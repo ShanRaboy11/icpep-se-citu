@@ -18,6 +18,7 @@ This project uses the **MERN stack** (MongoDB, Express, React/Next.js, Node.js) 
    cd icpep.se-cit-u
 ````
 
+
 2. **Create `.env` file in the project root**
    Add your MongoDB connection string:
 
@@ -94,12 +95,6 @@ docker compose up --build
   ```bash
   docker compose down -v
   ```
-
----
-
-Perfect 👍 I’ll merge your **Contributing section** with the **Branch & Commit Naming Conventions** into a single clean section so your groupmates don’t have to jump back and forth.
-
-Here’s the integrated version you can drop into your README:
 
 ---
 
