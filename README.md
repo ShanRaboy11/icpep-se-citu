@@ -7,6 +7,7 @@ This project uses the **MERN stack** (MongoDB, Express, React/Next.js, Node.js) 
 ## 📦 Prerequisites
 - Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
 - Install [Git](https://git-scm.com/)
+- Install Extensions [Docker & MongoDB for VSCode]
 
 
 ## ⚙️ Setup Instructions
@@ -17,13 +18,14 @@ This project uses the **MERN stack** (MongoDB, Express, React/Next.js, Node.js) 
    cd icpep.se-cit-u
 ````
 
-2. Create `.env` file in the project root
+2. **Create `.env` file in the project root**
    Add your MongoDB connection string:
 
-   ```env
+   ```
    MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<db-name>?retryWrites=true&w=majority
    PORT=5000
-   ```
+
+````
 
 3. Run the project with Docker**
 
@@ -95,22 +97,82 @@ docker compose up --build
 
 ---
 
-## 🤝 Contributing
+Perfect 👍 I’ll merge your **Contributing section** with the **Branch & Commit Naming Conventions** into a single clean section so your groupmates don’t have to jump back and forth.
 
-1. Pull the latest code:
+Here’s the integrated version you can drop into your README:
 
-   ```bash
-   git pull origin main
-   ```
-2. Create a new branch:
+---
 
-   ```bash
-   git checkout -b feature/my-feature
-   ```
-3. Commit and push:
+## 🤝 Contributing & Git Workflow
 
-   ```bash
-   git add .
-   git commit -m "Add my feature"
-   git push origin feature/my-feature
-   ```
+### 1. Pull the latest code
+
+```bash
+git pull origin main
+```
+
+### 2. Create a new branch
+
+Follow the branch naming convention:
+
+```bash
+git checkout -b feature/<lastname>-<short-description>
+```
+
+**Examples:**
+
+* `feature/raboy-landing-page`
+* `fix/mactual-navbar-bug`
+
+**Rules:**
+
+* Always use **lowercase** (except for names).
+* Keep branch names short and descriptive.
+* Use **hyphens (-)** instead of spaces.
+
+---
+
+### 3. Commit your changes
+
+Follow the commit message format:
+
+```bash
+<prefix>(<scope>): <message> - <name>
+```
+
+**Examples:**
+
+* `feat(landing page): add initial layout - Mactual`
+* `fix(navbar): resolve mobile responsiveness issue - Raboy`
+* `docs(readme): update setup instructions - Lim`
+
+**Rules:**
+
+* Prefix must follow the table below.
+* Use **lowercase** (except for names).
+* Keep messages concise and clear.
+* Scope is optional, but recommended.
+
+---
+
+### 4. Push your branch
+
+```bash
+git push origin feature/<lastname>-<short-description>
+```
+
+---
+
+## 📌 Commit Prefixes
+
+| Prefix        | Meaning                                          |
+| ------------- | ------------------------------------------------ |
+| **feat:**     | A new feature                                    |
+| **fix:**      | A bug fix                                        |
+| **docs:**     | Documentation only changes                       |
+| **style:**    | Code style changes (formatting, no logic change) |
+| **refactor:** | Refactoring code (not a fix or feature)          |
+| **test:**     | Adding or fixing tests                           |
+| **chore:**    | Maintenance tasks (build, deps, configs, etc.)   |
+
+---
