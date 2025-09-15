@@ -19,12 +19,9 @@ This project uses the **MERN stack** (MongoDB, Express, React/Next.js, Node.js) 
 ````
 
 
-2. **Create `.env` file in the project root**
-   Add your MongoDB connection string:
-
-   ```
-   MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/<db-name>?retryWrites=true&w=majority
-   PORT=5000
+2. Create `.env` file in the project root and in the server folder
+   
+   Copy and paste the info from the .env.example file
 
 ````
 
