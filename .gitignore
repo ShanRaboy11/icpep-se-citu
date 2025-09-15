@@ -57,6 +57,9 @@ lerna-debug.log*
 .env.test.local
 .env.production.local
 
+# Env example is excluded
+!.env.example
+
 # Next.js build
 .next/
 out/
