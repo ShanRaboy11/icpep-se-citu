@@ -1,39 +1,52 @@
-# 🔵  ICPEP.SE CIT-U CHAPTER OFFICIAL WEBSITE
+# 🔵 ICPEP.SE CIT-U CHAPTER OFFICIAL WEBSITE  
 
-This project uses the **MERN stack** (MongoDB, Express, React/Next.js, Node.js) with **Docker Compose** for easy setup and consistency across all devices.
+This project is the **official website of the ICPEP.SE CIT-U Student Organization**, developed using the **MERN stack** (MongoDB, Express, React/Next.js, Node.js). 
+
+---
+
+## 📑 Table of Contents
+- [Prerequisites](#-prerequisites)  
+- [Setup Instructions](#-setup-instructions)  
+- [Updating After Pulling New Code](#-updating-after-pulling-new-code)  
+- [Verify Setup](#-verify-setup)  
+- [Development Notes](#-development-notes)  
+- [Common Issues](#-common-issues)  
+- [Development Workflow](#-development-workflow)  
+  - [Branching Strategy](#branching-strategy)  
+  - [Commit Guidelines](#commit-guidelines)  
+- [Contributing](#-contributing--git-workflow)  
 
 ---
 
 ## 📦 Prerequisites
-- Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- Install [Git](https://git-scm.com/)
-- Install Extensions [Docker & MongoDB for VSCode]
+- Install [Docker Desktop](https://www.docker.com/products/docker-desktop)  
+- Install [Git](https://git-scm.com/)  
+- VSCode Extensions: **Docker** & **MongoDB for VSCode**  
 
+---
 
-## ⚙️ Setup Instructions
+## ⚙️ Setup Instructions  
 
-1. **Clone the repository**
+1. **Clone the repository**  
    ```bash
    git clone https://github.com/ShanRaboy11/icpep-se-citu.git
-   cd icpep.se-cit-u
-````
+   cd icpep-se-citu
+2. **Create `.env` files**
+```
+   * One in the project root
+   * One inside server/
 
-
-2. Create `.env` file in the project root and in the server folder
-   
-   Copy and paste the info from the .env.example file
-
-````
-
-3. Run the project with Docker**
+   Copy from `.env.example` and update values as needed.
+```
+3. **Run the project with Docker**
 
    ```bash
    docker compose up --build
-   ````
+   ```
 
    * Backend (Express) → **[http://localhost:5000](http://localhost:5000)**
    * Frontend (Next.js) → **[http://localhost:3000](http://localhost:3000)**
-   * MongoDB → runs inside Docker container
+   * MongoDB runs inside a container
 
 4. **Stop containers**
 
@@ -45,22 +58,20 @@ This project uses the **MERN stack** (MongoDB, Express, React/Next.js, Node.js) 
 
 ## 🔄 Updating After Pulling New Code
 
-When you pull the latest changes from GitHub:
-
 ```bash
 git pull origin main
 docker compose up --build
 ```
 
-* `--build` ensures images are rebuilt with new code & dependencies.
-* Use just `docker compose up` if nothing has changed.
+* Use `--build` if dependencies changed.
+* Use just `docker compose up` if no new dependencies.
 
 ---
 
 ## ✅ Verify Setup
 
-* Open **[http://localhost:3000](http://localhost:3000)** → Next.js frontend.
-* Open **[http://localhost:5000](http://localhost:5000)** → Backend should return: `API is running...`.
+* Open **[http://localhost:3000](http://localhost:3000)** → frontend should load.
+* Open **[http://localhost:5000](http://localhost:5000)** → should display: `API is running...`.
 * Docker logs should show:
 
   ```
@@ -74,7 +85,7 @@ docker compose up --build
 
 * **Backend (server/)** → Express + MongoDB, auto-restarts with `nodemon`.
 * **Frontend (client/)** → Next.js + TailwindCSS, supports hot reload.
-* **Database** → MongoDB 6.0, stored in a Docker volume (`mongo-data`) so data persists across restarts.
+* **Database** → MongoDB 6.0 with Docker volume (`mongo-data`) for persistence.
 
 ---
 
@@ -86,8 +97,8 @@ docker compose up --build
   docker compose build --no-cache
   ```
 * **MongoDB auth error** → check `.env` credentials.
-* **Port already in use** → stop old containers or apps using `3000`/`5000`.
-* **Fresh DB reset** → remove volumes:
+* **Port already in use** → stop old containers/apps on ports `3000` or `5000`.
+* **Reset DB** → remove volumes:
 
   ```bash
   docker compose down -v
@@ -95,17 +106,25 @@ docker compose up --build
 
 ---
 
-## 🤝 Contributing & Git Workflow
+## 🔄 Development Workflow
 
-### 1. Pull the latest code
+We follow a **lightweight Gitflow-inspired workflow** for teamwork, accountability, and clean code.
 
-```bash
-git pull origin main
-```
+1. **Issues** → Every task/feature/bug should have a GitHub Issue.
+2. **Branches** → Branch from `develop`, keep changes focused.
+3. **Pull Requests (PRs)** → Open into `develop`. Require at least 1 peer review.
+4. **Integration** → Test locally, then merge into `develop`.
+5. **Release** → Only merge `develop` → `main` when stable.
 
-### 2. Create a new branch
+---
 
-Follow the branch naming convention:
+### 🌱 Branching Strategy
+
+* **main** → production-ready, stable code
+* **develop** → active development branch
+* **feature/** → new features (`feature/raboy-landing-page`)
+* **fix/** → bug fixes (`fix/mactual-navbar-bug`)
+* **chore/** → configs, setup, maintenance
 
 ```bash
 git checkout -b feature/<lastname>-<short-description>
@@ -118,15 +137,15 @@ git checkout -b feature/<lastname>-<short-description>
 
 **Rules:**
 
-* Always use **lowercase** (except for names).
-* Keep branch names short and descriptive.
-* Use **hyphens (-)** instead of spaces.
+* Use **lowercase** (except names).
+* Keep names short and descriptive.
+* Use **hyphens (-)**, not spaces.
 
 ---
 
-### 3. Commit your changes
+### 📝 Commit Guidelines
 
-Follow the commit message format:
+Format:
 
 ```bash
 <prefix>(<scope>): <message> - <name>
@@ -134,28 +153,18 @@ Follow the commit message format:
 
 **Examples:**
 
-* `feat(landing page): add initial layout - Mactual`
-* `fix(navbar): resolve mobile responsiveness issue - Raboy`
-* `docs(readme): update setup instructions - Lim`
+* `feat(auth): implement login with JWT - Raboy`
+* `fix(ui): resolve navbar bug - Lim`
+* `docs(readme): update setup instructions - Mactual`
 
 **Rules:**
 
 * Prefix must follow the table below.
-* Use **lowercase** (except for names).
-* Keep messages concise and clear.
+* Use **lowercase** (except names).
+* Keep messages concise.
 * Scope is optional, but recommended.
 
----
-
-### 4. Push your branch
-
-```bash
-git push origin feature/<lastname>-<short-description>
-```
-
----
-
-## 📌 Commit Prefixes
+#### 📌 Commit Prefixes
 
 | Prefix        | Meaning                                          |
 | ------------- | ------------------------------------------------ |
@@ -168,3 +177,23 @@ git push origin feature/<lastname>-<short-description>
 | **chore:**    | Maintenance tasks (build, deps, configs, etc.)   |
 
 ---
+
+## 🤝 Contributing & Git Workflow
+
+1. Pull the latest code
+
+   ```bash
+   git pull origin main
+   ```
+2. Create a new branch
+
+   ```bash
+   git checkout -b feature/<lastname>-<short-description>
+   ```
+3. Commit changes using the [Commit Guidelines](#-commit-guidelines).
+4. Push your branch
+
+   ```bash
+   git push origin feature/<lastname>-<short-description>
+   ```
+5. Open a Pull Request → target `develop`.
