@@ -1,6 +1,5 @@
 import Header from "./components/header";
-import Button from "./components/button";
-//import Footer from "./components/Footer/Footer";
+import Footer from "./components/footer";
 
 export default function App() {
   return (
@@ -10,7 +9,7 @@ export default function App() {
         <h1 className="text-3xl font-rubik">Welcome to MyWebsite</h1>
         <p className="mt-4 text-primary1">This is your content area.</p>
       </main>
-      {/*<Footer />*/}
+      <Footer />
     </div>
   );
 }

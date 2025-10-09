@@ -22,13 +22,13 @@ const Header = () => {
             height={55}
             className="md:h-15 md:w-auto sm:h-25 sm:w-auto rounded-full"
           />
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-end gap-0.5">
             <Image src="/Vector-i.svg" alt="I" width={0} height={50} className="h-0 w-auto sm:h-12" />
             <Image src="/Vector-c.svg" alt="C" width={0} height={50} className="h-0 w-auto sm:h-12" />
             <Image src="/Vector-p1.svg" alt="P" width={0} height={50} className="h-0 w-auto sm:h-12" />
             <Image src="/Vector-e1.svg" alt="E" width={0} height={50} className="h-0 w-auto sm:h-12" />
             <Image src="/Vector-p2.svg" alt="P" width={0} height={50} className="h-0 w-auto sm:h-12" />
-            <Image src="/Vector-dot.svg" alt="." width={0} height={16} className="h-0 w-auto sm:h-4" />
+            <Image src="/Vector-dot.svg" alt="." width={0} height={16} className="h-0 w-auto sm:h-4 -ml-2" />
             <Image src="/Vector-s.svg" alt="S" width={0} height={50} className="h-0 w-auto sm:h-12" />
             <Image src="/Vector-e2.svg" alt="E" width={0} height={50} className="h-0 w-auto sm:h-12" />
           </div>

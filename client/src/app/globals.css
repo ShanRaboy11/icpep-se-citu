@@ -8,6 +8,9 @@
   --primary3: #003599;
   --bodytext: #373D47;
   --buttonbg1: #DBEEFF;
+  --steelblue-100: #59a1c2;
+  --steelblue-200:#006fa1;
+  --secondary1: #002231;
 }
 
 @theme inline {
@@ -18,6 +21,9 @@
   --color-primary3: var(--primary3);
   --color-bodytext: var(--bodytext);
   --color-buttonbg1: var(--buttonbg1);
+  --color-steelblue-100: var(--steelblue-100);
+  --color-steelblue-200: var(--steelblue-200);
+  --color-secondary1: var(--secondary1);
   --font-rubik: var(--font-rubik);
   --font-raleway: var(--font-raleway);
 }
