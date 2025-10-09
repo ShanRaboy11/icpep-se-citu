@@ -11,6 +11,8 @@
   --steelblue-100: #59a1c2;
   --steelblue-200:#006fa1;
   --secondary1: #002231;
+  --secondary2: #45c7ff;
+  --secondary3:#00a8f3;
 }
 
 @theme inline {
@@ -24,6 +26,8 @@
   --color-steelblue-100: var(--steelblue-100);
   --color-steelblue-200: var(--steelblue-200);
   --color-secondary1: var(--secondary1);
+  --color-secondary2: var(--secondary2);
+  --color-secondary3: var(--secondary3);
   --font-rubik: var(--font-rubik);
   --font-raleway: var(--font-raleway);
 }

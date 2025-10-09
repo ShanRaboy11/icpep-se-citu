@@ -111,7 +111,7 @@ const Footer: NextPage = () => {
     </div>
     <div
         className="w-full text-center font-medium uppercase text-steelblue-100 
-                    text-[35px] sm:text-[103px] leading-none tracking-[0.1em] 
+                    text-[30px] sm:text-[103px] leading-none tracking-[0.1em] 
                     whitespace-nowrap py-2">
         ICPEP SE CIT-UNIVERSITY
     </div>
