@@ -3,60 +3,50 @@ import type { NextPage } from 'next';
 import Image from "next/image";
 import { useState, useEffect } from "react";
 
-const Menu: NextPage = () => {
+interface MenuProps {
+    userRole: 'guest' | 'user';
+    onExit: () => void;
+  }
+
+const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   const [hovered, setHovered] = useState<string | null>(null);
-  const [active, setActive] = useState<string | null>(null);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   const submenus: Record<string, string[]> = {
     Home: [
-      "Hero section w/ call to action",
-      "About ICpEP (short intro + learn more)",
+      "Home",
+      "About ICpEP",
       "Why join ICpEP",
-      "Latest announcements (3 max)",
-      "Upcoming events & RSVP",
-      "Testimonials / Quotes",
-      "Current council officers & faculty",
+      "Latest Announcements",
+      "Upcoming Events",
+      "Testimonials",
+      "Council Officers & Faculty",
       "Partners / Sponsors",
       "FAQ",
     ],
     About: [
-      "Org info (vision, mission, values)",
+      "Org info",
       "Org faculty profiles",
       "Org officers profiles",
       "CPE dept faculty profiles",
     ],
-    Events: [
-      "Upcoming events",
-      "Event calendar",
-      "Gallery",
-    ],
+    Events: ["Upcoming events", "Event calendar", "Gallery"],
     Membership: [
-      "Membership details (benefits + prices)",
+      "Membership details",
       "Members (officers & faculty only)",
       "Merch",
     ],
-    Connect: [
-      "Lettucemeet",
-      "Schedule (meeting dates + time)",
-    ],
-    Developers: [
-      "About ExceptionHandlers",
-      "Developers profiles",
-    ],
-    Exit: [],
+    Connect: ["Lettucemeet", "Schedule"],
+    Developers: ["About ExceptionHandlers", "Developers profiles"],
   };
 
-  // Auto-remove active after 5 seconds
   useEffect(() => {
-    if (active) {
-      if (timeoutId) clearTimeout(timeoutId);
-      const id = setTimeout(() => setActive(null), 5000);
-      setTimeoutId(id);
+    if (hovered && timeoutId) {
+      clearTimeout(timeoutId);
     }
-  }, [active]);
+  }, [hovered]);
 
-  const currentMenu = hovered || active;
+  const currentMenu = hovered;
 
   return (
     <div className="w-full min-h-screen bg-steelblue-200 text-white font-rubik relative overflow-hidden px-5 sm:px-50">
@@ -74,9 +64,9 @@ const Menu: NextPage = () => {
             alt="ICPEP Logo"
             width={50}
             height={50}
-            className='sm:h-32 h:10 w-auto'
+            className="sm:h-32 h-10 w-auto"
           />
-          <div className=" text-center text-white mt-8">
+          <div className="text-center text-white mt-8">
             <h1 className="text-sm sm:text-xl font-light">
               Institute of Computer Engineers of the Philippines Student Edition
             </h1>
@@ -90,19 +80,20 @@ const Menu: NextPage = () => {
         <div className="w-full h-px bg-white/30 my-6"></div>
 
         {/* Main Section */}
-        <div className="flex-1 flex flex-col sm:flex-row px-8 py-6 transition-all duration-300">
+        <div className="flex-1 flex flex-row flex-nowrap px-8 py-6 transition-all duration-300 mb-20 sm:mb-0">
           {/* Left Menu */}
-          <div className="sm:w-1/3 mb-8 lg:mb-0 bg-red-500 w-1/8">
+          <div className="sm:w-1/3 mb-8 w-1/2">
             <nav className="flex flex-col space-y-6">
               {Object.keys(submenus).map((item) => (
                 <div
                   key={item}
                   onMouseEnter={() => setHovered(item)}
-                  onMouseLeave={() => setHovered(null)}
-                  onClick={() => setActive(item)}
+                  onClick={() => {
+                    // You can add your navigation logic here:
+                    console.log(`Navigate to /${item.toLowerCase()}`);
+                  }}
                   className="relative inline-block cursor-pointer group w-fit"
                 >
-                  {/* Menu text */}
                   <span
                     className={`text-lg sm:text-3xl font-raleway transition-colors duration-300 ${
                       currentMenu === item ? "text-white/90" : "text-white"
@@ -110,8 +101,6 @@ const Menu: NextPage = () => {
                   >
                     {item}
                   </span>
-
-                  {/* Underline */}
                   <span
                     className={`absolute left-0 bottom-0 h-[3px] bg-white transition-all duration-300 ${
                       currentMenu === item ? "w-full opacity-100" : "w-0 opacity-0"
@@ -119,21 +108,31 @@ const Menu: NextPage = () => {
                   ></span>
                 </div>
               ))}
+              <div
+                key="Exit"
+                onClick={onExit}
+                className="relative inline-block cursor-pointer group w-fit mt-8"
+              >
+                <span className="text-lg sm:text-3xl font-raleway transition-colors duration-300 text-white">
+                  Exit
+                </span>
+                <span className="absolute left-0 bottom-0 h-[3px] bg-white w-0 opacity-0 transition-all duration-300 group-hover:w-full group-hover:opacity-100"></span>
+              </div>
             </nav>
           </div>
 
           {/* Submenu Column */}
           <div
-            className={`bg-green-500 w-1/8 sm:w-1/3 transition-all duration-300 ${
+            className={`w-1/2 sm:w-1/3 transition-all duration-300 ${
               currentMenu
                 ? "opacity-100 translate-x-0"
                 : "opacity-0 -translate-x-8 pointer-events-none"
             }`}
             onMouseEnter={() => setHovered(currentMenu)}
-            onMouseLeave={() => setHovered(null)}
+            onMouseLeave={() => setHovered(null)} 
           >
             {currentMenu && submenus[currentMenu]?.length > 0 && (
-              <div className="space-y-4">
+              <div className="flex flex-col space-y-4">
                 {submenus[currentMenu].map((submenu) => (
                   <div
                     key={submenu}
@@ -150,29 +149,29 @@ const Menu: NextPage = () => {
           </div>
 
           {/* Contact Us */}
-            <div className="lg:w-1/3 sm:ml-20 sm:mt-0 mt-10">
+          <div className="sm:ml-20 sm:mt-0 mt-10 sm:block hidden">
             <h3 className="text-white text-xl font-semibold mb-4">Contact Us</h3>
             <div className="flex gap-4 mt-6">
-                <Image
+              <Image
                 src="/fb.svg"
                 alt="Facebook"
                 width={24}
                 height={24}
                 className="cursor-pointer hover:opacity-80 transition"
-                />
-                <Image
+              />
+              <Image
                 src="/email.svg"
                 alt="Email"
                 width={24}
                 height={24}
                 className="cursor-pointer hover:opacity-80 transition"
-                />
+              />
             </div>
-            </div>
+          </div>
         </div>
 
         {/* Divider */}
-        <div className="w-full h-px bg-white/30 my-6"></div>
+        <div className="w-full h-px bg-white/30 my-0"></div>
 
         {/* Footer */}
         <div className="text-center py-6">

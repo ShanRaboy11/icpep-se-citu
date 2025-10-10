@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Button from './button';
+import Menu from './menu';
 
 //UserRole = guest | user(non-member) | member | officer | faculty?
 type UserRole = 'guest' | 'user' ;
@@ -47,10 +48,10 @@ const Header = () => {
           {/* Guest View */}
           {role === 'guest' && (
             <>
-              <Button className="hidden sm:block" variant="secondary" onClick={() => setRole('user')}>
+              <Button className="sm:block" variant="secondary" onClick={() => setRole('user')}>
                 Sign Up
               </Button>
-              <Button className="hidden sm:block" onClick={() => setRole('user')}>
+              <Button className="sm:block" onClick={() => setRole('user')}>
                 Log In
               </Button>
             </>
@@ -85,42 +86,18 @@ const Header = () => {
           </div>
         </div>
       </div>
-
-      {/* Mobile dropdown */}
-      {open && (
-        <div className="sm:hidden border-t border-gainsboro bg-gray">
-          <div className="mx-auto max-w-7xl px-4 py-3 space-y-3">
-            {role === 'guest' ? (
-              <>
-                <a href="#signup" className="block text-deepskyblue font-manrope">
-                  Sign Up
-                </a>
-                <div
-                  className="rounded-[10px] bg-lavender border border-deepskyblue px-4 py-2 text-deepskyblue font-manrope inline-block"
-                  onClick={() => setRole('user')}
-                >
-                  Log In
-                </div>
-              </>
-            ) : role === 'user' ? (
-              <div
-                className="rounded-[10px] border border-deepskyblue px-4 py-2 text-deepskyblue font-manrope inline-block"
-                onClick={() => setRole('guest')}
-              >
-                Log Out
-              </div>
-            ) : (
-              <div
-                className="rounded-[10px] border border-deepskyblue px-4 py-2 text-deepskyblue font-manrope inline-block"
-                onClick={() => setRole('guest')}
-              >
-                Admin Log Out
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      <div
+        className={`fixed inset-0 z-50 transition-transform duration-700 ease-out ${
+          open ? 'translate-y-0' : '-translate-y-[120vh]'
+        }`}
+      >
+        <Menu
+          userRole={role}
+          onExit={() => setOpen(false)} // closes only when Exit is clicked
+        />
+      </div>
     </header>
+  
   );
 };
 
