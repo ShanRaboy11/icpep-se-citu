@@ -9,8 +9,8 @@ import AnnounceCardMed from "./components/cards/announcecardmed";
 import AdminCard from "./components/cards/admincard";
 import CommitteeCard from "./components/cards/committeecard";
 import AnnounceDetailsCard from "./components/cards/announcedetailscard";
-import CouncilOfficersCard from "./components/cards/attendancecard";
-import MeetingDetailsCard from "./components/cards/attendancemodal";
+import AttendanceModalCard from "./components/cards/attendancemodal";
+import OfficerCard from "./components/cards/officercard";
 
 
 const officersData = [
@@ -90,12 +90,22 @@ export default function App() {
   contact="icpep.seofficial2526@gmail.com"
   onClick={() => console.log('Meeting card clicked!')}
 />
-<MeetingDetailsCard
+<AttendanceModalCard
         title="Complete Meeting Attendance"
         subtitle="ICpEP.SE CIT-U Chapter - 2nd Regular Meeting"
         officers={officersData}
         onClose={() => alert("Modal closed")}
       />
+
+<OfficerCard
+  image="/officer.svg"
+  position="Vice President"
+  role="Internal"
+  lastName="Dela Cruz"
+  firstName="Juan"
+  onClick={() => alert("Card clicked!")}
+/>
+
 
 
 
