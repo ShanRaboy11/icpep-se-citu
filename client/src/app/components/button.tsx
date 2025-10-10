@@ -4,7 +4,7 @@ import React from "react";
 import clsx from "clsx";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline";
+  variant?: "primary" | "secondary" | "outline" | "primary2";
   size?: "sm" | "md" | "lg";
 }
 
@@ -20,10 +20,11 @@ const Button: React.FC<ButtonProps> = ({
 
   const variantStyles = {
     primary: "rounded-[10px] bg-buttonbg1 border border-primary1 px-4 py-2 text-primary1 font-manrope hover:bg-primary1 hover:text-white focus:ring-primary1 cursor-pointer",
-    secondary: "bg-lavender text-primary1 px-4 py-2 hover:bg-primary2 hover:text-white focus:ring-primary1 cursor-pointer",
+    secondary: "bg-lavender rounded-lg text-primary1 px-4 py-2 hover:bg-primary2 hover:text-white focus:ring-primary1 cursor-pointer",
     outline:
       "border border-primary1 text-primary1 hover:bg-primary1 hover:text-white focus:ring-primary1",
-  };
+      primary2: "bg-primary1 text-white font-medium text-sm sm:text-base px-8 py-2.5 rounded-2xl border border-transparent hover:bg-white hover:text-primary1 hover:border-primary1 active:scale-95 transition-all cursor-pointer"
+};
 
   const sizeStyles = {
     sm: "px-3 py-1.5 text-sm",
@@ -33,7 +34,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={clsx(baseStyles, variantStyles[variant], sizeStyles[size], className)}
+      className={clsx(variantStyles[variant], sizeStyles[size], className)}
       {...props}
     >
       {children}
