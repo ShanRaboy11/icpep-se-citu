@@ -12,7 +12,7 @@ interface OfficerCardProps {
   onClick?: () => void;
 }
 
-const OfficerCardnRole: React.FC<OfficerCardProps> = ({
+const OfficerCard1: React.FC<OfficerCardProps> = ({
   position,
   role,
   lastName,
@@ -59,4 +59,4 @@ const OfficerCardnRole: React.FC<OfficerCardProps> = ({
   );
 };
 
-export default OfficerCardnRole;
+export default OfficerCard1;

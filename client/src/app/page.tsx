@@ -13,7 +13,7 @@ import AttendanceModalCard from "./components/cards/attendancemodal";
 import OfficerCard2 from "./components/cards/officercard2";
 import OfficerCard1 from "./components/cards/officercard1";
 import OfficerCard3 from "./components/cards/officercard3";
-
+import OfficerFlipCard from "./components/cards/developercard";
 
 const officersData = [
   { title: "President", name: "Jorho Joseph Parino" },
@@ -123,6 +123,19 @@ export default function App() {
   firstName="Juan"
   onClick={() => alert("Card clicked!")}
 />
+<OfficerFlipCard
+  name="Maica C. Eupinado"
+  position="UI/UX"
+  role="Designer"
+  image="/officer.svg"
+  achievements={[
+    "3rd Year Batch Representative, 6th Administration",
+    "Head of Training and Seminar Committee, 6th Administration",
+    "UI/UX Designer of the ICPEPSE CIT-U Chapter Website",
+  ]}
+  portfolioLink="https://portfolio.example.com"
+/>
+
 
 
 
