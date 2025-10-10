@@ -10,7 +10,9 @@ import AdminCard from "./components/cards/admincard";
 import CommitteeCard from "./components/cards/committeecard";
 import AnnounceDetailsCard from "./components/cards/announcedetailscard";
 import AttendanceModalCard from "./components/cards/attendancemodal";
-import OfficerCard from "./components/cards/officercard";
+import OfficerCard2 from "./components/cards/officercard2";
+import OfficerCard1 from "./components/cards/officercard1";
+import OfficerCard3 from "./components/cards/officercard3";
 
 
 const officersData = [
@@ -97,10 +99,26 @@ export default function App() {
         onClose={() => alert("Modal closed")}
       />
 
-<OfficerCard
+<OfficerCard2
   image="/officer.svg"
   position="Vice President"
   role="Internal"
+  lastName="Dela Cruz"
+  firstName="Juan"
+  onClick={() => alert("Card clicked!")}
+/>
+<OfficerCard1
+  image="/officer.svg"
+  position="President"
+  role=""
+  lastName="Dela Cruz"
+  firstName="Juan"
+  onClick={() => alert("Card clicked!")}
+/>
+<OfficerCard3
+  image="/officer.svg"
+  position="1st year"
+  role="Representative"
   lastName="Dela Cruz"
   firstName="Juan"
   onClick={() => alert("Card clicked!")}
