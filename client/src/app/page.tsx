@@ -16,6 +16,7 @@ import OfficerCard3 from "./components/cards/officercard3";
 import FacultyCard from "./components/cards/facultycard";
 import FacultyOfficerCard from "./components/cards/facultyofficercard";
 import DeveloperCard from "./components/cards/developercard";
+import TestimonialCard from "./components/cards/testimonialcard";
 
 const officersData = [
   { title: "President", name: "Jorho Joseph Parino" },
@@ -174,6 +175,14 @@ export default function App() {
         />
       ))}
     </div>
+
+    <TestimonialCard
+  name="Virinder Bhardwaj"
+  title="MD Urology"
+  imageSrc="/officer.svg"
+  testimonial="OneLine Health has saved me two hours daily by eliminating the need for post-clinic dictation, allowing me to finalize notes immediately. This has significantly improved efficiency and enhanced the quality of care for my community."
+/>
+
 
       </main>
       <Footer />

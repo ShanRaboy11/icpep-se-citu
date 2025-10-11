@@ -49,7 +49,7 @@ export default function FacultyOfficerCard({
           alt={name}
           width={200}
           height={300}
-          className="rounded-xl object-cover h-[300px] w-[200px] sm:h-[320px] sm:w-[220px]"
+          className="rounded-xl -mb-10 sm:-mb-5 object-cover h-[300px] w-[200px] sm:h-[320px] sm:w-[220px]"
         />
       </div>
 
