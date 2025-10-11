@@ -13,9 +13,9 @@ import AttendanceModalCard from "./components/cards/attendancemodal";
 import OfficerCard2 from "./components/cards/officercard2";
 import OfficerCard1 from "./components/cards/officercard1";
 import OfficerCard3 from "./components/cards/officercard3";
-import OfficerFlipCard from "./components/cards/developercard";
 import FacultyCard from "./components/cards/facultycard";
 import FacultyOfficerCard from "./components/cards/facultyofficercard";
+import DeveloperCard from "./components/cards/developercard";
 
 const officersData = [
   { title: "President", name: "Jorho Joseph Parino" },
@@ -143,17 +143,17 @@ export default function App() {
   firstName="Juan"
   onClick={() => alert("Card clicked!")}
 />
-<OfficerFlipCard
+<DeveloperCard
   name="Maica C. Eupinado"
-  position="UI/UX"
-  role="Designer"
-  image="/officer.svg"
-  achievements={[
+  title="UI/UX"
+  desc="Designer"
+  imageSrc="/officer.svg" // your image file in /public
+  details={[
     "3rd Year Batch Representative, 6th Administration",
     "Head of Training and Seminar Committee, 6th Administration",
-    "UI/UX Designer of the ICPEPSE CIT-U Chapter Website",
+    "UI/UX Designer of the ICpEP.SE CIT-U Chapter Official Website",
   ]}
-  portfolioLink="https://portfolio.example.com"
+  portfolioLink="https://portfolio-link.com"
 />
 
 <FacultyCard

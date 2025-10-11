@@ -1,76 +1,87 @@
-'use client';
-
-import React from "react";
+"use client";
 import Image from "next/image";
+import { useState } from "react";
 
-interface OfficerCardProps {
+interface DeveloperCardProps {
   name: string;
-  position: string;
-  role: string;
-  image?: string;
-  achievements?: string[];
+  title: string;
+  desc: string;
+  imageSrc: string;
+  details: string[];
   portfolioLink?: string;
 }
 
-const OfficerFlipCard: React.FC<OfficerCardProps> = ({
+export default function DeveloperCard({
   name,
-  position,
-  role,
-  image,
-  achievements = [],
+  title,
+  desc,
+  imageSrc,
+  details,
   portfolioLink,
-}) => {
+}: DeveloperCardProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
-    <div className="group w-full max-w-[280px] aspect-square perspective mx-auto">
-      {/* Inner wrapper for 3D flip */}
-      <div className="relative w-full h-full transition-transform duration-700 transform-style-preserve-3d group-hover:rotate-y-180">
+    <div
+      className="w-[280px] sm:w-[300px] md:w-[340px] h-[340px] perspective cursor-pointer"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        className={`relative w-full h-full transition-transform duration-300 ease-out transform-style-preserve-3d ${
+          isHovered ? "rotate-y-180" : ""
+        }`}
+      >
+        {/* FRONT SIDE */}
+        <div className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg backface-hidden bg-gradient-to-b from-sky-400 to-blue-600 flex flex-col justify-between">
+          {/* Silhouette image (larger and centered) */}
+      <div className="relative w-[90%] ml-auto mt-10 sm:mt-1 -mr-8">
+        {imageSrc ? (
+          <Image
+            src={imageSrc}
+            alt={`${name}`}
+            width={330}
+            height={330}
+            className="object-contain mx-auto"
+          />
+        ) : (
+          <div className="w-full aspect-[3/4] bg-white/30 rounded-md mx-auto" />
+        )}
+      </div>
 
-        {/* Front Side */}
-        <div className="absolute w-full h-full bg-gradient-to-br from-sky-400 to-sky-500 rounded-2xl text-white shadow-md backface-hidden overflow-hidden flex flex-col justify-between">
-          {/* Role + Position */}
-          <div className="p-5 text-left">
-            <h2 className="text-lg font-semibold uppercase">{position}</h2>
-            <p className="text-md">{role}</p>
-          </div>
+      {/* Name (overlapping bottom slightly) */}
+      <div className="absolute bottom-30 left-1/2 -translate-x-1/2 w-[78%] 
+                 text-left flex flex-col
+                font-raleway font-bold text-white text-2xl">
+        <h3>
+          {title}
+        </h3>
+        <p>
+          {desc}
+        </p>
+      </div>
 
-          {/* Image */}
-          <div className="relative w-[90%] mx-auto">
-            {image ? (
-              <Image
-                src={image}
-                alt={name}
-                width={300}
-                height={300}
-                className="object-contain mx-auto"
-              />
-            ) : (
-              <div className="w-full aspect-[3/4] bg-white/30 rounded-md mx-auto" />
-            )}
-          </div>
-
-          {/* Name bar */}
-          <div className="bg-blue-900 text-center py-2 text-white font-semibold text-sm sm:text-base rounded-b-2xl">
+          <div className="-mt-5 bg-primary3 py-3 text-center text-white font-bold text-lg z-10">
             {name}
           </div>
         </div>
 
-        {/* Back Side */}
-        <div className="absolute w-full h-full bg-gradient-to-br from-blue-800 to-blue-900 text-white rounded-2xl shadow-md rotate-y-180 backface-hidden p-5 flex flex-col justify-between">
+        {/* BACK SIDE */}
+        <div className="absolute px-12 w-full h-full rounded-2xl  overflow-hidden shadow-lg bg-gradient-to-br from-sky-400 to-blue-900 p-6 flex flex-col justify-between text-white rotate-y-180 backface-hidden">
           <div>
-            <h3 className="text-lg font-semibold mb-2">{name}</h3>
-            <ul className="text-sm space-y-1 list-disc list-inside">
-              {achievements.map((item, index) => (
-                <li key={index}>{item}</li>
+            <h2 className="font-rubik text-xl sm:text-2xl text-center font-bold mb-3 mt-3">{name}</h2>
+            <ul className="font-raleway text-sm sm:text-base list-disc list-outside space-y-1 text-md text-gray-100 mt-5">
+              {details.map((item, idx) => (
+                <li key={idx}>{item}</li>
               ))}
             </ul>
           </div>
-
           {portfolioLink && (
             <a
               href={portfolioLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-right text-blue-300 hover:text-white transition-all"
+              className="font-raleway text-sm text-gray-200 hover:text-white self-end"
             >
               Portfolio ↗
             </a>
@@ -79,6 +90,4 @@ const OfficerFlipCard: React.FC<OfficerCardProps> = ({
       </div>
     </div>
   );
-};
-
-export default OfficerFlipCard;
+}
