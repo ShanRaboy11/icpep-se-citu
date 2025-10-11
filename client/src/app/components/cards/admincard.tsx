@@ -14,7 +14,6 @@ interface AdminCardProps {
 const AdminCard: React.FC<AdminCardProps> = ({ image, title, subtitle, onClick }) => {
   return (
     <div
-      onClick={onClick}
       className="w-full max-w-md bg-sky-100 rounded-3xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer transform hover:-translate-y-1 active:scale-95"
     >
       {/* Image section */}
@@ -38,7 +37,8 @@ const AdminCard: React.FC<AdminCardProps> = ({ image, title, subtitle, onClick }
         </div>
 
         {/* Arrow Button */}
-        <div className="bg-sky-500 p-3 rounded-full hover:bg-sky-600 transition-all">
+        <div onClick={onClick}
+        className="bg-sky-500 p-3 rounded-full hover:bg-sky-600 transition-all">
           <ArrowRight size={20} className="text-white" />
         </div>
       </div>
