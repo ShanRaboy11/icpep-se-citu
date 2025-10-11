@@ -1,103 +1,191 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import Header from "./components/header";
+import Footer from "./components/footer";
+import EventCard from "./components/cards/eventcard";
+import AnnounceCardSmall from "./components/cards/announcecardsmall";
+import AnnounceCardBig from "./components/cards/announcecardbig";
+import AnnounceCardMed from "./components/cards/announcecardmed";
+import AdminCard from "./components/cards/admincard";
+import CommitteeCard from "./components/cards/committeecard";
+import AnnounceDetailsCard from "./components/cards/announcedetailscard";
+import AttendanceModalCard from "./components/cards/attendancemodal";
+import OfficerCard2 from "./components/cards/officercard2";
+import OfficerCard1 from "./components/cards/officercard1";
+import OfficerCard3 from "./components/cards/officercard3";
+import FacultyCard from "./components/cards/facultycard";
+import FacultyOfficerCard from "./components/cards/facultyofficercard";
+import DeveloperCard from "./components/cards/developercard";
+import TestimonialCard from "./components/cards/testimonialcard";
+
+const officersData = [
+  { title: "President", name: "Jorho Joseph Parino" },
+  { title: "VP - Internal", name: "Shan Michael Raboy" },
+  { title: "VP - External", name: "Wilfred Justin Peteros" },
+  { title: "Secretary", name: "Elle Gabrielle Bernarte" },
+  { title: "Treasurer", name: "Kern Philip David" },
+  { title: "Auditor", name: "Gio Christian Macatual" },
+  { title: "P.R.O.", name: "Trixie Dolera" },
+  { title: "P.I.O.", name: "Louielyn Abella" },
+  { title: "1st Year - Batch Rep.", name: "Louielyn Abella" },
+  { title: "2nd Year - Batch Rep.", name: "Louielyn Abella" },
+  { title: "3rd Year - Batch Rep.", name: "Louielyn Abella" },
+  { title: "4th Year - Batch Rep.", name: "Louielyn Abella" },
+];
+
+const officers = [
+  {
+    name: 'Dela Cruz, Juana',
+    position: 'President',
+    image: '/faculty.png',
+  },
+  {
+    name: 'Santos, Mark',
+    position: 'Vice President',
+    image: '/faculty.png',
+  },
+  {
+    name: 'Santos, Mark',
+    position: 'Vice President',
+    image: '/faculty.png',
+  },
+];
+
+export default function App() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen flex flex-col">
+      <Header/>
+      <main className="flex-grow pt-20 p-6">
+        <h1 className="text-3xl font-rubik">Welcome to MyWebsite</h1>
+        <p className="mt-4 text-primary1">This is your content area.</p>
+        <EventCard
+        image="/gle.png"
+        title="COMPyesta"
+        description="The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog."
+        onRSVP={() => alert("RSVP clicked!")}
+      />
+      <AnnounceCardSmall
+        image="/gle.png"
+        category="Seminar"
+        title="Acquaintance Party"
+        description="The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog."
+        date="September 10, 2025"
+        onClick={() => alert("Card clicked!")}
+      />
+      <AnnounceCardBig
+  title="Acquaintance Party"
+  date="September 10, 2025"
+  description="The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog."
+  imageUrl="/gle.png"
+  onClick={() => alert("Card clicked!")}
+/>
+<AdminCard
+  image="/6th cover.png"
+  title="5th Administration"
+  subtitle="Year: 2025 - 2026"
+  onClick={() => alert("Card clicked!")}
+/>
+<CommitteeCard
+  title="Committee on Internal Affairs"
+  image="/finance.png"
+  description={[
+    "In charge of planning and initiating activities, programs, and projects that cater to advancing and engaging the Computer Engineering community.",
+    "Make sure that all activities, programs, and projects organized by the organization attain their objectives.",
+    "Assembles a team that will manage the technical aspects of the organization’s program and/or events.",
+    "Aspiring officers who have a dedication and commitment to Computer Engineering students are encouraged to apply in this committee."
+  ]}
+  onClick={() => console.log('Card clicked!')}
+/>
+<AnnounceCardMed
+  image="/gle.png"
+  tag="Event"
+  title="Annual Innovation Conference 2024"
+  description="Join us for our biggest innovation conference of the year featuring keynote speakers, workshops, and networking opportunities."
+  date="December 15, 2024"
+  onClick={() => alert('Conference clicked!')}
+/>
+<AnnounceDetailsCard
+  title="Meeting Details"
+  date="Friday, November 15, 2024"
+  time="8:00 PM - 10:00 PM"
+  location="GLE 703"
+  organizer="Training and Seminar Committee"
+  contact="icpep.seofficial2526@gmail.com"
+  onClick={() => console.log('Meeting card clicked!')}
+/>
+<AttendanceModalCard
+        title="Complete Meeting Attendance"
+        subtitle="ICpEP.SE CIT-U Chapter - 2nd Regular Meeting"
+        officers={officersData}
+        onClose={() => alert("Modal closed")}
+      />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+<OfficerCard2
+  image="/officer.svg"
+  position="Vice President"
+  role="Internal"
+  lastName="Dela Cruz"
+  firstName="Juan"
+  onClick={() => alert("Card clicked!")}
+/>
+<OfficerCard1
+  image="/officer.svg"
+  position="President"
+  role=""
+  lastName="Dela Cruz"
+  firstName="Juan"
+  onClick={() => alert("Card clicked!")}
+/>
+<OfficerCard3
+  image="/officer.svg"
+  position="1st year"
+  role="Representative"
+  lastName="Dela Cruz"
+  firstName="Juan"
+  onClick={() => alert("Card clicked!")}
+/>
+<DeveloperCard
+  name="Maica C. Eupinado"
+  title="UI/UX"
+  desc="Designer"
+  imageSrc="/officer.svg" // your image file in /public
+  details={[
+    "3rd Year Batch Representative, 6th Administration",
+    "Head of Training and Seminar Committee, 6th Administration",
+    "UI/UX Designer of the ICpEP.SE CIT-U Chapter Official Website",
+  ]}
+  portfolioLink="https://portfolio-link.com"
+/>
+
+<FacultyCard
+          name="Engr. Roel P. Lauron"
+          position="Dean"
+          image="/officer.svg"
+          onClick={() => alert(`Card Clicked!`)}
+        />
+
+<div className="flex flex-wrap justify-center gap-8 p-8">
+      {officers.map((o, i) => (
+        <FacultyOfficerCard
+          key={i}
+          name={o.name}
+          position={o.position}
+          image={o.image}
+          onClick={() => alert(`${o.name} clicked`)}
+        />
+      ))}
+    </div>
+
+    <TestimonialCard
+  name="Virinder Bhardwaj"
+  title="MD Urology"
+  imageSrc="/officer.svg"
+  testimonial="OneLine Health has saved me two hours daily by eliminating the need for post-clinic dictation, allowing me to finalize notes immediately. This has significantly improved efficiency and enhanced the quality of care for my community."
+/>
+
+
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <Footer />
     </div>
   );
 }

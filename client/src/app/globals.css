@@ -3,13 +3,33 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary1: #00A7EE;
+  --primary2: #04A6EF;
+  --primary3: #003599;
+  --bodytext: #373D47;
+  --buttonbg1: #DBEEFF;
+  --steelblue-100: #59a1c2;
+  --steelblue-200:#006fa1;
+  --secondary1: #002231;
+  --secondary2: #45c7ff;
+  --secondary3:#00a8f3;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary1: var(--primary1);
+  --color-primary2: var(--primary2);
+  --color-primary3: var(--primary3);
+  --color-bodytext: var(--bodytext);
+  --color-buttonbg1: var(--buttonbg1);
+  --color-steelblue-100: var(--steelblue-100);
+  --color-steelblue-200: var(--steelblue-200);
+  --color-secondary1: var(--secondary1);
+  --color-secondary2: var(--secondary2);
+  --color-secondary3: var(--secondary3);
+  --font-rubik: var(--font-rubik);
+  --font-raleway: var(--font-raleway);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,3 +44,22 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.perspective {
+  perspective: 1000px;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+
+
