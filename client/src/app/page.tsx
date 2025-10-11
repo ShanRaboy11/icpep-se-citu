@@ -14,6 +14,7 @@ import OfficerCard2 from "./components/cards/officercard2";
 import OfficerCard1 from "./components/cards/officercard1";
 import OfficerCard3 from "./components/cards/officercard3";
 import OfficerFlipCard from "./components/cards/developercard";
+import FacultyCard from "./components/cards/facultycard";
 
 const officersData = [
   { title: "President", name: "Jorho Joseph Parino" },
@@ -136,9 +137,13 @@ export default function App() {
   portfolioLink="https://portfolio.example.com"
 />
 
-
-
-
+<FacultyCard
+          name="Engr. Roel P. Lauron"
+          position="Dean"
+          image="/officer.svg"
+          onClick={() => alert(`Card Clicked!`)}
+        />
+        
 
       </main>
       <Footer />
