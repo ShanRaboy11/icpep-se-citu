@@ -18,7 +18,7 @@ const CommitteeCard: React.FC<CommitteeCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className="bg-white text-black rounded-3xl p-6 flex flex-col items-center md:items-start gap-6 
+      className="bg-white text-black rounded-3xl p-6 flex flex-col md:flex-row items-center md:items-start gap-6 
                  shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer 
                  border border-sky-500 max-w-5xl w-full mx-auto"
     >
@@ -37,7 +37,7 @@ const CommitteeCard: React.FC<CommitteeCardProps> = ({
       <div className="flex flex-col space-y-3 text-center md:text-left py-5">
         <h2 className="text-center font-rubik text-2xl sm:text-3xl font-bold">{title}</h2>
 
-        <ul className="my-4 font-raleway list-disc list-outside space-y-2">
+        <ul className="my-4 font-raleway list-disc list-inside sm:list-outside space-y-2">
           {description.map((item, index) => (
             <li key={index}>{item}</li>
           ))}
