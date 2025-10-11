@@ -15,6 +15,7 @@ import OfficerCard1 from "./components/cards/officercard1";
 import OfficerCard3 from "./components/cards/officercard3";
 import OfficerFlipCard from "./components/cards/developercard";
 import FacultyCard from "./components/cards/facultycard";
+import FacultyOfficerCard from "./components/cards/facultyofficercard";
 
 const officersData = [
   { title: "President", name: "Jorho Joseph Parino" },
@@ -29,6 +30,24 @@ const officersData = [
   { title: "2nd Year - Batch Rep.", name: "Louielyn Abella" },
   { title: "3rd Year - Batch Rep.", name: "Louielyn Abella" },
   { title: "4th Year - Batch Rep.", name: "Louielyn Abella" },
+];
+
+const officers = [
+  {
+    name: 'Dela Cruz, Juana',
+    position: 'President',
+    image: '/faculty.png',
+  },
+  {
+    name: 'Santos, Mark',
+    position: 'Vice President',
+    image: '/faculty.png',
+  },
+  {
+    name: 'Santos, Mark',
+    position: 'Vice President',
+    image: '/faculty.png',
+  },
 ];
 
 export default function App() {
@@ -143,7 +162,18 @@ export default function App() {
           image="/officer.svg"
           onClick={() => alert(`Card Clicked!`)}
         />
-        
+
+<div className="flex flex-wrap justify-center gap-8 p-8">
+      {officers.map((o, i) => (
+        <FacultyOfficerCard
+          key={i}
+          name={o.name}
+          position={o.position}
+          image={o.image}
+          onClick={() => alert(`${o.name} clicked`)}
+        />
+      ))}
+    </div>
 
       </main>
       <Footer />
