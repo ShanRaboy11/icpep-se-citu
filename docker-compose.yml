@@ -24,6 +24,9 @@ services:
       - ./.env
     depends_on:
       - server
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
 
   mongo:
     image: mongo:6.0
