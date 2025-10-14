@@ -13,9 +13,9 @@ const rubik = Rubik({
 });
 
 export const metadata: Metadata = {
-  title: "ICpEP SE CIT-U Chapter",
+  title: "ICPEP SE CIT-U Chapter",
   icons: '/icpep logo.png',
-  description: "Official ICPEP.SE CIT-U Chapter Website",
+  description: "Unlocking Potential, One Bit at a Time",
 };
 
 export default function RootLayout({
