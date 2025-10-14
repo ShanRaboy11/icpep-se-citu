@@ -1,23 +1,30 @@
+version: '3.8'
+
 services:
   server:
     build:
       context: ./server
     volumes:
       - ./server:/usr/src/app
-      - /usr/src/app/node_modules
+      - /usr/src/app/node_modules # Ensures node_modules from build are used
     ports:
       - "5000:5000"
     env_file:
       - ./.env
     depends_on:
       - mongo
+    environment:
+      NODE_ENV: development
+      MONGO_URI: mongodb://mongo:27017/mern_db # Example: link to the mongo service directly
+    command: npm run dev # Starts nodemon for hot-reloading
 
   client:
     build:
       context: ./client
     volumes:
-      - ./client:/usr/src/app
-      - /usr/src/app/node_modules
+      - ./client:/app
+      - /app/node_modules # Ensures node_modules from build are used
+      # REMOVED: - /app/.next - Let the Next.js dev server manage this internally
     ports:
       - "3000:3000"
     env_file:
@@ -25,8 +32,11 @@ services:
     depends_on:
       - server
     environment:
-      - CHOKIDAR_USEPOLLING=true
-      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true # Essential for reliable file watching in Docker
+      - WATCHPACK_POLLING=true   # For Webpack/Next.js HMR
+      - NODE_ENV=development
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:5000 # If client needs backend URL
+    command: npm run dev # Starts Next.js dev server with HMR
 
   mongo:
     image: mongo:6.0

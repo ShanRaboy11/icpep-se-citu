@@ -1,6 +1,6 @@
 'use client';
 
-import Header from "./components/header";
+import Header from "./components/header_guest";
 import Footer from "./components/footer";
 import EventCard from "./components/cards/eventcard";
 import AnnounceCardSmall from "./components/cards/announcecardsmall";
