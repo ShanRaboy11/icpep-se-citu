@@ -14,6 +14,7 @@ const rubik = Rubik({
 
 export const metadata: Metadata = {
   title: "ICPEP SE CIT-U Chapter",
+  icons: '/icpep logo.png',
   description: "Unlocking Potential, One Bit at a Time",
 };
 
