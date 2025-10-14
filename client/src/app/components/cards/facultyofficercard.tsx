@@ -5,14 +5,14 @@ import { useState } from 'react';
 
 interface FacultyOfficerCardProps {
   name: string;
-  position: string;
+  title: string;
   image: string;
   onClick?: () => void;
 }
 
 export default function FacultyOfficerCard({
   name,
-  position,
+  title,
   image,
   onClick,
 }: FacultyOfficerCardProps) {
@@ -24,7 +24,7 @@ export default function FacultyOfficerCard({
       onMouseLeave={() => setHovered(false)}
       onClick={onClick}
       className={`relative flex items-center justify-start overflow-hidden rounded-2xl bg-buttonbg1 cursor-pointer border-2 shadow-md transition-all duration-500 ease-in-out
-        ${hovered ? 'w-[450px] border-primary1 shadow-xl' : 'w-[220px] border-buttonbg1'}`}
+        ${hovered ? 'w-[450px] border-primary1 shadow-xl' : 'w-[150px] border-buttonbg1'}`}
       style={{ height: '340px' }}
     >
       {/* Background Logo */}
@@ -62,7 +62,7 @@ export default function FacultyOfficerCard({
         }`}
       >
         <h3 className="whitespace-nowrap font-rubik text-2xl font-bold text-black drop-shadow-sm">
-          {position}
+          {title}
         </h3>
         <p className="font-raleway text-lg text-gray-800 leading-tight">{name}</p>
       </div>
