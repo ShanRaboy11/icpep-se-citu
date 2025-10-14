@@ -12,7 +12,7 @@ const Header = () => {
   const [role, setRole] = useState<UserRole>('guest');
 
   return (
-    <header className="w-full border-b border-gainsboro bg-white relative z-10">
+    <header className="w-full border-b border-gray bg-white relative z-10">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-10 lg:px-10 py-3">
         {/* Left: Logo + Titles */}
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -51,7 +51,7 @@ const Header = () => {
               <Button className="sm:block" variant="secondary" onClick={() => setRole('user')}>
                 Sign Up
               </Button>
-              <Button className="sm:block" onClick={() => setRole('user')}>
+              <Button className="sm:block border-2" onClick={() => setRole('user')}>
                 Log In
               </Button>
             </>
@@ -65,9 +65,9 @@ const Header = () => {
                 alt="User Profile"
                 width={36}
                 height={36}
-                className="h-9 w-9 cursor-pointer"
+                className="h-11 w-11 cursor-pointer"
               />
-              <Button variant="outline" size="sm" onClick={() => setRole('guest')}>
+              <Button variant="outline" size="md" className="border border-2" onClick={() => setRole('guest')}>
                 Log Out
               </Button>
             </div>

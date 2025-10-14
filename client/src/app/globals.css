@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+/*npm install embla-carousel-react*/
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -118,6 +120,34 @@ body {
   background-size: 200% 200%;
   animation: gradient-flow 3s ease-in-out infinite;
 }
+
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 12s ease infinite;
+}
+
+/* optional: hide scrollbars for smooth mobile swipe */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
 
 
 

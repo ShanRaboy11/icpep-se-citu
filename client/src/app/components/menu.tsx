@@ -1,16 +1,16 @@
 'use client';
 import type { NextPage } from 'next';
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface MenuProps {
-    userRole: 'guest' | 'user';
-    onExit: () => void;
-  }
+  userRole: 'guest' | 'user';
+  onExit: () => void;
+}
 
 const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   const [hovered, setHovered] = useState<string | null>(null);
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const leaveTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const submenus: Record<string, string[]> = {
     Home: [
@@ -40,11 +40,24 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     Developers: ["About ExceptionHandlers", "Developers profiles"],
   };
 
+  // Cancel timeout when hovered changes (user re-enters)
   useEffect(() => {
-    if (hovered && timeoutId) {
-      clearTimeout(timeoutId);
+    if (hovered && leaveTimeout.current) {
+      clearTimeout(leaveTimeout.current);
     }
   }, [hovered]);
+
+  const handleMouseEnter = (item: string) => {
+    if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
+    setHovered(item);
+  };
+
+  const handleMouseLeave = () => {
+    // Delay hover removal by 5 seconds
+    leaveTimeout.current = setTimeout(() => {
+      setHovered(null);
+    }, 300);
+  };
 
   const currentMenu = hovered;
 
@@ -87,9 +100,9 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
               {Object.keys(submenus).map((item) => (
                 <div
                   key={item}
-                  onMouseEnter={() => setHovered(item)}
+                  onMouseEnter={() => handleMouseEnter(item)}
+                  onMouseLeave={handleMouseLeave}
                   onClick={() => {
-                    // You can add your navigation logic here:
                     console.log(`Navigate to /${item.toLowerCase()}`);
                   }}
                   className="relative inline-block cursor-pointer group w-fit"
@@ -128,8 +141,8 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                 ? "opacity-100 translate-x-0"
                 : "opacity-0 -translate-x-8 pointer-events-none"
             }`}
-            onMouseEnter={() => setHovered(currentMenu)}
-            onMouseLeave={() => setHovered(null)} 
+            onMouseEnter={() => handleMouseEnter(currentMenu!)}
+            onMouseLeave={handleMouseLeave}
           >
             {currentMenu && submenus[currentMenu]?.length > 0 && (
               <div className="flex flex-col space-y-4">
