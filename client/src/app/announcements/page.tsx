@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { AnnouncementCard } from "../components/cards/announcement_card";
-import AnnouncementDetail from "../components/cards/announcement_detail";
 import Header from "../components/header_guest";
 import Footer from "../components/footer";
 import { ArrowLeft } from "lucide-react";
@@ -189,62 +188,48 @@ const announcements: Announcement[] = [
   },
 ];
 
-export default function App() {
-  const [selectedAnnouncement, setSelectedAnnouncement] =
-    useState<Announcement | null>(null);
+export default function AnnouncementsPage() {
+  const router = useRouter();
 
   // Sort announcements by date in descending order (most recent first)
   const sortedAnnouncements = [...announcements].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  const handleAnnouncementClick = (announcement: Announcement) => {
-    setSelectedAnnouncement(announcement);
-  };
+ const handleAnnouncementClick = (announcement: Announcement) => {
+  const encodedData = encodeURIComponent(JSON.stringify(announcement));
+  router.push(`/announcements/${announcement.id}?data=${encodedData}`);
+};
 
-  const handleBackToList = () => {
-    setSelectedAnnouncement(null);
+  const handleBackToHome = () => {
+    router.push('/');
   };
-
-  // Show detail view if an announcement is selected
-  if (selectedAnnouncement) {
-    return (
-      <div className="min-h-screen" style={{ backgroundColor: "#FEFEFF" }}>
-        <Header />
-        <div className="flex-1">
-          <AnnouncementDetail
-            announcement={selectedAnnouncement}
-            onBack={handleBackToList}
-          />
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#FEFEFF" }}>
       <Header />
 
       <div className="py-8 px-4 sm:py-10 sm:px-6 lg:py-12 lg:px-12 xl:px-16">
-    {/* Back to Home Navigation */}
-    <div className="mb-6 sm:mb-8 flex justify-start pl-4 sm:pl-8 md:pl-4 lg:pl-32 xl:pl-60">
-      <button className="flex items-center text-[#00A7EE] hover:text-[#003599] transition-colors font-medium text-sm sm:text-base">
-        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-        Back to Home
-      </button>
-    </div>
+        {/* Back to Home Navigation */}
+        <div className="mb-6 sm:mb-8 flex justify-start pl-4 sm:pl-8 md:pl-4 lg:pl-32 xl:pl-60">
+          <button 
+            onClick={handleBackToHome}
+            className="flex items-center text-[#00A7EE] hover:text-[#003599] transition-colors font-medium text-sm sm:text-base"
+          >
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            Back to Home
+          </button>
+        </div>
 
-    <div className="text-center">
-      <h1 className="text-3xl sm:text-5xl lg:text-6xl text-[#003599] mb-2 sm:mb-3 font-bold">
-        Announcements
-      </h1>
-      <p className="text-base sm:text-2xl text-gray-600 max-w-6xl mx-auto px-4 pb-14">
-        Stay updated with the latest news, events, and achievements from
-        ICpEP.SE CIT-U Chapter
-      </p>
-    </div>
-
+        <div className="text-center">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl text-[#003599] mb-2 sm:mb-3 font-bold">
+            Announcements
+          </h1>
+          <p className="text-base sm:text-2xl text-gray-600 max-w-6xl mx-auto px-4 pb-14">
+            Stay updated with the latest news, events, and achievements from
+            ICpEP.SE CIT-U Chapter
+          </p>
+        </div>
 
         {/* Announcements List */}
         <div className="px-6 lg:px-12 xl:px-16 pb-14">
