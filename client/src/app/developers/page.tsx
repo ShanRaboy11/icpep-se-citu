@@ -1,85 +1,95 @@
-// app/developers/page.tsx (or wherever your DevelopersPage component is located)
-
-// Make sure to import your DeveloperCard component.
-// Adjust the path if your DeveloperCard is in a different location.
-import DeveloperCard from "@/app/components/cards/developercard"; 
+"use client";
+import  Header  from "../components/header";
+import Footer from "../components/footer";
+import DeveloperCard from "../components/cards/developercard"; 
 
 export default function DevelopersPage() {
   const developers = [
     {
-      name: "John Doe",
-      title: "Fullstack Developer",
-      desc: "React, Node.js, and everything in between.",
-      imageSrc: "/developers/john_doe_silhouette.png", // Example silhouette image path
+      name: "Maica C. Eupinado",
+      title: "UI/UX",
+      desc: "Designer",
+      imageSrc: "/officer.svg",
       details: [
-        "Specializes in MERN stack",
-        "Passionate about clean code",
-        "Expert in API design",
-        "Deployment via Vercel/Netlify",
+        "3rd Year Batch Representative, 6th Administration",
+        "Head of Training and Seminar Committee, 6th Administration",
+        "UI/UX Designer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
-      portfolioLink: "https://johndoe.com/portfolio",
+      portfolioLink: "https://github.com/Cayla07",
     },
     {
-      name: "Jane Smith",
-      title: "Frontend UI/UX",
-      desc: "Bringing designs to life with pixel-perfect precision.",
-      imageSrc: "/developers/jane_smith_silhouette.png", // Example silhouette image path
+      name: "Gio Christian D. Macatual",
+      title: "Frontend",
+      desc: "Developer",
+      imageSrc: "/officer.svg",
       details: [
-        "Figma to React conversion",
-        "Proficient in Tailwind CSS",
-        "Responsive design advocate",
-        "Accessibility standards follower",
+        "Auditor, 6th Administration",
+        "Asst. Head of Finance Committee, 6th Administration",
+        "Frontend Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
-      portfolioLink: "https://janesmith.design",
+      portfolioLink: "https://github.com/WATRM3LON",
     },
     {
-      name: "Peter Jones",
-      title: "Backend Architect",
-      desc: "Building scalable and secure server solutions.",
-      imageSrc: "/developers/peter_jones_silhouette.png", // Example silhouette image path
+      name: "Shan Michael V. Raboy",
+      title: "Backend",
+      desc: "Developer",
+      imageSrc: "/officer.svg", 
       details: [
-        "Experienced with AWS/Azure",
-        "Microservices expert",
-        "Database optimization (SQL/NoSQL)",
-        "CI/CD pipeline automation",
+        "Vice President - Internal, 6th Administration",
+        "Head of Internal Affairs Committee, 6th Administration",
+        "Project Manager of the ICPEP.SE CIT-U Chapter Official Website",
+        "Backend Developer of the ICPEP.SE CIT-U Chapter Official Website"
       ],
-      portfolioLink: "https://peterjones.dev",
+      portfolioLink: "https://github.com/ShanRaboy11",
     },
     {
-      name: "Alice Brown",
-      title: "Mobile Developer",
-      desc: "Creating intuitive mobile experiences for iOS & Android.",
-      imageSrc: "/developers/alice_brown_silhouette.png", // Example silhouette image path
+      name: "Trixie T. Dolera",
+      title: "Fullstack",
+      desc: "Developer",
+      imageSrc: "/officer.svg", 
       details: [
-        "React Native specialist",
-        "Native module development",
-        "App store deployment",
-        "Performance tuning on mobile",
+        "Public Relations Officer, 6th Administration",
+        "Asst. Head of Public Relations Committee, 6th Administration",
+        "Asst. Head of External Committee, 6th Administation",
+        "Fullstack Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
-      portfolioLink: "https://alicebrown.app",
+      portfolioLink: "https://github.com/nsfw-syntaxia",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12">
-      <div className="container mx-auto px-4">
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-center text-gray-800 mb-16">
-          Meet Our Amazing Team
-        </h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
-          {developers.map((developer, index) => (
+    <div className="min-h-screen bg-white">
+      <Header />
+
+      <main className="max-w-7xl mx-auto px-6 py-12">
+        
+        <div className="mb-12">
+          <h1 className="font-rubik font-bold text-4xl sm:text-5xl text-gray-900 mb-3">
+            DEVELOPERS
+          </h1>
+          <p className="font-raleway text-gray-600 text-base sm:text-lg">
+            Meet the student developers who created the website as part of the
+            Software Design course.
+          </p>
+        </div>
+
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 justify-items-center max-w-4xl mx-auto mb-16">
+          {developers.map((dev, index) => (
             <DeveloperCard
-              key={index} // It's good practice to use a unique key, index is okay for static lists
-              name={developer.name}
-              title={developer.title}
-              desc={developer.desc}
-              imageSrc={developer.imageSrc}
-              details={developer.details}
-              portfolioLink={developer.portfolioLink}
+              key={index}
+              name={dev.name}
+              title={dev.title}
+              desc={dev.desc}
+              imageSrc={dev.imageSrc}
+              details={dev.details}
+              portfolioLink={dev.portfolioLink}
             />
           ))}
         </div>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }
