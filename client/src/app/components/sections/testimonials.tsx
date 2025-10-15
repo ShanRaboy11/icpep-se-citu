@@ -65,7 +65,8 @@ export function TestimonialsSection() {
   }, []);
 
   return (
-    <div className="relative w-full flex flex-col items-center py-12 overflow-visible mb-20 bg-white">
+    <div className="relative w-full flex flex-col items-center py-8 sm:py-12 md:py-16 lg:py-20 overflow-visible mb-12 sm:mb-16 md:mb-20 bg-white">
+      
       <div className="absolute inset-0 -z-0 overflow-visible">
         <div className="blob bg-primary1 top-[-10%] left-[-10%] animate-blob-slow" />
         <div className="blob bg-steel-blue-200 top-[-15%] right-[15%] animate-blob-medium" />
@@ -75,26 +76,31 @@ export function TestimonialsSection() {
         <div className="blob bg-secondary2 top-[40%] right-[35%] opacity-40 animate-blob-fast" />
       </div>
 
-      <div className="text-center max-w-4xl mx-auto mb-15 relative z-10">
-        <h2 className="font-rubik text-3xl md:text-4xl font-extrabold mb-4 tracking-tight text-black">
+      
+      <div className="text-center max-w-4xl mx-auto mb-8 sm:mb-10 md:mb-12 lg:mb-15 px-4 sm:px-6 md:px-8 relative z-10">
+        <h2 className="font-rubik text-2xl sm:text-3xl md:text-4xl lg:text-4xl font-extrabold mb-3 sm:mb-4 tracking-tight text-black">
           TESTIMONIALS
         </h2>
-        <p className="font-raleway text-gray-700 text-base md:text-lg leading-relaxed mt-5">
+        <p className="font-raleway text-gray-700 text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed mt-3 sm:mt-4 md:mt-5">
           Discover how ICpEP.SE has impacted students through their stories and feedback.
         </p>
       </div>
 
+      
       <div
         ref={containerRef}
-        className="flex gap-8 h-120 items-center overflow-x-auto scroll-smooth snap-x snap-mandatory px-10 md:px-20 pb-8 hide-scrollbar relative z-10"
-        style={{ scrollbarWidth: "none" }}
+        className="flex gap-4 sm:gap-6 md:gap-8 items-center overflow-x-auto scroll-smooth snap-x snap-mandatory px-4 sm:px-6 md:px-10 lg:px-20 pb-6 sm:pb-8 hide-scrollbar relative z-10 w-full"
+        style={{ 
+          scrollbarWidth: "none",
+          minHeight: "clamp(300px, 40vh, 500px)"
+        }}
       >
         {extendedTestimonials.map((t, index) => (
           <div
             key={index}
-            className="flex-shrink-0 snap-center w-[80%] sm:w-[60%] md:w-[33%] flex justify-center items-center"
+            className="flex-shrink-0 snap-center w-[95%] sm:w-[75%] md:w-[60%] lg:w-[45%] xl:w-[33%] flex justify-center items-center"
           >
-            <div className="testimonial-card transition-transform duration-300 ease-in-out origin-center">
+            <div className="testimonial-card transition-transform duration-300 ease-in-out origin-center w-full">
               <TestimonialCard
                 name={t.name}
                 title={t.title}
