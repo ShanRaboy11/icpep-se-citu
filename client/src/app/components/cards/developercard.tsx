@@ -1,4 +1,5 @@
 "use client";
+
 import Image from "next/image";
 import { useState } from "react";
 
@@ -23,7 +24,7 @@ export default function DeveloperCard({
 
   return (
     <div
-      className="w-[280px] sm:w-[300px] md:w-[340px] h-[340px] perspective cursor-pointer"
+      className="w-[300px] sm:w-[320px] md:w-[360px] h-[360px] perspective cursor-pointer"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -61,7 +62,7 @@ export default function DeveloperCard({
         </p>
       </div>
 
-          <div className="-mt-5 bg-primary3 py-3 text-center text-white font-bold text-lg z-10">
+          <div className="-mt-5 bg-primary3 py-3 text-center text-white font-bold text-xl z-10">
             {name}
           </div>
         </div>
@@ -76,14 +77,14 @@ export default function DeveloperCard({
               ))}
             </ul>
           </div>
-          {portfolioLink && (
+           {portfolioLink && portfolioLink !== "#" && ( // Added check for '#'
             <a
               href={portfolioLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-raleway text-sm text-gray-200 hover:text-white self-end"
+              className="font-raleway text-sm sm:text-base text-gray-200 hover:text-white hover:underline self-end cursor-pointer flex items-center gap-1 transition-colors mt-6"
             >
-              Portfolio ↗
+              Portfolio <span className="text-lg">↗</span>
             </a>
           )}
         </div>
