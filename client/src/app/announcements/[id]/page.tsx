@@ -10,7 +10,7 @@ import DetailsSidebar from '../components/detail_sidebar';
 import MeetingAttendanceCard from '../components/attendance_card';
 import ActionCard from '../components/action_card';
 import AttendanceModal from '../components/attendance_modal';
-import Header from "../../components/header_guest";
+import Header from "../../components/header";
 import Footer from "../../components/footer";
 
 // Temporary: Get announcements from the list page

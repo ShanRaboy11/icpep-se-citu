@@ -53,6 +53,10 @@ body {
   perspective: 1000px;
 }
 
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
 .backface-hidden {
   backface-visibility: hidden;
 }
@@ -191,3 +195,7 @@ body {
 .animate-blob-3 { animation: blob-3 22s ease-in-out infinite; }
 .animate-blob-4 { animation: blob-4 28s ease-in-out infinite; }
 .animate-blob-5 { animation: blob-5 24s ease-in-out infinite; }
+.animate-blob-fast {
+  animation: blobMoveFast 10s ease-in-out infinite;
+}
+

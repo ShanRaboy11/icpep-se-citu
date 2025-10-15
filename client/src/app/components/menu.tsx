@@ -1,5 +1,7 @@
 'use client';
+
 import type { NextPage } from 'next';
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
@@ -38,6 +40,22 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     ],
     Connect: ["Lettucemeet", "Schedule"],
     Developers: ["About ExceptionHandlers", "Developers profiles"],
+  };
+  
+  const router = useRouter();
+  
+
+  // Handle navigation for menu items
+  const handleMenuClick = (item: string) => {
+    if (item === "Developers") {
+      router.push("/developers");
+    } 
+    if (item === "Home") {
+      //router.push("/landing-page");
+    }else {
+      console.log(`Navigate to /${item.toLowerCase()}`);
+      // Add other navigation logic here
+    }
   };
 
   // Cancel timeout when hovered changes (user re-enters)
@@ -102,9 +120,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                   key={item}
                   onMouseEnter={() => handleMouseEnter(item)}
                   onMouseLeave={handleMouseLeave}
-                  onClick={() => {
-                    console.log(`Navigate to /${item.toLowerCase()}`);
-                  }}
+                  onClick={() => handleMenuClick(item)}
                   className="relative inline-block cursor-pointer group w-fit"
                 >
                   <span
@@ -150,6 +166,12 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                   <div
                     key={submenu}
                     className="relative inline-block cursor-pointer group w-fit"
+                    onClick={() => {
+                      // Handle submenu clicks
+                      if (currentMenu === "Developers" && submenu === "Developers profiles") {
+                        handleDevelopers();
+                      }
+                    }}
                   >
                     <span className="text-md sm:text-2xl font-raleway transition-colors duration-300 group-hover:text-white/80">
                       {submenu}
