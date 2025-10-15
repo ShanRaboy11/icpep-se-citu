@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 /*npm install embla-carousel-react
-npm install ogl*/
+npm install ogl
+npm install gsap*/
 
 :root {
   --background: #ffffff;

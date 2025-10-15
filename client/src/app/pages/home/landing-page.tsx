@@ -1,8 +1,6 @@
-'use client';
+
 import { useEffect, useRef, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
-import useEmblaCarousel from "embla-carousel-react";
-//import Autoplay from "embla-carousel-autoplay";
 
 import Header from "../../components/header_guest";
 import Hero from "../../components/hero";
@@ -66,6 +64,27 @@ const facultyAndOfficers = [
   { name: "Cheska Uy", title: "Finance Officer", image: "/faculty.png" },
   { name: "Jordan Pascual", title: "Research Coordinator", image: "/faculty.png" },
   { name: "Kyla Fernandez", title: "Technical Lead", image: "/faculty.png" },
+];
+
+
+
+type Tier = 'gold' | 'silver' | 'bronze';
+
+const tierStyles: Record<Tier, { border: string; glow: string; size: number }> = {
+  gold: { border: 'border-yellow-400', glow: 'shadow-yellow-300', size: 200 },
+  silver: { border: 'border-gray-300', glow: 'shadow-gray-300', size: 180 },
+  bronze: { border: 'border-amber-700', glow: 'shadow-amber-600', size: 160 },
+};
+
+const partners = [
+  { id: 1, name: "Google", logo: "/icpep logo.png", tier: "gold" },
+  { id: 2, name: "Microsoft", logo: "/icpep logo.png", tier: "silver" },
+  { id: 3, name: "Amazon", logo: "/icpep logo.png", tier: "gold" },
+  { id: 4, name: "IBM", logo: "/icpep logo.png", tier: "bronze" },
+  { id: 5, name: "Intel", logo: "/icpep logo.png", tier: "silver" },
+  { id: 6, name: "Adobe", logo: "/icpep logo.png", tier: "bronze" },
+  { id: 7, name: "Meta", logo: "/icpep logo.png", tier: "gold" },
+  { id: 8, name: "Apple", logo: "/icpep logo.png", tier: "silver" },
 ];
 
 interface FAQ {
@@ -141,7 +160,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-hidden">
       <Header />
       <Hero />
       <section className="-mt-10 flex flex-col items-center justify-center px-6 py-20 md:px-16 lg:px-28 space-y-28">
@@ -158,7 +177,7 @@ export default function LandingPage() {
       </div>
 
       {/*======= WHY JOIN =======*/}
-      <div className="mt-50 flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-20">
+      <div className="mt-50 flex mb-10 flex-col lg:flex-row items-center justify-center gap-12 lg:gap-20">
         {/* IMAGE */}
         <div className="w-full lg:w-1/2 flex justify-center">
           <Image
@@ -214,9 +233,8 @@ export default function LandingPage() {
     </section>
 
     {/*======= Announcements =======*/}
-    <section className="w-full bg-sky-400/90 py-12 px-4 sm:px-8 md:px-40 text-black rounded-t-3xl shadow-inner mt-30">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-15">
+    <section className="relative w-full py-12 px-4 sm:px-8 md:px-40 text-black rounded-t-3xl  mt-30 overflow-hidden bg-primary1">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-10 mb-15">
         <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-black">
           LATEST ANNOUNCEMENTS
         </h2>
@@ -229,7 +247,7 @@ export default function LandingPage() {
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr] gap-8 items-start sm:-ml-15">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr] gap-8 items-start sm:-ml-15 mb-15">
         {/* LEFT SIDE (Big Announcement) */}
         <AnnounceCardBig
           category="Event"
@@ -263,11 +281,12 @@ export default function LandingPage() {
             image="/gle.png"
           />
         </div>
-      </div>
+        </div>
+      
     </section>
 
     {/*======= Events  =======*/}
-    <section className="w-full py-16 px-4 md:px-40 bg-white text-center mt-20">
+    <section className="w-full py-16 px-4 md:px-40 text-center mt-20 mb-20">
       {/* Header */}
       <div className="max-w-4xl mx-auto mb-15">
         <h2 className="font-rubik text-3xl md:text-4xl font-extrabold mb-4 tracking-tight text-black">
@@ -310,7 +329,7 @@ export default function LandingPage() {
     </section>
 
     {/*======= Testimonials =======*/}
-    <section className="relative w-full flex flex-col items-center py-12 overflow-visible">
+    <section className="relative w-full flex flex-col items-center py-12 overflow-visible mb-20">
     <div className="absolute inset-0 -z-10 overflow-visible">
   <div className="blob bg-primary1 top-[-10%] left-[-10%] animate-blob-slow" />
   <div className="blob bg-steel-blue-200 top-[-15%] right-[15%] animate-blob-medium" />
@@ -352,7 +371,7 @@ export default function LandingPage() {
     </section>
 
     {/*======= Faculty & Officers =======*/}
-    <section className="w-full py-16 overflow-hidden">
+    <section className="w-full py-16 overflow-hidden mb-20">
       <div className="text-center mb-10">
         <h2 className="font-rubik text-3xl md:text-4xl font-extrabold mb-4">
           COUNCIL OFFICERS & FACULTIES
@@ -403,9 +422,74 @@ export default function LandingPage() {
     </section>
 
     {/*======= Our Partners =======*/}
+    <section className="w-full py-24 px-6 flex flex-col items-center text-center sm:mb-60">
+      {/* Title and description */}
+      <div className="max-w-2xl mx-auto mb-20">
+        <h2 className="font-rubik text-3xl md:text-4xl font-bold text-gray-900">
+          Our Partners
+        </h2>
+        <p className="font-raleway text-gray-600 mt-3 text-sm md:text-base">
+          Building meaningful collaborations that make an impact on students
+          and the community.
+        </p>
+      </div>
 
+      {/* Partners logos */}
+      <div className="flex flex-wrap justify-center gap-8 md:gap-10 lg:gap-12 mb-12">
+        {partners.map((partner, index) => {
+          const tier = tierStyles[partner.tier];
+          const delay = index * 0.3; // stagger the bounce timing for variety
+
+          return (
+            <motion.div
+              key={partner.id}
+              className="flex flex-col items-center group"
+              initial={{ y: 0 }}
+              animate={{
+                y: [0, -10, 0], // bounce up-down animation
+              }}
+              transition={{
+                duration: 4,
+                ease: "easeInOut",
+                repeat: Infinity,
+                delay,
+              }}
+            >
+              <div
+                className={`flex items-center justify-center rounded-full bg-white border ${tier.border} ${tier.glow} transition-transform duration-300 group-hover:scale-110`}
+                style={{
+                  width: `${tier.size}px`,
+                  height: `${tier.size}px`,
+                }}
+              >
+                <Image
+                  src={partner.logo}
+                  alt={partner.name}
+                  width={tier.size * 0.45}
+                  height={tier.size * 0.45}
+                  className="object-contain"
+                />
+              </div>
+
+              {/* Name appears on hover */}
+              <motion.span
+                className="text-gray-700 mt-3 text-sm opacity-0 group-hover:opacity-100 group-hover:translate-y-0 transform translate-y-2 transition-all duration-300"
+              >
+                {partner.name}
+              </motion.span>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Explore button */}
+      <Button className="bg-sky-500 hover:bg-sky-600 text-white px-6 py-2 text-sm md:text-base rounded-full">
+        Explore Partnership
+      </Button>
+    </section>
+    
     {/*======= Faqs =======*/}
-    <section className="relative flex flex-col md:flex-row justify-between items-start w-full max-w-7xl mx-auto px-6 md:px-12 py-40">
+    <section className="relative flex flex-col md:flex-row justify-between items-start w-full max-w-7xl mx-auto px-6 md:px-12 py-40 mb-20">
       {/* Blurred question mark background */}
       <div className="absolute inset-0 -z-10">
         <Image

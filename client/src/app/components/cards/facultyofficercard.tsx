@@ -25,7 +25,7 @@ export default function FacultyOfficerCard({
       onClick={onClick}
       className={`relative flex items-center justify-start overflow-hidden rounded-2xl bg-buttonbg1 cursor-pointer border-2 shadow-md transition-all duration-500 ease-in-out
         ${hovered ? 'w-[450px] border-primary1 shadow-xl' : 'w-[150px] border-buttonbg1'}`}
-      style={{ height: '340px' }}
+      style={{ height: '280px' }}
     >
       {/* Background Logo */}
       <Image
