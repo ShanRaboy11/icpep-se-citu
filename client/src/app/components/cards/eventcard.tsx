@@ -13,7 +13,7 @@ interface EventCardProps {
 
 const EventCard: React.FC<EventCardProps> = ({ image, title, description, onRSVP }) => {
   return (
-    <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg bg-sky-100 rounded-3xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col mx-auto">
+    <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg bg-sky-100 rounded-[20px] overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col mx-auto">
       {/* Image */}
       <div className="relative w-full h-40 sm:h-48 md:h-56">
         <Image
@@ -25,7 +25,7 @@ const EventCard: React.FC<EventCardProps> = ({ image, title, description, onRSVP
       </div>
 
       {/* Content */}
-      <div className="p-5 flex flex-col justify-between flex-grow px-10">
+      <div className="text-justify p-5 flex flex-col justify-between flex-grow px-10">
         <div>
           <h2 className="font-rubik text-lg sm:text-xl font-semibold text-gray-900 mb-2">
             {title}
