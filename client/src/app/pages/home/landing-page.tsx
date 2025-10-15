@@ -66,16 +66,6 @@ const facultyAndOfficers = [
   { name: "Kyla Fernandez", title: "Technical Lead", image: "/faculty.png" },
 ];
 
-
-
-type Tier = 'gold' | 'silver' | 'bronze';
-
-const tierStyles: Record<Tier, { border: string; glow: string; size: number }> = {
-  gold: { border: 'border-yellow-400', glow: 'shadow-yellow-300', size: 200 },
-  silver: { border: 'border-gray-300', glow: 'shadow-gray-300', size: 180 },
-  bronze: { border: 'border-amber-700', glow: 'shadow-amber-600', size: 160 },
-};
-
 const partners = [
   { id: 1, name: "Google", logo: "/icpep logo.png", tier: "gold" },
   { id: 2, name: "Microsoft", logo: "/icpep logo.png", tier: "silver" },
@@ -86,6 +76,24 @@ const partners = [
   { id: 7, name: "Meta", logo: "/icpep logo.png", tier: "gold" },
   { id: 8, name: "Apple", logo: "/icpep logo.png", tier: "silver" },
 ];
+
+const tierStyles = {
+  gold: {
+    border: "border-yellow-400",
+    glow: "shadow-[0_0_20px_rgba(255,215,0,0.1)]",
+    size: 110,
+  },
+  silver: {
+    border: "border-gray-300",
+    glow: "shadow-[0_0_20px_rgba(200,200,200,0.1)]",
+    size: 95,
+  },
+  bronze: {
+    border: "border-amber-700",
+    glow: "shadow-[0_0_20px_rgba(205,127,50,0.1)]",
+    size: 85,
+  },
+};
 
 interface FAQ {
   question: string;
