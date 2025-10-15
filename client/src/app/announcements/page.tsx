@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { AnnouncementCard } from "../components/cards/announcement_card";
-import Header from "../components/header_guest";
+import Header from "../components/header";
 import Footer from "../components/footer";
 import { ArrowLeft } from "lucide-react";
 
