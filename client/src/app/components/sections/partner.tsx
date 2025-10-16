@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from 'next/image';
+import Image from "next/image";
 import Button from "@/app/components/button";
 
 const tierStyles = {
@@ -20,32 +20,72 @@ const tierStyles = {
     glow: "shadow-[0_0_20px_rgba(205,127,50,0.1)]",
     size: 85,
   },
-} as const;
-
-// Define the tier type
-type TierType = keyof typeof tierStyles;
+};
 
 export function PartnersSection() {
-  const partners: Array<{ id: number; name: string; logo: string; tier: TierType }> = [
-    { id: 1, name: "Google", logo: "/icpep logo.png", tier: "gold" },
-    { id: 2, name: "Microsoft", logo: "/icpep logo.png", tier: "silver" },
-    { id: 3, name: "Amazon", logo: "/icpep logo.png", tier: "gold" },
-    { id: 4, name: "IBM", logo: "/icpep logo.png", tier: "bronze" },
-    { id: 5, name: "Intel", logo: "/icpep logo.png", tier: "silver" },
-    { id: 6, name: "Adobe", logo: "/icpep logo.png", tier: "bronze" },
-    { id: 7, name: "Meta", logo: "/icpep logo.png", tier: "gold" },
-    { id: 8, name: "Apple", logo: "/icpep logo.png", tier: "silver" },
+  const partners = [
+    {
+      id: 1,
+      name: "Google",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
+      tier: "gold",
+    },
+    {
+      id: 2,
+      name: "Microsoft",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+      tier: "silver",
+    },
+    {
+      id: 3,
+      name: "Amazon",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg", // example
+      tier: "gold",
+    },
+    {
+      id: 4,
+      name: "IBM",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg", // example
+      tier: "bronze",
+    },
+    {
+      id: 5,
+      name: "Intel",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Intel-logo.svg", // example
+      tier: "silver",
+    },
+    {
+      id: 6,
+      name: "Adobe",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Adobe_Systems_logo_and_wordmark.svg", // example
+      tier: "bronze",
+    },
+    {
+      id: 7,
+      name: "Meta",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/Meta_Platforms_Inc._logo.svg", // example
+      tier: "gold",
+    },
+    {
+      id: 8,
+      name: "Apple",
+      logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg", // example
+      tier: "silver",
+    },
   ];
 
   return (
-    <section className="w-full py-24 px-6 flex flex-col items-center text-center sm:mb-60">
+    <section
+      className="w-full py-24 px-6 flex flex-col items-center text-center sm:mb-10"
+      style={{ backgroundColor: "#FEFEFF" }}
+    >
       <div className="max-w-2xl mx-auto mb-20">
-        <h2 className="font-rubik text-3xl md:text-4xl font-bold text-gray-900">
+        <h2 className="font-rubik text-3xl sm:text-5xl font-bold text-gray-900">
           Our Partners
         </h2>
         <p className="font-raleway text-gray-600 mt-3 text-sm md:text-base">
-          Building meaningful collaborations that make an impact on students
-          and the community.
+          Building meaningful collaborations that make an impact on students and
+          the community.
         </p>
       </div>
 

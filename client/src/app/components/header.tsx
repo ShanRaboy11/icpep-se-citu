@@ -106,7 +106,7 @@ const Header = () => {
                 Sign Up
               </Button>
               <Button
-                className="sm:block"
+                className="sm:block border-2"
                 onClick={() => {
                   setRole("user");
                   router.push("/login");

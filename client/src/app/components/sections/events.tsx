@@ -6,29 +6,36 @@ export function EventsSection() {
     {
       image: "/gle.png",
       title: "COMPyesta",
-      description: "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog."
+      description:
+        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
     },
     {
       image: "/gle.png",
       title: "Why Choose this Biatch?",
-      description: "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog."
+      description:
+        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
     },
     {
       image: "/gle.png",
       title: "Why Choose this Biatch?",
-      description: "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog."
-    }
+      description:
+        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
+    },
   ];
 
   return (
-    <section className="w-full py-16 px-4 md:px-40 text-center mt-20 mb-20">
+    <section
+      className="w-full py-16 px-4 md:px-40 text-center mt-20 mb-20 "
+      style={{ backgroundColor: "#FEFEFF" }}
+    >
       <div className="max-w-4xl mx-auto mb-15">
-        <h2 className="font-rubik text-3xl md:text-4xl font-extrabold mb-4 tracking-tight text-black">
+        <h2 className="font-rubik text-3xl md:text-5xl font-extrabold mb-4 tracking-tight text-black">
           UPCOMING EVENTS
         </h2>
         <p className="font-raleway text-gray-700 text-base md:text-lg leading-relaxed mt-5">
           Stay informed and engage in initiatives that foster collaboration,
-          build connections, and promote continuous learning within the community.
+          build connections, and promote continuous learning within the
+          community.
         </p>
       </div>
 
