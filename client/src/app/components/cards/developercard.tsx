@@ -35,7 +35,17 @@ export default function DeveloperCard({
       >
         {/* FRONT SIDE */}
         <div className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg backface-hidden bg-gradient-to-b from-sky-400 to-blue-600 flex flex-col justify-between">
-          {/* Silhouette image (larger and centered) */}
+        
+        <div className="absolute left-15 w-[110%] h-[110%] z-0 opacity-15">
+            <Image
+              src="/icpep logo.png" // Your generic silhouette image
+              alt="silhouette"
+              fill
+              className="object-contain object-bottom"
+              sizes="(max-width: 360px) 250px, 300px"
+            />
+          </div>
+
       <div className="relative w-[90%] ml-auto mt-6 sm:-mt-3 -mr-8">
         {imageSrc ? (
           <Image
@@ -70,23 +80,24 @@ export default function DeveloperCard({
         {/* BACK SIDE */}
         <div className="absolute px-12 w-full h-full rounded-2xl  overflow-hidden shadow-lg bg-gradient-to-br from-sky-400 to-blue-900 p-6 flex flex-col justify-between text-white rotate-y-180 backface-hidden">
           <div>
-            <h2 className="font-rubik text-xl sm:text-2xl text-center font-bold mb-3 mt-3">{name}</h2>
+            <h2 className="font-rubik text-xl sm:text-2xl text-center font-bold mb-3">{name}</h2>
             <ul className="font-raleway text-sm sm:text-base list-disc list-outside space-y-1 text-md text-gray-100 mt-5">
               {details.map((item, idx) => (
                 <li key={idx}>{item}</li>
               ))}
             </ul>
           </div>
-           {portfolioLink && portfolioLink !== "#" && ( // Added check for '#'
-            <a
-              href={portfolioLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-raleway text-sm sm:text-base text-gray-200 hover:text-white hover:underline self-end cursor-pointer flex items-center gap-1 transition-colors mt-6"
-            >
-              Portfolio <span className="text-lg">↗</span>
-            </a>
-          )}
+           {portfolioLink && portfolioLink !== "#" && (
+  <a
+    href={portfolioLink}
+    target="_blank"
+    rel="noopener noreferrer"
+    // Retained your existing styles and the added padding
+    className="font-raleway text-2xl sm sm:text-base text-gray-200 hover:text-white self-end cursor-pointer flex items-center gap-1 transition-colors mt-5 py-2 px-5"
+  >
+    Portfolio <span className="text-xl">↗</span>
+  </a>
+)}
         </div>
       </div>
     </div>
