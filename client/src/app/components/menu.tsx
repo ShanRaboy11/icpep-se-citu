@@ -169,7 +169,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                     onClick={() => {
                       // Handle submenu clicks
                       if (currentMenu === "Developers" && submenu === "Developers profiles") {
-                        handleDevelopers();
+                        router.push("/developers");
                       }
                     }}
                   >

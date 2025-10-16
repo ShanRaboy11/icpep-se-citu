@@ -20,10 +20,13 @@ const tierStyles = {
     glow: "shadow-[0_0_20px_rgba(205,127,50,0.1)]",
     size: 85,
   },
-};
+} as const;
+
+// Define the tier type
+type TierType = keyof typeof tierStyles;
 
 export function PartnersSection() {
-  const partners = [
+  const partners: Array<{ id: number; name: string; logo: string; tier: TierType }> = [
     { id: 1, name: "Google", logo: "/icpep logo.png", tier: "gold" },
     { id: 2, name: "Microsoft", logo: "/icpep logo.png", tier: "silver" },
     { id: 3, name: "Amazon", logo: "/icpep logo.png", tier: "gold" },

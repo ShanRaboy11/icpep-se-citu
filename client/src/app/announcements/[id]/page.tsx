@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Announcement } from '../types';
 import DetailHeader from '../components/detail_header';
 import HeroImage from '../components/hero_image';
 import AboutSection from '../components/about_section';
@@ -157,7 +156,7 @@ export default function AnnouncementDetailPage({ params }: { params: { id: strin
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">Announcement Not Found</h1>
-          <p className="text-gray-600 mb-8">The announcement you're looking for doesn't exist.</p>
+          <p className="text-gray-600 mb-8">{`The announcement you're looking for doesn't exist.`}</p>
           <button
             onClick={() => router.push('/announcements')}
             className="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors"

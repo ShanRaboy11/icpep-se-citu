@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import TestimonialCard from "@/app/components/cards/testimonialcard";
 
 export function TestimonialsSection() {
-  const containerRef = useRef(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const testimonials = [
     {
@@ -48,13 +48,14 @@ export function TestimonialsSection() {
       const center = container.scrollLeft + container.clientWidth / 2;
 
       cards.forEach((card) => {
-        const rect = card.getBoundingClientRect();
+        const htmlCard = card as HTMLElement;
+        const rect = htmlCard.getBoundingClientRect();
         const cardCenter = rect.left + rect.width / 2;
-        const distance = Math.abs(center - (card.offsetLeft + card.offsetWidth / 2));
+        const distance = Math.abs(center - (htmlCard.offsetLeft + htmlCard.offsetWidth / 2));
         const maxDistance = container.clientWidth / 2;
         const scale = Math.max(0.8, 1.10 - distance / maxDistance);
-        card.style.transform = `scale(${scale})`;
-        card.style.zIndex = String(scale > 1.0 ? 10 : 1);
+        htmlCard.style.transform = `scale(${scale})`;
+        htmlCard.style.zIndex = String(scale > 1.0 ? 10 : 1);
       });
     };
 
@@ -68,7 +69,7 @@ export function TestimonialsSection() {
     <div className="relative w-full flex flex-col items-center py-8 sm:py-12 md:py-16 lg:py-20 overflow-visible mb-12 sm:mb-16 md:mb-20 bg-white">
       
       <div className="absolute inset-0 -z-0 overflow-visible">
-        <div className="blob bg-primary1 top-[-10%] left-[-10%] animate-blob-slow" />
+        <div className="blob bg-primary1 top-[-10%] left-[-5%] animate-blob-slow" />
         <div className="blob bg-steel-blue-200 top-[-15%] right-[15%] animate-blob-medium" />
         <div className="blob bg-secondary2 top-1/3 left-1/3 animate-blob-fast" />
         <div className="blob bg-primary1 bottom-[-20%] left-[-10%] animate-blob-medium" />
