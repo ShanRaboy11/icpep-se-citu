@@ -35,7 +35,7 @@ const InfoDetailRow = ({
 
 const CountdownPill = ({ days, hours }: { days: number; hours: number }) => (
   <div className="bg-green-100 text-green-800 font-raleway font-semibold px-4 py-2 rounded-full text-sm text-center whitespace-nowrap">
-    Starting in {days}d, {hours}h
+    Starting in {days}d {hours}h
   </div>
 );
 
@@ -45,6 +45,12 @@ export default function EventPage() {
   // ---------------------------------------------------------------------------------
 
   const [hasRsvpd, setHasRsvpd] = useState(false);
+
+  // --- Event Configuration ---
+  const eventMode = "Online"; // Change to "Onsite" to see the pin icon and a different location
+  const isOnline = eventMode === "Online";
+  const eventLocation = isOnline ? "Google Meet" : "123 Tech Avenue, Innovation City";
+
 
   // Set event date (example)
   const eventDate = new Date(
@@ -166,7 +172,11 @@ export default function EventPage() {
                     line1={formattedDate}
                     line2="7:00 PM - 10:00 PM PST"
                   />
-                  <InfoDetailRow icon="📍" line1="Online" line2="Google Meet" />
+                  <InfoDetailRow
+                    icon={isOnline ? "💻" : "📍"}
+                    line1={eventMode}
+                    line2={eventLocation}
+                  />
                 </div>
               </div>
 
