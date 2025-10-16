@@ -10,17 +10,17 @@ const tierStyles: Record<Tier, { border: string; glow: string; size: number }> =
   {
     gold: {
       border: "border-yellow-400",
-      glow: "shadow-[0_0_20px_rgba(255,215,0,0.3)]",
+      glow: "shadow-[0_0_20px_rgba(255,215,0,0.2)]",
       size: 110,
     },
     silver: {
       border: "border-gray-400",
-      glow: "shadow-[0_0_20px_rgba(200,200,200,0.3)]",
+      glow: "shadow-[0_0_20px_rgba(200,200,200,0.2)]",
       size: 95,
     },
     bronze: {
       border: "border-amber-600",
-      glow: "shadow-[0_0_20px_rgba(205,127,50,0.3)]",
+      glow: "shadow-[0_0_20px_rgba(205,127,50,0.2)]",
       size: 85,
     },
   };
@@ -111,7 +111,7 @@ export function PartnersSection() {
               }}
             >
               <motion.div
-                whileHover={{ scale: 1.1 }}
+                whileHover={{ scale: 1.0 }}
                 className={`flex items-center justify-center rounded-full bg-white border ${tier.border} ${tier.glow} transition-transform duration-300`}
                 style={{
                   width: `${tier.size}px`,

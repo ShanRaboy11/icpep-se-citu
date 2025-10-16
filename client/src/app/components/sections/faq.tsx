@@ -10,9 +10,9 @@ interface FAQ {
 }
 
 export function FAQSection() {
-  const [openIndex, setOpenIndex] = useState(0);
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
-  const faqs = [
+  const faqs: FAQ[] = [
     {
       question: "Lorem ipsum dolor sit amet consectetur adipiscing elit?",
       answer:

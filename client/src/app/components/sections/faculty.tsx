@@ -57,7 +57,7 @@ export function FacultyOfficersSection() {
       style={{ backgroundColor: "#FEFEFF" }}
     >
       <div className="text-center mb-10">
-        <h2 className="font-rubik text-3xl sm:text-5xl font-extrabold mb-4 text-black">
+        <h2 className="font-rubik text-2xl sm:text-5xl font-extrabold mb-4 text-black">
           COUNCIL OFFICERS & FACULTIES
         </h2>
         <p className="font-raleway text-base sm:text-lg text-gray-600 mt-5 max-w-2xl mx-auto">

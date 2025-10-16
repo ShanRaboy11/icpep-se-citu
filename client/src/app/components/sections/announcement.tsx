@@ -42,7 +42,7 @@ export function AnnouncementsSection() {
   return (
     <div className="relative w-full py-12 px-4 sm:px-8 md:px-40 text-black rounded-t-3xl mt-30 overflow-hidden bg-primary1">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-10 mb-15">
-        <h2 className="font-rubik text-2xl sm:text-5xl font-extrabold tracking-tight text-white">
+        <h2 className="font-rubik text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
           LATEST ANNOUNCEMENTS
         </h2>
         <Button
