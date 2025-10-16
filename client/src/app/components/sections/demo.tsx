@@ -15,6 +15,8 @@ import EventCard from "@/app/components/cards/eventcard";
 import TestimonialCard from "@/app/components/cards/testimonialcard";
 import FacultyOfficerCard from "@/app/components/cards/facultyofficercard";
 
+type Tier = "gold" | "silver" | "bronze";
+
 const testimonials = [
   {
     name: "Alyssa Cruz",
@@ -75,6 +77,12 @@ const facultyAndOfficers = [
   { name: "Kyla Fernandez", title: "Technical Lead", image: "/faculty.png" },
 ];
 
+const tierStyles: Record<Tier, { border: string; glow: string; size: number }> =
+  {
+    gold: { border: "border-yellow-400", glow: "shadow-yellow-400", size: 110 },
+    silver: { border: "border-gray-400", glow: "shadow-gray-400", size: 95 },
+    bronze: { border: "border-amber-600", glow: "shadow-amber-600", size: 85 },
+  };
 const partners = [
   {
     id: 1,
@@ -91,58 +99,40 @@ const partners = [
   {
     id: 3,
     name: "Amazon",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg", // example
+    logo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
     tier: "gold",
   },
   {
     id: 4,
     name: "IBM",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg", // example
+    logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
     tier: "bronze",
   },
   {
     id: 5,
     name: "Intel",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Intel-logo.svg", // example
+    logo: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Intel-logo.svg",
     tier: "silver",
   },
   {
     id: 6,
     name: "Adobe",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Adobe_Systems_logo_and_wordmark.svg", // example
+    logo: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Adobe_Systems_logo_and_wordmark.svg",
     tier: "bronze",
   },
   {
     id: 7,
     name: "Meta",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/Meta_Platforms_Inc._logo.svg", // example
+    logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/Meta_Platforms_Inc._logo.svg",
     tier: "gold",
   },
   {
     id: 8,
     name: "Apple",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg", // example
+    logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
     tier: "silver",
   },
 ];
-
-const tierStyles = {
-  gold: {
-    border: "border-yellow-400",
-    glow: "shadow-[0_0_20px_rgba(255,215,0,0.1)]",
-    size: 110,
-  },
-  silver: {
-    border: "border-gray-300",
-    glow: "shadow-[0_0_20px_rgba(200,200,200,0.1)]",
-    size: 95,
-  },
-  bronze: {
-    border: "border-amber-700",
-    glow: "shadow-[0_0_20px_rgba(205,127,50,0.1)]",
-    size: 85,
-  },
-};
 
 interface FAQ {
   question: string;
@@ -515,7 +505,7 @@ export default function LandingPage() {
         {/* Partners logos */}
         <div className="flex flex-wrap justify-center gap-8 md:gap-10 lg:gap-12 mb-12">
           {partners.map((partner, index) => {
-            const tier = tierStyles[partner.tier];
+            const tier = tierStyles[partner.tier as Tier];
             const delay = index * 0.3; // stagger the bounce timing for variety
 
             return (
@@ -545,7 +535,8 @@ export default function LandingPage() {
                     alt={"${partner.name} logo"}
                     width={tier.size * 0.45}
                     height={tier.size * 0.45}
-                    className="object-contain"
+                    className="object-contain transform rotate-0"
+                    unoptimized
                   />
                 </div>
 
