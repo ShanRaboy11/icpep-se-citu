@@ -1,8 +1,11 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
+import { useRouter } from "next/navigation";
 
 const Hero = () => {
+  const router = useRouter();
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white -mt-16 z-0">
       {/* Floating Elements - in front of everything */}
@@ -10,7 +13,9 @@ const Hero = () => {
         {/* Software Development - Top Left */}
         <div className="absolute top-1/3 left-1/4 transform -translate-y-2/2 animate-float-slow">
           <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200">
-            <span className="text-lg font-raleway text-gray-700">💻 Programming</span>
+            <span className="text-lg font-raleway text-gray-700">
+              💻 Programming
+            </span>
           </div>
         </div>
 
@@ -24,14 +29,18 @@ const Hero = () => {
         {/* Arduino - Bottom Left */}
         <div className="absolute bottom-1/3 left-1/3 transform translate-y-0/2 animate-float-fast">
           <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200">
-            <span className="text-lg font-raleway text-gray-700">⚡ Arduino</span>
+            <span className="text-lg font-raleway text-gray-700">
+              ⚡ Arduino
+            </span>
           </div>
         </div>
 
         {/* COMPanions - Bottom Right */}
         <div className="absolute bottom-1/3 right-1/3 transform translate-y-1/2 animate-float-slow">
           <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200">
-            <span className="text-lg font-raleway text-gray-700">👥 COMPanions</span>
+            <span className="text-lg font-raleway text-gray-700">
+              👥 COMPanions
+            </span>
           </div>
         </div>
       </div>
@@ -61,7 +70,10 @@ const Hero = () => {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-          <button className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer">
+          <button
+            className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer"
+            onClick={() => router.push("/login")}
+          >
             Join Community
           </button>
           <button className="bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-buttonbg1 hover:border-primary1 hover:text-primary1 font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 cursor-pointer">
@@ -73,16 +85,28 @@ const Hero = () => {
         <div className="flex justify-center">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-lg">
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-rubik font-bold text-primary1 mb-1">200+</div>
-              <div className="text-sm font-raleway text-bodytext">Active Members</div>
+              <div className="text-2xl md:text-3xl font-rubik font-bold text-primary1 mb-1">
+                200+
+              </div>
+              <div className="text-sm font-raleway text-bodytext">
+                Active Members
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-rubik font-bold text-primary1 mb-1">15+</div>
-              <div className="text-sm font-raleway text-bodytext">Events Hosted</div>
+              <div className="text-2xl md:text-3xl font-rubik font-bold text-primary1 mb-1">
+                15+
+              </div>
+              <div className="text-sm font-raleway text-bodytext">
+                Events Hosted
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl md:text-3xl font-rubik font-bold text-primary1 mb-1">8</div>
-              <div className="text-sm font-raleway text-bodytext">Years Active</div>
+              <div className="text-2xl md:text-3xl font-rubik font-bold text-primary1 mb-1">
+                8
+              </div>
+              <div className="text-sm font-raleway text-bodytext">
+                Years Active
+              </div>
             </div>
           </div>
         </div>

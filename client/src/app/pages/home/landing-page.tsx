@@ -1,6 +1,6 @@
 "use client";
 
-import Header from "../../components/header_guest";
+import Header from "../../components/header";
 import Hero from "../../components/hero";
 import Footer from "../../components/footer";
 import { AboutSection } from "../../components/sections/about";

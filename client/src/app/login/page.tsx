@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { Eye, EyeOff, AlertCircle, X } from "lucide-react";
 import Button from "@/app/components/button";
