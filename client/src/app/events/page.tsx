@@ -41,7 +41,7 @@ const CountdownPill = ({ days, hours }: { days: number; hours: number }) => (
 
 export default function EventPage() {
   // --- IMPORTANT: To see the "post-event" layout, change `false` to `true` here ---
-  const [isEventOver, setIsEventOver] = useState(true);
+  const [isEventOver, setIsEventOver] = useState(false);
   // ---------------------------------------------------------------------------------
 
   const [hasRsvpd, setHasRsvpd] = useState(false);
@@ -203,7 +203,7 @@ export default function EventPage() {
                         />
                         <div>
                           <h2 className="font-rubik font-bold text-2xl text-green-700 leading-none">
-                            You're In!
+                            You&apos;re In!
                           </h2>
                         </div>
                       </div>
