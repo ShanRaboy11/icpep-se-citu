@@ -1,11 +1,11 @@
 'use client';
 
-import LandingPage from "./pages/home/landing-page";
+import LandingPage from "./home/landing-page";
 
 export default function App() {
   return (
     <div>
-    <LandingPage />
+      <LandingPage />
     </div>
   );
 }

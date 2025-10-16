@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  
+  turbopack: {
+    root: __dirname,
+  },
+
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.watchOptions = {

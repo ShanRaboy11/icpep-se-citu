@@ -1,16 +1,16 @@
 "use client";
 
-import Header from "../../components/header_guest";
-import Hero from "../../components/hero";
-import Footer from "../../components/footer";
-import { AboutSection } from "../../components/sections/about";
-import { WhyJoinSection } from "../../components/sections/join";
-import { AnnouncementsSection } from "../../components/sections/announcement";
-import { EventsSection } from "../../components/sections/events";
-import { TestimonialsSection } from "../../components/sections/testimonials";
-import { FacultyOfficersSection } from "../../components/sections/faculty";
-import { PartnersSection } from "../../components/sections/partner";
-import { FAQSection } from "../../components/sections/faq";
+import Header from "../components/header_guest";
+import Hero from "../components/hero";
+import Footer from "../components/footer";
+import { AboutSection } from "../components/sections/about";
+import { WhyJoinSection } from "../components/sections/join";
+import { AnnouncementsSection } from "../components/sections/announcement";
+import { EventsSection } from "../components/sections/events";
+import { TestimonialsSection } from "../components/sections/testimonials";
+import { FacultyOfficersSection } from "../components/sections/faculty";
+import { PartnersSection } from "../components/sections/partner";
+import { FAQSection } from "../components/sections/faq";
 
 export default function LandingPage() {
   return (
