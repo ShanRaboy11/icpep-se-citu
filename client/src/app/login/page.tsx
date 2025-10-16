@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { Eye, EyeOff, AlertCircle, X } from "lucide-react";
 import Button from "@/app/components/button";
@@ -88,28 +90,30 @@ export default function Login() {
   if (!isVisible) return null;
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center font-rubik relative overflow-hidden">
-       {/* Blurry blobs */}
-       <div className="absolute inset-0">
+    <div
+      className="min-h-screen w-full flex items-center justify-center font-rubik relative overflow-hidden"
+      style={{ backgroundColor: "#FEFEFF" }}
+    >
+      {/* Blurry blobs */}
+      <div className="absolute inset-0">
         {/* Blob 1 - Purple */}
         <div className="absolute top-3/4 left-1/2 w-64 h-64 md:w-96 md:h-96 lg:w-[50rem] lg:h-[60rem] bg-gradient-to-br from-primary1 to-white rounded-full mix-blend-multiply filter blur-3xl animate-orbit-1"></div>
-        
+
         {/* Blob 2 - Pink */}
         <div className="absolute top-1/2 left-1/2 w-64 h-64 md:w-96 md:h-96 lg:w-[30rem] lg:h-[30rem] bg-gradient-to-br from-primary1 to-white rounded-full mix-blend-multiply filter blur-3xl animate-orbit-2"></div>
-        
+
         {/* Blob 3 - Blue */}
         <div className="absolute top-1/2 left-1/2 w-64 h-64 md:w-96 md:h-96 lg:w-[60rem] lg:h-[60rem] bg-gradient-to-br from-primary1 to-white rounded-full mix-blend-multiply filter blur-3xl animate-orbit-3"></div>
       </div>
 
       <div
-  className="absolute top-15  right-5 sm:right-20 cursor-pointer text-primary3 hover:text-primary2 hover:scale-130 transition-all duration-200"
-  onClick={() => alert("Close button clicked!")}
->
-  <X size={30} strokeWidth={2} />
-</div>
+        className="absolute top-15  right-5 sm:right-20 cursor-pointer text-primary3 hover:text-primary2 hover:scale-130 transition-all duration-200"
+        onClick={() => alert("Close button clicked!")}
+      >
+        <X size={30} strokeWidth={2} />
+      </div>
       {/* Login Card */}
       <div className="relative z-10 bg-white shadow-2xl rounded-2xl px-8 py-10 sm:px-10 w-[90%] max-w-md text-gray-800">
-
         <div className="flex flex-col items-center mb-6">
           <img
             src="./icpep logo.png"
@@ -214,9 +218,13 @@ export default function Login() {
             </button>
           </div>
 
-          <Button variant="primary2" className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10" type="submit">
-          {isFirstLogin ? "Sign Up" : "Log In"}
-            </Button>
+          <Button
+            variant="primary2"
+            className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10"
+            type="submit"
+          >
+            {isFirstLogin ? "Sign Up" : "Log In"}
+          </Button>
         </form>
 
         <style>{`

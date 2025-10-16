@@ -14,15 +14,18 @@ import { FAQSection } from "../components/sections/faq";
 
 export default function LandingPage() {
   return (
-    <div className="bg-white min-h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col overflow-hidden">
       <Header />
-      
-      <main>
+
+      <main style={{ backgroundColor: "#FEFEFF" }}>
         <section id="hero">
           <Hero />
         </section>
 
-        <section id="about" className="-mt-10 flex flex-col items-center justify-center px-6 py-20 md:px-16 lg:px-28 space-y-28 bg">
+        <section
+          id="about"
+          className="-mt-10 flex flex-col items-center justify-center px-6 py-20 md:px-16 lg:px-28 space-y-28 bg"
+        >
           <AboutSection />
           <WhyJoinSection />
         </section>
@@ -35,7 +38,7 @@ export default function LandingPage() {
           <EventsSection />
         </section>
 
-         <section id="testimonials">
+        <section id="testimonials">
           <TestimonialsSection />
         </section>
 

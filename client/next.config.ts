@@ -6,6 +6,15 @@ const nextConfig: NextConfig = {
     root: __dirname,
   },
 
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
+      },
+    ],
+  },
+
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.watchOptions = {

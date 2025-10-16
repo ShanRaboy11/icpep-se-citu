@@ -1,4 +1,3 @@
-// ============= components/sections/AnnouncementsSection.jsx =============
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -14,23 +13,26 @@ export function AnnouncementsSection() {
       category: "Seminar",
       title: "Acquaintance Party",
       date: "September 10, 2025",
-      description: "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
-      image: "/gle.png"
+      description:
+        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
+      image: "/gle.png",
     },
     {
       category: "Achievement",
       title: "Acquaintance Party",
       date: "September 10, 2025",
-      description: "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
-      image: "/gle.png"
+      description:
+        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
+      image: "/gle.png",
     },
     {
       category: "Event",
       title: "Acquaintance Party",
       date: "September 10, 2025",
-      description: "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
-      image: "/gle.png"
-    }
+      description:
+        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
+      image: "/gle.png",
+    },
   ];
 
   const handleViewAll = () => {
@@ -40,7 +42,7 @@ export function AnnouncementsSection() {
   return (
     <div className="relative w-full py-12 px-4 sm:px-8 md:px-40 text-black rounded-t-3xl mt-30 overflow-hidden bg-primary1">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-10 mb-15">
-        <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-black">
+        <h2 className="font-rubik text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
           LATEST ANNOUNCEMENTS
         </h2>
         <Button

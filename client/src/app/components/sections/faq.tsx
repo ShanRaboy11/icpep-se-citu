@@ -1,20 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import Image from 'next/image';
+import Image from "next/image";
 import Button from "@/app/components/button";
 
-export function FAQSection() {
-  const [openIndex, setOpenIndex] = useState(0);
+interface FAQ {
+  question: string;
+  answer: string;
+}
 
-  const faqs = [
+export function FAQSection() {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const faqs: FAQ[] = [
     {
       question: "Lorem ipsum dolor sit amet consectetur adipiscing elit?",
-      answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+      answer:
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
     },
     {
       question: "Ut enim ad minim veniam, quis nostrud exercitation?",
-      answer: "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+      answer:
+        "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
     },
     {
       question: "Excepteur sint occaecat cupidatat non proident?",
@@ -22,16 +29,20 @@ export function FAQSection() {
     },
     {
       question: "Aliquip ex ea commodo consequat?",
-      answer: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+      answer:
+        "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
     },
   ];
 
-  const toggleFAQ = (index) => {
+  const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
   };
 
   return (
-    <div className="relative flex flex-col md:flex-row justify-between items-start w-full max-w-7xl mx-auto px-6 md:px-12 py-40 mb-20">
+    <div
+      className="relative flex flex-col md:flex-row justify-between items-start w-full max-w-7xl mx-auto px-6 md:px-12 py-40 mb-40"
+      style={{ backgroundColor: "#FEFEFF" }}
+    >
       <div className="absolute inset-0 -z-0">
         <Image
           src="/question.svg"
@@ -45,7 +56,7 @@ export function FAQSection() {
           alt="question mark"
           width={250}
           height={250}
-          className="absolute top-[-30%] right-[30%] rotate-[15deg] blur-xl opacity-70"
+          className="absolute top-[5%] right-[10%] sm:top-[-10%] sm:right-[30%] rotate-[15deg] blur-xl opacity-50"
         />
         <Image
           src="/question.svg"
@@ -63,12 +74,13 @@ export function FAQSection() {
         />
       </div>
 
-      <div className="w-full md:w-1/2 mb-10 md:mb-0 text-center md:text-left">
-        <h2 className="font-rubik text-4xl font-bold text-gray-900 mb-4 leading-tight">
+      <div className="w-full md:w-1/2 mb-10 md:mb-0 text-center md:text-left z-5">
+        <h2 className="font-rubik text-4xl sm:text-5xl font-bold text-gray-900 mb-4 leading-tight">
           Any questions? <br /> We got you.
         </h2>
         <p className="font-raleway text-gray-700 mb-6 text-base md:text-lg max-w-md">
-          Explore our FAQs or reach out for personalized support—our team is here to help you.
+          Explore our FAQs or reach out for personalized support—our team is
+          here to help you.
         </p>
         <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
           <Button className="bg-primary3 border-primary3 hover:bg-primary2 hover:border-primary2 text-white px-6 py-3 rounded-full">
@@ -83,7 +95,7 @@ export function FAQSection() {
         </div>
       </div>
 
-      <div className="w-full md:w-1/2 space-y-4">
+      <div className="w-full md:w-1/2 space-y-4 z-5">
         {faqs.map((faq, index) => (
           <div
             key={index}
