@@ -1,290 +1,328 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import Header from "../components/header";
 import Footer from "../components/footer";
 
+// --- Helper Components ---
+const EventTag = ({ children }: { children: React.ReactNode }) => (
+  <span className="bg-buttonbg1 text-primary3 font-raleway font-semibold px-3 py-1 rounded-full text-sm">
+    {children}
+  </span>
+);
+
+const InfoDetailRow = ({
+  icon,
+  line1,
+  line2,
+}: {
+  icon: React.ReactNode;
+  line1: string;
+  line2: string;
+}) => (
+  <div className="flex items-center gap-4">
+    <div className="w-12 h-12 bg-buttonbg1 rounded-lg flex items-center justify-center text-primary1 text-2xl flex-shrink-0">
+      {icon}
+    </div>
+    <div>
+      <p className="font-raleway font-semibold text-primary3 leading-tight">
+        {line1}
+      </p>
+      <p className="font-raleway text-bodytext leading-tight">{line2}</p>
+    </div>
+  </div>
+);
+
+const CountdownPill = ({ days, hours }: { days: number; hours: number }) => (
+  <div className="bg-green-100 text-green-800 font-raleway font-semibold px-4 py-2 rounded-full text-sm text-center whitespace-nowrap">
+    Starting in {days}d, {hours}h
+  </div>
+);
+
 export default function EventPage() {
-  const [showRSVPModal, setShowRSVPModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [rsvpData, setRsvpData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    affiliation: ''
+  // --- IMPORTANT: To see the "post-event" layout, change `false` to `true` here ---
+  const [isEventOver, setIsEventOver] = useState(true);
+  // ---------------------------------------------------------------------------------
+
+  const [hasRsvpd, setHasRsvpd] = useState(false);
+
+  // Set event date (example)
+  const eventDate = new Date(
+    Date.now() + 5 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000
+  ); // 5 days, 3 hours from now
+
+  const calculateTimeLeft = () => {
+    const difference = +eventDate - +new Date();
+    let timeLeft = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    if (difference > 0) {
+      timeLeft = {
+        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((difference / 1000 / 60) % 60),
+        seconds: Math.floor((difference / 1000) % 60),
+      };
+    }
+    return timeLeft;
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
+
+  useEffect(() => {
+    const timer = setTimeout(() => setTimeLeft(calculateTimeLeft()), 1000);
+    return () => clearTimeout(timer);
   });
 
-  const handleRSVP = () => {
-    if (rsvpData.name && rsvpData.email) {
-      setShowRSVPModal(false);
-      setShowSuccessModal(true);
-    }
-  };
+  // Example formatting based on current date + offset
+  const formattedDate = eventDate.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRsvpData({
-      ...rsvpData,
-      [e.target.name]: e.target.value
-    });
-  };
+  const eventPhotos = [
+    "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1511578314322-379afb476865?w=500&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=500&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1578899952109-a7a5529a5a5b?w=500&auto=format&fit=crop",
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <Header />
-      
-      <main className="flex-grow">
-        {/* Event Header */}
-        <div className="relative">
-          <div className="w-full h-96 bg-gradient-to-r from-primary1 to-primary2 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/20"></div>
-            <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-              <div className="max-w-4xl mx-auto">
-                <div className="flex items-center gap-2 mb-4">
-                  <span className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1 text-sm font-raleway">
-                    AI Workshop
-                  </span>
-                  <span className="text-sm font-raleway opacity-90">Hosted by START DOST</span>
-                </div>
-                <h1 className="text-4xl md:text-5xl font-rubik font-bold mb-4">
-                  Vibe Coding: OpenXAI Foundations Online Workshop
-                </h1>
-                <div className="flex items-center gap-6 text-sm font-raleway">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-white rounded-full"></span>
-                    <span>Google Meet</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 bg-white rounded-full"></span>
-                    <span>419 Went</span>
-                  </div>
-                </div>
+    <div className="min-h-screen flex flex-col bg-white relative overflow-hidden font-sans">
+      {/* Background Blushes */}
+      <div className="absolute top-[-10rem] left-[-15rem] w-[35rem] h-[35rem] bg-primary1/20 rounded-full filter blur-3xl opacity-90 animate-blob-1"></div>
+      <div className="absolute top-1/4 right-[-18rem] w-[35rem] h-[35rem] bg-secondary2/20 rounded-full filter blur-3xl opacity-90 animate-blob-2"></div>
+      <div className="absolute bottom-[-15rem] left-1/4 w-[35rem] h-[35rem] bg-primary3/15 rounded-full filter blur-3xl opacity-80 animate-blob-3"></div>
+      <div className="absolute bottom-[-5rem] right-[-5rem] w-[25rem] h-[25rem] bg-secondary3/15 rounded-full filter blur-3xl opacity-80 animate-blob-4"></div>
+
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow w-full max-w-6xl mx-auto px-4 py-16">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
+            {/* --- Left Column (Narrower & STICKY) --- */}
+            <div className="lg:col-span-2 lg:sticky lg:top-8 h-fit space-y-6 order-2 lg:order-1">
+              <div className="aspect-square w-full rounded-2xl overflow-hidden shadow-2xl bg-gray-100">
+                <img
+                  src="https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=2012&auto=format&fit=crop"
+                  alt="Event Banner"
+                  className="w-full h-full object-cover"
+                />
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Event Content */}
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          {/* RSVP Status */}
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <span className="text-red-800 font-raleway font-semibold">Registration Closed</span>
-            </div>
-            <p className="text-red-700 font-raleway text-sm mt-2">
-              This event is not currently taking registrations. You may contact the host or subscribe to receive updates.
-            </p>
-          </div>
-
-          {/* Event Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
-            <div className="lg:col-span-2">
-              <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-                <h2 className="text-2xl font-rubik font-bold text-primary3 mb-4">About Event</h2>
-                <div className="prose prose-gray max-w-none font-raleway">
-                  <p className="text-gray-700 leading-relaxed mb-4">
-                    The <strong>Vibe Coding: OpenXAI Foundations Workshop</strong> is a <strong>FREE</strong> two-part hands-on training designed for DOST Scholars. This workshop introduces participants to the fundamentals of OpenXAI, its no-code development framework, and practical pathways toward blockchain applications.
-                  </p>
-                  
-                  <h3 className="text-xl font-rubik font-semibold text-primary3 mt-6 mb-3">Topics Covered:</h3>
-                  <ul className="list-disc list-inside space-y-2 text-gray-700">
-                    <li>No-code development approach</li>
-                    <li>Introduction to OpenXAI concepts</li>
-                    <li>Leveraging and setting up a development environment</li>
-                    <li>Hands-on scenario demonstration</li>
-                    <li>Pathway to blockchain applications</li>
-                  </ul>
-
-                  <h3 className="text-xl font-rubik font-semibold text-primary3 mt-6 mb-3">Schedule:</h3>
-                  <ul className="space-y-2 text-gray-700">
-                    <li><strong>1st Session:</strong> September 28, 2025 (7:00 – 10:00 PM) - <em>Sunday</em></li>
-                    <li><strong>2nd Session:</strong> October 5, 2025 (7:00 – 10:00 PM) <em>Sunday</em></li>
-                  </ul>
-
-                  <h3 className="text-xl font-rubik font-semibold text-primary3 mt-6 mb-3">Participant Requirements:</h3>
-                  <ul className="list-disc list-inside space-y-2 text-gray-700">
-                    <li>A development environment installation will be required before the event. Installation files and instructions will be provided upon the acceptance of your registration.</li>
-                    <li>Open to all DOST Scholars</li>
-                  </ul>
-
-                  <h3 className="text-xl font-rubik font-semibold text-primary3 mt-6 mb-3">Benefits:</h3>
-                  <ul className="list-disc list-inside space-y-2 text-gray-700">
-                    <li>Certificate of recognition as a <strong>Vibe Coder Enthusiast</strong></li>
-                    <li>Exposure to blockchain pathways and potential job offerings through OpenXAI</li>
-                    <li>Opportunity to participate in an international hackathon</li>
-                  </ul>
-                </div>
+              <div className="flex flex-wrap gap-2">
+                <EventTag>AI</EventTag>
+                <EventTag>Workshop</EventTag>
+                <EventTag>No-Code</EventTag>
+                <EventTag>Blockchain</EventTag>
               </div>
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* RSVP Button */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <button 
-                  onClick={() => setShowRSVPModal(true)}
-                  className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold py-3 px-6 rounded-lg transition-all duration-300 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
-                  disabled
-                >
-                  Registration Closed
-                </button>
-                <p className="text-gray-600 text-sm font-raleway mt-3 text-center">
-                  Contact the host for more information
-                </p>
-              </div>
-
-              {/* Event Info */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-rubik font-semibold text-primary3 mb-4">Event Details</h3>
-                <div className="space-y-3 font-raleway text-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary1/10 rounded-full flex items-center justify-center">
-                      <span className="text-primary1">📅</span>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-gray-900">September 28 & October 5, 2025</div>
-                      <div className="text-gray-600">7:00 PM - 10:00 PM</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary1/10 rounded-full flex items-center justify-center">
-                      <span className="text-primary1">💻</span>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-gray-900">Google Meet</div>
-                      <div className="text-gray-600">Online Event</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary1/10 rounded-full flex items-center justify-center">
-                      <span className="text-primary1">👥</span>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-gray-900">419 Participants</div>
-                      <div className="text-gray-600">DOST Scholars</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Host Info */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <h3 className="text-lg font-rubik font-semibold text-primary3 mb-4">Hosted By</h3>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary1 rounded-full flex items-center justify-center">
-                    <span className="text-white font-rubik font-bold">SD</span>
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="w-14 h-14 bg-primary1 rounded-full flex items-center justify-center text-white font-rubik text-2xl font-bold flex-shrink-0">
+                    SD
                   </div>
                   <div>
-                    <div className="font-rubik font-semibold text-gray-900">START DOST</div>
-                    <div className="text-gray-600 font-raleway text-sm">Event Organizer</div>
+                    <h3 className="font-rubik font-bold text-lg text-primary3">
+                      START DOST
+                    </h3>
+                    <p className="font-raleway text-sm text-bodytext">
+                      Event Organizer
+                    </p>
                   </div>
                 </div>
-                <div className="mt-4 space-y-2">
-                  <button className="w-full bg-transparent border border-primary1 text-primary1 hover:bg-primary1 hover:text-white font-raleway font-semibold py-2 px-4 rounded-lg transition-all duration-300 cursor-pointer">
+                <div className="space-y-3">
+                  <button className="w-full bg-transparent border border-primary1 text-primary1 hover:bg-primary1 hover:text-white font-raleway font-semibold py-2 px-4 rounded-lg transition-all cursor-pointer">
                     Contact Host
                   </button>
-                  <button className="w-full bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50 font-raleway font-semibold py-2 px-4 rounded-lg transition-all duration-300 cursor-pointer">
+                  <button className="w-full bg-transparent border border-gray-400 text-gray-600 hover:bg-gray-100 font-raleway font-semibold py-2 px-4 rounded-lg transition-all cursor-pointer">
                     Report Event
                   </button>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </main>
 
-      <Footer />
+            {/* --- Right Column (Wider & SCROLLABLE) --- */}
+            <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
+              {/* Event Title & Deets (No Container) */}
+              <div>
+                <div
+                  className={`font-raleway font-semibold text-sm inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full ${
+                    isEventOver
+                      ? "bg-red-100 text-red-800"
+                      : "bg-green-100 text-green-800"
+                  }`}
+                >
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      isEventOver ? "bg-red-500" : "bg-green-500"
+                    }`}
+                  ></div>
+                  {isEventOver ? "Event Ended" : "Registration Open"}
+                </div>
+                <h1 className="font-rubik text-4xl font-bold text-primary3 mb-8 leading-tight">
+                  Vibe Coding: OpenXAI Foundations Workshop
+                </h1>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <InfoDetailRow
+                    icon="📅"
+                    line1={formattedDate}
+                    line2="7:00 PM - 10:00 PM PST"
+                  />
+                  <InfoDetailRow icon="📍" line1="Online" line2="Google Meet" />
+                </div>
+              </div>
 
-      {/* RSVP Modal */}
-      {showRSVPModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 className="text-xl font-rubik font-bold text-primary3 mb-4">RSVP to Event</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-raleway font-semibold text-gray-700 mb-2">Full Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={rsvpData.name}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 font-raleway focus:outline-none focus:border-primary1"
-                  placeholder="Enter your full name"
-                />
+              {/* Call to Action (RSVP Card) */}
+              <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg transition-all duration-300">
+                {isEventOver ? (
+                  <div className="text-center">
+                    <h2 className="font-rubik font-bold text-2xl text-primary3">
+                      Registration Closed
+                    </h2>
+                    <p className="font-raleway text-bodytext mt-2">
+                      This event is not currently taking registrations. Stay
+                      tuned for the next one!
+                    </p>
+                  </div>
+                ) : hasRsvpd ? (
+                  <div>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <img
+                          src="https://i.pravatar.cc/150?img=32"
+                          alt="User"
+                          className="w-14 h-14 rounded-full border-2 border-green-500 p-0.5"
+                        />
+                        <div>
+                          <h2 className="font-rubik font-bold text-2xl text-green-700 leading-none">
+                            You're In!
+                          </h2>
+                        </div>
+                      </div>
+                      <CountdownPill
+                        days={timeLeft.days}
+                        hours={timeLeft.hours}
+                      />
+                    </div>
+                    <p className="font-raleway text-sm text-gray-500 mt-6 text-center border-t border-gray-100 pt-4">
+                      No longer able to attend? Notify the host by{" "}
+                      <button
+                        onClick={() => setHasRsvpd(false)}
+                        className="text-primary1 font-medium underline hover:text-primary2 transition-colors cursor-pointer"
+                      >
+                        cancelling your registration
+                      </button>
+                      .
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <p className="font-raleway text-lg text-bodytext mb-6">
+                      Welcome! To join the event, please register below.
+                    </p>
+                    <button
+                      onClick={() => setHasRsvpd(true)}
+                      className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-bold py-4 rounded-xl transition-all text-xl shadow-lg hover:shadow-primary1/40 transform hover:-translate-y-0.5 cursor-pointer"
+                    >
+                      RSVP Now
+                    </button>
+                    <div className="flex items-center justify-center gap-2 mt-4 text-sm font-raleway text-gray-600">
+                      <div className="flex -space-x-2">
+                        <img
+                          className="w-6 h-6 rounded-full border-2 border-white"
+                          src="https://i.pravatar.cc/100?img=1"
+                          alt=""
+                        />
+                        <img
+                          className="w-6 h-6 rounded-full border-2 border-white"
+                          src="https://i.pravatar.cc/100?img=2"
+                          alt=""
+                        />
+                        <img
+                          className="w-6 h-6 rounded-full border-2 border-white"
+                          src="https://i.pravatar.cc/100?img=3"
+                          alt=""
+                        />
+                      </div>
+                      <p>
+                        <span className="font-bold text-primary3">105</span>{" "}
+                        people have already registered
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
-              <div>
-                <label className="block text-sm font-raleway font-semibold text-gray-700 mb-2">Email *</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={rsvpData.email}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 font-raleway focus:outline-none focus:border-primary1"
-                  placeholder="Enter your email"
-                />
+
+              {/* Event Full Details */}
+              <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
+                <h2 className="font-rubik text-2xl font-bold text-primary3 mb-4 pb-2 border-b border-gray-100">
+                  Details
+                </h2>
+                <div className="prose prose-lg max-w-none font-raleway text-bodytext">
+                  <p>
+                    The{" "}
+                    <strong>Vibe Coding: OpenXAI Foundations Workshop</strong>{" "}
+                    is a <strong>FREE</strong> two-part hands-on training for
+                    DOST Scholars. It introduces the fundamentals of OpenXAI and
+                    its no-code framework.
+                  </p>
+                  <p className="mt-4 font-semibold">Topics Covered:</p>
+                  <ul className="mt-0">
+                    <li>No-code development approach</li>
+                    <li>Introduction to OpenXAI concepts</li>
+                    <li>Hands-on scenario demonstration</li>
+                    <li>Pathway to blockchain applications</li>
+                  </ul>
+                  <p className="mt-4 font-semibold">Requirements:</p>
+                  <ul className="mt-0">
+                    <li>Open to all DOST Scholars</li>
+                    <li>
+                      Development environment setup (instructions provided upon
+                      registration)
+                    </li>
+                  </ul>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-raleway font-semibold text-gray-700 mb-2">Phone Number</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={rsvpData.phone}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 font-raleway focus:outline-none focus:border-primary1"
-                  placeholder="Enter your phone number"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-raleway font-semibold text-gray-700 mb-2">Affiliation</label>
-                <input
-                  type="text"
-                  name="affiliation"
-                  value={rsvpData.affiliation}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 font-raleway focus:outline-none focus:border-primary1"
-                  placeholder="e.g., DOST Scholar, Student"
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowRSVPModal(false)}
-                className="flex-1 bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50 font-raleway font-semibold py-2 px-4 rounded-lg transition-all duration-300 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleRSVP}
-                className="flex-1 bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold py-2 px-4 rounded-lg transition-all duration-300 cursor-pointer"
-              >
-                RSVP
-              </button>
+
+              {/* Gallery */}
+              {isEventOver && (
+                <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
+                  <h2 className="font-rubik text-2xl font-bold text-primary3 mb-4 pb-2 border-b border-gray-100">
+                    Gallery
+                  </h2>
+                  <div className="grid grid-cols-3 gap-3">
+                    {eventPhotos.slice(0, 2).map((photo, index) => (
+                      <div
+                        key={index}
+                        className="aspect-square rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                      >
+                        <img
+                          src={photo}
+                          alt={`Event photo ${index + 1}`}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    ))}
+                    {eventPhotos.length > 2 && (
+                      <div className="aspect-square rounded-xl overflow-hidden relative shadow-sm cursor-pointer group">
+                        <img
+                          src={eventPhotos[2]}
+                          alt="More photos"
+                          className="w-full h-full object-cover filter blur-sm group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/30 transition-colors">
+                          <span className="font-rubik text-white text-2xl font-bold">
+                            +{eventPhotos.length - 2}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Success Modal */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-6 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-green-600 text-2xl">✓</span>
-            </div>
-            <h3 className="text-xl font-rubik font-bold text-primary3 mb-2">RSVP Successful!</h3>
-            <p className="text-gray-600 font-raleway mb-6">
-              You have successfully registered for the event. You will receive a confirmation email shortly.
-            </p>
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold py-2 px-4 rounded-lg transition-all duration-300 cursor-pointer"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }
