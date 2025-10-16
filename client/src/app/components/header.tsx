@@ -1,15 +1,17 @@
-'use client';
-import React, { useState } from 'react';
-import Image from 'next/image';
-import Button from './button';
-import Menu from './menu';
+"use client";
+import React, { useState } from "react";
+import Image from "next/image";
+import Button from "./button";
+import Menu from "./menu";
+import { useRouter } from "next/navigation";
 
 //UserRole = guest | user(non-member) | member | officer | faculty?
-type UserRole = 'guest' | 'user' ;
+type UserRole = "guest" | "user";
 
 const Header = () => {
   const [open, setOpen] = useState(false);
-  const [role, setRole] = useState<UserRole>('guest');
+  const [role, setRole] = useState<UserRole>("guest");
+  const router = useRouter();
 
   return (
     <header className="w-full border-b border-gainsboro bg-white relative z-10">
@@ -24,14 +26,62 @@ const Header = () => {
             className="md:h-15 md:w-auto sm:h-25 sm:w-auto rounded-full"
           />
           <div className="flex items-end gap-0.5">
-            <Image src="/Vector-i.svg" alt="I" width={0} height={50} className="h-0 w-auto sm:h-12" />
-            <Image src="/Vector-c.svg" alt="C" width={0} height={50} className="h-0 w-auto sm:h-12" />
-            <Image src="/Vector-p1.svg" alt="P" width={0} height={50} className="h-0 w-auto sm:h-12" />
-            <Image src="/Vector-e1.svg" alt="E" width={0} height={50} className="h-0 w-auto sm:h-12" />
-            <Image src="/Vector-p2.svg" alt="P" width={0} height={50} className="h-0 w-auto sm:h-12" />
-            <Image src="/Vector-dot.svg" alt="." width={0} height={16} className="h-0 w-auto sm:h-4 -ml-2" />
-            <Image src="/Vector-s.svg" alt="S" width={0} height={50} className="h-0 w-auto sm:h-12" />
-            <Image src="/Vector-e2.svg" alt="E" width={0} height={50} className="h-0 w-auto sm:h-12" />
+            <Image
+              src="/Vector-i.svg"
+              alt="I"
+              width={0}
+              height={50}
+              className="h-0 w-auto sm:h-12"
+            />
+            <Image
+              src="/Vector-c.svg"
+              alt="C"
+              width={0}
+              height={50}
+              className="h-0 w-auto sm:h-12"
+            />
+            <Image
+              src="/Vector-p1.svg"
+              alt="P"
+              width={0}
+              height={50}
+              className="h-0 w-auto sm:h-12"
+            />
+            <Image
+              src="/Vector-e1.svg"
+              alt="E"
+              width={0}
+              height={50}
+              className="h-0 w-auto sm:h-12"
+            />
+            <Image
+              src="/Vector-p2.svg"
+              alt="P"
+              width={0}
+              height={50}
+              className="h-0 w-auto sm:h-12"
+            />
+            <Image
+              src="/Vector-dot.svg"
+              alt="."
+              width={0}
+              height={16}
+              className="h-0 w-auto sm:h-4 -ml-2"
+            />
+            <Image
+              src="/Vector-s.svg"
+              alt="S"
+              width={0}
+              height={50}
+              className="h-0 w-auto sm:h-12"
+            />
+            <Image
+              src="/Vector-e2.svg"
+              alt="E"
+              width={0}
+              height={50}
+              className="h-0 w-auto sm:h-12"
+            />
           </div>
           <div className="min-w-0 font-rubik -ml-2">
             <div className="truncate text-[0px] sm:text-[22px] font-bold text-primary1 -mt-1 pt-1">
@@ -46,19 +96,29 @@ const Header = () => {
         {/* Right side: Role-based rendering */}
         <div className="flex items-center gap-4 sm:gap-5">
           {/* Guest View */}
-          {role === 'guest' && (
+          {role === "guest" && (
             <>
-              <Button className="sm:block" variant="secondary" onClick={() => setRole('user')}>
+              <Button
+                className="sm:block"
+                variant="secondary"
+                onClick={() => setRole("user")}
+              >
                 Sign Up
               </Button>
-              <Button className="sm:block" onClick={() => setRole('user')}>
+              <Button
+                className="sm:block"
+                onClick={() => {
+                  setRole("user");
+                  router.push("/login");
+                }}
+              >
                 Log In
               </Button>
             </>
           )}
 
           {/* Member View */}
-          {role === 'user' && (
+          {role === "user" && (
             <div className="flex items-center gap-3">
               <Image
                 src="/user.svg"
@@ -67,7 +127,11 @@ const Header = () => {
                 height={36}
                 className="h-9 w-9 cursor-pointer"
               />
-              <Button variant="outline" size="sm" onClick={() => setRole('guest')}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setRole("guest")}
+              >
                 Log Out
               </Button>
             </div>
@@ -88,7 +152,7 @@ const Header = () => {
       </div>
       <div
         className={`fixed inset-0 z-50 transition-transform duration-700 ease-out ${
-          open ? 'translate-y-0' : '-translate-y-[120vh]'
+          open ? "translate-y-0" : "-translate-y-[120vh]"
         }`}
       >
         <Menu
@@ -97,7 +161,6 @@ const Header = () => {
         />
       </div>
     </header>
-  
   );
 };
 

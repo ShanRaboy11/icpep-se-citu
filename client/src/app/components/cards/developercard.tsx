@@ -24,7 +24,7 @@ export default function DeveloperCard({
 
   return (
     <div
-      className="w-[300px] sm:w-[320px] md:w-[360px] h-[360px] perspective cursor-pointer"
+      className="w-[300px] sm:w-[320px] md:w-[360px] h-[360px] perspective "
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -36,7 +36,7 @@ export default function DeveloperCard({
         {/* FRONT SIDE */}
         <div className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg backface-hidden bg-gradient-to-b from-sky-400 to-blue-600 flex flex-col justify-between">
           {/* Silhouette image (larger and centered) */}
-      <div className="relative w-[90%] ml-auto mt-10 sm:mt-1 -mr-8">
+      <div className="relative w-[90%] ml-auto mt-6 sm:-mt-3 -mr-8">
         {imageSrc ? (
           <Image
             src={imageSrc}
@@ -62,7 +62,7 @@ export default function DeveloperCard({
         </p>
       </div>
 
-          <div className="-mt-5 bg-primary3 py-3 text-center text-white font-bold text-xl z-10">
+          <div className="-mt-6 bg-primary3 py-2 text-center text-white font-bold text-[24px] z-10 ">
             {name}
           </div>
         </div>
