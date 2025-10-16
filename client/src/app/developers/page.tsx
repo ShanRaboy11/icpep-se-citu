@@ -10,6 +10,7 @@ export default function DevelopersPage() {
       title: "UI/UX",
       desc: "Designer",
       imageSrc: "/officer.svg",
+      bgSrc: "/bg-mai.png",
       details: [
         "3rd Year Batch Representative, 6th Administration",
         "Head of Training and Seminar Committee, 6th Administration",
@@ -22,6 +23,7 @@ export default function DevelopersPage() {
       title: "Frontend",
       desc: "Developer",
       imageSrc: "/officer.svg",
+      bgSrc: "/bg-gio.png",
       details: [
         "Auditor, 6th Administration",
         "Asst. Head of Finance Committee, 6th Administration",
@@ -34,6 +36,7 @@ export default function DevelopersPage() {
       title: "Backend",
       desc: "Developer",
       imageSrc: "/officer.svg", 
+      bgSrc: "/bg-shan.png",
       details: [
         "Vice President - Internal, 6th Administration",
         "Head of Internal Affairs Committee, 6th Administration",
@@ -47,6 +50,7 @@ export default function DevelopersPage() {
       title: "Fullstack",
       desc: "Developer",
       imageSrc: "/officer.svg", 
+      bgSrc: "/bg-rexi.png",
       details: [
         "Public Relations Officer, 6th Administration",
         "Asst. Head of Public Relations Committee, 6th Administration",
@@ -74,7 +78,7 @@ export default function DevelopersPage() {
         </div>
 
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10 justify-items-center max-w-4xl mx-auto mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-18 justify-items-center max-w-4xl mx-auto mb-16">
           {developers.map((dev, index) => (
             <DeveloperCard
               key={index}
@@ -82,6 +86,7 @@ export default function DevelopersPage() {
               title={dev.title}
               desc={dev.desc}
               imageSrc={dev.imageSrc}
+              bgSrc={dev.bgSrc}
               details={dev.details}
               portfolioLink={dev.portfolioLink}
             />
