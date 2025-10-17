@@ -308,3 +308,14 @@ html {
 .animate-nudge-left {
   animation: nudge-left 1.5s ease-in-out infinite;
 }
+
+.embla {
+  overflow: hidden;
+}
+.embla__container {
+  display: flex;
+}
+.embla__slide {
+  flex: 0 0 100%;
+  min-width: 0;
+}

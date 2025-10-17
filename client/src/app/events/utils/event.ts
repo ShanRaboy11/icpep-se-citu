@@ -1,13 +1,14 @@
 export interface Event {
   id: string;
   title: string;
-  status: "Upcoming" | "Ended" | "Ongoing";
-  date: string; // Use ISO 8601 format: 'YYYY-MM-DDTHH:mm:ss'
+  status?: "Upcoming" | "Ended" | "Ongoing";
+  date: string; // This is now the START date
+  endDate?: string; // Optional END date for multi-day events
   mode: "Online" | "Onsite";
-  location: string; // Can be a physical address or a platform name like "Google Meet"
+  location: string;
   organizer: {
     name: string;
-    avatarImageUrl: string; // Changed from avatarInitial
+    avatarImageUrl: string;
   };
   tags: string[];
   bannerImageUrl: string;
@@ -24,8 +25,8 @@ export const events: Event[] = [
   {
     id: "1",
     title: "Vibe Coding: OpenXAI Foundations Workshop",
-    status: "Upcoming",
-    date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
+    date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // Starts in 5 days
+    // No endDate needed for a single-day event
     mode: "Online",
     location: "Google Meet",
     organizer: {
@@ -59,8 +60,7 @@ export const events: Event[] = [
   {
     id: "2",
     title: "Annual General Assembly 2024",
-    status: "Ended",
-    date: "2024-08-15T13:00:00",
+    date: "2024-08-15T13:00:00Z", // In the past
     mode: "Onsite",
     location: "CIT-U Main Auditorium",
     organizer: {
@@ -93,8 +93,8 @@ export const events: Event[] = [
   {
     id: "3",
     title: "ICpEP Week 2024: Innovation Festival",
-    status: "Ongoing",
     date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // Started 2 days ago
+    endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // Ends in 3 days
     mode: "Onsite",
     location: "CIT-U Campus Grounds",
     organizer: {

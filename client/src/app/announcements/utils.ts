@@ -2,7 +2,7 @@
 export const getTypeColor = (type: string) => {
   switch (type.toLowerCase()) {
     // For primary, general events
-    case "event":
+    case "news":
       return "bg-sky-500 text-white"; // A bright, welcoming blue (like your theme's primary)
 
     // For more formal or internal announcements

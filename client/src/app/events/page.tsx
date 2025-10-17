@@ -1,12 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { events } from "./utils/event";
+import { events, Event } from "./utils/event"; // Import the base Event type
 import Header from "../components/header";
 import Footer from "../components/footer";
 import EventCard from "./event-card";
 import Grid from "../components/grid";
 import { ArrowLeft } from "lucide-react";
+
+// Define a new type for our processed event
+type ProcessedEvent = Event & {
+  status: "Upcoming" | "Ongoing" | "Ended";
+};
 
 export default function EventsListPage() {
   const router = useRouter();
@@ -15,30 +20,37 @@ export default function EventsListPage() {
     router.push("/");
   };
 
-  // --- MODIFICATION: Added custom sorting logic ---
-  const sortedEvents = [...events].sort((a, b) => {
-    // 1. Define the order of the statuses
-    const statusOrder = { Upcoming: 1, Ongoing: 2, Ended: 3 };
+  // --- MODIFICATION: Dynamic status calculation and sorting ---
+  const now = new Date();
 
-    const statusA = statusOrder[a.status];
-    const statusB = statusOrder[b.status];
+  // 1. Map over raw events to add the dynamic status
+  const processedEvents: ProcessedEvent[] = events.map((event) => {
+    const startDate = new Date(event.date);
+    const endDate = event.endDate ? new Date(event.endDate) : startDate;
 
-    // 2. If statuses are different, sort by status order
-    if (statusA !== statusB) {
-      return statusA - statusB;
+    let status: ProcessedEvent["status"];
+    if (now < startDate) {
+      status = "Upcoming";
+    } else if (now >= startDate && now <= endDate) {
+      status = "Ongoing";
+    } else {
+      status = "Ended";
     }
 
-    // 3. If statuses are the same, sort by date
+    return { ...event, status };
+  });
+
+  // 2. Sort the processed events
+  const sortedEvents = processedEvents.sort((a, b) => {
+    const statusOrder = { Upcoming: 1, Ongoing: 2, Ended: 3 };
+    if (statusOrder[a.status] !== statusOrder[b.status]) {
+      return statusOrder[a.status] - statusOrder[b.status];
+    }
+
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
 
-    // For "Upcoming" events, show the soonest first (ascending date)
-    if (a.status === "Upcoming") {
-      return dateA - dateB;
-    }
-
-    // For "Ongoing" and "Ended" events, show the most recent first (descending date)
-    return dateB - dateA;
+    return a.status === "Upcoming" ? dateA - dateB : dateB - dateA;
   });
 
   return (
@@ -81,7 +93,8 @@ export default function EventsListPage() {
           </div>
 
           {/* --- MODIFICATION: Map over the new `sortedEvents` array --- */}
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
+            {/* Map over the new `sortedEvents` array */}
             {sortedEvents.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
