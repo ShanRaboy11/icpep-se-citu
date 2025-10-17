@@ -50,7 +50,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     if (item === "Developers") {
       router.push("/developers");
     } else if (item === "Home") {
-      //router.push("/landing-page");
+      router.push("/home");
     } else if (item === "Events") {
       router.push("/events");
     } else {
