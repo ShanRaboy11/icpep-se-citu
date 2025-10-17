@@ -5,6 +5,7 @@ import { AnnouncementCard } from "../components/cards/announcement_card";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import { ArrowLeft } from "lucide-react";
+import Grid from "../components/grid";
 
 interface Announcement {
   id: string;
@@ -196,88 +197,107 @@ export default function AnnouncementsPage() {
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
- const handleAnnouncementClick = (announcement: Announcement) => {
-  const encodedData = encodeURIComponent(JSON.stringify(announcement));
-  router.push(`/announcements/${announcement.id}?data=${encodedData}`);
-};
+  const handleAnnouncementClick = (announcement: Announcement) => {
+    const encodedData = encodeURIComponent(JSON.stringify(announcement));
+    router.push(`/announcements/${announcement.id}?data=${encodedData}`);
+  };
 
   const handleBackToHome = () => {
-    router.push('/');
+    router.push("/");
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#FEFEFF" }}>
-      <Header />
+    // --> MODIFICATION 2: Set up the page structure to match DevelopersPage
+    <div className="min-h-screen bg-white flex flex-col relative">
+      {/* Add the interactive grid background */}
+      <Grid />
 
-      <div className="py-8 px-4 sm:py-10 sm:px-6 lg:py-12 lg:px-12 xl:px-16">
-        {/* Back to Home Navigation */}
-        <div className="mb-6 sm:mb-8 flex justify-start pl-4 sm:pl-8 md:pl-4 lg:pl-32 xl:pl-60">
-          <button 
-            onClick={handleBackToHome}
-            className="flex items-center text-[#00A7EE] hover:text-[#003599] transition-colors font-medium text-sm sm:text-base"
-          >
-            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-            Back to Home
-          </button>
-        </div>
+      {/* Wrapper to keep all content on top */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
 
-        <div className="text-center">
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl text-[#003599] mb-2 sm:mb-3 font-bold">
-            Announcements
-          </h1>
-          <p className="text-base sm:text-2xl text-gray-600 max-w-6xl mx-auto px-4 pb-14">
-            Stay updated with the latest news, events, and achievements from
-            ICpEP.SE CIT-U Chapter
-          </p>
-        </div>
-
-        {/* Announcements List */}
-        <div className="px-6 lg:px-12 xl:px-16 pb-14">
-          <div className="space-y-12">
-            {sortedAnnouncements.map((announcement) => (
-              <AnnouncementCard
-                key={announcement.id}
-                id={announcement.id}
-                title={announcement.title}
-                description={announcement.description}
-                date={announcement.date}
-                type={announcement.type}
-                imageUrl="/gle.png"
-                onClick={() => handleAnnouncementClick(announcement)}
-              />
-            ))}
+        <main className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12 w-full flex-grow">
+          {/* Back to Home Navigation */}
+          <div className="mb-8 flex justify-start pl-4 sm:pl-8 md:pl-0">
+            {/* --- MODIFICATION: Updated button with shimmer effect --- */}
+            <button
+              onClick={handleBackToHome}
+              title="Back to Home"
+              className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
+                         rounded-full border-2 border-primary1 text-primary1 
+                         overflow-hidden transition-all duration-300 ease-in-out 
+                         active:scale-95 before:absolute before:inset-0 
+                         before:bg-gradient-to-r before:from-transparent 
+                         before:via-white/40 before:to-transparent 
+                         before:translate-x-[-100%] hover:before:translate-x-[100%] 
+                         before:transition-transform before:duration-700"
+            >
+              {/* --- MODIFICATION: Nudged arrow to the right --- */}
+              <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
+            </button>
           </div>
 
-          {/* Empty State */}
-          {sortedAnnouncements.length === 0 && (
-            <div className="text-center py-16">
-              <div className="text-gray-400 mb-4">
-                <svg
-                  className="w-16 h-16 mx-auto"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl text-gray-600 mb-2">
-                No announcements yet
-              </h3>
-              <p className="text-gray-500">
-                Check back later for updates and news.
-              </p>
+          {/* --> MODIFICATION 4: Title section updated to match DevelopersPage */}
+          <div className="mb-16 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+              <div className="h-2 w-2 rounded-full bg-primary1"></div>
+              <span className="font-raleway text-sm font-semibold text-primary1">
+                Latest Updates
+              </span>
             </div>
-          )}
-        </div>
-      </div>
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+              Announcements
+            </h1>
+            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+              Stay updated with the latest news, events, and achievements from
+              ICpEP.SE R7 CIT-U Chapter.
+            </p>
+          </div>
 
-      <Footer />
+          {/* Announcements List */}
+          <div className="px-6 lg:px-12 xl:px-16 pb-14">
+            <div className="space-y-12">
+              {sortedAnnouncements.map((announcement) => (
+                <AnnouncementCard
+                  key={announcement.id}
+                  {...announcement}
+                  imageUrl="/gle.png"
+                  onClick={() => handleAnnouncementClick(announcement)}
+                />
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {sortedAnnouncements.length === 0 && (
+              <div className="text-center py-16">
+                <div className="text-gray-400 mb-4">
+                  <svg
+                    className="w-16 h-16 mx-auto"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                    />
+                  </svg>
+                </div>
+                <h3 className="font-rubik text-xl text-gray-600 mb-2">
+                  No announcements yet
+                </h3>
+                <p className="font-raleway text-gray-500">
+                  Check back later for updates and news.
+                </p>
+              </div>
+            )}
+          </div>
+        </main>
+
+        <Footer />
+      </div>
     </div>
   );
 }

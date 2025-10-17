@@ -294,3 +294,17 @@ html {
   /* This transition smooths the spotlight's movement */
   transition: background 0.1s ease-out;
 }
+
+@keyframes nudge-left {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-5px); /* Adjust distance as needed */
+  }
+}
+
+.animate-nudge-left {
+  animation: nudge-left 1.5s ease-in-out infinite;
+}

@@ -17,21 +17,15 @@ export function AnnouncementCard({
   onClick,
 }: AnnouncementProps) {
   const getTypeColor = (type: string) => {
+    // ... switch statement remains the same
     switch (type.toLowerCase()) {
-      case "event":
-        return "bg-blue-500 text-white";
-      case "seminar":
-        return "bg-sky-500 text-white";
-      case "achievement":
-        return "bg-green-500 text-white";
-      case "workshop":
-        return "bg-purple-500 text-white";
-      case "meeting":
-        return "bg-orange-500 text-white";
-      case "award":
-        return "bg-yellow-500 text-white";
-      default:
-        return "bg-gray-500 text-white";
+      case "event": return "bg-blue-500 text-white";
+      case "seminar": return "bg-sky-500 text-white";
+      case "achievement": return "bg-green-500 text-white";
+      case "workshop": return "bg-purple-500 text-white";
+      case "meeting": return "bg-orange-500 text-white";
+      case "award": return "bg-yellow-500 text-white";
+      default: return "bg-gray-500 text-white";
     }
   };
 
@@ -45,13 +39,15 @@ export function AnnouncementCard({
   };
 
   return (
+    // --- MODIFICATION 1: Added new transition and hover effect classes ---
     <div
-      className="bg-white rounded-[25px] shadow-lg
-                 shadow-gray-300
+      className="bg-white rounded-[25px] shadow-lg shadow-gray-300
                  overflow-hidden mb-10 max-w-4xl mx-auto 
                  h-auto md:h-80 cursor-pointer
-                 hover:shadow-2xl hover:shadow-blue-400/50
-                 transition-shadow duration-300"
+                 transition-all duration-300 ease-in-out
+                 hover:shadow-2xl hover:shadow-primary1/40
+                 hover:-translate-y-1 hover:scale-[1.02]
+                 hover:ring-2 hover:ring-primary1/50"
       onClick={onClick}
     >
       <div className="md:flex h-full">
@@ -69,8 +65,9 @@ export function AnnouncementCard({
           <div>
             {/* Type Badge */}
             <div className="mb-3 sm:mb-4">
+              {/* --- MODIFICATION 2: Font changed to Raleway --- */}
               <span
-                className={`inline-block px-3 py-1 sm:px-4 sm:py-2 rounded-[10px] text-xs sm:text-sm font-medium ${getTypeColor(
+                className={`inline-block px-3 py-1 sm:px-4 sm:py-2 rounded-[10px] text-xs sm:text-sm font-raleway font-medium ${getTypeColor(
                   type
                 )}`}
               >
@@ -78,20 +75,21 @@ export function AnnouncementCard({
               </span>
             </div>
 
-            {/* Title */}
-            <h3 className="mb-2 sm:mb-3 text-[#003599] text-lg sm:text-xl font-bold line-clamp-2">
+            {/* Title (Remains Rubik) */}
+            <h3 className="mb-2 sm:mb-3 text-[#003599] text-lg sm:text-xl font-rubik font-bold line-clamp-2">
               {title}
             </h3>
 
-            {/* Description */}
-            <p className="text-gray-700 text-sm sm:text-base mb-2 sm:mb-4 leading-relaxed line-clamp-2 sm:line-clamp-3 overflow-hidden">
+            {/* Description (Remains Raleway) */}
+            <p className="font-raleway text-gray-700 text-sm sm:text-base mb-2 sm:mb-4 leading-relaxed line-clamp-2 sm:line-clamp-3 overflow-hidden">
               {description}
             </p>
           </div>
 
           {/* Date */}
           <div className="mt-2 md:mt-auto">
-            <p className="text-[#00A7EE] font-medium text-sm sm:text-base">
+            {/* --- MODIFICATION 3: Font changed to Raleway --- */}
+            <p className="font-raleway text-[#00A7EE] font-medium text-sm sm:text-base">
               {formatDate(date)}
             </p>
           </div>
