@@ -73,7 +73,7 @@ export default function RsvpCard({ status, date }: Props) {
             No longer able to attend?{" "}
             <button
               onClick={() => setHasRsvpd(false)}
-              className="text-primary1 font-medium underline hover:text-primary2 transition-colors"
+              className="text-primary1 font-medium underline hover:text-primary2 transition-colors cursor-pointer"
             >
               Cancel your registration
             </button>
@@ -87,7 +87,7 @@ export default function RsvpCard({ status, date }: Props) {
           </p>
           <button
             onClick={() => setHasRsvpd(true)}
-            className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-bold py-4 rounded-xl transition-all text-xl shadow-lg hover:shadow-primary1/40 transform hover:-translate-y-0.5"
+            className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-bold py-4 rounded-xl transition-all text-xl shadow-lg hover:shadow-primary1/40 transform hover:-translate-y-0.5 cursor-pointer"
           >
             RSVP Now
           </button>

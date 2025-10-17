@@ -7,7 +7,7 @@ export interface Event {
   location: string; // Can be a physical address or a platform name like "Google Meet"
   organizer: {
     name: string;
-    avatarInitial: string;
+    avatarImageUrl: string; // Changed from avatarInitial
   };
   tags: string[];
   bannerImageUrl: string;
@@ -28,7 +28,10 @@ export const events: Event[] = [
     date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days from now
     mode: "Online",
     location: "Google Meet",
-    organizer: { name: "START DOST", avatarInitial: "SD" },
+    organizer: {
+      name: "START DOST",
+      avatarImageUrl: "/icpep logo.png", // Example path to a logo
+    },
     tags: ["AI", "Workshop", "No-Code", "Blockchain"],
     bannerImageUrl:
       "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=2012&auto=format&fit=crop",
@@ -60,7 +63,10 @@ export const events: Event[] = [
     date: "2024-08-15T13:00:00",
     mode: "Onsite",
     location: "CIT-U Main Auditorium",
-    organizer: { name: "ICpEP.SE R7 CIT-U", avatarInitial: "I" },
+    organizer: {
+      name: "ICpEP.SE R7 CIT-U",
+      avatarImageUrl: "/icpep logo.png", // Using your existing logo
+    },
     tags: ["Assembly", "Official", "Chapter Event"],
     bannerImageUrl:
       "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=500&auto=format&fit=crop",
@@ -91,7 +97,10 @@ export const events: Event[] = [
     date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // Started 2 days ago
     mode: "Onsite",
     location: "CIT-U Campus Grounds",
-    organizer: { name: "ICpEP.SE R7 CIT-U", avatarInitial: "I" },
+    organizer: {
+      name: "ICpEP.SE R7 CIT-U",
+      avatarImageUrl: "/icpep logo.png", // Using your existing logo
+    },
     tags: ["Chapter Week", "Competitions", "Seminars"],
     bannerImageUrl:
       "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=2069&auto=format&fit=crop",
