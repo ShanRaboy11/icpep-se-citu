@@ -1,3 +1,8 @@
+type Officer = {
+  title: string;
+  name: string;
+};
+
 function MeetingAttendanceCard({ onViewFull }: { onViewFull: () => void }) {
   const councilOfficers: Officer[] = [
     { title: 'President', name: 'Maria Elena Santos' },

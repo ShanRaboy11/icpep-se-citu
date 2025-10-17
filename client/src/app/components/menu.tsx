@@ -1,16 +1,18 @@
 'use client';
+
 import type { NextPage } from 'next';
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface MenuProps {
-    userRole: 'guest' | 'user';
-    onExit: () => void;
-  }
+  userRole: 'guest' | 'user';
+  onExit: () => void;
+}
 
 const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   const [hovered, setHovered] = useState<string | null>(null);
-  const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const leaveTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const submenus: Record<string, string[]> = {
     Home: [
@@ -39,12 +41,42 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     Connect: ["Lettucemeet", "Schedule"],
     Developers: ["About ExceptionHandlers", "Developers profiles"],
   };
+  
+  const router = useRouter();
+  
 
+  // Handle navigation for menu items
+  const handleMenuClick = (item: string) => {
+    if (item === "Developers") {
+      router.push("/developers");
+    } else if (item === "Home") {
+      //router.push("/landing-page");
+    } else if (item === "Events") {
+      router.push("/events");
+    } else {
+      console.log(`Navigate to /${item.toLowerCase()}`);
+      // Add other navigation logic here
+    }
+  };
+
+  // Cancel timeout when hovered changes (user re-enters)
   useEffect(() => {
-    if (hovered && timeoutId) {
-      clearTimeout(timeoutId);
+    if (hovered && leaveTimeout.current) {
+      clearTimeout(leaveTimeout.current);
     }
   }, [hovered]);
+
+  const handleMouseEnter = (item: string) => {
+    if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
+    setHovered(item);
+  };
+
+  const handleMouseLeave = () => {
+    // Delay hover removal by 5 seconds
+    leaveTimeout.current = setTimeout(() => {
+      setHovered(null);
+    }, 300);
+  };
 
   const currentMenu = hovered;
 
@@ -87,11 +119,9 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
               {Object.keys(submenus).map((item) => (
                 <div
                   key={item}
-                  onMouseEnter={() => setHovered(item)}
-                  onClick={() => {
-                    // You can add your navigation logic here:
-                    console.log(`Navigate to /${item.toLowerCase()}`);
-                  }}
+                  onMouseEnter={() => handleMouseEnter(item)}
+                  onMouseLeave={handleMouseLeave}
+                  onClick={() => handleMenuClick(item)}
                   className="relative inline-block cursor-pointer group w-fit"
                 >
                   <span
@@ -128,8 +158,8 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                 ? "opacity-100 translate-x-0"
                 : "opacity-0 -translate-x-8 pointer-events-none"
             }`}
-            onMouseEnter={() => setHovered(currentMenu)}
-            onMouseLeave={() => setHovered(null)} 
+            onMouseEnter={() => handleMouseEnter(currentMenu!)}
+            onMouseLeave={handleMouseLeave}
           >
             {currentMenu && submenus[currentMenu]?.length > 0 && (
               <div className="flex flex-col space-y-4">
@@ -137,6 +167,15 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                   <div
                     key={submenu}
                     className="relative inline-block cursor-pointer group w-fit"
+                    onClick={() => {
+                      // Handle submenu clicks
+                      if (currentMenu === "Developers" && submenu === "Developers profiles") {
+                        router.push("/developers");
+                      }
+                      if (currentMenu === "Events" && submenu === "Upcoming events") {
+                        router.push("/events");
+                      }
+                    }}
                   >
                     <span className="text-md sm:text-2xl font-raleway transition-colors duration-300 group-hover:text-white/80">
                       {submenu}
