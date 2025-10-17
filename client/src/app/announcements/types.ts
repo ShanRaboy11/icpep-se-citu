@@ -17,18 +17,50 @@ export interface Awardee {
 }
 
 export interface Announcement {
-  id: string;
+  _id: string;
   title: string;
-  description: string;
-  date: string;
-  type: string;
-  imageUrl: string;
-  fullDescription?: string;
+  description: string; // Short description
+  content: string; // Full description
+  author: {
+    _id: string;
+    fullName: string;
+  };
+  type: 'Event' | 'Award' | 'Workshop' | 'Meeting' | 'Seminar' | 'Achievement' | 'General';
+  priority: 'normal' | 'important' | 'urgent';
+  targetAudience: ('all' | 'members' | 'officers' | 'faculty')[];
+  isPublished: boolean;
+  publishDate: string;
+  expiryDate?: string;
+  
+  // Event/Meeting fields
   time?: string;
   location?: string;
   organizer?: string;
   contact?: string;
   attendees?: string;
   agenda?: string[];
-  awardees?: Awardee[];
+  
+  // Award fields
+  awardees?: {
+    name: string;
+    program?: string;
+    year: string;
+    award: string;
+  }[];
+  
+  // Media
+  imageUrl?: string;
+  attachments: {
+    name: string;
+    url: string;
+    fileType: string;
+  }[];
+  
+  views: number;
+  createdAt: string;
+  updatedAt: string;
+  
+  // Virtuals
+  isExpired?: boolean;
+  formattedDate?: string;
 }
