@@ -4,6 +4,12 @@ import React, { useState, useEffect } from "react";
 import Header from "../components/header";
 import Footer from "../components/footer";
 
+import {
+  CalendarDaysIcon,
+  ComputerDesktopIcon,
+  MapPinIcon,
+} from "@heroicons/react/24/outline";
+
 // --- Helper Components ---
 const EventTag = ({ children }: { children: React.ReactNode }) => (
   <span className="bg-buttonbg1 text-primary3 font-raleway font-semibold px-3 py-1 rounded-full text-sm">
@@ -49,8 +55,9 @@ export default function EventPage() {
   // --- Event Configuration ---
   const eventMode = "Online"; // Change to "Onsite" to see the pin icon and a different location
   const isOnline = eventMode === "Online";
-  const eventLocation = isOnline ? "Google Meet" : "123 Tech Avenue, Innovation City";
-
+  const eventLocation = isOnline
+    ? "Google Meet"
+    : "123 Tech Avenue, Innovation City";
 
   // Set event date (example)
   const eventDate = new Date(
@@ -103,10 +110,13 @@ export default function EventPage() {
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow w-full max-w-6xl mx-auto px-4 py-16">
+        {/* push ALL content down, creating space for the header. */}
+        <main className="flex-grow w-full max-w-6xl mx-auto px-4 pt-38 pb-16">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
             {/* --- Left Column (Narrower & STICKY) --- */}
-            <div className="lg:col-span-2 lg:sticky lg:top-8 h-fit space-y-6 order-2 lg:order-1">
+
+            {/* top-38. This value MUST match the padding-top of <main>. */}
+            <div className="lg:col-span-2 lg:sticky lg:top-38 h-fit space-y-6 order-2 lg:order-1">
               <div className="aspect-square w-full rounded-2xl overflow-hidden shadow-2xl bg-gray-100">
                 <img
                   src="https://images.unsplash.com/photo-1505373877841-8d25f7d46678?q=80&w=2012&auto=format&fit=crop"
@@ -168,12 +178,18 @@ export default function EventPage() {
                 </h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <InfoDetailRow
-                    icon="📅"
+                    icon={<CalendarDaysIcon className="h-7 w-7" />}
                     line1={formattedDate}
                     line2="7:00 PM - 10:00 PM PST"
                   />
                   <InfoDetailRow
-                    icon={isOnline ? "💻" : "📍"}
+                    icon={
+                      isOnline ? (
+                        <ComputerDesktopIcon className="h-7 w-7" />
+                      ) : (
+                        <MapPinIcon className="h-7 w-7" />
+                      )
+                    }
                     line1={eventMode}
                     line2={eventLocation}
                   />

@@ -262,3 +262,7 @@ body {
 .animate-blob-fast {
   animation: blobMoveFast 10s ease-in-out infinite;
 }
+
+html {
+  scroll-behavior: smooth;
+}
