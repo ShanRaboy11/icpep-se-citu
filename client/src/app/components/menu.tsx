@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import type { NextPage } from 'next';
+import type { NextPage } from "next";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
 interface MenuProps {
-  userRole: 'guest' | 'user';
+  userRole: "guest" | "user";
   onExit: () => void;
 }
 
@@ -41,9 +41,8 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     Connect: ["Lettucemeet", "Schedule"],
     Developers: ["About ExceptionHandlers", "Developers profiles"],
   };
-  
+
   const router = useRouter();
-  
 
   // Handle navigation for menu items
   const handleMenuClick = (item: string) => {
@@ -133,7 +132,9 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                   </span>
                   <span
                     className={`absolute left-0 bottom-0 h-[3px] bg-white transition-all duration-300 ${
-                      currentMenu === item ? "w-full opacity-100" : "w-0 opacity-0"
+                      currentMenu === item
+                        ? "w-full opacity-100"
+                        : "w-0 opacity-0"
                     }`}
                   ></span>
                 </div>
@@ -169,10 +170,16 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                     className="relative inline-block cursor-pointer group w-fit"
                     onClick={() => {
                       // Handle submenu clicks
-                      if (currentMenu === "Developers" && submenu === "Developers profiles") {
+                      if (
+                        currentMenu === "Developers" &&
+                        submenu === "Developers profiles"
+                      ) {
                         router.push("/developers");
                       }
-                      if (currentMenu === "Events" && submenu === "Upcoming events") {
+                      if (
+                        currentMenu === "Events" &&
+                        submenu === "Upcoming events"
+                      ) {
                         router.push("/events");
                       }
                     }}
@@ -189,22 +196,46 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
 
           {/* Contact Us */}
           <div className="sm:ml-20 sm:mt-0 mt-10 sm:block hidden">
-            <h3 className="text-white text-xl font-semibold mb-4">Contact Us</h3>
-            <div className="flex gap-4 mt-6">
-              <Image
-                src="/fb.svg"
-                alt="Facebook"
-                width={24}
-                height={24}
-                className="cursor-pointer hover:opacity-80 transition"
-              />
-              <Image
-                src="/email.svg"
-                alt="Email"
-                width={24}
-                height={24}
-                className="cursor-pointer hover:opacity-80 transition"
-              />
+            <h3 className="text-white text-xl font-semibold mb-4">
+              Contact Us
+            </h3>
+            <div className="flex gap-4 mt-3">
+              {[
+                {
+                  src: "/fb.svg",
+                  alt: "Facebook",
+                  action: () =>
+                    window.open("https://www.facebook.com/cituicpep", "_blank"),
+                },
+                {
+                  src: "/email.svg",
+                  alt: "Email",
+                  action: () =>
+                    (window.location.href =
+                      "mailto:icpep.seofficial2526@gmail.com"),
+                },
+              ].map((icon, i) => (
+                <div
+                  key={i}
+                  onClick={icon.action}
+                  className="relative cursor-pointer group flex flex-col items-center transition-all duration-300 ease-in-out"
+                >
+                  {/* icon */}
+                  <Image
+                    src={icon.src}
+                    alt={icon.alt}
+                    width={32}
+                    height={32}
+                    className="transition-all duration-300 ease-in-out group-hover:scale-110"
+                  />
+                  {/* subtle circular tab indicator */}
+                  <span
+                    className="mt-1 h-1.5 w-1.5 rounded-full bg-buttonbg1 opacity-0 scale-0
+                   group-hover:opacity-100 group-hover:scale-100 
+                   transition-all duration-300 ease-out"
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -215,7 +246,8 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
         {/* Footer */}
         <div className="text-center py-6">
           <p className="text-white text-sm">
-            Copyright © 2025 ICpEP Student Edition R7 CIT-U Chapter. All rights reserved.
+            Copyright © 2025 ICpEP Student Edition R7 CIT-U Chapter. All rights
+            reserved.
           </p>
         </div>
       </div>
