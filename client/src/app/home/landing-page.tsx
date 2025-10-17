@@ -1,30 +1,31 @@
 "use client";
 
-import Header from "../../components/header";
-import Hero from "../../components/hero";
-import Footer from "../../components/footer";
-import { AboutSection } from "../../components/sections/about";
-import { WhyJoinSection } from "../../components/sections/join";
-import { AnnouncementsSection } from "../../components/sections/announcement";
-import { EventsSection } from "../../components/sections/events";
-import { TestimonialsSection } from "../../components/sections/testimonials";
-import { FacultyOfficersSection } from "../../components/sections/faculty";
-import { PartnersSection } from "../../components/sections/partner";
-import { FAQSection } from "../../components/sections/faq";
+import Header from "../components/header"; // Assuming correct import path
+import Hero from "../components/hero";
+import Footer from "../components/footer";
+import { AboutSection } from "../components/sections/about";
+import { WhyJoinSection } from "../components/sections/join";
+import { AnnouncementsSection } from "../components/sections/announcement";
+import { EventsSection } from "../components/sections/events";
+import { TestimonialsSection } from "../components/sections/testimonials";
+import { FacultyOfficersSection } from "../components/sections/faculty";
+import { PartnersSection } from "../components/sections/partner";
+import { FAQSection } from "../components/sections/faq";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen flex flex-col overflow-hidden">
       <Header />
 
-      <main style={{ backgroundColor: "#FEFEFF" }}>
+      {/* MODIFICATION: Added className="pt-20" to offset the fixed header */}
+      <main className="pt-20" style={{ backgroundColor: "#FEFEFF" }}>
         <section id="hero">
           <Hero />
         </section>
 
         <section
           id="about"
-          className="-mt-10 flex flex-col items-center justify-center px-6 py-20 md:px-16 lg:px-28 space-y-28 bg"
+          className="-mt-10 flex flex-col items-center justify-center px-6 py-28 md:px-16 lg:px-28 space-y-28 bg"
         >
           <AboutSection />
           <WhyJoinSection />

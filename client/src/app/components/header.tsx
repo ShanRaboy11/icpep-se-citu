@@ -14,7 +14,7 @@ const Header = () => {
   const router = useRouter();
 
   return (
-    <header className="w-full border-b border-foreground bg-white relative z-10">
+    <header className="w-full border-b border-foreground bg-white fixed top-0 left-0 right-0 z-40">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-10 lg:px-10 py-3">
         {/* Left: Logo + Titles */}
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">

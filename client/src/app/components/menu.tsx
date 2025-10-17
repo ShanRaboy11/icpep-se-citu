@@ -49,10 +49,11 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   const handleMenuClick = (item: string) => {
     if (item === "Developers") {
       router.push("/developers");
-    } 
-    if (item === "Home") {
+    } else if (item === "Home") {
       //router.push("/landing-page");
-    }else {
+    } else if (item === "Events") {
+      router.push("/events");
+    } else {
       console.log(`Navigate to /${item.toLowerCase()}`);
       // Add other navigation logic here
     }
@@ -170,6 +171,9 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                       // Handle submenu clicks
                       if (currentMenu === "Developers" && submenu === "Developers profiles") {
                         router.push("/developers");
+                      }
+                      if (currentMenu === "Events" && submenu === "Upcoming events") {
+                        router.push("/events");
                       }
                     }}
                   >
