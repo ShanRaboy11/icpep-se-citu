@@ -266,3 +266,31 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+.interactive-grid {
+  /* The static background grid */
+  background-image: linear-gradient(
+      to right,
+      rgba(0, 167, 238, 0.1) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(0, 167, 238, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-color: #ffffff; /* Ensure a solid white background */
+}
+
+/* This pseudo-element creates the moving "spotlight" */
+.interactive-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    /* The size of the spotlight circle */ 600px circle at var(--mouse-x)
+      var(--mouse-y),
+    /* The color of the glow, using your brand's primary blue */
+      rgba(0, 167, 238, 0.15),
+    /* Fade to transparent */ transparent 80%
+  );
+  /* This transition smooths the spotlight's movement */
+  transition: background 0.1s ease-out;
+}

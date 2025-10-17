@@ -2,6 +2,7 @@
 import Header from "../components/header";
 import Footer from "../components/footer";
 import DeveloperCard from "../components/cards/developercard";
+import Grid from "../components/grid";
 
 export default function DevelopersPage() {
   const developers = [
@@ -66,50 +67,42 @@ export default function DevelopersPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <Header />
+    // --> set up the main container for positioning
+    <div className="min-h-screen bg-white flex flex-col relative">
+      {/* Add the interactive grid background. It will sit at z-0. */}
+      <Grid />
 
-      <main className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12 w-full flex-grow">
-        {/* --- MODIFICATION: Title section updated to match event page style --- */}
-        <div className="mb-16 text-center">
-          {/* Status Pill */}
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-            <div className="h-2 w-2 rounded-full bg-primary1"></div>
-            <span className="font-raleway text-sm font-semibold text-primary1">
-              Project Team
-            </span>
+      {/* --> wrap all content in a div to place it on top */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
+
+        <main className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12 w-full flex-grow">
+          {/* This title section is already perfectly styled for light mode */}
+          <div className="mb-16 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+              <div className="h-2 w-2 rounded-full bg-primary1"></div>
+              <span className="font-raleway text-sm font-semibold text-primary1">
+                Project Team
+              </span>
+            </div>
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+              Meet the Developers
+            </h1>
+            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+              The student developers who created the official ICPEP.SE CIT-U
+              Chapter website as part of the Software Design course.
+            </p>
           </div>
 
-          {/* Main Title */}
-          <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-            Meet the Developers
-          </h1>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[0px] gap-y-14 justify-items-center max-w-[845px] mx-auto mb-16">
+            {developers.map((dev, index) => (
+              <DeveloperCard key={index} {...dev} />
+            ))}
+          </div>
+        </main>
 
-          {/* Subtitle */}
-          <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-            The student developers who created the official ICPEP.SE CIT-U
-            Chapter website as part of the Software Design course.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[0px] gap-y-14 justify-items-center max-w-[845px] mx-auto mb-16">
-          {developers.map((dev, index) => (
-            <DeveloperCard
-              key={index}
-              name={dev.name}
-              title={dev.title}
-              desc={dev.desc}
-              imageSrc={dev.imageSrc}
-              bgSrc={dev.bgSrc}
-              details={dev.details}
-              githubLink={dev.githubLink}
-              portfolioLink={dev.portfolioLink}
-            />
-          ))}
-        </div>
-      </main>
-
-      <Footer />
+        <Footer />
+      </div>
     </div>
   );
 }
