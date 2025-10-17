@@ -1,4 +1,4 @@
-import { Event } from "../data/event";
+import { Event } from "../utils/event";
 
 interface Props {
   status: Event["status"];
@@ -21,7 +21,7 @@ export default function EventHeader({ status, title }: Props) {
             isEventOver ? "bg-red-500" : "bg-green-500"
           }`}
         />
-        {isEventOver ? "Event Ended" : "Registration Open"}
+        {isEventOver ? "Registration Closed" : "Registration Open"}
       </div>
       <h1 className="font-rubik text-4xl font-bold text-primary3 leading-tight">
         {title}

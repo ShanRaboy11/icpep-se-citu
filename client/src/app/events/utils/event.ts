@@ -80,7 +80,32 @@ export const events: Event[] = [
     galleryImageUrls: [
       "https://images.unsplash.com/photo-1511578314322-379afb476865?w=500&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=500&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1578899952109-a7a5529a5a5b?w=500&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1511578314322-379afb476865?w=500&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=500&auto=format&fit=crop",
+    ],
+  },
+  {
+    id: "3",
+    title: "ICpEP Week 2024: Innovation Festival",
+    status: "Ongoing",
+    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // Started 2 days ago
+    mode: "Onsite",
+    location: "CIT-U Campus Grounds",
+    organizer: { name: "ICpEP.SE R7 CIT-U", avatarInitial: "I" },
+    tags: ["Chapter Week", "Competitions", "Seminars"],
+    bannerImageUrl:
+      "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?q=80&w=2069&auto=format&fit=crop",
+    description:
+      "A week-long celebration of technology and engineering with daily competitions, workshops, and fun activities.",
+    details: [
+      {
+        title: "Daily Activities",
+        items: ["Coding Challenges", "Hardware Exhibits", "Gaming Tournaments"],
+      },
+      {
+        title: "Main Events",
+        items: ["Hackathon on Day 3", "Keynote Speech on Day 5"],
+      },
     ],
   },
 ];

@@ -1,6 +1,6 @@
 "use client";
 
-import { events } from "../data/event";
+import { events } from "../utils/event";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import EventHeader from "../components/header";

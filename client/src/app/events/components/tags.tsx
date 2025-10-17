@@ -1,4 +1,4 @@
-import { Event } from "../data/event";
+import { Event } from "../utils/event";
 
 interface Props {
   tags: string[];

@@ -249,8 +249,8 @@ export default function AnnouncementsPage() {
               Announcements
             </h1>
             <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-              Stay updated with the latest news, events, and achievements from
-              ICpEP.SE R7 CIT-U Chapter.
+              Stay in the know with the latest news, events, and achievements
+              from ICpEP.SE R7 CIT-U Chapter.
             </p>
           </div>
 
