@@ -21,7 +21,7 @@ export interface Announcement {
   title: string;
   description: string;
   date: string;
-  type: string;
+  type: string; // This will now be one of 'Event', 'Meeting', 'Achievement'
   imageUrl: string;
   fullDescription?: string;
   time?: string;
