@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useState } from "react";
-// --> MODIFICATION: Import an icon for the portfolio link
-import { ArrowUpRightIcon } from "@heroicons/react/24/solid";
+import { FaGithub } from "react-icons/fa";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/solid";
 
 interface DeveloperCardProps {
   name: string;
@@ -12,6 +12,7 @@ interface DeveloperCardProps {
   imageSrc: string;
   bgSrc: string;
   details: string[];
+  githubLink?: string;
   portfolioLink?: string;
 }
 
@@ -22,9 +23,12 @@ export default function DeveloperCard({
   imageSrc,
   bgSrc,
   details,
+  githubLink,
   portfolioLink,
 }: DeveloperCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+
+  const hasActivePortfolioLink = portfolioLink && portfolioLink !== "#";
 
   return (
     <div
@@ -101,19 +105,43 @@ export default function DeveloperCard({
               ))}
             </ul>
           </div>
-          {portfolioLink && portfolioLink !== "#" && (
-            // --> ANIMATION FIX: Added `group` and updated styles
-            <a
-              href={portfolioLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group font-rubik font-semibold text-base sm:text-sm lg:text-lg text-gray-200 hover:text-white self-end cursor-pointer flex items-center gap-1.5 transition-colors mr-[-20px] mt-5 py-2 px-4"
-            >
-              Portfolio
-              {/* --> ANIMATION FIX: Replaced span with animating icon */}
-              <ArrowUpRightIcon className="h-5 w-5 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </a>
-          )}
+
+          <div className="self-end flex items-center gap-4 mr-[-20px] mt-5 py-2 px-4">
+            {/* GitHub Link */}
+            {githubLink && githubLink !== "#" && (
+              <a
+                href={githubLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="View GitHub Profile"
+                className="text-gray-200 hover:text-white transition-all duration-200"
+              >
+                <FaGithub className="h-7 w-7 transition-transform duration-200 hover:scale-110 active:scale-95" />
+              </a>
+            )}
+
+            {/* Portfolio Link */}
+            {hasActivePortfolioLink ? (
+              // If the link is active, render a clickable <a> tag
+              <a
+                href={portfolioLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="View Portfolio"
+                className="text-gray-200 hover:text-white transition-all duration-200"
+              >
+                <ArrowTopRightOnSquareIcon className="h-7 w-7 transition-transform duration-200 hover:scale-110 active:scale-95" />
+              </a>
+            ) : (
+              // If the link is a placeholder, render a disabled-looking <span>
+              <span
+                title="Portfolio not available"
+                className="cursor-not-allowed opacity-40"
+              >
+                <ArrowTopRightOnSquareIcon className="h-7 w-7" />
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

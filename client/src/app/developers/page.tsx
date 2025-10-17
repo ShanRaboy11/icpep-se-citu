@@ -16,7 +16,8 @@ export default function DevelopersPage() {
         "Head of Training and Seminar Committee, 6th Administration",
         "UI/UX Designer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
-      portfolioLink: "https://github.com/Cayla07",
+      githubLink: "https://github.com/Cayla07",
+      portfolioLink: "#", // <-- Add actual portfolio link here
     },
     {
       name: "Gio Christian D. Macatual",
@@ -29,7 +30,8 @@ export default function DevelopersPage() {
         "Asst. Head of Finance Committee, 6th Administration",
         "Frontend Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
-      portfolioLink: "https://github.com/WATRM3LON",
+      githubLink: "https://github.com/WATRM3LON",
+      portfolioLink: "#", // <-- Add actual portfolio link here
     },
     {
       name: "Shan Michael V. Raboy",
@@ -43,7 +45,8 @@ export default function DevelopersPage() {
         "Project Manager of the ICPEP.SE CIT-U Chapter Official Website",
         "Backend Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
-      portfolioLink: "https://github.com/ShanRaboy11",
+      githubLink: "https://github.com/ShanRaboy11",
+      portfolioLink: "#", // <-- Add actual portfolio link here
     },
     {
       name: "Trixie T. Dolera",
@@ -57,7 +60,8 @@ export default function DevelopersPage() {
         "Asst. Head of External Committee, 6th Administation",
         "Fullstack Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
-      portfolioLink: "https://github.com/nsfw-syntaxia",
+      githubLink: "https://github.com/nsfw-syntaxia",
+      portfolioLink: "#", // <-- Add actual portfolio link here
     },
   ];
 
@@ -66,7 +70,6 @@ export default function DevelopersPage() {
       <Header />
 
       <main className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12 w-full flex-grow">
-        
         {/* --- MODIFICATION: Title section updated to match event page style --- */}
         <div className="mb-16 text-center">
           {/* Status Pill */}
@@ -81,11 +84,11 @@ export default function DevelopersPage() {
           <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
             Meet the Developers
           </h1>
-          
+
           {/* Subtitle */}
           <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-            The student developers who created the official ICPEP.SE CIT-U Chapter website as part of the
-            Software Design course.
+            The student developers who created the official ICPEP.SE CIT-U
+            Chapter website as part of the Software Design course.
           </p>
         </div>
 
@@ -99,6 +102,7 @@ export default function DevelopersPage() {
               imageSrc={dev.imageSrc}
               bgSrc={dev.bgSrc}
               details={dev.details}
+              githubLink={dev.githubLink}
               portfolioLink={dev.portfolioLink}
             />
           ))}
