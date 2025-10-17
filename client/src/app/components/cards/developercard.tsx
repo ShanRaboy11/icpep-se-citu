@@ -26,7 +26,7 @@ export default function DeveloperCard({
 
   return (
     <div
-      className="w-[300px] h-[340px] sm:w-[320px] sm:h-[360px] md:w-[360px] md:h-[360px]"//w-[300px] sm:w-[320px] md:w-[360px] h-[360px] perspective ""
+      className="w-[310px] h-[330px] sm:w-[320px] sm:h-[360px] md:w-[360px] md:h-[360px]"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -37,7 +37,7 @@ export default function DeveloperCard({
       >
         {/* FRONT SIDE */}
         <div className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg backface-hidden bg-gradient-to-b from-sky-400 to-blue-600 flex flex-col justify-between">
-          <div className="absolute top-[-60px] sm:top-[-19px] lg:top-[-38px] left-0 w-full h-full z-0 z-0">
+          <div className="absolute top-[-60px] sm:top-[-19px] lg:top-[-38px] left-0 w-full h-full z-0 z-0 hidden md:block">
             <Image
               src={bgSrc}
               alt={`${name}`}
@@ -47,7 +47,17 @@ export default function DeveloperCard({
             />
           </div>
 
-          <div className="relative w-[90%] ml-auto mt-6 sm:-mt-3 -mr-8">
+          <div className="absolute top-[-15px]  left-[20px] w-[120%] h-[120%] z-0 z-0 md:hidden">
+            <Image
+              src="/icpep logo.png"
+              alt={`${name}`}
+              fill
+              className="object-contain object-bottom opacity-10"
+              sizes="(max-width: 360px) 250px, 300px"
+            />
+          </div>
+
+          <div className="relative w-[90%] ml-auto mt-1 sm:-mt-3 lg:-mt-5 -mr-8">
             {imageSrc ? (
               <Image
                 src={imageSrc}
@@ -63,8 +73,8 @@ export default function DeveloperCard({
 
           {/* Name (overlapping bottom slightly) */}
           <div
-            className="absolute bottom-30 left-1/2 -translate-x-1/2 w-[78%] 
-                 text-left flex flex-col text-xl sm:text-xl lg:text-2xl
+            className="absolute bottom-30 left-[47%] sm:left-[48%] -translate-x-1/2 w-[78%] 
+                 text-left flex flex-col text-[22px] sm:text-xl lg:text-2xl
                 font-raleway font-bold text-white text-2xl"
           >
             <h3>{title}</h3>
@@ -77,12 +87,12 @@ export default function DeveloperCard({
         </div>
 
         {/* BACK SIDE */}
-        <div className="absolute px-12 w-full h-full rounded-2xl  overflow-hidden shadow-lg bg-gradient-to-br from-sky-400 to-blue-900 p-6 flex flex-col justify-between text-white rotate-y-180 backface-hidden">
+        <div className="absolute px-8 sm:px-12 lg:px-12 w-full h-full rounded-2xl  overflow-hidden shadow-lg bg-gradient-to-br from-sky-400 to-blue-900 p-6 flex flex-col justify-between text-white rotate-y-180 backface-hidden">
           <div>
-            <h2 className="font-rubik text-lg sm:text-xl lg:text-2xl text-center font-bold mt-1 mb-3">
+            <h2 className="font-rubik text-[20.2px] sm:text-xl lg:text-2xl text-center font-bold mt-1 sm:mt-1 lg:mt-1 mb-2 sm:mb-3 lg:mb-3">
               {name}
             </h2>
-            <ul className="font-raleway text-sm sm:text-base list-disc list-outside space-y-1 text-md text-gray-100 mt-5">
+            <ul className="font-raleway text-[13.6px] sm:text-base lg:text-base list-disc list-outside space-y-1 text-md text-gray-100 mt-5 -mb-2">
               {details.map((item, idx) => (
                 <li key={idx}>{item}</li>
               ))}
@@ -94,7 +104,7 @@ export default function DeveloperCard({
               target="_blank"
               rel="noopener noreferrer"
               // Retained your existing styles and the added padding
-              className="font-raleway  text-base sm:text-sm lg:text-lg text-gray-200 hover:text-white self-end cursor-pointer flex items-center gap-1 transition-colors mr-[-20px] mt-5 py-2 px-5"
+              className="font-raleway  text-base sm:text-sm lg:text-lg text-gray-200 hover:text-white self-end cursor-pointer flex items-center gap-1 transition-colors mr-[-20px] mt-5 py-2 px-4"
             >
               Portfolio <span className="text-xl">↗</span>
             </a>

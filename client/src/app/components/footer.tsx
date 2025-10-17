@@ -1,10 +1,13 @@
 "use client";
 import type { NextPage } from "next";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const Footer: NextPage = () => {
+  const router = useRouter();
+
   return (
-    <footer className="w-full bg-steelblue-200 text-buttonbg1 font-raleway z-5">
+    <footer className="w-full bg-steelblue-200 text-buttonbg1 font-raleway">
       <div className="max-w-7xl mx-auto px-2 py-10 flex flex-col gap-8 pb-5">
         {/* ====== Top Navigation ====== */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-white/30 pb-4">
@@ -14,7 +17,15 @@ const Footer: NextPage = () => {
               (item, i) => (
                 <div key={item} className="flex items-center">
                   {i > 0 && <span className="mx-2">•</span>}
-                  <span className="cursor-pointer hover:text-white transition">
+                  <span
+                    className="cursor-pointer hover:text-white transition"
+                    onClick={() => {
+                      if (item === "Developers") {
+                        router.push("/developers");
+                      }
+                      // else if (item === 'Home') { router.push('/'); }
+                    }}
+                  >
                     {item}
                   </span>
                 </div>
@@ -144,29 +155,39 @@ const Footer: NextPage = () => {
           <div className="flex flex-col items-center sm:items-end gap-3">
             <p className="font-medium text-lavender cursor-auto">Contact Us</p>
             <div className="flex gap-3">
-              <Image
-                src="/fb.svg"
-                alt="Facebook"
-                width={25}
-                height={25}
-                className="cursor-pointer hover:opacity-80 transition"
-              />
-              <Image
-                src="/email.svg"
-                alt="Email"
-                width={25}
-                height={25}
-                className="cursor-pointer hover:opacity-80 transition"
-              />
+              {" "}
+              <a
+                href="https://www.facebook.com/cituicpep"
+                target="fb_page"
+                rel="noopener noreferrer"
+                className="flex"
+              >
+                <Image
+                  src="/fb.svg"
+                  alt="Facebook"
+                  width={25}
+                  height={25}
+                  className="cursor-pointer hover:opacity-80 transition"
+                />
+              </a>
+              {/* Email Link */}
+              <a href="mailto:icpep.seofficial2526@gmail.com" className="flex">
+                <Image
+                  src="/email.svg"
+                  alt="Email"
+                  width={25}
+                  height={25}
+                  className="cursor-pointer hover:opacity-80 transition"
+                />
+              </a>
             </div>
           </div>
         </div>
-
         {/* ====== Bottom Text ====== */}
       </div>
       <div
-        className="w-full text-center font-medium uppercase text-steelblue-100 
-                    text-[30px] sm:text-[103px] leading-none tracking-[0.1em] 
+        className="w-full text-center font-medium uppercase text-steelblue-100
+                    text-[30px] sm:text-[103px] leading-none tracking-[0.1em]
                     whitespace-nowrap py-2"
       >
         ICPEP SE CIT-UNIVERSITY
