@@ -3,8 +3,6 @@ export const getTypeColor = (type: string) => {
   switch (type.toLowerCase()) {
     // For primary, general events
     case "event":
-    case "seminar":
-    case "workshop":
       return "bg-sky-500 text-white"; // A bright, welcoming blue (like your theme's primary)
 
     // For more formal or internal announcements
@@ -13,7 +11,6 @@ export const getTypeColor = (type: string) => {
 
     // For celebratory or positive news
     case "achievement":
-    case "award":
       return "bg-teal-500 text-white"; // A sophisticated, positive blue-green
 
     // A fallback that still fits the theme

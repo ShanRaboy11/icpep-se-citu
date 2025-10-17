@@ -54,7 +54,7 @@ const announcements = [
     organizer: "ICpEP SE CIT-U Chapter",
     contact: "awards@icpep-cituc.org",
     attendees: "200+ members and guests",
-    type: "Award",
+    type: "Achievement",
     imageUrl: "/meeting.png",
     awardees: [
       {
@@ -96,7 +96,7 @@ const announcements = [
     organizer: "Digital Innovation Team",
     contact: "training@organization.com",
     attendees: "30 participants",
-    type: "Workshop",
+    type: "Event",
     imageUrl: "/meeting.png",
     agenda: [
       "1:00 PM - Welcome & Digital Transformation Overview",
@@ -146,7 +146,7 @@ const announcements = [
     organizer: "Human Resources Department",
     contact: "leadership@organization.com",
     attendees: "50 managers and leaders",
-    type: "Seminar",
+    type: "Event",
     imageUrl: "/meeting.png",
     agenda: [
       "9:00 AM - Modern Leadership Principles",
