@@ -5,18 +5,18 @@ npm install ogl
 npm install gsap*/
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary1: #00A7EE;
-  --primary2: #04A6EF;
+  --background: #fefeff;
+  --foreground: #ededed;
+  --primary1: #00a7ee;
+  --primary2: #04a6ef;
   --primary3: #003599;
-  --bodytext: #373D47;
-  --buttonbg1: #DBEEFF;
+  --bodytext: #373d47;
+  --buttonbg1: #dbeeff;
   --steelblue-100: #59a1c2;
-  --steelblue-200:#006fa1;
+  --steelblue-200: #006fa1;
   --secondary1: #002231;
   --secondary2: #45c7ff;
-  --secondary3:#00a8f3;
+  --secondary3: #00a8f3;
 }
 
 @theme inline {
@@ -63,7 +63,8 @@ body {
 
 /* Floating animations */
 @keyframes float-slow {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -72,7 +73,8 @@ body {
 }
 
 @keyframes float-medium {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -81,7 +83,8 @@ body {
 }
 
 @keyframes float-fast {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -119,7 +122,6 @@ body {
   animation: gradient-flow 3s ease-in-out infinite;
 }
 
-
 .transform-style-preserve-3d {
   transform-style: preserve-3d;
 }
@@ -149,53 +151,114 @@ body {
 
 /* Floating animations (random paths) */
 @keyframes blob-1 {
-  0%   { transform: translate(0px, 0px) scale(1); }
-  25%  { transform: translate(80px, -30px) scale(1.1); }
-  50%  { transform: translate(150px, 40px) scale(1.2); }
-  75%  { transform: translate(60px, 90px) scale(1.1); }
-  100% { transform: translate(0px, 0px) scale(1); }
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  25% {
+    transform: translate(80px, -30px) scale(1.1);
+  }
+  50% {
+    transform: translate(150px, 40px) scale(1.2);
+  }
+  75% {
+    transform: translate(60px, 90px) scale(1.1);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }
 
 @keyframes blob-2 {
-  0%   { transform: translate(0px, 0px) scale(1); }
-  20%  { transform: translate(-60px, 20px) scale(1.05); }
-  40%  { transform: translate(-30px, 80px) scale(1.1); }
-  60%  { transform: translate(20px, 40px) scale(1.05); }
-  80%  { transform: translate(-10px, -20px) scale(1.1); }
-  100% { transform: translate(0px, 0px) scale(1); }
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  20% {
+    transform: translate(-60px, 20px) scale(1.05);
+  }
+  40% {
+    transform: translate(-30px, 80px) scale(1.1);
+  }
+  60% {
+    transform: translate(20px, 40px) scale(1.05);
+  }
+  80% {
+    transform: translate(-10px, -20px) scale(1.1);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }
 
 @keyframes blob-3 {
-  0%   { transform: translate(0px, 0px) scale(1); }
-  30%  { transform: translate(120px, 50px) scale(1.15); }
-  60%  { transform: translate(180px, -20px) scale(1.2); }
-  90%  { transform: translate(60px, -60px) scale(1.1); }
-  100% { transform: translate(0px, 0px) scale(1); }
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  30% {
+    transform: translate(120px, 50px) scale(1.15);
+  }
+  60% {
+    transform: translate(180px, -20px) scale(1.2);
+  }
+  90% {
+    transform: translate(60px, -60px) scale(1.1);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }
 
 @keyframes blob-4 {
-  0%   { transform: translate(0px, 0px) scale(1); }
-  25%  { transform: translate(-40px, -50px) scale(1.1); }
-  50%  { transform: translate(-100px, 20px) scale(1.15); }
-  75%  { transform: translate(-50px, 60px) scale(1.1); }
-  100% { transform: translate(0px, 0px) scale(1); }
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  25% {
+    transform: translate(-40px, -50px) scale(1.1);
+  }
+  50% {
+    transform: translate(-100px, 20px) scale(1.15);
+  }
+  75% {
+    transform: translate(-50px, 60px) scale(1.1);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }
 
 @keyframes blob-5 {
-  0%   { transform: translate(0px, 0px) scale(1); }
-  20%  { transform: translate(50px, 30px) scale(1.05); }
-  50%  { transform: translate(100px, 70px) scale(1.1); }
-  80%  { transform: translate(40px, 40px) scale(1.05); }
-  100% { transform: translate(0px, 0px) scale(1); }
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  20% {
+    transform: translate(50px, 30px) scale(1.05);
+  }
+  50% {
+    transform: translate(100px, 70px) scale(1.1);
+  }
+  80% {
+    transform: translate(40px, 40px) scale(1.05);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }
 
 /* Assign animations with different durations & easing */
-.animate-blob-1 { animation: blob-1 20s ease-in-out infinite; }
-.animate-blob-2 { animation: blob-2 25s ease-in-out infinite; }
-.animate-blob-3 { animation: blob-3 22s ease-in-out infinite; }
-.animate-blob-4 { animation: blob-4 28s ease-in-out infinite; }
-.animate-blob-5 { animation: blob-5 24s ease-in-out infinite; }
+.animate-blob-1 {
+  animation: blob-1 20s ease-in-out infinite;
+}
+.animate-blob-2 {
+  animation: blob-2 25s ease-in-out infinite;
+}
+.animate-blob-3 {
+  animation: blob-3 22s ease-in-out infinite;
+}
+.animate-blob-4 {
+  animation: blob-4 28s ease-in-out infinite;
+}
+.animate-blob-5 {
+  animation: blob-5 24s ease-in-out infinite;
+}
 .animate-blob-fast {
   animation: blobMoveFast 10s ease-in-out infinite;
 }
-

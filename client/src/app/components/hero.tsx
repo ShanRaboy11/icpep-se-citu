@@ -7,7 +7,10 @@ const Hero = () => {
   const router = useRouter();
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white -mt-16 z-0">
+    <section
+      className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-16 z-0"
+      style={{ backgroundColor: "#FEFEFF" }}
+    >
       {/* Floating Elements - in front of everything */}
       <div className="absolute inset-0 pointer-events-none z-50">
         {/* Software Development - Top Left */}
