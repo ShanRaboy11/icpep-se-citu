@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnnouncementCard } from "./components/announcement-card";
 import Header from "../components/header";
@@ -10,10 +11,20 @@ import { Announcement, announcements } from "./utils/announcements";
 
 export default function AnnouncementsPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<string>("All");
 
   const sortedAnnouncements = [...announcements].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
+
+  const filteredAnnouncements = announcements
+    .filter((announcement) => {
+      if (activeTab === "All") {
+        return true; // show all announcements
+      }
+      return announcement.type.toLowerCase() === activeTab.toLowerCase();
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const handleAnnouncementClick = (announcement: Announcement) => {
     const encodedData = encodeURIComponent(JSON.stringify(announcement));
@@ -23,6 +34,8 @@ export default function AnnouncementsPage() {
   const handleBackToHome = () => {
     router.push("/");
   };
+
+  const tabs = ["All", "News", "Meeting", "Achievement"];
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
@@ -66,14 +79,41 @@ export default function AnnouncementsPage() {
             </p>
           </div>
 
-          {/* Announcements List - now maps over the full, sorted list */}
+          {/* --- MODIFICATION: Themed "Inset" Tab Bar --- */}
+          <div className="mb-16 flex justify-center">
+            {/* The "track" now uses your theme's light blue background */}
+            <div className="flex space-x-1 rounded-xl bg-primary1/10 p-1">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`relative w-full rounded-lg px-4 py-2 sm:px-6 sm:py-2.5 text-sm sm:text-base font-rubik font-semibold transition-colors duration-300 ease-in-out cursor-pointer
+                    ${
+                      activeTab === tab
+                        ? "bg-white text-primary1 shadow" // Active tab is white on the blue track
+                        : "text-primary1/60 hover:bg-white/60" // Inactive tabs are faded blue
+                    }
+                  `}
+                >
+                  {tab}
+                  {/* The underline remains the same */}
+                  {activeTab === tab && (
+                    <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-0.5 w-1/3 bg-primary1"></span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Announcements List */}
           <div className="px-6 lg:px-12 xl:px-16 pb-14">
             <div className="space-y-12">
-              {sortedAnnouncements.map((announcement) => (
+              {/* --- MODIFICATION 5: Map over the new `filteredAnnouncements` array --- */}
+              {filteredAnnouncements.map((announcement) => (
                 <AnnouncementCard
                   key={announcement.id}
                   {...announcement}
-                  imageUrl={announcement.imageUrl} // Use dynamic image URL
+                  imageUrl={announcement.imageUrl}
                   onClick={() => handleAnnouncementClick(announcement)}
                 />
               ))}
