@@ -15,43 +15,45 @@ export default function MeetingAttendanceCard({
     { title: "Treasurer", name: "Miguel Angelo Fernandez" },
     { title: "Auditor", name: "Ana Gabriela Reyes" },
     { title: "PIO", name: "Carlos David Mendoza" },
+    { title: "PRO", name: "Carlos David Mendoza" },
   ];
 
   return (
-    // Using theme color primary3 for the background
-    <div className="bg-primary3 rounded-2xl shadow-md p-6 text-white">
-      {/* --- FONT: Rubik --- */}
-      <h3 className="font-rubik text-xl font-bold mb-4">Meeting Attendance</h3>
+    // --- MODIFICATION 1: Replaced solid color with a sophisticated dark blue gradient ---
+    <div className="rounded-2xl bg-gradient-to-br from-primary3 to-secondary1 p-6 text-white shadow-lg">
+      <h3 className="font-rubik text-xl font-bold text-white mb-4 pb-4 border-b border-white/20">
+        Meeting Attendance
+      </h3>
 
       <div className="bg-white/10 rounded-lg p-4 mb-4 max-h-64 overflow-y-auto">
         <div className="space-y-3">
           <div>
-            {/* --- FONT: Rubik --- */}
-            <h4 className="font-rubik text-sm font-semibold mb-2 opacity-90">
+            <h4 className="font-rubik text-sm font-semibold text-white/90 mb-2">
               Council Officers
             </h4>
             {councilOfficers.slice(0, 4).map((officer, index) => (
-              // --- FONT: Raleway ---
               <div
                 key={index}
                 className="font-raleway flex justify-between py-1.5 text-sm"
               >
-                <span className="opacity-80">{officer.title}</span>
-                <span className="font-medium">{officer.name}</span>
+                <span className="text-white/70">{officer.title}</span>
+                <span className="font-medium text-white">{officer.name}</span>
               </div>
             ))}
-            {/* --- FONT: Raleway --- */}
-            <p className="font-raleway text-xs opacity-70 mt-2">
+            <p className="font-raleway text-xs text-white/60 mt-2">
               + {councilOfficers.length - 4} more officers
             </p>
           </div>
         </div>
       </div>
 
-      {/* --- FONT: Rubik --- */}
+      {/* --- MODIFICATION 2: Upgraded to a premium "outline" button that fills on hover --- */}
       <button
         onClick={onViewFull}
-        className="font-rubik w-full bg-white text-primary3 py-3 px-6 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+        className="font-rubik w-full rounded-lg border border-white/50 bg-transparent 
+                   py-3 px-6 font-semibold text-white 
+                   transition-all duration-300 ease-in-out 
+                   hover:bg-white hover:text-primary3 active:scale-95 cursor-pointer"
       >
         View Full Attendance
       </button>

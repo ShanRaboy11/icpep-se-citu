@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AnnouncementDetails from "../components/details";
 import DetailsSidebar from "../components/info";
-import MeetingAttendanceCard from "../components/attendance_card";
+import MeetingAttendanceCard from "../components/attendance-card";
 import AttendanceModal from "../components/attendance_modal";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
