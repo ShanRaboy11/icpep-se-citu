@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { events } from "../utils/event";
+import { events, Event } from "../utils/event";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import EventHeader from "../components/header";
@@ -14,6 +14,10 @@ import EventDetails from "../components/details";
 import EventGallery from "../components/gallery";
 import { ArrowLeft } from "lucide-react";
 
+type ProcessedEvent = Event & {
+  status: "Upcoming" | "Ongoing" | "Ended";
+};
+
 export default function EventDetailPage({
   params,
 }: {
@@ -21,7 +25,32 @@ export default function EventDetailPage({
 }) {
   const router = useRouter();
 
-  const event = events.find((e) => e.id === params.id);
+  // Find the raw event data first
+  const rawEvent = events.find((e) => e.id === params.id);
+
+  // --- MODIFICATION 1: Calculate the status dynamically ---
+  let event: ProcessedEvent | undefined;
+
+  if (rawEvent) {
+    const now = new Date();
+    const startDate = new Date(rawEvent.date);
+    // For single-day events, they effectively 'end' at midnight of that day
+    const endDate = rawEvent.endDate
+      ? new Date(rawEvent.endDate)
+      : new Date(startDate.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+    let status: ProcessedEvent["status"];
+    if (now < startDate) {
+      status = "Upcoming";
+    } else if (now >= startDate && now <= endDate) {
+      status = "Ongoing";
+    } else {
+      status = "Ended";
+    }
+
+    // Create the final event object with the dynamic status
+    event = { ...rawEvent, status };
+  }
 
   const handleBackToEvents = () => {
     router.push("/events");
@@ -76,6 +105,7 @@ export default function EventDetailPage({
             </div>
 
             <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
+              {/* --- MODIFICATION 2: Pass the dynamic status to child components --- */}
               <EventHeader status={event.status} title={event.title} />
               <EventInfo
                 date={event.date}

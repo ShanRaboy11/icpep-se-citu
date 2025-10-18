@@ -13,10 +13,6 @@ export default function AnnouncementsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>("All");
 
-  const sortedAnnouncements = [...announcements].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
-
   const filteredAnnouncements = announcements
     .filter((announcement) => {
       if (activeTab === "All") {
