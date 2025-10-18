@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Event } from "./utils/event"; // Assuming your types are here
+import { Event } from "../utils/event"; // Assuming your types are here
 
 interface Props {
   event: Event;

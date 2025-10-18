@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { events, Event } from "./utils/event"; // Import the base Event type
 import Header from "../components/header";
 import Footer from "../components/footer";
-import EventCard from "./event-card";
+import EventCard from "./components/event-card";
 import Grid from "../components/grid";
 import { ArrowLeft } from "lucide-react";
 
