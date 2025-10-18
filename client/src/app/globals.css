@@ -319,3 +319,30 @@ html {
   flex: 0 0 100%;
   min-width: 0;
 }
+
+/* Add/update these styles for a custom LIGHT scrollbar */
+.themed-scrollbar::-webkit-scrollbar {
+  width: 7px;
+}
+.themed-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9; /* A light gray track */
+  border-radius: 10px;
+}
+.themed-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1; /* A slightly darker gray thumb */
+  border-radius: 10px;
+}
+.themed-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8; /* Darken on hover */
+}
+
+@keyframes spin-and-fade {
+  from {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: rotate(90deg) scale(1.2);
+    opacity: 0.7;
+  }
+}

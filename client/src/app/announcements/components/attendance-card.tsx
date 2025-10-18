@@ -1,4 +1,4 @@
-import { Officer } from "../types";
+import { councilOfficers } from "../utils/announcements";
 
 interface MeetingAttendanceCardProps {
   onViewFull: () => void;
@@ -7,19 +7,7 @@ interface MeetingAttendanceCardProps {
 export default function MeetingAttendanceCard({
   onViewFull,
 }: MeetingAttendanceCardProps) {
-  const councilOfficers: Officer[] = [
-    { title: "President", name: "Maria Elena Santos" },
-    { title: "VP - Internal", name: "John Rafael Cruz" },
-    { title: "VP - External", name: "Patricia Anne Villanueva" },
-    { title: "Secretary", name: "Sarah Mae Rodriguez" },
-    { title: "Treasurer", name: "Miguel Angelo Fernandez" },
-    { title: "Auditor", name: "Ana Gabriela Reyes" },
-    { title: "PIO", name: "Carlos David Mendoza" },
-    { title: "PRO", name: "Carlos David Mendoza" },
-  ];
-
   return (
-    // --- MODIFICATION 1: Replaced solid color with a sophisticated dark blue gradient ---
     <div className="rounded-2xl bg-gradient-to-br from-primary3 to-secondary1 p-6 text-white shadow-lg">
       <h3 className="font-rubik text-xl font-bold text-white mb-4 pb-4 border-b border-white/20">
         Meeting Attendance
@@ -31,6 +19,7 @@ export default function MeetingAttendanceCard({
             <h4 className="font-rubik text-sm font-semibold text-white/90 mb-2">
               Council Officers
             </h4>
+            
             {councilOfficers.slice(0, 4).map((officer, index) => (
               <div
                 key={index}
@@ -47,7 +36,6 @@ export default function MeetingAttendanceCard({
         </div>
       </div>
 
-      {/* --- MODIFICATION 2: Upgraded to a premium "outline" button that fills on hover --- */}
       <button
         onClick={onViewFull}
         className="font-rubik w-full rounded-lg border border-white/50 bg-transparent 

@@ -18,6 +18,17 @@ export interface Announcement {
   }[];
 }
 
+export interface Officer {
+  title: string;
+  name: string;
+}
+
+export interface Committee {
+  name: string;
+  color: string;
+  members: Officer[];
+}
+
 export const getTypeColor = (type: string) => {
   switch (type.toLowerCase()) {
     case "news":
@@ -93,6 +104,105 @@ export const announcements: Announcement[] = [
       "Chapter Performance Review",
       "Financial Status & Budget Planning",
       "Strategic Initiatives Planning",
+    ],
+  },
+];
+
+export const councilOfficers: Officer[] = [
+  { title: "President", name: "Maria Elena Santos" },
+  { title: "VP - Internal", name: "John Rafael Cruz" },
+  { title: "VP - External", name: "Patricia Anne Villanueva" },
+  { title: "Secretary", name: "Sarah Mae Rodriguez" },
+  { title: "Treasurer", name: "Miguel Angelo Fernandez" },
+  { title: "Auditor", name: "Ana Gabriela Reyes" },
+  { title: "PIO", name: "Carlos David Mendoza" },
+  { title: "PRO", name: "Eurica Abella" },
+];
+
+export const committees: Committee[] = [
+  {
+    name: "Internal Affairs",
+    color: "#00A7EE",
+    members: [
+      { title: "Head", name: "Lisa Marie Gonzales" },
+      { title: "Asst. Head", name: "Mark Anthony Torres" },
+      { title: "Secretary", name: "Jerome Paul Castro" },
+      { title: "Member", name: "Michelle Anne Dela Cruz" },
+      { title: "Member", name: "Kenneth James Rivera" },
+    ],
+  },
+  {
+    name: "External Affairs",
+    color: "#9333ea",
+    members: [
+      { title: "Head", name: "Rachel Anne Delgado" },
+      { title: "Asst. Head", name: "Alexander James Morales" },
+      { title: "Secretary", name: "Kristine Mae Perez" },
+      { title: "Member", name: "Daniel Jose Aquino" },
+    ],
+  },
+  {
+    name: "Training & Seminar",
+    color: "#16a34a",
+    members: [
+      { title: "Head", name: "Anthony Carl Valdez" },
+      { title: "Asst. Head", name: "Jasmine Rose Garcia" },
+      { title: "Secretary", name: "Benedict Paul Ramos" },
+      { title: "Member", name: "Sophia Jane Herrera" },
+      { title: "Member", name: "Christopher Mark Luna" },
+    ],
+  },
+  {
+    name: "Public Relations",
+    color: "#ea580c",
+    members: [
+      { title: "Head", name: "Isabella Marie Santos" },
+      { title: "Asst. Head", name: "Gabriel Luis Mendez" },
+      { title: "Secretary", name: "Nicole Faith Castillo" },
+      { title: "Member", name: "Adrian Jose Flores" },
+    ],
+  },
+  {
+    name: "Research & Development",
+    color: "#2563eb",
+    members: [
+      { title: "Head", name: "Emmanuel Jose Rivera" },
+      { title: "Asst. Head", name: "Angelica Mae Torres" },
+      { title: "Secretary", name: "Francisco Paul Moreno" },
+      { title: "Member", name: "Vanessa Joy Diaz" },
+      { title: "Member", name: "Roberto Miguel Aguilar" },
+    ],
+  },
+  {
+    name: "Finance",
+    color: "#ca8a04",
+    members: [
+      { title: "Head", name: "Victoria Grace Tan" },
+      { title: "Asst. Head", name: "Joshua Daniel Lim" },
+      { title: "Secretary", name: "Stephanie Rose Ong" },
+      { title: "Member", name: "Michael Andre Chua" },
+    ],
+  },
+  {
+    name: "Sports & Cultural",
+    color: "#dc2626",
+    members: [
+      { title: "Head", name: "Christian Mark Velasco" },
+      { title: "Asst. Head", name: "Amanda Faith Salazar" },
+      { title: "Secretary", name: "Lucas James Navarro" },
+      { title: "Member", name: "Samantha Rose Cruz" },
+      { title: "Member", name: "Matthew Jose Reyes" },
+    ],
+  },
+  {
+    name: "Media & Documentation",
+    color: "#4f46e5",
+    members: [
+      { title: "Head", name: "Catherine Joy Mendoza" },
+      { title: "Asst. Head", name: "Rafael Antonio Santos" },
+      { title: "Secretary", name: "Gabrielle Marie Pascual" },
+      { title: "Member", name: "Nathan Carl Domingo" },
+      { title: "Member", name: "Arianna Faith Bautista" },
     ],
   },
 ];

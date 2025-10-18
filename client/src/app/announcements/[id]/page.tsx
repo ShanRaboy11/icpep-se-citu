@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import AnnouncementDetails from "../components/details";
 import DetailsSidebar from "../components/info";
 import MeetingAttendanceCard from "../components/attendance-card";
-import AttendanceModal from "../components/attendance_modal";
+import AttendanceModal from "../components/attendance-modal";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import { ArrowLeft } from "lucide-react";
