@@ -14,7 +14,7 @@ const Header = () => {
   const router = useRouter();
 
   return (
-    <header className="w-full border-b border-foreground bg-white fixed top-0 left-0 right-0 z-40">
+    <header className="w-full border-b border-foreground bg-white fixed top-0 left-0 right-0 z-40 cursor-default">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-10 lg:px-10 py-3">
         {/* Left: Logo + Titles */}
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -23,7 +23,10 @@ const Header = () => {
             alt="ICPEP Logo"
             width={55}
             height={55}
-            className="md:h-15 md:w-auto sm:h-25 sm:w-auto rounded-full"
+            className="md:h-15 md:w-auto sm:h-25 sm:w-auto rounded-full cursor-pointer 
+                       transition-all duration-300 ease-in-out 
+                       hover:drop-shadow-[0_0_8px_rgba(0,167,238,0.7)]"
+            onClick={() => router.push("/home")}
           />
           <div className="flex items-end gap-0.5">
             <Image
@@ -99,17 +102,26 @@ const Header = () => {
           {role === "guest" && (
             <>
               <Button
-                className="sm:block"
+                className="sm:block h-10.5 transition-all duration-300 ease-in-out 
+             hover:scale-105 hover:brightness-110 hover:shadow-[0_0_10px_rgba(0,167,238,0.5)] 
+             active:scale-95"
                 variant="secondary"
                 onClick={() => setRole("user")}
               >
                 Sign Up
               </Button>
+
+              {/* Log In Button */}
               <Button
-                className="sm:block border-2"
+                className="sm:block border-2 relative overflow-hidden 
+             transition-all duration-300 ease-in-out active:scale-95 
+             before:absolute before:inset-0 before:bg-gradient-to-r 
+             before:from-transparent before:via-white/40 before:to-transparent 
+             before:translate-x-[-100%] hover:before:translate-x-[100%] 
+             before:transition-transform before:duration-700"
                 onClick={() => {
                   setRole("user");
-                  router.push("/login");
+                  // router.push("/login");
                 }}
               >
                 Log In
@@ -125,11 +137,18 @@ const Header = () => {
                 alt="User Profile"
                 width={36}
                 height={36}
-                className="h-9 w-9 cursor-pointer"
+                className="h-11.5 w-11.5 cursor-pointer transition-all duration-300 ease-in-out
+             hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_10px_rgba(0,167,238,0.5)]
+             active:scale-95"
               />
+
               <Button
-                variant="outline"
-                size="sm"
+                className="sm:block border-2 relative overflow-hidden 
+             transition-all duration-300 ease-in-out active:scale-95 
+             before:absolute before:inset-0 before:bg-gradient-to-r 
+             before:from-transparent before:via-white/40 before:to-transparent 
+             before:translate-x-[-100%] hover:before:translate-x-[100%] 
+             before:transition-transform before:duration-700"
                 onClick={() => setRole("guest")}
               >
                 Log Out
@@ -142,7 +161,9 @@ const Header = () => {
             aria-label="Open menu"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="grid grid-cols-3 gap-1 cursor-pointer"
+            className={`grid grid-cols-3 gap-1 cursor-pointer transition-transform duration-500 ease-in-out hover:rotate-90 ${
+              open ? "rotate-[360deg]" : ""
+            }`}
           >
             {Array.from({ length: 9 }).map((_, i) => (
               <div key={i} className="h-1.5 w-1.5 rounded-[3px] bg-primary1" />
