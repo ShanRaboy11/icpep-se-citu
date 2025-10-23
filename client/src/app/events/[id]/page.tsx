@@ -58,9 +58,23 @@ export default function EventDetailPage({
 
   if (!event) {
     return (
-      <div>
+      <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="text-center pt-38">Event not found.</main>
+        <main className="flex flex-grow flex-col items-center justify-center text-center px-4 pt-[9.5rem] pb-12">
+          <h1 className="font-rubik text-4xl font-bold text-primary3 mb-4">
+            Event Not Found
+          </h1>
+          <p className="font-raleway max-w-md text-gray-600 mb-8">
+            Sorry, the event you are looking for does not exist.
+          </p>
+          <button
+            onClick={() => router.push("/events")}
+            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2 hover:shadow-primary1/40 hover:-translate-y-0.5"
+          >
+            <ArrowLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
+            <span>Back to Events</span>
+          </button>
+        </main>
         <Footer />
       </div>
     );
