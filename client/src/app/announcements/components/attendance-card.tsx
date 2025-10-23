@@ -30,7 +30,7 @@ export default function MeetingAttendanceCard({
               </div>
             ))}
             <p className="font-raleway text-xs text-white/60 mt-2">
-              + {councilOfficers.length - 4} more officers
+              +{councilOfficers.length - 4} more officers
             </p>
           </div>
         </div>

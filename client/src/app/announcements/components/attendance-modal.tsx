@@ -1,6 +1,12 @@
 import Image from "next/image";
 import { X } from "lucide-react";
-import { councilOfficers, committees } from "../utils/announcements";
+import {
+  Announcement,
+  Officer,
+  Committee,
+  councilOfficers,
+  committees,
+} from "../utils/announcements";
 
 const lightenColor = (hex: string, percent: number) => {
   const num = parseInt(hex.replace("#", ""), 16);
@@ -21,13 +27,32 @@ const lightenColor = (hex: string, percent: number) => {
 interface AttendanceModalProps {
   isOpen: boolean;
   onClose: () => void;
+  announcement: Announcement | null;
 }
 
 export default function AttendanceModal({
   isOpen,
   onClose,
+  announcement,
 }: AttendanceModalProps) {
-  if (!isOpen) return null;
+  if (!isOpen || !announcement) return null;
+
+  const formattedDate = new Date(announcement.date).toLocaleDateString(
+    "en-US",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }
+  );
+
+  const subtitleParts = [formattedDate];
+  if (announcement.time) {
+    subtitleParts.push(announcement.time);
+  }
+  if (announcement.location) {
+    subtitleParts.push(announcement.location);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -36,7 +61,7 @@ export default function AttendanceModal({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-white text-gray-800 shadow-2xl">
+      <div className="relative flex flex-col w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-white text-gray-800 shadow-2xl">
         {/* --- inverted Light Header --- */}
         <div className="relative flex flex-col items-center justify-center p-8 text-center border-b border-gray-200">
           <Image
@@ -47,10 +72,10 @@ export default function AttendanceModal({
             className="mb-4 rounded-full"
           />
           <h2 className="font-rubik text-3xl font-bold text-primary3">
-            Complete Meeting Attendance
+            {`${announcement.title}`}
           </h2>
           <p className="font-raleway text-gray-500 text-lg">
-            ICpEP.SE CIT-U Chapter - Quarterly Board Meeting
+            {subtitleParts.join(" • ")}
           </p>
 
           <button
@@ -62,8 +87,9 @@ export default function AttendanceModal({
         </div>
 
         {/* Modal Content */}
-        <div className="themed-scrollbar h-full max-h-[calc(90vh-190px)] space-y-6 overflow-y-auto bg-gray-50 p-8">
-          {/* Council Officers */}
+        {/* provides the needed bottom space --- */}
+        <div className="themed-scrollbar flex-1 space-y-6 overflow-y-auto bg-gray-50 p-8">
+          {/* Council Officers with Gradient */}
           <div
             className="rounded-xl p-4 text-white"
             style={{
@@ -123,7 +149,6 @@ export default function AttendanceModal({
               </div>
             </div>
           ))}
-          <div className="h-0" />
         </div>
       </div>
     </div>
