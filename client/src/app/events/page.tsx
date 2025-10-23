@@ -92,13 +92,22 @@ export default function EventsListPage() {
             </p>
           </div>
 
-          {/* --- MODIFICATION: Map over the new `sortedEvents` array --- */}
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
-            {/* Map over the new `sortedEvents` array */}
-            {sortedEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          {/* --- MODIFICATION: Added conditional rendering for the events grid --- */}
+          {sortedEvents.length > 0 ? (
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
+              {sortedEvents.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          ) : (
+            // --- MODIFICATION: Added a styled "Empty State" message ---
+            <div className="text-center py-16">
+              <p className="font-raleway text-lg text-gray-500">
+                No events yet.
+              </p>
+            </div>
+          )}
+          
         </main>
         <Footer />
       </div>
