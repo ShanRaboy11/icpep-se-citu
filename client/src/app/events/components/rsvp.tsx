@@ -91,10 +91,30 @@ export default function RsvpCard({ status, date }: Props) {
           >
             RSVP Now
           </button>
+
+          {/* --- MODIFICATION: Added the stacked avatar icons --- */}
           <div className="flex items-center justify-center gap-2 mt-4 text-sm font-raleway text-gray-600">
-            {/* This part can be made dynamic later */}
-            <span className="font-bold text-primary3">105</span> people have
-            already registered
+            <div className="flex -space-x-2">
+              <img
+                className="inline-block h-6 w-6 rounded-full ring-2 ring-white"
+                src="https://i.pravatar.cc/100?img=1"
+                alt="User 1"
+              />
+              <img
+                className="inline-block h-6 w-6 rounded-full ring-2 ring-white"
+                src="https://i.pravatar.cc/100?img=2"
+                alt="User 2"
+              />
+              <img
+                className="inline-block h-6 w-6 rounded-full ring-2 ring-white"
+                src="https://i.pravatar.cc/100?img=3"
+                alt="User 3"
+              />
+            </div>
+            <p>
+              <span className="font-bold text-primary3">105</span> people have
+              already registered
+            </p>
           </div>
         </div>
       )}
