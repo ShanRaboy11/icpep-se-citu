@@ -6,7 +6,7 @@ import Header from "../components/header";
 import Footer from "../components/footer";
 import EventCard from "./components/event-card";
 import Grid from "../components/grid";
-import { ArrowLeft } from "lucide-react";
+import { Home } from "lucide-react";
 
 // Define a new type for our processed event
 type ProcessedEvent = Event & {
@@ -60,6 +60,7 @@ export default function EventsListPage() {
         <Header />
         <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
           <div className="mb-8 flex justify-start">
+            {/* --- updated the button icon and removed animation --- */}
             <button
               onClick={handleBackToHome}
               title="Back to Home"
@@ -72,7 +73,7 @@ export default function EventsListPage() {
                          before:translate-x-[-100%] hover:before:translate-x-[100%] 
                          before:transition-transform before:duration-700"
             >
-              <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
+              <Home className="h-6 w-6" />
             </button>
           </div>
 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnnouncementCard } from "./components/announcement-card";
 import Header from "../components/header";
 import Footer from "../components/footer";
-import { ArrowLeft } from "lucide-react";
+import { Home } from "lucide-react";
 import Grid from "../components/grid";
 import { Announcement, announcements } from "./utils/announcements";
 
@@ -42,6 +42,7 @@ export default function AnnouncementsPage() {
         <main className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12 w-full flex-grow">
           {/* Back to Home Navigation */}
           <div className="mb-8 flex justify-start">
+            {/* --- MODIFICATION: Updated the button icon and removed animation --- */}
             <button
               onClick={handleBackToHome}
               title="Back to Home"
@@ -54,7 +55,7 @@ export default function AnnouncementsPage() {
                          before:translate-x-[-100%] hover:before:translate-x-[100%] 
                          before:transition-transform before:duration-700"
             >
-              <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
+              <Home className="h-6 w-6" />
             </button>
           </div>
 
