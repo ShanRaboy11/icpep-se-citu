@@ -29,7 +29,6 @@ export default function LandingPage() {
 
         <section
           id="about"
-          className="-mt-10 flex flex-col items-center justify-center px-6 py-28 md:px-16 lg:px-28 space-y-28 bg"
         >
           <WhyJoinSection />
         </section>

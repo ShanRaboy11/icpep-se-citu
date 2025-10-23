@@ -73,9 +73,10 @@ const Hero = () => {
           Unlocking Potential, One Bit at a Time
         </p>
 
+        {/* Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
           <button
-            className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer"
+            className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer w-[220px] sm:w-auto"
             onClick={() => router.push("/login")}
           >
             Join Community
@@ -92,12 +93,13 @@ const Hero = () => {
                 window.scrollTo({ top: y, behavior: "smooth" });
               }
             }}
-            className="bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-buttonbg1 hover:border-primary1 hover:text-primary1 font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 cursor-pointer"
+            className="bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-buttonbg1 hover:border-primary1 hover:text-primary1 font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 cursor-pointer w-[220px] sm:w-auto"
           >
             Learn More
           </button>
         </div>
 
+        {/* Stats */}
         <div className="flex justify-center">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-lg">
             <div className="text-center">

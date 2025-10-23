@@ -354,3 +354,19 @@ html {
 .about-themed-background {
   background-image: linear-gradient(to bottom, #e0f2fe, #fbfdff);
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  50% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s linear infinite;
+}
