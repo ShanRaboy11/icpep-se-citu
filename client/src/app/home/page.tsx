@@ -17,17 +17,20 @@ export default function LandingPage() {
     <div className="min-h-screen flex flex-col overflow-hidden">
       <Header />
 
-      {/* MODIFICATION: Added className="pt-20" to offset the fixed header */}
+      {/* added className="pt-20" to offset the fixed header */}
       <main className="pt-20" style={{ backgroundColor: "#FEFEFF" }}>
         <section id="hero">
           <Hero />
+        </section>
+
+        <section id="about">
+          <AboutSection />
         </section>
 
         <section
           id="about"
           className="-mt-10 flex flex-col items-center justify-center px-6 py-28 md:px-16 lg:px-28 space-y-28 bg"
         >
-          <AboutSection />
           <WhyJoinSection />
         </section>
 

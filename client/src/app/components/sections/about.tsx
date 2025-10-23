@@ -1,20 +1,66 @@
-import Button from "@/app/components/button";
+"use client";
+
+import React, { useRef, useEffect } from "react";
+
+const ScrollingText = ({ text }: { text: string }) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const wordRefs = useRef<HTMLSpanElement[]>([]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const triggerPoint = window.innerHeight * 0.75;
+      const scrollPercent = (triggerPoint - rect.top) / rect.height;
+      const clampedPercent = Math.max(0, Math.min(1, scrollPercent));
+
+      const totalWords = wordRefs.current.length;
+      const wordsToShow = Math.floor(clampedPercent * totalWords);
+
+      wordRefs.current.forEach((word, index) => {
+        word.style.opacity = index < wordsToShow ? "1" : "0.2";
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      className="max-w-5xl text-[1.5rem] md:text-[1.9rem] font-raleway font-regular leading-relaxed text-center text-gray-700 flex flex-wrap justify-center"
+    >
+      {text.split(" ").map((word, i) => (
+        <span
+          key={i}
+          ref={(el) => {
+            if (el) wordRefs.current[i] = el;
+          }}
+          className="transition-opacity duration-500 ease-out mx-1 opacity-20"
+        >
+          {word}
+        </span>
+      ))}
+    </div>
+  );
+};
 
 export function AboutSection() {
   return (
-    <div className="text-center max-w-3xl">
-      <h2 className=" font-rubik text-4xl sm:text-5xl font-extrabold mb-4 text-black">
-        ABOUT US
-      </h2>
-      <p className="font-raleway text-gray-700 leading-relaxed text-md md:text-xl mb-8 my-10">
-        The Institute of Computer Engineers of the Philippines Student Edition (ICpEP.SE)
-        CIT-U Chapter is a recognized organization of Computer Engineering students
-        that fosters learning, collaboration, and innovation through seminars,
-        workshops, and student-led initiatives.
-      </p>
-      <Button className="bg-primary3 text-white rounded-full px-8 py-3 border-primary3 hover:border-primary1 text-sm md:text-base">
-        Learn more
-      </Button>
-    </div>
+    <section
+      id="about"
+      className="about-themed-background relative flex min-h-screen items-center justify-center overflow-hidden p-6"
+    >
+      <div className="relative z-10 flex flex-col items-center text-center -translate-y-16">
+        <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-10">
+          Who We Are
+        </h1>
+
+        <ScrollingText text="We are the Institute of Computer Engineers of the Philippines (ICpEP) Student Edition at Cebu Institute of Technology-University (CIT-U), a dynamic community of aspiring computer engineers dedicated to innovation, leadership, and shaping the future of technology through impactful, student-led initiatives." />
+      </div>
+      <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-[#FEFEFF] via-[#fbfdff] to-transparent z-20 pointer-events-none"></div>
+    </section>
   );
 }

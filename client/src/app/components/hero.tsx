@@ -2,64 +2,59 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { Code, PenTool, BrainCircuit, Users } from "lucide-react";
 
 const Hero = () => {
   const router = useRouter();
 
-  return (
-    <section
-      style={{ backgroundColor: "#FEFEFF" }}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-white -mt-16 z-0"
+  // Reusable rectangular skill box
+  const SkillBox = ({
+    icon,
+    text,
+    className,
+  }: {
+    icon: React.ReactNode;
+    text: string;
+    className: string;
+  }) => (
+    <div
+      className={`absolute flex items-center gap-2 rounded-lg border border-gray-200/50 bg-white/70 px-4 py-2.5 shadow-md backdrop-blur-md ${className}`}
     >
-      {/* Floating Elements - in front of everything */}
+      <div className="text-primary1">{icon}</div>
+      <span className="font-raleway text-[15px] font-semibold text-primary3">
+        {text}
+      </span>
+    </div>
+  );
 
-      {/* 
-        Responsive Positioning: 
-        - Base classes (e.g., top-[15%]) apply to mobile screens (default).
-        - Prefixed classes (e.g., md:top-1/3) override the base classes on medium screens and larger.
-      */}
-
+  return (
+    <section className="hero-themed-background relative min-h-screen flex items-center justify-center overflow-hidden -mt-16 z-0">
+      {/* Floating skill boxes */}
       <div className="absolute inset-0 pointer-events-none z-50">
-        {/* Software Development - Top Left */}
-        <div className="absolute top-[15%] left-[5%] md:top-1/3 md:left-1/4 transform -translate-y-2/2 animate-float-slow">
-          <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200">
-            <span className="text-base md:text-lg font-raleway text-gray-700">
-              💻 Programming
-            </span>
-          </div>
-        </div>
-
-        {/* UI/UX - Top Right */}
-        <div className="absolute top-[20%] right-[5%] md:top-1/3 md:right-1/4 transform -translate-y-1/2 animate-float-medium">
-          <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200">
-            <span className="text-base md:text-lg font-raleway text-gray-700">
-              🎨 UI/UX
-            </span>
-          </div>
-        </div>
-
-        {/* Arduino - Bottom Left */}
-        <div className="absolute bottom-[20%] left-[8%] md:bottom-1/3 md:left-1/3 transform translate-y-0/2 animate-float-fast">
-          <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200">
-            <span className="text-base md:text-lg font-raleway text-gray-700">
-              ⚡ Arduino
-            </span>
-          </div>
-        </div>
-
-        {/* COMPanions - Bottom Right */}
-        <div className="absolute bottom-[15%] right-[8%] md:bottom-1/3 md:right-1/3 transform translate-y-1/2 animate-float-slow">
-          <div className="bg-white rounded-xl p-3 shadow-lg border border-gray-200">
-            <span className="text-base md:text-lg font-raleway text-gray-700">
-              👥 COMPanions
-            </span>
-          </div>
-        </div>
+        <SkillBox
+          icon={<Code size={20} />}
+          text="Programming"
+          className="top-[15%] left-[5%] md:top-1/3 md:left-1/4 animate-float-slow"
+        />
+        <SkillBox
+          icon={<PenTool size={20} />}
+          text="UI/UX Design"
+          className="top-[20%] right-[5%] md:top-1/3 md:right-1/4 animate-float-medium"
+        />
+        <SkillBox
+          icon={<BrainCircuit size={20} />}
+          text="Arduino"
+          className="bottom-[20%] left-[8%] md:bottom-1/3 md:left-1/3 animate-float-fast"
+        />
+        <SkillBox
+          icon={<Users size={20} />}
+          text="COMPanions"
+          className="bottom-[15%] right-[8%] md:bottom-1/3 md:right-1/3 animate-float-slow"
+        />
       </div>
 
       {/* Main Content */}
       <div className="relative z-10 text-center px-4 w-full max-w-7xl mx-auto">
-        {/* Welcome Text with container */}
         <div className="mb-8">
           <div className="inline-block bg-buttonbg1 border border-primary1/30 rounded-full px-6 py-2">
             <p className="text-primary1 text-sm font-raleway font-medium tracking-wide">
@@ -68,19 +63,16 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Main Title with animated gradient */}
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-rubik font-bold mb-4 leading-tight">
           <span className="bg-gradient-to-r from-black via-primary1 to-black bg-clip-text text-transparent animate-gradient-flow">
             ICpEP SE CIT-U Chapter
           </span>
         </h1>
 
-        {/* Subtitle */}
         <p className="text-lg md:text-2xl font-raleway text-bodytext mb-6 max-w-2xl mx-auto leading-relaxed">
           Unlocking Potential, One Bit at a Time
         </p>
 
-        {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
           <button
             className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer"
@@ -92,8 +84,7 @@ const Hero = () => {
             onClick={() => {
               const aboutSection = document.getElementById("about");
               if (aboutSection) {
-                // Scroll smoothly to "about" with some offset to reveal the full section
-                const yOffset = -80; // adjust if your header overlaps (try -80 or -100)
+                const yOffset = -80;
                 const y =
                   aboutSection.getBoundingClientRect().top +
                   window.pageYOffset +
@@ -107,7 +98,6 @@ const Hero = () => {
           </button>
         </div>
 
-        {/* Achievements */}
         <div className="flex justify-center">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-lg">
             <div className="text-center">

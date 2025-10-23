@@ -346,3 +346,11 @@ html {
     opacity: 0.7;
   }
 }
+
+.hero-themed-background {
+  background-image: linear-gradient(to bottom, #fbfdff, #e0f2fe);
+}
+
+.about-themed-background {
+  background-image: linear-gradient(to bottom, #e0f2fe, #fbfdff);
+}
