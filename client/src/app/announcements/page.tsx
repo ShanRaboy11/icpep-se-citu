@@ -103,17 +103,27 @@ export default function AnnouncementsPage() {
 
           {/* Announcements List */}
           <div className="px-6 lg:px-12 xl:px-16 pb-14">
-            <div className="space-y-12">
-              {/* --- MODIFICATION 5: Map over the new `filteredAnnouncements` array --- */}
-              {filteredAnnouncements.map((announcement) => (
-                <AnnouncementCard
-                  key={announcement.id}
-                  {...announcement}
-                  imageUrl={announcement.imageUrl}
-                  onClick={() => handleAnnouncementClick(announcement)}
-                />
-              ))}
-            </div>
+            {filteredAnnouncements.length > 0 ? (
+              <div className="space-y-12">
+                {filteredAnnouncements.map((announcement) => (
+                  <AnnouncementCard
+                    key={announcement.id}
+                    {...announcement}
+                    imageUrl={announcement.imageUrl}
+                    onClick={() => handleAnnouncementClick(announcement)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <p className="font-raleway text-lg text-gray-500">
+                  {activeTab === "All"
+                    ? "No announcements yet."
+                    : `No ${activeTab.toLowerCase()} announcements yet.`}
+                </p>
+              </div>
+            )}
+            
           </div>
         </main>
         <Footer />

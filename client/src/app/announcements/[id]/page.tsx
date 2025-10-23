@@ -10,7 +10,7 @@ import Header from "../../components/header";
 import Footer from "../../components/footer";
 import { ArrowLeft } from "lucide-react";
 import AnnouncementMedia from "../components/media";
-import { Announcement, announcements } from "../utils/announcements";
+import { announcements } from "../utils/announcements";
 
 export default function AnnouncementDetailPage({
   params,

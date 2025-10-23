@@ -2,8 +2,6 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import {
   Announcement,
-  Officer,
-  Committee,
   councilOfficers,
   committees,
 } from "../utils/announcements";
