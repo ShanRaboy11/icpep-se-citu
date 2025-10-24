@@ -347,11 +347,11 @@ html {
   }
 }
 
-.hero-themed-background {
+.light-dark-background {
   background-image: linear-gradient(to bottom, #fbfdff, #e0f2fe);
 }
 
-.about-themed-background {
+.dark-light-background {
   background-image: linear-gradient(to bottom, #e0f2fe, #fbfdff);
 }
 
@@ -369,4 +369,8 @@ html {
 
 .animate-shimmer {
   animation: shimmer 3s linear infinite;
+}
+
+.perspective-container {
+  perspective: 1000px;
 }

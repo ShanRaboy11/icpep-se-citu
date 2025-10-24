@@ -17,7 +17,6 @@ export default function LandingPage() {
     <div className="min-h-screen flex flex-col overflow-hidden">
       <Header />
 
-      {/* added className="pt-20" to offset the fixed header */}
       <main className="pt-20" style={{ backgroundColor: "#FEFEFF" }}>
         <section id="hero">
           <Hero />

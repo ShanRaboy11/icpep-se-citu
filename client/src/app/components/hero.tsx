@@ -28,9 +28,9 @@ const Hero = () => {
   );
 
   return (
-    <section className="hero-themed-background relative min-h-screen flex items-center justify-center overflow-hidden -mt-16 z-0">
+    <section className="light-dark-background relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 isolate -translate-y-[4vh]">
       {/* Floating skill boxes */}
-      <div className="absolute inset-0 pointer-events-none z-50">
+      <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
         <SkillBox
           icon={<Code size={20} />}
           text="Programming"
@@ -39,7 +39,7 @@ const Hero = () => {
         <SkillBox
           icon={<PenTool size={20} />}
           text="UI/UX Design"
-          className="top-[20%] right-[5%] md:top-1/3 md:right-1/4 animate-float-medium"
+          className="top-[17%] right-[5%] md:top-[28%] md:right-1/4 animate-float-medium"
         />
         <SkillBox
           icon={<BrainCircuit size={20} />}

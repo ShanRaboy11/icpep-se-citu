@@ -51,7 +51,7 @@ export function AboutSection() {
   return (
     <section
       id="about"
-      className="about-themed-background relative flex min-h-screen items-center justify-center overflow-hidden p-6"
+      className="dark-light-background relative flex min-h-[80vh] items-center justify-center overflow-hidden p-6 -mt-10"
     >
       <div className="relative z-10 flex flex-col items-center text-center -translate-y-16">
         <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-10">
@@ -60,7 +60,7 @@ export function AboutSection() {
 
         <ScrollingText text="We are the Institute of Computer Engineers of the Philippines (ICpEP) Student Edition at Cebu Institute of Technology-University (CIT-U), a dynamic community of aspiring computer engineers dedicated to innovation, leadership, and shaping the future of technology through impactful, student-led initiatives." />
       </div>
-      <div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-[#FEFEFF] via-[#fbfdff] to-transparent z-20 pointer-events-none"></div>
+      {/*<div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-[#FEFEFF] via-[#fbfdff] to-transparent z-20 pointer-events-none"></div>*/}
     </section>
   );
 }
