@@ -106,6 +106,15 @@ export const announcements: Announcement[] = [
       "Strategic Initiatives Planning",
     ],
   },
+  {
+    id: "4",
+    title: "Partnership with GDG Cebu",
+    description:
+      "ICpEP.SE R7 CIT-U Chapter proudly announces its collaboration with GDG Cebu for future tech initiatives.",
+    date: "2024-09-20",
+    type: "News",
+    imageUrl: "/gle.png",
+  },
 ];
 
 export const councilOfficers: Officer[] = [

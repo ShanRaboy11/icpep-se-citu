@@ -1,74 +1,60 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import Button from "@/app/components/button";
-import AnnounceCardBig from "@/app/components/cards/announcecardbig";
-import AnnounceCardSmall from "@/app/components/cards/announcecardsmall";
+import { useRouter } from 'next/navigation';
+import { GlassCard } from "../../home/components/glass-card";
+import FeaturedAnnouncementCard from "../../home/components/featured-announcement";
+import MiniAnnouncementCard from "../../home/components/mini-announcement";
+import { announcements } from "../../announcements/utils/announcements";
 
 export function AnnouncementsSection() {
   const router = useRouter();
 
-  const smallAnnouncements = [
-    {
-      category: "Seminar",
-      title: "Acquaintance Party",
-      date: "September 10, 2025",
-      description:
-        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
-      image: "/gle.png",
-    },
-    {
-      category: "Achievement",
-      title: "Acquaintance Party",
-      date: "September 10, 2025",
-      description:
-        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
-      image: "/gle.png",
-    },
-    {
-      category: "Event",
-      title: "Acquaintance Party",
-      date: "September 10, 2025",
-      description:
-        "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog.",
-      image: "/gle.png",
-    },
-  ];
+  const sortedAnnouncements = [...announcements].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
 
-  const handleViewAll = () => {
-    router.push("/announcements");
-  };
+  const latestAnnouncement = sortedAnnouncements[0];
+  const otherAnnouncements = sortedAnnouncements.slice(1, 4); // Get the next 3
 
   return (
-    <div className="relative w-full py-12 px-4 sm:px-8 md:px-40 text-black rounded-t-3xl mt-30 overflow-hidden bg-primary1">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-10 mb-15">
-        <h2 className="font-rubik text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
-          LATEST ANNOUNCEMENTS
-        </h2>
-        <Button
-          variant="outline"
-          className="mt-4 sm:mt-0 px-5 py-2 text-white border-2 border-white hover:bg-buttonbg1 transition-all"
-          onClick={handleViewAll}
-        >
-          View All
-        </Button>
-      </div>
+    <section className="dark-light-background relative overflow-hidden py-28 px-4 sm:px-6">
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.8fr_1fr] gap-8 items-start sm:-ml-15 mb-15">
-        <AnnounceCardBig
-          category="Event"
-          title="Acquaintance Party"
-          date="September 10, 2025"
-          description="The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog."
-          image="/gle.png"
-        />
+      {/* --- MODIFICATION 1: Content is wrapped and nudged upward --- */}
+      <div className="relative z-10 mx-auto max-w-7xl transform -translate-y-8">
+        {/* --- MODIFICATION 2: Header now includes the "View All" button --- */}
+        <div className="flex flex-col items-center justify-between gap-4 text-center mb-12 sm:flex-row sm:text-left">
+          <div>
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
+              Latest Announcements
+            </h1>
+            <p className="font-raleway text-lg text-bodytext mt-2 max-w-lg">
+              Stay in the know with the latest updates from our chapter.
+            </p>
+          </div>
+          <button
+            onClick={() => router.push("/announcements")}
+            className="flex-shrink-0 rounded-full bg-primary1 px-8 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2 hover:-translate-y-1"
+          >
+            View All
+          </button>
+        </div>
 
-        <div className="flex flex-col gap-2 lg:-ml-15 md:ml-0">
-          {smallAnnouncements.map((announcement, index) => (
-            <AnnounceCardSmall key={index} {...announcement} />
+        {/* The Main "How It Works" Style Card */}
+        {latestAnnouncement && (
+          <GlassCard>
+            <FeaturedAnnouncementCard announcement={latestAnnouncement} />
+          </GlassCard>
+        )}
+
+        {/* The Grid of Smaller Cards */}
+        <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {otherAnnouncements.map((announcement) => (
+            <GlassCard key={announcement.id}>
+              <MiniAnnouncementCard announcement={announcement} />
+            </GlassCard>
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
