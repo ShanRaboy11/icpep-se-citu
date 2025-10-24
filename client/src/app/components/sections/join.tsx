@@ -1,5 +1,5 @@
 import { ArrowUpRight, Cpu, Rocket, Target, Network } from "lucide-react";
-import CarouselGallery from "../../home/components/carousel";
+import { CardStack } from "../../home/components/photo-card";
 import React, { useRef, useEffect } from "react";
 
 const BenefitCard = ({
@@ -12,7 +12,6 @@ const BenefitCard = ({
   description: string;
 }) => (
   <div className="relative group rounded-2xl p-6 overflow-hidden">
-
     {/* Softer Shimmer Glow Effect */}
     <div
       className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-primary1/40 via-secondary2/40 to-primary1/40 
@@ -115,7 +114,6 @@ export function WhyJoinSection() {
   return (
     // the main section is now the LIGHT background container ---
     <section className="light-dark-background relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 py-16 sm:py-20">
-      
       {/* the main dark card is now wider --- */}
       <div
         ref={cardRef}
@@ -129,11 +127,9 @@ export function WhyJoinSection() {
             "rotateX(var(--card-rotate-x, 0deg)) rotateY(var(--card-rotate-y, 0deg))",
         }}
       >
-        
         {/* inner fixed-width container */}
         <div className="mx-auto max-w-6xl w-full">
           <div className="w-full">
-            
             {/* Heading */}
             <div className="mb-16 text-center">
               <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-secondary2 leading-tight mb-4">
@@ -147,13 +143,9 @@ export function WhyJoinSection() {
 
             {/* Grid layout */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-              
-              {/* Carousel Card */}
-              <div className="w-full h-[475px] sm:h-[475px] h-auto max-h-[475px] min-h-[300px]">
-                <CarouselGallery
-                  imageUrls={galleryImages}
-                  className="h-full w-full"
-                />
+              {/* Photo Card */}
+              <div className="h-[475px] w-full">
+                <CardStack imageUrls={galleryImages} />
               </div>
 
               {/* Benefit Cards */}
