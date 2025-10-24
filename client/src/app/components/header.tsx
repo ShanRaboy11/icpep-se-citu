@@ -1,21 +1,34 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Button from "./button";
 import Menu from "./menu";
 import { useRouter } from "next/navigation";
 
-//UserRole = guest | user(non-member) | member | officer | faculty?
 type UserRole = "guest" | "user";
 
 const Header = () => {
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<UserRole>("guest");
+  const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
-    <header className="w-full border-b border-foreground bg-white fixed top-0 left-0 right-0 z-40 cursor-default">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 sm:px-10 lg:px-10 py-3">
+    <header
+      className={`w-full fixed top-0 left-0 right-0 z-40 border-b border-foreground cursor-default transition-all duration-500
+        ${
+          scrolled
+            ? "bg-white/85 backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.05)]"
+            : "bg-white"
+        }`}
+    >
+      <div className="mx-auto flex max-w-[93%] items-center justify-between px-8 sm:px-12 lg:px-16 py-3">
         {/* Left: Logo + Titles */}
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Image
@@ -69,7 +82,7 @@ const Header = () => {
               alt="."
               width={0}
               height={16}
-              className="h-0 w-auto sm:h-4 -ml-2"
+              className="h-0 w-auto sm:h-3.5 -ml-2"
             />
             <Image
               src="/Vector-s.svg"
@@ -98,7 +111,6 @@ const Header = () => {
 
         {/* Right side: Role-based rendering */}
         <div className="flex items-center gap-4 sm:gap-5">
-          {/* Guest View */}
           {role === "guest" && (
             <>
               <Button
@@ -111,7 +123,6 @@ const Header = () => {
                 Sign Up
               </Button>
 
-              {/* Log In Button */}
               <Button
                 className="sm:block border-2 relative overflow-hidden 
              transition-all duration-300 ease-in-out active:scale-95 
@@ -121,7 +132,6 @@ const Header = () => {
              before:transition-transform before:duration-700"
                 onClick={() => {
                   setRole("user");
-                  // router.push("/login");
                 }}
               >
                 Log In
@@ -129,7 +139,6 @@ const Header = () => {
             </>
           )}
 
-          {/* Member View */}
           {role === "user" && (
             <div className="flex items-center gap-3">
               <Image
@@ -171,15 +180,13 @@ const Header = () => {
           </div>
         </div>
       </div>
+
       <div
         className={`fixed inset-0 z-50 transition-transform duration-700 ease-out ${
           open ? "translate-y-0" : "-translate-y-[120vh]"
         }`}
       >
-        <Menu
-          userRole={role}
-          onExit={() => setOpen(false)} // closes only when Exit is clicked
-        />
+        <Menu userRole={role} onExit={() => setOpen(false)} />
       </div>
     </header>
   );
