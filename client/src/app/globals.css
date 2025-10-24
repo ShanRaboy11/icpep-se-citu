@@ -375,11 +375,11 @@ html {
   perspective: 1000px;
 }
 
-@keyframes rotate-border {
+@keyframes move-border {
   0% {
-    transform: rotate(0deg);
+    background-position: 0% 0%;
   }
   100% {
-    transform: rotate(360deg);
+    background-position: 200% 0%;
   }
 }

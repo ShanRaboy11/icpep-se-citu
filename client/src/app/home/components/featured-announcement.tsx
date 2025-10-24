@@ -45,7 +45,7 @@ export default function FeaturedAnnouncementCard({
           src={announcement.imageUrl}
           alt={announcement.title}
           layout="fill"
-          className="object-cover transition-transform duration-300 group-hover:scale-105" // Added group-hover
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
     </div>

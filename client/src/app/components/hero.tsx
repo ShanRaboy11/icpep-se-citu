@@ -82,17 +82,7 @@ const Hero = () => {
             Join Community
           </button>
           <button
-            onClick={() => {
-              const aboutSection = document.getElementById("about");
-              if (aboutSection) {
-                const yOffset = -80;
-                const y =
-                  aboutSection.getBoundingClientRect().top +
-                  window.pageYOffset +
-                  yOffset;
-                window.scrollTo({ top: y, behavior: "smooth" });
-              }
-            }}
+            onClick={() => router.push("/about")}
             className="bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-buttonbg1 hover:border-primary1 hover:text-primary1 font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 cursor-pointer w-[220px] sm:w-auto"
           >
             Learn More

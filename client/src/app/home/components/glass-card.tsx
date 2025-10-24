@@ -9,24 +9,35 @@ interface GlassCardProps {
 
 export function GlassCard({ children, className = "" }: GlassCardProps) {
   return (
-    // main container is now `relative` and `overflow-hidden` ---
     <div
-      className={`relative overflow-hidden rounded-3xl p-8 shadow-2xl ${className}`}
+      className={`relative overflow-hidden rounded-3xl shadow-[0_0_25px_rgba(0,119,170,0.25)] h-full ${className}`}
+      style={{ padding: "3px" }}
     >
-      {/* the Animated Glowing Border --- */}
-      {/* This pseudo-element is a large, rotating gradient positioned behind the content */}
+      {/* Thin moving gradient line along border */}
+      <div className="absolute inset-0 rounded-3xl overflow-hidden">
+        <div
+          className="absolute inset-0 rounded-3xl"
+          style={{
+            background:
+              "linear-gradient(90deg, #00a7ee, #45c7ff, #2dd4bf, #00a7ee)",
+            backgroundSize: "200% 200%",
+            animation: "move-border 3s linear infinite",
+          }}
+        />
+        {/* White mask to hide everything except border line */}
+        <div
+          className="absolute inset-[2px] rounded-[22px]"
+          style={{ backgroundColor: "rgba(255,255,255,0.9)" }}
+        />
+      </div>
+
+      {/* Inner card content */}
       <div
-        className="absolute inset-0 z-0 animate-[rotate-border_8s_linear_infinite]
-                   bg-[conic-gradient(from_90deg_at_50%_50%,#00a7ee_0%,#45c7ff_50%,#00a7ee_100%)]
-                   opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-      />
-
-      {/* The Glass Background Layer */}
-      {/* It's inset slightly to let the glowing border show around the edges */}
-      <div className="absolute inset-px rounded-[22px] bg-primary1/10 backdrop-blur-lg"></div>
-
-      {/* The Content Layer (on top of everything) */}
-      <div className="relative z-10">{children}</div>
+        className="relative z-10 rounded-[22px] p-8 h-full flex flex-col"
+        style={{ backgroundColor: "#e6f7ff" }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
