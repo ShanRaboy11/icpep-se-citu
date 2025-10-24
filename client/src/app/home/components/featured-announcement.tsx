@@ -19,7 +19,18 @@ export default function FeaturedAnnouncementCard({
 
   return (
     <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-      <div className="text-left">
+      {/* Image first on mobile, second on desktop */}
+      <div className="relative h-80 w-full overflow-hidden rounded-2xl group order-first lg:order-last">
+        <Image
+          src={announcement.imageUrl}
+          alt={announcement.title}
+          layout="fill"
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+      </div>
+
+      {/* Text content */}
+      <div className="text-left order-last lg:order-first">
         <p className="font-raleway text-primary1 font-medium mb-3">
           {formatDate(announcement.date)}
         </p>
@@ -39,14 +50,6 @@ export default function FeaturedAnnouncementCard({
           <span>Read More</span>
           <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1.5" />
         </button>
-      </div>
-      <div className="relative h-80 w-full overflow-hidden rounded-2xl group">
-        <Image
-          src={announcement.imageUrl}
-          alt={announcement.title}
-          layout="fill"
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-        />
       </div>
     </div>
   );
