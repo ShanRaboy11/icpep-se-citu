@@ -17,9 +17,19 @@ type SortDirection = "asc" | "desc";
 
 interface UsersTableProps {
   users: User[];
+  onEdit: (user: User) => void;
+  onDelete: (user: User) => void;
+  onToggleActive: (user: User) => void;
+  onView: (user: User) => void;
 }
 
-export default function UsersTable({ users }: UsersTableProps) {
+export default function UsersTable({
+  users,
+  onEdit,
+  onDelete,
+  onToggleActive,
+  onView,
+}: UsersTableProps) {
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [filterRole, setFilterRole] = useState<string>("all");
@@ -103,7 +113,7 @@ export default function UsersTable({ users }: UsersTableProps) {
           <select
             value={filterRole}
             onChange={(e) => setFilterRole(e.target.value)}
-            className="font-raleway text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
+            className="font-raleway text-sm text-gray-400 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
           >
             <option value="all">All Roles</option>
             <option value="member">Member</option>
@@ -121,7 +131,7 @@ export default function UsersTable({ users }: UsersTableProps) {
           <select
             value={filterMembership}
             onChange={(e) => setFilterMembership(e.target.value)}
-            className="font-raleway text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
+            className="font-raleway text-sm text-gray-400 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
           >
             <option value="all">All</option>
             <option value="member">Member</option>
@@ -169,7 +179,7 @@ export default function UsersTable({ users }: UsersTableProps) {
                 </th>
                 <th
                   onClick={() => handleSort("yearLevel")}
-                  className="px-4 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
+                  className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
                 >
                   <div className="flex items-center gap-2 justify-center">
                     Year Level
@@ -184,7 +194,7 @@ export default function UsersTable({ users }: UsersTableProps) {
                 </th>
                 <th
                   onClick={() => handleSort("createdAt")}
-                  className="px-4 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
+                  className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
                 >
                   <div className="flex items-center gap-2 justify-center">
                     Registration Date
@@ -193,7 +203,7 @@ export default function UsersTable({ users }: UsersTableProps) {
                 </th>
                 <th
                   onClick={() => handleSort("updatedAt")}
-                  className="px-4 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
+                  className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
                 >
                   <div className="flex items-center gap-2 justify-center">
                     Last Updated
@@ -203,11 +213,21 @@ export default function UsersTable({ users }: UsersTableProps) {
                 <th className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 whitespace-nowrap">
                   Status
                 </th>
+                <th className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 whitespace-nowrap">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
               {sortedUsers.map((user) => (
-                <UserTableRow key={user.id} user={user} />
+                <UserTableRow
+                  key={user.id}
+                  user={user}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onToggleActive={onToggleActive}
+                  onView={onView}
+                />
               ))}
             </tbody>
           </table>
@@ -216,7 +236,9 @@ export default function UsersTable({ users }: UsersTableProps) {
 
       {sortedUsers.length === 0 && (
         <div className="text-center py-12">
-          <p className="font-raleway text-gray-500">No users found matching the filters.</p>
+          <p className="font-raleway text-gray-500">
+            No users found matching the filters.
+          </p>
         </div>
       )}
     </div>

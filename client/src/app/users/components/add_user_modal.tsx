@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X, UserPlus, AlertCircle } from "lucide-react";
+import { PiPlaceholder } from "react-icons/pi";
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -226,11 +227,10 @@ export default function AddUserModal({
                   name="yearLevel"
                   value={formData.yearLevel || ""}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 border rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
+                  className={`w-full px-4 py-2 border rounded-lg font-raleway text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
                     errors.yearLevel ? "border-red-500" : "border-gray-300"
                   }`}
                 >
-                  <option value="">Select Year Level</option>
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
@@ -279,7 +279,7 @@ export default function AddUserModal({
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50"
+                  className="w-full px-4 py-2 text-gray-400 border border-gray-300 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50"
                 >
                   <option value="member">Member</option>
                   <option value="non-member">Non-Member</option>
@@ -297,7 +297,7 @@ export default function AddUserModal({
                   name="membershipStatus"
                   value={formData.membershipStatus}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50"
+                  className="w-full px-4 py-2 text-gray-400 border border-gray-300 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50"
                 >
                   <option value="non-member">Non-Member</option>
                   <option value="member">Member</option>

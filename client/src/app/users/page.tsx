@@ -17,7 +17,8 @@ export default function UsersListPage() {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
-
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const handleBackToHome = () => {
     router.push("/");
   };
@@ -160,6 +161,46 @@ export default function UsersListPage() {
     link.click();
     document.body.removeChild(link);
   };
+
+  const handleEditUser = (user: User) => {
+     console.log("Edit user:", user);
+     // TODO: Open edit modal
+     // setSelectedUser(user);
+     // setIsEditModalOpen(true);
+   };
+
+   const handleDeleteUser = (user: User) => {
+     setUserToDelete(user);
+     setIsConfirmDialogOpen(true);
+   };
+
+   const confirmDelete = () => {
+     if (userToDelete) {
+       // TODO: Call DELETE /api/users/${userToDelete.id}
+       
+       setUsers(users.filter(u => u.id !== userToDelete.id));
+       alert(`${userToDelete.fullName} deleted!`);
+       setUserToDelete(null);
+     }
+   };
+
+   const handleToggleActive = (user: User) => {
+     // TODO: Call PATCH /api/users/${user.id}
+     
+     setUsers(users.map(u => 
+       u.id === user.id 
+         ? { ...u, isActive: !u.isActive }
+         : u
+     ));
+     
+     alert(`User ${user.isActive ? 'deactivated' : 'activated'}!`);
+   };
+
+   const handleViewUser = (user: User) => {
+     console.log("View user:", user);
+     // TODO: Navigate to details page
+     // router.push(`/users/${user.id}`);
+   };
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
