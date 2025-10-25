@@ -8,7 +8,7 @@ var __createBinding = (this && this.__createBinding) || (Object.create ? (functi
     Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
+    o[k2] = k;
 }));
 var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
     Object.defineProperty(o, "default", { enumerable: true, value: v });
@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+
 const participantSchema = new mongoose_1.Schema({
     user: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -50,7 +51,19 @@ const participantSchema = new mongoose_1.Schema({
         default: Date.now,
     },
 }, { _id: false });
+
+// Organizer subdocument schema
+const organizerSchema = new mongoose_1.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    role: String,
+    imageUrl: String,
+}, { _id: false });
+
 const eventSchema = new mongoose_1.Schema({
+    // Frontend expects: id (mapped from _id)
     title: {
         type: String,
         required: [true, 'Event title is required'],
@@ -60,19 +73,36 @@ const eventSchema = new mongoose_1.Schema({
         type: String,
         required: [true, 'Event description is required'],
     },
+    // Frontend expects: details (array of detail sections)
+    details: [{
+        title: String,
+        content: String,
+    }],
+    // Frontend expects: tags (array of strings)
+    tags: [String],
     eventType: {
         type: String,
         enum: ['workshop', 'seminar', 'competition', 'social', 'meeting', 'other'],
         default: 'other',
     },
-    dateTime: {
-        start: {
-            type: Date,
-            required: [true, 'Start date is required'],
-        },
-        end: Date,
+    // Frontend expects: date (start date as string/Date)
+    date: {
+        type: Date,
+        required: [true, 'Event date is required'],
     },
-    location: String,
+    // Frontend expects: endDate (optional, for multi-day events)
+    endDate: Date,
+    // Frontend expects: mode ("Online" | "In-person" | "Hybrid")
+    mode: {
+        type: String,
+        enum: ['Online', 'In-person', 'Hybrid'],
+        required: [true, 'Event mode is required'],
+    },
+    // Frontend expects: location (string)
+    location: {
+        type: String,
+        required: [true, 'Event location is required'],
+    },
     venue: String,
     capacity: {
         type: Number,
@@ -80,12 +110,23 @@ const eventSchema = new mongoose_1.Schema({
     },
     rsvpDeadline: Date,
     participants: [participantSchema],
-    organizers: [
+    // Frontend expects: organizer (single object with name, role, imageUrl)
+    organizer: organizerSchema,
+    // Additional organizers reference (if needed for backend logic)
+    organizerUsers: [
         {
             type: mongoose_1.Schema.Types.ObjectId,
             ref: 'User',
         },
     ],
+    // Frontend expects: bannerImageUrl (single main image)
+    bannerImageUrl: {
+        type: String,
+        required: [true, 'Banner image is required'],
+    },
+    // Frontend expects: galleryImageUrls (array, shown when status is "Ended")
+    galleryImageUrls: [String],
+    // Legacy images field (can be kept for backward compatibility)
     images: [String],
     coverImage: String,
     isPublished: {
@@ -97,11 +138,36 @@ const eventSchema = new mongoose_1.Schema({
         default: true,
     },
 }, { timestamps: true });
+
 // Virtual for approved participants count
 eventSchema.virtual('approvedCount').get(function () {
     return this.participants.filter((p) => p.status === 'approved').length;
 });
+
+// Virtual for dynamic status calculation (Upcoming | Ongoing | Ended)
+eventSchema.virtual('status').get(function () {
+    const now = new Date();
+    const startDate = new Date(this.date);
+    const endDate = this.endDate
+        ? new Date(this.endDate)
+        : new Date(startDate.getTime() + 24 * 60 * 60 * 1000 - 1);
+
+    if (now < startDate) {
+        return 'Upcoming';
+    } else if (now >= startDate && now <= endDate) {
+        return 'Ongoing';
+    } else {
+        return 'Ended';
+    }
+});
+
+// Ensure virtuals are included in JSON/Object output
+eventSchema.set('toJSON', { virtuals: true });
+eventSchema.set('toObject', { virtuals: true });
+
 // Indexes
-eventSchema.index({ 'dateTime.start': 1 });
-eventSchema.index({ isPublished: 1, 'dateTime.start': 1 });
+eventSchema.index({ date: 1 });
+eventSchema.index({ isPublished: 1, date: 1 });
+eventSchema.index({ tags: 1 });
+
 exports.default = mongoose_1.default.model('Event', eventSchema);
