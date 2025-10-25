@@ -35,13 +35,14 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+
 const userSchema = new mongoose_1.Schema({
     studentNumber: {
         type: String,
         required: [true, 'Student number is required'],
         unique: true,
         trim: true,
-        uppercase: true, // Normalize to uppercase
+        uppercase: true,
     },
     lastName: {
         type: String,
@@ -62,16 +63,12 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         required: [true, 'Password is required'],
         minlength: 6,
-        select: false, // Don't return password by default
+        select: false,
     },
     role: {
         type: String,
         enum: ['member', 'non-member', 'officer', 'faculty'],
         default: 'member',
-    },
-    department: {
-        type: String,
-        default: 'Computer Engineering',
     },
     yearLevel: {
         type: Number,
@@ -101,10 +98,11 @@ const userSchema = new mongoose_1.Schema({
         default: null,
     },
 }, {
-    timestamps: true,
+    timestamps: true, // This automatically adds createdAt and updatedAt
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
 });
+
 // Virtual for full name
 userSchema.virtual('fullName').get(function () {
     if (this.middleName) {
@@ -112,15 +110,26 @@ userSchema.virtual('fullName').get(function () {
     }
     return `${this.firstName} ${this.lastName}`;
 });
+
+// Virtual for registeredBy name (populated)
+userSchema.virtual('registeredByName').get(function () {
+    if (this.registeredBy && typeof this.registeredBy === 'object') {
+        const registrar = this.registeredBy as any;
+        return registrar.fullName || `${registrar.firstName} ${registrar.lastName}`;
+    }
+    return 'Self-registered';
+});
+
 // Pre-save middleware to hash password
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password'))
         return next();
-    // Hash password (you'll need to import bcrypt)
+    
     const bcrypt = await Promise.resolve().then(() => __importStar(require('bcryptjs')));
     this.password = await bcrypt.hash(this.password, 10);
     next();
 });
+
 // Pre-save middleware to set membershipStatus based on role
 userSchema.pre('save', function (next) {
     if (this.isNew && this.role === 'member') {
@@ -132,10 +141,12 @@ userSchema.pre('save', function (next) {
     }
     next();
 });
+
 // Indexes
-userSchema.index({ email: 1 });
 userSchema.index({ studentNumber: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ 'membershipStatus.isMember': 1 });
-userSchema.index({ registrationMethod: 1 });
+userSchema.index({ createdAt: -1 }); // For sorting by registration date
+userSchema.index({ updatedAt: -1 }); // For sorting by update date
+
 exports.default = mongoose_1.default.model('User', userSchema);
