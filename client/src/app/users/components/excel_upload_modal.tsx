@@ -9,9 +9,10 @@ interface UploadedUser {
   lastName: string;
   firstName: string;
   middleName?: string;
-  role: string;
   yearLevel?: number;
-  membershipType?: string;
+  password?: string;
+  role: string;
+  membershipStatus: string;
   status?: "valid" | "error";
   error?: string;
 }
@@ -94,9 +95,10 @@ export default function ExcelUploadModal({
           lastName: String(row["Last Name"] || row["lastName"] || "").trim(),
           firstName: String(row["First Name"] || row["firstName"] || "").trim(),
           middleName: String(row["Middle Name"] || row["middleName"] || "").trim() || undefined,
-          role: String(row["Role"] || row["role"] || "member").toLowerCase().trim(),
           yearLevel: row["Year Level"] || row["yearLevel"] || undefined,
-          membershipType: String(row["Membership Type"] || row["membershipType"] || "").toLowerCase().trim() || undefined,
+          password: String(row["Password"] || row["password"] || "123456").trim(),
+          role: String(row["Role"] || row["role"] || "member").toLowerCase().trim(),
+          membershipStatus: String(row["Membership Status"] || row["membershipStatus"] || "non-member").toLowerCase().trim(),
           status: "valid",
         };
 
@@ -114,7 +116,7 @@ export default function ExcelUploadModal({
         }
         if (
           user.role &&
-          !["member", "non-member", "officer", "faculty"].includes(user.role)
+          !["member", "non-member", "council-officer", "committee-officer", "faculty"].includes(user.role)
         ) {
           errors.push("Invalid role");
         }
@@ -122,10 +124,10 @@ export default function ExcelUploadModal({
           errors.push("Year Level must be between 1-5");
         }
         if (
-          user.membershipType &&
-          !["local", "regional", ""].includes(user.membershipType)
+          user.membershipStatus &&
+          !["member", "non-member", "local", "regional"].includes(user.membershipStatus)
         ) {
-          errors.push("Invalid membership type");
+          errors.push("Invalid membership status");
         }
 
         if (errors.length > 0) {
@@ -300,10 +302,13 @@ export default function ExcelUploadModal({
                             Name
                           </th>
                           <th className="px-4 py-2 text-left font-raleway font-semibold text-gray-700">
+                            Year
+                          </th>
+                          <th className="px-4 py-2 text-left font-raleway font-semibold text-gray-700">
                             Role
                           </th>
                           <th className="px-4 py-2 text-left font-raleway font-semibold text-gray-700">
-                            Year
+                            Membership
                           </th>
                           <th className="px-4 py-2 text-left font-raleway font-semibold text-gray-700">
                             Error
@@ -334,10 +339,13 @@ export default function ExcelUploadModal({
                               }`.trim()}
                             </td>
                             <td className="px-4 py-2 font-raleway text-gray-700">
+                              {user.yearLevel || "N/A"}
+                            </td>
+                            <td className="px-4 py-2 font-raleway text-gray-700">
                               {user.role}
                             </td>
                             <td className="px-4 py-2 font-raleway text-gray-700">
-                              {user.yearLevel || "N/A"}
+                              {user.membershipStatus}
                             </td>
                             <td className="px-4 py-2 font-raleway text-xs text-red-600">
                               {user.error || ""}
@@ -354,31 +362,48 @@ export default function ExcelUploadModal({
 
           {/* Instructions */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-raleway font-semibold text-blue-900 mb-2 flex items-center gap-2">
-              <AlertCircle className="w-4 h-4" />
-              Excel File Format
-            </h4>
+            <div className="flex items-start justify-between mb-2">
+              <h4 className="font-raleway font-semibold text-blue-900 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                Excel File Format
+              </h4>
+              <button
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = "/user-upload-template.xlsx";
+                  link.download = "user-upload-template.xlsx";
+                  link.click();
+                }}
+                className="px-3 py-1 bg-blue-600 text-white text-xs font-raleway font-semibold rounded hover:bg-blue-700 transition-colors"
+              >
+                Download Template
+              </button>
+            </div>
             <p className="font-raleway text-sm text-blue-800 mb-2">
-              Your Excel file should have the following columns:
+              Your Excel file should have the following columns in this exact order:
             </p>
             <ul className="font-raleway text-sm text-blue-700 space-y-1 list-disc list-inside">
               <li>
-                <strong>Student Number</strong> (required)
-              </li>
-              <li>
-                <strong>First Name</strong> (required)
+                <strong>Student Number</strong> (required) - Format: 23-2502-326
               </li>
               <li>
                 <strong>Last Name</strong> (required)
               </li>
+              <li>
+                <strong>First Name</strong> (required)
+              </li>
               <li>Middle Name (optional)</li>
               <li>
-                Role (optional: member, non-member, officer, faculty - default:
-                member)
+                <strong>Year Level</strong> (optional) - Single number: 1, 2, 3, 4, or 5
               </li>
-              <li>Year Level (optional: 1-5)</li>
               <li>
-                Membership Type (optional: local, regional)
+                Password (optional) - Default: 123456
+              </li>
+              <li>
+                Role (optional) - member, non-member, council-officer, committee-officer, faculty (Default: member)
+              </li>
+              <li>
+                <strong>Membership Status</strong> (optional) - member, non-member, local, regional (Default: non-member)
               </li>
             </ul>
           </div>

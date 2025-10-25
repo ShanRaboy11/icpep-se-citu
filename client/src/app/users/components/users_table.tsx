@@ -95,7 +95,7 @@ export default function UsersTable({ users }: UsersTableProps) {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 items-center">
+      <div className="flex flex-wrap gap-4 items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
         <div className="flex items-center gap-2">
           <label className="font-raleway text-sm font-medium text-gray-700">
             Role:
@@ -108,7 +108,8 @@ export default function UsersTable({ users }: UsersTableProps) {
             <option value="all">All Roles</option>
             <option value="member">Member</option>
             <option value="non-member">Non-Member</option>
-            <option value="officer">Officer</option>
+            <option value="council-officer">Council Officer</option>
+            <option value="committee-officer">Committee Officer</option>
             <option value="faculty">Faculty</option>
           </select>
         </div>
@@ -128,87 +129,89 @@ export default function UsersTable({ users }: UsersTableProps) {
           </select>
         </div>
 
-        <div className="ml-auto font-raleway text-sm text-gray-600">
+        <div className="ml-auto font-raleway text-sm text-gray-600 font-medium">
           Showing {sortedUsers.length} of {users.length} users
         </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-        <table className="w-full">
-          <thead className="bg-gradient-to-r from-primary1/5 to-secondary2/5">
-            <tr>
-              <th
-                onClick={() => handleSort("studentNumber")}
-                className="px-6 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  Student Number
-                  <SortIcon field="studentNumber" />
-                </div>
-              </th>
-              <th
-                onClick={() => handleSort("fullName")}
-                className="px-6 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  Full Name
-                  <SortIcon field="fullName" />
-                </div>
-              </th>
-              <th
-                onClick={() => handleSort("role")}
-                className="px-6 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  Role
-                  <SortIcon field="role" />
-                </div>
-              </th>
-              <th
-                onClick={() => handleSort("yearLevel")}
-                className="px-6 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  Year Level
-                  <SortIcon field="yearLevel" />
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left font-raleway text-sm font-semibold text-primary3">
-                Membership
-              </th>
-              <th className="px-6 py-4 text-left font-raleway text-sm font-semibold text-primary3">
-                Registered By
-              </th>
-              <th
-                onClick={() => handleSort("createdAt")}
-                className="px-6 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  Registration Date
-                  <SortIcon field="createdAt" />
-                </div>
-              </th>
-              <th
-                onClick={() => handleSort("updatedAt")}
-                className="px-6 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  Last Updated
-                  <SortIcon field="updatedAt" />
-                </div>
-              </th>
-              <th className="px-6 py-4 text-left font-raleway text-sm font-semibold text-primary3">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {sortedUsers.map((user) => (
-              <UserTableRow key={user.id} user={user} />
-            ))}
-          </tbody>
-        </table>
+      <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-max">
+            <thead className="bg-gradient-to-r from-primary1/5 to-secondary2/5">
+              <tr>
+                <th
+                  onClick={() => handleSort("studentNumber")}
+                  className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
+                >
+                  <div className="flex items-center gap-2 justify-center">
+                    Student Number
+                    <SortIcon field="studentNumber" />
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort("fullName")}
+                  className="px-4 py-4 w-40 text-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
+                >
+                  <div className="flex items-center gap-2 justify-center">
+                    Full Name
+                    <SortIcon field="fullName" />
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort("role")}
+                  className="px-4 py-4 w-10 text-center items-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
+                >
+                  <div className="flex items-center gap-2 justify-center">
+                    Role
+                    <SortIcon field="role" />
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort("yearLevel")}
+                  className="px-4 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
+                >
+                  <div className="flex items-center gap-2 justify-center">
+                    Year Level
+                    <SortIcon field="yearLevel" />
+                  </div>
+                </th>
+                <th className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 whitespace-nowrap">
+                  Membership
+                </th>
+                <th className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 whitespace-nowrap">
+                  Registered By
+                </th>
+                <th
+                  onClick={() => handleSort("createdAt")}
+                  className="px-4 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
+                >
+                  <div className="flex items-center gap-2 justify-center">
+                    Registration Date
+                    <SortIcon field="createdAt" />
+                  </div>
+                </th>
+                <th
+                  onClick={() => handleSort("updatedAt")}
+                  className="px-4 py-4 text-left font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
+                >
+                  <div className="flex items-center gap-2 justify-center">
+                    Last Updated
+                    <SortIcon field="updatedAt" />
+                  </div>
+                </th>
+                <th className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 whitespace-nowrap">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {sortedUsers.map((user) => (
+                <UserTableRow key={user.id} user={user} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {sortedUsers.length === 0 && (

@@ -10,7 +10,7 @@ interface UserStatsProps {
 export default function UserStats({ users }: UserStatsProps) {
   const totalUsers = users.length;
   const activeMembers = users.filter((u) => u.membershipStatus.isMember).length;
-  const officers = users.filter((u) => u.role === "officer").length;
+  const officers = users.filter((u) => u.role === "council-officer" || u.role === "committee-officer").length;
   const faculty = users.filter((u) => u.role === "faculty").length;
 
   const stats = [

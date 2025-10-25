@@ -3,27 +3,66 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { users as initialUsers, User } from "./utils/user";
-import { downloadExcelTemplate } from "./utils/excel_template";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import UsersTable from "./components/users_table";
 import UserStats from "./components/stats";
 import ExcelUploadModal from "./components/excel_upload_modal";
+import AddUserModal, { NewUser } from "./components/add_user_modal";
 import Grid from "../components/grid";
-import { ArrowLeft, UserPlus, Download, Upload, FileDown } from "lucide-react";
+import { ArrowLeft, UserPlus, Download, Upload } from "lucide-react";
 
 export default function UsersListPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   const handleBackToHome = () => {
     router.push("/");
   };
 
   const handleAddUser = () => {
-    // Navigate to add user page
-    router.push("/users/add");
+    setIsAddUserModalOpen(true);
+  };
+
+  const handleAddUserSubmit = async (newUser: NewUser) => {
+    try {
+      // TODO: Replace with actual API call
+      // const response = await fetch('/api/users', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(newUser),
+      // });
+      // const data = await response.json();
+
+      // For now, just add to local state
+      const user: User = {
+        id: `new-${Date.now()}`,
+        studentNumber: newUser.studentNumber,
+        lastName: newUser.lastName,
+        firstName: newUser.firstName,
+        middleName: newUser.middleName || null,
+        fullName: `${newUser.firstName} ${newUser.middleName || ""} ${newUser.lastName}`.trim(),
+        role: newUser.role as any,
+        yearLevel: newUser.yearLevel,
+        membershipStatus: {
+          isMember: newUser.membershipStatus === "member" || newUser.membershipStatus === "local" || newUser.membershipStatus === "regional",
+          membershipType: newUser.membershipStatus === "local" ? "local" : newUser.membershipStatus === "regional" ? "regional" : null,
+        },
+        profilePicture: null,
+        isActive: true,
+        registeredBy: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setUsers([user, ...users]);
+      alert("User added successfully!");
+    } catch (error) {
+      console.error("Error adding user:", error);
+      alert("Failed to add user. Please try again.");
+    }
   };
 
   const handleExcelUpload = async (uploadedUsers: any[]) => {
@@ -47,8 +86,8 @@ export default function UsersListPage() {
         role: user.role as any,
         yearLevel: user.yearLevel,
         membershipStatus: {
-          isMember: user.role === "member" || user.role === "officer",
-          membershipType: user.membershipType || (user.role === "member" ? "local" : null),
+          isMember: user.role === "member" || user.role === "council-officer" || user.role === "committee-officer",
+          membershipType: user.membershipStatus === "local" ? "local" : user.membershipStatus === "regional" ? "regional" : null,
         },
         profilePicture: null,
         isActive: true,
@@ -127,7 +166,7 @@ export default function UsersListPage() {
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
+        <main className="flex-grow w-full max-w-[1600px] mx-auto px-8 pt-[9.5rem] pb-12">
           {/* Back Button */}
           <div className="mb-8 flex justify-start">
             <button
@@ -146,60 +185,56 @@ export default function UsersListPage() {
             </button>
           </div>
 
-          {/* Header Section */}
-          <div className="mb-12">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-                  <div className="h-2 w-2 rounded-full bg-primary1"></div>
-                  <span className="font-raleway text-sm font-semibold text-primary1">
-                    User Management
-                  </span>
-                </div>
-                <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-                  Registered Users
-                </h1>
-                <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl">
-                  Manage and view all registered users, members, officers, and faculty.
-                </p>
-              </div>
+          {/* Header Section - Centered */}
+          <div className="mb-12 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+              <div className="h-2 w-2 rounded-full bg-primary1"></div>
+              <span className="font-raleway text-sm font-semibold text-primary1">
+                User Management
+              </span>
+            </div>
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+              Registered Users
+            </h1>
+            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+              Manage and view all registered users, members, officers, and faculty.
+            </p>
+          </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={downloadExcelTemplate}
-                  className="flex items-center gap-2 px-4 py-2 border-2 border-secondary2 text-secondary2 font-raleway font-semibold rounded-lg hover:bg-secondary2 hover:text-white transition-colors duration-300"
-                  title="Download Excel template"
-                >
-                  <FileDown className="w-4 h-4" />
-                  Template
-                </button>
-                <button
-                  onClick={handleExport}
-                  className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-300"
-                >
-                  <Download className="w-4 h-4" />
-                  Export
-                </button>
-                <button
-                  onClick={() => setIsUploadModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300"
-                >
-                  <Upload className="w-4 h-4" />
-                  Upload Excel
-                </button>
-                <button
-                  onClick={handleAddUser}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  Add User
-                </button>
-              </div>
+          {/* Stats Cards */}
+          <UserStats users={users} />
+
+          {/* Filters and Action Buttons */}
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+            {/* This will hold filters from UsersTable component */}
+            <div className="flex-1">
+              {/* Filters will be rendered here by passing as prop */}
             </div>
 
-            {/* Stats Cards */}
-            <UserStats users={users} />
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-300"
+              >
+                <Download className="w-4 h-4" />
+                Export
+              </button>
+              <button
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300"
+              >
+                <Upload className="w-4 h-4" />
+                Upload Excel
+              </button>
+              <button
+                onClick={handleAddUser}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
+              >
+                <UserPlus className="w-4 h-4" />
+                Add User
+              </button>
+            </div>
           </div>
 
           {/* Users Table */}
@@ -213,6 +248,13 @@ export default function UsersListPage() {
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
         onUpload={handleExcelUpload}
+      />
+
+      {/* Add User Modal */}
+      <AddUserModal
+        isOpen={isAddUserModalOpen}
+        onClose={() => setIsAddUserModalOpen(false)}
+        onAdd={handleAddUserSubmit}
       />
     </div>
   );

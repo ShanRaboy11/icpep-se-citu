@@ -11,9 +11,11 @@ export default function UserTableRow({ user }: UserTableRowProps) {
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case "faculty":
-        return "bg-purple-100 text-purple-700 border-purple-200";
-      case "officer":
-        return "bg-blue-100 text-blue-700 border-blue-200";
+        return "bg-purple-100 text-purple-700 border-purple-200 it";
+      case "council-officer":
+        return "bg-primary1/20 text-blue-700 border-blue-200";
+      case "committee-officer":
+        return "bg-indigo-100 text-indigo-700 border-indigo-200";
       case "member":
         return "bg-green-100 text-green-700 border-green-200";
       case "non-member":
@@ -43,47 +45,35 @@ export default function UserTableRow({ user }: UserTableRowProps) {
 
   return (
     <tr className="hover:bg-gray-50/50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-4 py-4 whitespace-nowrap text-center">
         <span className="font-raleway text-sm font-medium text-primary3">
           {user.studentNumber}
         </span>
       </td>
-      <td className="px-6 py-4">
-        <div className="flex items-center gap-3">
-          {user.profilePicture ? (
-            <img
-              src={user.profilePicture}
-              alt={user.fullName}
-              className="w-8 h-8 rounded-full object-cover border-2 border-primary1/20"
-            />
-          ) : (
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary1/20 to-secondary2/20 flex items-center justify-center border-2 border-primary1/20">
-              <span className="font-raleway text-xs font-semibold text-primary1">
-                {user.firstName[0]}
-                {user.lastName[0]}
-              </span>
-            </div>
-          )}
-          <span className="font-raleway text-sm text-gray-900">
-            {user.fullName}
-          </span>
-        </div>
+      <td className="px-4 py-4 whitespace-nowrap ">
+        <span className="font-raleway text-sm text-center text-gray-900">
+          {user.fullName}
+        </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-4 py-4 whitespace-nowrap text-center">
         <span
           className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-raleway border ${getRoleBadgeColor(
             user.role
           )}`}
         >
-          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+          {user.role === "council-officer"
+            ? "Council Officer"
+            : user.role === "committee-officer"
+            ? "Committee Officer"
+            : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-4 py-4 whitespace-nowrap text-center">
         <span className="font-raleway text-sm text-gray-600">
-          {user.yearLevel ? `Year ${user.yearLevel}` : "N/A"}
+          {user.yearLevel ? `${user.yearLevel}` : "N/A"}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-4 py-4 whitespace-nowrap text-center">
         <span
           className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-raleway border ${getMembershipBadgeColor(
             user.membershipStatus.isMember,
@@ -97,23 +87,23 @@ export default function UserTableRow({ user }: UserTableRowProps) {
             : "Local"}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-4 py-4 whitespace-nowrap">
         <span className="font-raleway text-sm text-gray-600">
           {user.registeredBy?.fullName || "Self-registered"}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-4 py-4 whitespace-nowrap">
         <span className="font-raleway text-sm text-gray-600">
           {formatDate(user.createdAt)}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="px-4 py-4 whitespace-nowrap">
         <span className="font-raleway text-sm text-gray-600">
           {formatDate(user.updatedAt)}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="flex items-center gap-2">
+      <td className="px-4 py-4 whitespace-nowrap">
+        <div className="flex items-center gap-2 justify-center">
           <div
             className={`w-2 h-2 rounded-full ${
               user.isActive ? "bg-green-500" : "bg-gray-400"

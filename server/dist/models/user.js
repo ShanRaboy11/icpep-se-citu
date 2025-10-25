@@ -63,11 +63,12 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         required: [true, 'Password is required'],
         minlength: 6,
+        default: '123456', // Default password for all new users
         select: false,
     },
     role: {
         type: String,
-        enum: ['member', 'non-member', 'officer', 'faculty'],
+        enum: ['member', 'non-member', 'council-officer', 'committee-officer', 'faculty'],
         default: 'member',
     },
     yearLevel: {

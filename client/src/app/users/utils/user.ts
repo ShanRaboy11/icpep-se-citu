@@ -5,7 +5,7 @@ export interface User {
   firstName: string;
   middleName?: string | null;
   fullName: string;
-  role: 'member' | 'non-member' | 'officer' | 'faculty';
+  role: 'member' | 'non-member' | 'council-officer' | 'committee-officer' | 'faculty';
   yearLevel?: number;
   membershipStatus: {
     isMember: boolean;
@@ -31,7 +31,7 @@ export const users: User[] = [
     firstName: "Maria",
     middleName: "Cruz",
     fullName: "Maria Cruz Santos",
-    role: "officer",
+    role: "council-officer",
     yearLevel: 4,
     membershipStatus: {
       isMember: true,
@@ -68,7 +68,7 @@ export const users: User[] = [
   },
   {
     id: "3",
-    studentNumber: "2023-00112",
+    studentNumber: "23-4020-990",
     lastName: "Garcia",
     firstName: "Ana",
     middleName: null,
@@ -136,7 +136,7 @@ export const users: User[] = [
     firstName: "Miguel",
     middleName: "Santos",
     fullName: "Miguel Santos Bautista",
-    role: "officer",
+    role: "committee-officer",
     yearLevel: 3,
     membershipStatus: {
       isMember: true,
