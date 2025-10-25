@@ -9,6 +9,9 @@ import UsersTable from "./components/users_table";
 import UserStats from "./components/stats";
 import ExcelUploadModal from "./components/excel_upload_modal";
 import AddUserModal, { NewUser } from "./components/add_user_modal";
+import ConfirmDialog from "./components/confirm_dialog";
+import ViewUserModal from "./components/view_user_modal";
+import EditUserModal from "./components/edit_user_modal";
 import Grid from "../components/grid";
 import { ArrowLeft, UserPlus, Download, Upload } from "lucide-react";
 
@@ -17,8 +20,18 @@ export default function UsersListPage() {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  
+  // Confirmation Dialogs
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToToggle, setUserToToggle] = useState<User | null>(null);
+  
+  // View and Edit Modals
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+
   const handleBackToHome = () => {
     router.push("/");
   };
@@ -162,45 +175,60 @@ export default function UsersListPage() {
     document.body.removeChild(link);
   };
 
+  // Context Menu Action Handlers
   const handleEditUser = (user: User) => {
-     console.log("Edit user:", user);
-     // TODO: Open edit modal
-     // setSelectedUser(user);
-     // setIsEditModalOpen(true);
-   };
+    setSelectedUser(user);
+    setIsEditModalOpen(true);
+  };
 
-   const handleDeleteUser = (user: User) => {
-     setUserToDelete(user);
-     setIsConfirmDialogOpen(true);
-   };
+  const handleSaveEdit = (updatedUser: User) => {
+    // TODO: Call PUT /api/users/${updatedUser.id}
+    
+    setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+    alert(`${updatedUser.fullName} has been updated successfully!`);
+  };
 
-   const confirmDelete = () => {
-     if (userToDelete) {
-       // TODO: Call DELETE /api/users/${userToDelete.id}
-       
-       setUsers(users.filter(u => u.id !== userToDelete.id));
-       alert(`${userToDelete.fullName} deleted!`);
-       setUserToDelete(null);
-     }
-   };
+  const handleDeleteUser = (user: User) => {
+    setUserToDelete(user);
+    setIsDeleteConfirmOpen(true);
+  };
 
-   const handleToggleActive = (user: User) => {
-     // TODO: Call PATCH /api/users/${user.id}
-     
-     setUsers(users.map(u => 
-       u.id === user.id 
-         ? { ...u, isActive: !u.isActive }
-         : u
-     ));
-     
-     alert(`User ${user.isActive ? 'deactivated' : 'activated'}!`);
-   };
+  const confirmDelete = () => {
+    if (userToDelete) {
+      // TODO: Call DELETE /api/users/${userToDelete.id}
+      
+      setUsers(users.filter(u => u.id !== userToDelete.id));
+      alert(`${userToDelete.fullName} has been deleted successfully!`);
+      setUserToDelete(null);
+    }
+  };
 
-   const handleViewUser = (user: User) => {
-     console.log("View user:", user);
-     // TODO: Navigate to details page
-     // router.push(`/users/${user.id}`);
-   };
+  const handleToggleActive = (user: User) => {
+    setUserToToggle(user);
+    setIsStatusConfirmOpen(true);
+  };
+
+  const confirmToggleActive = () => {
+    if (userToToggle) {
+      // TODO: Call PATCH /api/users/${userToToggle.id}
+      // body: { isActive: !userToToggle.isActive }
+      
+      setUsers(users.map(u => 
+        u.id === userToToggle.id 
+          ? { ...u, isActive: !u.isActive, updatedAt: new Date().toISOString() }
+          : u
+      ));
+      
+      const status = userToToggle.isActive ? 'deactivated' : 'activated';
+      alert(`${userToToggle.fullName} has been ${status} successfully!`);
+      setUserToToggle(null);
+    }
+  };
+
+  const handleViewUser = (user: User) => {
+    setSelectedUser(user);
+    setIsViewModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
@@ -278,8 +306,14 @@ export default function UsersListPage() {
             </div>
           </div>
 
-          {/* Users Table */}
-          <UsersTable users={users} />
+          {/* Users Table with Context Menu Actions */}
+          <UsersTable 
+            users={users}
+            onEdit={handleEditUser}
+            onDelete={handleDeleteUser}
+            onToggleActive={handleToggleActive}
+            onView={handleViewUser}
+          />
         </main>
         <Footer />
       </div>
@@ -297,6 +331,67 @@ export default function UsersListPage() {
         onClose={() => setIsAddUserModalOpen(false)}
         onAdd={handleAddUserSubmit}
       />
+
+      {/* View User Details Modal */}
+      {isViewModalOpen && selectedUser && (
+        <ViewUserModal
+          isOpen={isViewModalOpen}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setSelectedUser(null);
+          }}
+          user={selectedUser}
+        />
+      )}
+
+      {/* Edit User Modal */}
+      {isEditModalOpen && selectedUser && (
+        <EditUserModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedUser(null);
+          }}
+          onSave={handleSaveEdit}
+          user={selectedUser}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {isDeleteConfirmOpen && userToDelete && (
+        <ConfirmDialog
+          isOpen={isDeleteConfirmOpen}
+          onClose={() => {
+            setIsDeleteConfirmOpen(false);
+            setUserToDelete(null);
+          }}
+          onConfirm={confirmDelete}
+          title="Delete User"
+          message={`Are you sure you want to delete ${userToDelete.fullName}? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          type="danger"
+        />
+      )}
+
+      {/* Toggle Status Confirmation Dialog */}
+      {isStatusConfirmOpen && userToToggle && (
+        <ConfirmDialog
+          isOpen={isStatusConfirmOpen}
+          onClose={() => {
+            setIsStatusConfirmOpen(false);
+            setUserToToggle(null);
+          }}
+          onConfirm={confirmToggleActive}
+          title={userToToggle.isActive ? "Deactivate User" : "Activate User"}
+          message={`Are you sure you want to ${
+            userToToggle.isActive ? "deactivate" : "activate"
+          } ${userToToggle.fullName}?`}
+          confirmText={userToToggle.isActive ? "Deactivate" : "Activate"}
+          cancelText="Cancel"
+          type="warning"
+        />
+      )}
     </div>
   );
 }

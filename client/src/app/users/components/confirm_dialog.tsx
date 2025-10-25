@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X, Info, AlertCircle } from "lucide-react";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -33,6 +33,7 @@ export default function ConfirmDialog({
           border: "border-red-200",
           icon: "text-red-600",
           button: "bg-red-600 hover:bg-red-700",
+          IconComponent: AlertTriangle,
         };
       case "warning":
         return {
@@ -40,6 +41,7 @@ export default function ConfirmDialog({
           border: "border-orange-200",
           icon: "text-orange-600",
           button: "bg-orange-600 hover:bg-orange-700",
+          IconComponent: AlertCircle,
         };
       case "info":
         return {
@@ -47,11 +49,13 @@ export default function ConfirmDialog({
           border: "border-blue-200",
           icon: "text-blue-600",
           button: "bg-blue-600 hover:bg-blue-700",
+          IconComponent: Info,
         };
     }
   };
 
   const styles = getTypeStyles();
+  const IconComponent = styles.IconComponent;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -60,7 +64,7 @@ export default function ConfirmDialog({
         <div className={`${styles.bg} ${styles.border} border-b px-6 py-4`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <AlertTriangle className={`w-6 h-6 ${styles.icon}`} />
+              <IconComponent className={`w-6 h-6 ${styles.icon}`} />
               <h2 className="font-rubik text-xl font-bold text-gray-900">
                 {title}
               </h2>
