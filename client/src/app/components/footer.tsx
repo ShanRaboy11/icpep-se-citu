@@ -6,8 +6,15 @@ import { useRouter } from "next/navigation";
 const Footer: NextPage = () => {
   const router = useRouter();
 
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
   return (
-    <footer className="w-full bg-steelblue-200 text-buttonbg1 font-raleway">
+    <footer className="w-full bg-steelblue-200 text-buttonbg1 font-raleway cursor-default">
       <div className="max-w-7xl mx-auto px-2 py-10 flex flex-col gap-8 pb-5">
         {/* ====== Top Navigation ====== */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-white/30 pb-4">
@@ -20,6 +27,11 @@ const Footer: NextPage = () => {
                   <span
                     className="cursor-pointer hover:text-white transition"
                     onClick={() => {
+                      if (item == "Home") {
+                        router.push("/home");
+                      } else if (item == "Events") {
+                        router.push("/events");
+                      }
                       if (item === "Developers") {
                         router.push("/developers");
                       }
@@ -59,13 +71,14 @@ const Footer: NextPage = () => {
               alt="ICPEP Logo"
               width={100}
               height={100}
+              onClick={scrollToTop}
             />
 
             <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-3">
               {/* Top Row: Logo + Chapter Info */}
               <div className="flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-start">
                 {/* Logo */}
-                <div className="flex items-end gap-0.5">
+                <div className="flex items-end gap-0.5 cursor-pointer" onClick={scrollToTop}>
                   <Image
                     src="/Vector-ifooter.svg"
                     alt="I"
@@ -125,7 +138,10 @@ const Footer: NextPage = () => {
                 </div>
 
                 {/* Chapter Info - stacked */}
-                <div className="flex flex-col sm:ml-3 font-rubik text-secondary1">
+                <div
+                  className="flex flex-col sm:ml-3 font-rubik text-secondary1 cursor-pointer"
+                  onClick={scrollToTop}
+                >
                   <span className="text-[16px] sm:text-[22px] font-bold leading-tight">
                     Region 7
                   </span>
@@ -153,7 +169,9 @@ const Footer: NextPage = () => {
 
           {/* Contact */}
           <div className="flex flex-col items-center sm:items-end gap-3">
-            <p className="font-medium text-lavender cursor-auto">Contact Us</p>
+            <p className="font-medium text-lavender cursor-default">
+              Contact Us
+            </p>
             <div className="flex gap-3">
               {" "}
               <a
