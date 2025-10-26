@@ -7,23 +7,22 @@ import * as XLSX from "xlsx";
 // Define an interface for the raw data read from the Excel sheet
 interface RawExcelRow {
   "Student Number"?: string | number;
-  studentNumber?: string | number;
+  studentNumber?: string | number; // Alternate casing
   "Last Name"?: string;
-  lastName?: string;
+  lastName?: string; // Alternate casing
   "First Name"?: string;
-  firstName?: string;
+  firstName?: string; // Alternate casing
   "Middle Name"?: string;
-  middleName?: string;
+  middleName?: string; // Alternate casing
   "Year Level"?: string | number;
-  yearLevel?: string | number;
+  yearLevel?: string | number; // Alternate casing
   "Password"?: string;
-  password?: string;
+  password?: string; // Alternate casing
   "Role"?: string;
-  role?: string;
+  role?: string; // Alternate casing
   "Membership Status"?: string;
-  membershipStatus?: string;
-  // Add other possible column headers here
-  [key: string]: any; // Allow for other unexpected columns, if necessary, but try to be specific
+  membershipStatus?: string; // Alternate casing
+  [key: string]: string | number | undefined; // More specific for other columns
 }
 
 interface UploadedUser {
@@ -109,10 +108,11 @@ export default function ExcelUploadModal({
       const workbook = XLSX.read(data, { type: "array" });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      // Cast the result to an array of RawExcelRow
+      
+      // Cast the result to an array of RawExcelRow with a more specific index type
       const jsonData = XLSX.utils.sheet_to_json<RawExcelRow>(worksheet, { defval: "" });
 
-      const processedUsers = jsonData.map((row, index) => { // 'row' is now typed as RawExcelRow
+      const processedUsers = jsonData.map((row) => { // Removed 'index' as it's unused
         // Helper function to safely get string value, trim, and handle potential null/undefined
         const getStringValue = (val: string | number | undefined) =>
           String(val || "").trim();

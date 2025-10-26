@@ -23,7 +23,7 @@ export default function EditUserModal({
     lastName: user.lastName,
     middleName: user.middleName || "",
     role: user.role,
-    yearLevel: user.yearLevel || "",
+    yearLevel: user.yearLevel?.toString() || "", // Convert to string for select input
     membershipStatus: user.membershipStatus.isMember
       ? user.membershipStatus.membershipType || "local"
       : "non-member",
@@ -72,6 +72,9 @@ export default function EditUserModal({
       return;
     }
 
+    // Explicitly define the type for role to match User['role']
+    const role: User['role'] = formData.role as User['role']; 
+
     const updatedUser: User = {
       ...user,
       studentNumber: formData.studentNumber,
@@ -81,7 +84,7 @@ export default function EditUserModal({
       fullName: `${formData.firstName} ${formData.middleName || ""} ${
         formData.lastName
       }`.trim(),
-      role: formData.role as any,
+      role: role, // Use the explicitly typed role
       yearLevel: formData.yearLevel ? parseInt(formData.yearLevel) : null,
       membershipStatus: {
         isMember: formData.membershipStatus !== "non-member",
