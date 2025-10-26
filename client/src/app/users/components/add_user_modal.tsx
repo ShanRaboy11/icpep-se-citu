@@ -303,6 +303,7 @@ export default function AddUserModal({
                   <option value="member">Member</option>
                   <option value="local">Local</option>
                   <option value="regional">Regional</option>
+                  <option value="regional">Both (Local & Regional)</option>
                 </select>
               </div>
             </div>

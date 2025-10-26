@@ -46,12 +46,16 @@ export default function UserTableRow({
 
   const getMembershipBadgeColor = (isMember: boolean, type: string | null) => {
     if (!isMember) {
-      return "bg-gray-100 text-gray-600 border-gray-200";
-    }
-    if (type === "regional") {
-      return "bg-primary1/10 text-primary1 border-primary1/30";
-    }
-    return "bg-secondary2/10 text-secondary2 border-secondary2/30";
+  return "bg-gray-100 text-gray-600 border-gray-200";
+}
+if (type === "regional") {
+  return "bg-cyan-100 text-cyan-700 border-cyan-200";
+}
+if (type === "both") {
+  return "bg-purple-100 text-purple-700 border-purple-200";
+}
+// New color for "local" (the default return)
+ return "bg-secondary2/10 text-secondary2 border-secondary2/30";
   };
 
   const formatDate = (dateString: string) => {
@@ -120,6 +124,8 @@ export default function UserTableRow({
               ? "Non-Member"
               : user.membershipStatus.membershipType === "regional"
               ? "Regional"
+              : user.membershipStatus.membershipType === "both"
+              ? "Both"
               : "Local"}
           </span>
         </td>

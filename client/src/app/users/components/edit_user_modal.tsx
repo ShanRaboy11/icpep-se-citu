@@ -88,7 +88,7 @@ export default function EditUserModal({
         membershipType:
           formData.membershipStatus === "non-member"
             ? null
-            : (formData.membershipStatus as "local" | "regional"),
+            : (formData.membershipStatus as "local" | "regional" | "both"),
       },
       isActive: formData.isActive,
       updatedAt: new Date().toISOString(),
@@ -133,7 +133,7 @@ export default function EditUserModal({
               name="studentNumber"
               value={formData.studentNumber}
               onChange={handleChange}
-              className={`w-full px-4 py-2 border-2 text-gray-400 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
+              className={`w-full px-4 py-2 text-gray-400 border-2 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
                 errors.studentNumber
                   ? "border-red-500"
                   : "border-gray-300 focus:border-primary1"
@@ -158,7 +158,7 @@ export default function EditUserModal({
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border-2 text-gray-400 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
+                className={`w-full px-4 py-2 text-gray-400 border-2 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
                   errors.firstName
                     ? "border-red-500"
                     : "border-gray-300 focus:border-primary1"
@@ -195,7 +195,7 @@ export default function EditUserModal({
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border-2 rounded-lg text-gray-400 font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
+                className={`w-full px-4 py-2 border-2 text-gray-400 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
                   errors.lastName
                     ? "border-red-500"
                     : "border-gray-300 focus:border-primary1"
@@ -220,12 +220,13 @@ export default function EditUserModal({
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className={`w-full px-4 py-2 border-2 text-gray-400 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
+                className={`w-full px-4 py-2 text-gray-400 border-2 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
                   errors.role
                     ? "border-red-500"
                     : "border-gray-300 focus:border-primary1"
                 }`}
               >
+                <option value="">Select Role</option>
                 <option value="member">Member</option>
                 <option value="non-member">Non-Member</option>
                 <option value="council-officer">Council Officer</option>
@@ -247,7 +248,7 @@ export default function EditUserModal({
                 name="yearLevel"
                 value={formData.yearLevel}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border-2 border-gray-300 text-gray-400 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
+                className="w-full px-4 py-2 border-2 text-gray-400 border-gray-300 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
               >
                 <option value="">Select Year Level</option>
                 <option value="1">1st Year</option>
@@ -267,11 +268,12 @@ export default function EditUserModal({
               name="membershipStatus"
               value={formData.membershipStatus}
               onChange={handleChange}
-              className="w-full px-4 py-2 border-2 border-gray-300 text-gray-400 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
+              className="w-full px-4 py-2 border-2 text-gray-400 border-gray-300 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
             >
               <option value="non-member">Non-Member</option>
               <option value="local">Local Member</option>
               <option value="regional">Regional Member</option>
+              <option value="both">Both (Local & Regional)</option>
             </select>
           </div>
 

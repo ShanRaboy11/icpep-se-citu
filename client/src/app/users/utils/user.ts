@@ -9,7 +9,7 @@ export interface User {
   yearLevel?: number;
   membershipStatus: {
     isMember: boolean;
-    membershipType: 'local' | 'regional' | null;
+    membershipType: 'local' | 'regional' | 'both' | null;
     validUntil?: Date;
   };
   profilePicture?: string | null;
@@ -68,7 +68,7 @@ export const users: User[] = [
   },
   {
     id: "3",
-    studentNumber: "23-4020-990",
+    studentNumber: "2023-00112",
     lastName: "Garcia",
     firstName: "Ana",
     middleName: null,
@@ -191,5 +191,27 @@ export const users: User[] = [
     },
     createdAt: "2024-01-25T12:00:00Z",
     updatedAt: "2024-06-30T18:20:00Z",
+  },
+  {
+    id: "9",
+    studentNumber: "2022-00198",
+    lastName: "Aquino",
+    firstName: "Patricia",
+    middleName: "Santos",
+    fullName: "Patricia Santos Aquino",
+    role: "member",
+    yearLevel: 3,
+    membershipStatus: {
+      isMember: true,
+      membershipType: "both",
+    },
+    profilePicture: null,
+    isActive: true,
+    registeredBy: {
+      id: "1",
+      fullName: "Maria Cruz Santos",
+    },
+    createdAt: "2024-03-10T09:30:00Z",
+    updatedAt: "2024-10-24T12:15:00Z",
   },
 ];

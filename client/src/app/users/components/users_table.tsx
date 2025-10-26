@@ -58,7 +58,9 @@ export default function UsersTable({
     const roleMatch = filterRole === "all" || user.role === filterRole;
     const membershipMatch =
       filterMembership === "all" ||
-      (filterMembership === "member" && user.membershipStatus.isMember) ||
+      (filterMembership === "local" && user.membershipStatus.membershipType === "local") ||
+      (filterMembership === "regional" && user.membershipStatus.membershipType === "regional") ||
+      (filterMembership === "both" && user.membershipStatus.membershipType === "both") ||
       (filterMembership === "non-member" && !user.membershipStatus.isMember);
     return roleMatch && membershipMatch;
   });
@@ -134,7 +136,9 @@ export default function UsersTable({
             className="font-raleway text-sm text-gray-400 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
           >
             <option value="all">All</option>
-            <option value="member">Member</option>
+            <option value="local">Local</option>
+            <option value="regional">Regional</option>
+            <option value="both">Both (Local & Regional)</option>
             <option value="non-member">Non-Member</option>
           </select>
         </div>

@@ -94,15 +94,7 @@ export default function ViewUserModal({ isOpen, onClose, user }: ViewUserModalPr
                   ? "Committee Officer"
                   : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </span>
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold font-raleway border ${
-                  user.membershipStatus.isMember
-                    ? "bg-green-100 text-green-700 border-green-200"
-                    : "bg-gray-100 text-gray-600 border-gray-200"
-                }`}
-              >
-                {user.membershipStatus.isMember ? "Member" : "Non-Member"}
-              </span>
+  
               <div className="flex items-center gap-2">
                 <div
                   className={`w-2 h-2 rounded-full ${
@@ -178,11 +170,15 @@ export default function ViewUserModal({ isOpen, onClose, user }: ViewUserModalPr
                     className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold font-raleway border ${
                       user.membershipStatus.membershipType === "regional"
                         ? "bg-primary1/10 text-primary1 border-primary1/30"
+                        : user.membershipStatus.membershipType === "both"
+                        ? "bg-purple-100 text-purple-700 border-purple-200"
                         : "bg-secondary2/10 text-secondary2 border-secondary2/30"
                     }`}
                   >
                     {user.membershipStatus.membershipType === "regional"
                       ? "Regional"
+                      : user.membershipStatus.membershipType === "both"
+                      ? "Both (Local & Regional)"
                       : "Local"}
                   </span>
                 </div>

@@ -80,7 +80,7 @@ const userSchema = new mongoose_1.Schema({
         isMember: { type: Boolean, default: false },
         membershipType: {
             type: String,
-            enum: ['local', 'regional', null],
+            enum: ['local', 'regional', 'both', null],
             default: null,
         },
         validUntil: Date,
@@ -167,6 +167,7 @@ userSchema.pre('save', function (next) {
 userSchema.index({ studentNumber: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ 'membershipStatus.isMember': 1 });
+userSchema.index({ 'membershipStatus.membershipType': 1 }); // NEW: Index for membership type filtering
 userSchema.index({ createdAt: -1 }); // For sorting by registration date
 userSchema.index({ updatedAt: -1 }); // For sorting by update date
 
