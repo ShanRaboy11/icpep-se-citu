@@ -86,9 +86,8 @@ export default function EditUserModal({
       fullName: `${formData.firstName} ${formData.middleName || ""} ${
         formData.lastName
       }`.trim(),
-      role: role, // Use the explicitly typed role
-      // If formData.yearLevel is an empty string, assign null; otherwise, parse it.
-      yearLevel: formData.yearLevel ? parseInt(formData.yearLevel) : null,
+      role: role,
+      yearLevel: formData.yearLevel ? parseInt(formData.yearLevel) : undefined,
       membershipStatus: {
         isMember: formData.membershipStatus !== "non-member",
         membershipType:
