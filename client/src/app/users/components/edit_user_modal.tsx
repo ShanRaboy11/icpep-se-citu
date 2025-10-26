@@ -1,7 +1,7 @@
 "use client";
 
 import { X, Save } from "lucide-react";
-import { User } from "../utils/user";
+import { User } from "../utils/user"; // Ensure this path is correct
 import { useState } from "react";
 
 interface EditUserModalProps {
@@ -23,7 +23,9 @@ export default function EditUserModal({
     lastName: user.lastName,
     middleName: user.middleName || "",
     role: user.role,
-    yearLevel: user.yearLevel?.toString() || "", // Convert to string for select input
+    // Convert yearLevel to string for the select input.
+    // Use an empty string if it's null or undefined.
+    yearLevel: user.yearLevel?.toString() || "", 
     membershipStatus: user.membershipStatus.isMember
       ? user.membershipStatus.membershipType || "local"
       : "non-member",
@@ -85,6 +87,7 @@ export default function EditUserModal({
         formData.lastName
       }`.trim(),
       role: role, // Use the explicitly typed role
+      // If formData.yearLevel is an empty string, assign null; otherwise, parse it.
       yearLevel: formData.yearLevel ? parseInt(formData.yearLevel) : null,
       membershipStatus: {
         isMember: formData.membershipStatus !== "non-member",
