@@ -2,15 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-// Import User, and the specific types UserRole, MembershipType
-import { users as initialUsers, User, UserRole, MembershipType } from "./utils/user";
+// Import User and initialUsers. UserRole and MembershipType are not exported
+// so we don't try to import them directly here.
+import { users as initialUsers, User } from "./utils/user";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import UsersTable from "./components/users_table";
 import UserStats from "./components/stats";
 import ExcelUploadModal from "./components/excel_upload_modal";
 // Import UploadedUser from the modal component file
-import { UploadedUser } from "./components/excel_upload_modal";
+import { UploadedUser } from "./components/excel_upload_modal"; // <--- Added this import
 import AddUserModal, { NewUser } from "./components/add_user_modal";
 import ConfirmDialog from "./components/confirm_dialog";
 import ViewUserModal from "./components/view_user_modal";
@@ -53,11 +54,12 @@ export default function UsersListPage() {
         firstName: newUser.firstName,
         middleName: newUser.middleName || null,
         fullName: `${newUser.firstName} ${newUser.middleName || ""} ${newUser.lastName}`.trim(),
-        role: newUser.role as UserRole, // FIX 1: Cast to UserRole
+        role: newUser.role as User['role'], // Use indexed access type
         yearLevel: newUser.yearLevel,
         membershipStatus: {
-          isMember: newUser.membershipStatus === "member" || newUser.membershipStatus === "local" || newUser.membershipStatus === "regional",
-          membershipType: (newUser.membershipStatus === "local" ? "local" : newUser.membershipStatus === "regional" ? "regional" : null) as MembershipType, // Cast to MembershipType
+          isMember: ["member", "local", "regional"].includes(newUser.membershipStatus),
+          // Use indexed access type for membershipType
+          membershipType: (newUser.membershipStatus === "local" ? "local" : newUser.membershipStatus === "regional" ? "regional" : newUser.membershipStatus === "both" ? "both" : null) as User['membershipStatus']['membershipType'],
         },
         profilePicture: null,
         isActive: true,
@@ -74,17 +76,23 @@ export default function UsersListPage() {
     }
   };
 
-  const handleExcelUpload = async (uploadedUsers: UploadedUser[]) => { // FIX 2: Type uploadedUsers as UploadedUser[]
+  const handleExcelUpload = async (uploadedUsers: UploadedUser[]) => {
     try {
       // For now, just add to local state
       const newUsers: User[] = uploadedUsers.map((user, index) => {
         // Safely determine membership type based on the string from the uploaded file
-        let membershipType: MembershipType = null;
+        // Ensure this logic maps correctly to User['membershipStatus']['membershipType']
+        let membershipType: User['membershipStatus']['membershipType'] = null; // Use indexed access type here
         if (user.membershipStatus === "local") {
           membershipType = "local";
         } else if (user.membershipStatus === "regional") {
           membershipType = "regional";
+        } else if (user.membershipStatus === "both") {
+          membershipType = "both";
         }
+        // Note: if user.membershipStatus from Excel is "member" or "non-member"
+        // and you want those to map to something specific, adjust logic here.
+        // Currently, they would result in `null` membershipType.
 
         return {
           id: `uploaded-${Date.now()}-${index}`,
@@ -93,10 +101,10 @@ export default function UsersListPage() {
           firstName: user.firstName,
           middleName: user.middleName || null,
           fullName: `${user.firstName} ${user.middleName || ""} ${user.lastName}`.trim(),
-          role: user.role as UserRole, // FIX 3: Cast to UserRole
+          role: user.role as User['role'], // Use indexed access type
           yearLevel: user.yearLevel,
           membershipStatus: {
-            isMember: ["member", "local", "regional"].includes(user.membershipStatus),
+            isMember: ["member", "local", "regional", "both"].includes(user.membershipStatus),
             membershipType: membershipType,
           },
           profilePicture: null,
