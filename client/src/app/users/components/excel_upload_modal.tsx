@@ -4,6 +4,28 @@ import { useState, useRef } from "react";
 import { X, Upload, AlertCircle, CheckCircle, FileSpreadsheet } from "lucide-react";
 import * as XLSX from "xlsx";
 
+// Define an interface for the raw data read from the Excel sheet
+interface RawExcelRow {
+  "Student Number"?: string | number;
+  studentNumber?: string | number;
+  "Last Name"?: string;
+  lastName?: string;
+  "First Name"?: string;
+  firstName?: string;
+  "Middle Name"?: string;
+  middleName?: string;
+  "Year Level"?: string | number;
+  yearLevel?: string | number;
+  "Password"?: string;
+  password?: string;
+  "Role"?: string;
+  role?: string;
+  "Membership Status"?: string;
+  membershipStatus?: string;
+  // Add other possible column headers here
+  [key: string]: any; // Allow for other unexpected columns, if necessary, but try to be specific
+}
+
 interface UploadedUser {
   studentNumber: string;
   lastName: string;
@@ -87,18 +109,29 @@ export default function ExcelUploadModal({
       const workbook = XLSX.read(data, { type: "array" });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+      // Cast the result to an array of RawExcelRow
+      const jsonData = XLSX.utils.sheet_to_json<RawExcelRow>(worksheet, { defval: "" });
 
-      const processedUsers = jsonData.map((row: any, index: number) => {
+      const processedUsers = jsonData.map((row, index) => { // 'row' is now typed as RawExcelRow
+        // Helper function to safely get string value, trim, and handle potential null/undefined
+        const getStringValue = (val: string | number | undefined) =>
+          String(val || "").trim();
+
+        // Helper function to safely get number value
+        const getNumberValue = (val: string | number | undefined) => {
+          const num = Number(val);
+          return isNaN(num) ? undefined : num;
+        };
+
         const user: UploadedUser = {
-          studentNumber: String(row["Student Number"] || row["studentNumber"] || "").trim(),
-          lastName: String(row["Last Name"] || row["lastName"] || "").trim(),
-          firstName: String(row["First Name"] || row["firstName"] || "").trim(),
-          middleName: String(row["Middle Name"] || row["middleName"] || "").trim() || undefined,
-          yearLevel: row["Year Level"] || row["yearLevel"] || undefined,
-          password: String(row["Password"] || row["password"] || "123456").trim(),
-          role: String(row["Role"] || row["role"] || "member").toLowerCase().trim(),
-          membershipStatus: String(row["Membership Status"] || row["membershipStatus"] || "non-member").toLowerCase().trim(),
+          studentNumber: getStringValue(row["Student Number"] || row["studentNumber"]),
+          lastName: getStringValue(row["Last Name"] || row["lastName"]),
+          firstName: getStringValue(row["First Name"] || row["firstName"]),
+          middleName: getStringValue(row["Middle Name"] || row["middleName"]) || undefined,
+          yearLevel: getNumberValue(row["Year Level"] || row["yearLevel"]),
+          password: getStringValue(row["Password"] || row["password"] || "123456"),
+          role: getStringValue(row["Role"] || row["role"] || "member").toLowerCase(),
+          membershipStatus: getStringValue(row["Membership Status"] || row["membershipStatus"] || "non-member").toLowerCase(),
           status: "valid",
         };
 
@@ -120,7 +153,7 @@ export default function ExcelUploadModal({
         ) {
           errors.push("Invalid role");
         }
-        if (user.yearLevel && (user.yearLevel < 1 || user.yearLevel > 5)) {
+        if (user.yearLevel !== undefined && (user.yearLevel < 1 || user.yearLevel > 5)) {
           errors.push("Year Level must be between 1-5");
         }
         if (

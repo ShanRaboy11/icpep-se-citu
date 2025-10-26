@@ -2,12 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { users as initialUsers, User } from "./utils/user";
+// Import User, and the specific types UserRole, MembershipType
+import { users as initialUsers, User, UserRole, MembershipType } from "./utils/user";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import UsersTable from "./components/users_table";
 import UserStats from "./components/stats";
 import ExcelUploadModal from "./components/excel_upload_modal";
+// Import UploadedUser from the modal component file
+import { UploadedUser } from "./components/excel_upload_modal";
 import AddUserModal, { NewUser } from "./components/add_user_modal";
 import ConfirmDialog from "./components/confirm_dialog";
 import ViewUserModal from "./components/view_user_modal";
@@ -20,13 +23,13 @@ export default function UsersListPage() {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
-  
+
   // Confirmation Dialogs
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userToToggle, setUserToToggle] = useState<User | null>(null);
-  
+
   // View and Edit Modals
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -42,14 +45,6 @@ export default function UsersListPage() {
 
   const handleAddUserSubmit = async (newUser: NewUser) => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/users', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(newUser),
-      // });
-      // const data = await response.json();
-
       // For now, just add to local state
       const user: User = {
         id: `new-${Date.now()}`,
@@ -58,15 +53,15 @@ export default function UsersListPage() {
         firstName: newUser.firstName,
         middleName: newUser.middleName || null,
         fullName: `${newUser.firstName} ${newUser.middleName || ""} ${newUser.lastName}`.trim(),
-        role: newUser.role as any,
+        role: newUser.role as UserRole, // FIX 1: Cast to UserRole
         yearLevel: newUser.yearLevel,
         membershipStatus: {
           isMember: newUser.membershipStatus === "member" || newUser.membershipStatus === "local" || newUser.membershipStatus === "regional",
-          membershipType: newUser.membershipStatus === "local" ? "local" : newUser.membershipStatus === "regional" ? "regional" : null,
+          membershipType: (newUser.membershipStatus === "local" ? "local" : newUser.membershipStatus === "regional" ? "regional" : null) as MembershipType, // Cast to MembershipType
         },
         profilePicture: null,
         isActive: true,
-        registeredBy: null,
+        registeredBy: null, // This would typically be the ID of the user performing the registration
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -79,36 +74,38 @@ export default function UsersListPage() {
     }
   };
 
-  const handleExcelUpload = async (uploadedUsers: any[]) => {
+  const handleExcelUpload = async (uploadedUsers: UploadedUser[]) => { // FIX 2: Type uploadedUsers as UploadedUser[]
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/users/bulk-upload', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ users: uploadedUsers }),
-      // });
-      // const data = await response.json();
-
       // For now, just add to local state
-      const newUsers: User[] = uploadedUsers.map((user, index) => ({
-        id: `uploaded-${Date.now()}-${index}`,
-        studentNumber: user.studentNumber,
-        lastName: user.lastName,
-        firstName: user.firstName,
-        middleName: user.middleName || null,
-        fullName: `${user.firstName} ${user.middleName || ""} ${user.lastName}`.trim(),
-        role: user.role as any,
-        yearLevel: user.yearLevel,
-        membershipStatus: {
-          isMember: user.role === "member" || user.role === "council-officer" || user.role === "committee-officer",
-          membershipType: user.membershipStatus === "local" ? "local" : user.membershipStatus === "regional" ? "regional" : null,
-        },
-        profilePicture: null,
-        isActive: true,
-        registeredBy: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }));
+      const newUsers: User[] = uploadedUsers.map((user, index) => {
+        // Safely determine membership type based on the string from the uploaded file
+        let membershipType: MembershipType = null;
+        if (user.membershipStatus === "local") {
+          membershipType = "local";
+        } else if (user.membershipStatus === "regional") {
+          membershipType = "regional";
+        }
+
+        return {
+          id: `uploaded-${Date.now()}-${index}`,
+          studentNumber: user.studentNumber,
+          lastName: user.lastName,
+          firstName: user.firstName,
+          middleName: user.middleName || null,
+          fullName: `${user.firstName} ${user.middleName || ""} ${user.lastName}`.trim(),
+          role: user.role as UserRole, // FIX 3: Cast to UserRole
+          yearLevel: user.yearLevel,
+          membershipStatus: {
+            isMember: ["member", "local", "regional"].includes(user.membershipStatus),
+            membershipType: membershipType,
+          },
+          profilePicture: null,
+          isActive: true,
+          registeredBy: null, // This would typically be the ID of the user performing the upload
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      });
 
       setUsers([...newUsers, ...users]);
       alert(`Successfully uploaded ${newUsers.length} users!`);
@@ -183,7 +180,7 @@ export default function UsersListPage() {
 
   const handleSaveEdit = (updatedUser: User) => {
     // TODO: Call PUT /api/users/${updatedUser.id}
-    
+
     setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
     alert(`${updatedUser.fullName} has been updated successfully!`);
   };
@@ -196,7 +193,7 @@ export default function UsersListPage() {
   const confirmDelete = () => {
     if (userToDelete) {
       // TODO: Call DELETE /api/users/${userToDelete.id}
-      
+
       setUsers(users.filter(u => u.id !== userToDelete.id));
       alert(`${userToDelete.fullName} has been deleted successfully!`);
       setUserToDelete(null);
@@ -212,13 +209,13 @@ export default function UsersListPage() {
     if (userToToggle) {
       // TODO: Call PATCH /api/users/${userToToggle.id}
       // body: { isActive: !userToToggle.isActive }
-      
-      setUsers(users.map(u => 
-        u.id === userToToggle.id 
+
+      setUsers(users.map(u =>
+        u.id === userToToggle.id
           ? { ...u, isActive: !u.isActive, updatedAt: new Date().toISOString() }
           : u
       ));
-      
+
       const status = userToToggle.isActive ? 'deactivated' : 'activated';
       alert(`${userToToggle.fullName} has been ${status} successfully!`);
       setUserToToggle(null);
@@ -241,13 +238,13 @@ export default function UsersListPage() {
             <button
               onClick={handleBackToHome}
               title="Back to Home"
-              className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
-                         rounded-full border-2 border-primary1 text-primary1 
-                         overflow-hidden transition-all duration-300 ease-in-out 
-                         active:scale-95 before:absolute before:inset-0 
-                         before:bg-gradient-to-r before:from-transparent 
-                         before:via-white/40 before:to-transparent 
-                         before:translate-x-[-100%] hover:before:translate-x-[100%] 
+              className="relative flex h-12 w-12 cursor-pointer items-center justify-center
+                         rounded-full border-2 border-primary1 text-primary1
+                         overflow-hidden transition-all duration-300 ease-in-out
+                         active:scale-95 before:absolute before:inset-0
+                         before:bg-gradient-to-r before:from-transparent
+                         before:via-white/40 before:to-transparent
+                         before:translate-x-[-100%] hover:before:translate-x-[100%]
                          before:transition-transform before:duration-700"
             >
               <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
@@ -307,7 +304,7 @@ export default function UsersListPage() {
           </div>
 
           {/* Users Table with Context Menu Actions */}
-          <UsersTable 
+          <UsersTable
             users={users}
             onEdit={handleEditUser}
             onDelete={handleDeleteUser}

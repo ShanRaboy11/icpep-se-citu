@@ -5,12 +5,12 @@ import UserTableRow from "./user_table_row";
 import { useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 
-type SortField = 
-  | "studentNumber" 
-  | "fullName" 
-  | "role" 
-  | "yearLevel" 
-  | "createdAt" 
+type SortField =
+  | "studentNumber"
+  | "fullName"
+  | "role"
+  | "yearLevel"
+  | "createdAt"
   | "updatedAt";
 
 type SortDirection = "asc" | "desc";
@@ -67,8 +67,9 @@ export default function UsersTable({
 
   // Sort users
   const sortedUsers = [...filteredUsers].sort((a, b) => {
-    let aValue: any;
-    let bValue: any;
+    // Define a union type for the possible values that aValue and bValue can hold
+    let aValue: string | number | Date | undefined;
+    let bValue: string | number | Date | undefined;
 
     switch (sortField) {
       case "studentNumber":
@@ -84,23 +85,34 @@ export default function UsersTable({
         bValue = b.role;
         break;
       case "yearLevel":
-        aValue = a.yearLevel || 0;
-        bValue = b.yearLevel || 0;
+        aValue = a.yearLevel || 0; // Provide a default number if yearLevel is undefined
+        bValue = b.yearLevel || 0; // Provide a default number if yearLevel is undefined
         break;
       case "createdAt":
-        aValue = new Date(a.createdAt).getTime();
-        bValue = new Date(b.createdAt).getTime();
+        aValue = new Date(a.createdAt);
+        bValue = new Date(b.createdAt);
         break;
       case "updatedAt":
-        aValue = new Date(a.updatedAt).getTime();
-        bValue = new Date(b.updatedAt).getTime();
+        aValue = new Date(a.updatedAt);
+        bValue = new Date(b.updatedAt);
         break;
       default:
         return 0;
     }
 
-    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    // Now perform the comparison based on the types
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    } else if (aValue instanceof Date && bValue instanceof Date) {
+      if (aValue.getTime() < bValue.getTime()) return sortDirection === "asc" ? -1 : 1;
+      if (aValue.getTime() > bValue.getTime()) return sortDirection === "asc" ? 1 : -1;
+    }
+    // Handle cases where values might be undefined or mismatched types if necessary
+    // For now, if types don't match or are undefined, they are considered equal
     return 0;
   });
 
