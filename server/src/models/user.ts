@@ -1,25 +1,35 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
+import bcrypt from 'bcryptjs';
 
+// Interface for User document
 export interface IUser extends Document {
-  studentNumber: string; 
+  _id: string;
+  studentNumber: string;
   lastName: string;
   firstName: string;
-  middleName?: string; 
+  middleName?: string;
   password: string;
-  role: 'member' | 'non-member' | 'officer' | 'faculty';
-  department?: string;
+  role: 'member' | 'non-member' | 'council-officer' | 'committee-officer' | 'faculty';
   yearLevel?: number;
   membershipStatus: {
     isMember: boolean;
-    membershipType?: 'local' | 'regional' | null;
+    membershipType: 'local' | 'regional' | 'both' | null;
     validUntil?: Date;
   };
   profilePicture?: string;
   isActive: boolean;
-  registeredBy?: mongoose.Types.ObjectId;
-  fullName: string;
+  registeredBy?: mongoose.Types.ObjectId | IUser;
+  firstLogin: boolean;
   createdAt: Date;
   updatedAt: Date;
+  fullName: string;
+  registeredByName: string;
+  comparePassword(candidatePassword: string): Promise<boolean>;
+}
+
+// Interface for User Model with static methods
+interface IUserModel extends Model<IUser> {
+  // Add any static methods here if needed
 }
 
 const userSchema = new Schema<IUser>(
@@ -29,7 +39,7 @@ const userSchema = new Schema<IUser>(
       required: [true, 'Student number is required'],
       unique: true,
       trim: true,
-      uppercase: true, // Normalize to uppercase
+      uppercase: true,
     },
     lastName: {
       type: String,
@@ -50,16 +60,13 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, 'Password is required'],
       minlength: 6,
-      select: false, // Don't return password by default
+      default: '123456',
+      select: false,
     },
     role: {
       type: String,
-      enum: ['member', 'non-member', 'officer', 'faculty'],
+      enum: ['member', 'non-member', 'council-officer', 'committee-officer', 'faculty'],
       default: 'member',
-    },
-    department: {
-      type: String,
-      default: 'Computer Engineering',
     },
     yearLevel: {
       type: Number,
@@ -70,7 +77,7 @@ const userSchema = new Schema<IUser>(
       isMember: { type: Boolean, default: false },
       membershipType: {
         type: String,
-        enum: ['local', 'regional', null],
+        enum: ['local', 'regional', 'both', null],
         default: null,
       },
       validUntil: Date,
@@ -88,6 +95,11 @@ const userSchema = new Schema<IUser>(
       ref: 'User',
       default: null,
     },
+    firstLogin: {
+      type: Boolean,
+      default: true,
+      select: false,
+    },
   },
   {
     timestamps: true,
@@ -104,12 +116,19 @@ userSchema.virtual('fullName').get(function (this: IUser) {
   return `${this.firstName} ${this.lastName}`;
 });
 
+// Virtual for registeredBy name
+userSchema.virtual('registeredByName').get(function (this: IUser) {
+  if (this.registeredBy && typeof this.registeredBy === 'object') {
+    const registrar = this.registeredBy as IUser;
+    return registrar.fullName || `${registrar.firstName} ${registrar.lastName}`;
+  }
+  return 'Self-registered';
+});
+
 // Pre-save middleware to hash password
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   
-  // Hash password (you'll need to import bcrypt)
-  const bcrypt = await import('bcryptjs');
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
@@ -125,11 +144,19 @@ userSchema.pre('save', function (next) {
   next();
 });
 
+// Method to compare password
+userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
 // Indexes
-userSchema.index({ email: 1 });
 userSchema.index({ studentNumber: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ 'membershipStatus.isMember': 1 });
-userSchema.index({ registrationMethod: 1 });
+userSchema.index({ 'membershipStatus.membershipType': 1 });
+userSchema.index({ createdAt: -1 });
+userSchema.index({ updatedAt: -1 });
 
-export default mongoose.model<IUser>('User', userSchema);
+const User = mongoose.model<IUser, IUserModel>('User', userSchema);
+
+export default User;

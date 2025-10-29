@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { users as initialUsers, User } from "./utils/user";
+import { useState, useEffect } from "react";
+import { User } from "./utils/user";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import UsersTable from "./components/users_table";
@@ -15,9 +15,47 @@ import EditUserModal from "./components/edit_user_modal";
 import Grid from "../components/grid";
 import { ArrowLeft, UserPlus, Download, Upload } from "lucide-react";
 
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
+// Helper function to get auth token
+const getAuthToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('authToken');
+  }
+  return null;
+};
+
+// Helper function to make authenticated API calls
+const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+  const token = getAuthToken();
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'An error occurred');
+  }
+
+  return response.json();
+};
+
 export default function UsersListPage() {
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   
@@ -32,6 +70,48 @@ export default function UsersListPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetchWithAuth(`${API_BASE_URL}/users`);
+      
+      if (response.success) {
+        // Transform backend data to match frontend User type
+        const transformedUsers: User[] = response.data.map((user: any) => ({
+          id: user._id,
+          studentNumber: user.studentNumber,
+          lastName: user.lastName,
+          firstName: user.firstName,
+          middleName: user.middleName,
+          fullName: user.fullName,
+          role: user.role,
+          yearLevel: user.yearLevel,
+          membershipStatus: user.membershipStatus,
+          profilePicture: user.profilePicture,
+          isActive: user.isActive,
+          registeredBy: user.registeredBy ? {
+            id: user.registeredBy._id,
+            fullName: `${user.registeredBy.firstName} ${user.registeredBy.lastName}`,
+          } : null,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        }));
+        
+        setUsers(transformedUsers);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      alert("Failed to load users. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleBackToHome = () => {
     router.push("/");
   };
@@ -42,79 +122,70 @@ export default function UsersListPage() {
 
   const handleAddUserSubmit = async (newUser: NewUser) => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/users', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(newUser),
-      // });
-      // const data = await response.json();
+      const response = await fetchWithAuth(`${API_BASE_URL}/users`, {
+        method: 'POST',
+        body: JSON.stringify(newUser),
+      });
 
-      // For now, just add to local state
-      const user: User = {
-        id: `new-${Date.now()}`,
-        studentNumber: newUser.studentNumber,
-        lastName: newUser.lastName,
-        firstName: newUser.firstName,
-        middleName: newUser.middleName || null,
-        fullName: `${newUser.firstName} ${newUser.middleName || ""} ${newUser.lastName}`.trim(),
-        role: newUser.role as any,
-        yearLevel: newUser.yearLevel,
-        membershipStatus: {
-          isMember: newUser.membershipStatus === "member" || newUser.membershipStatus === "local" || newUser.membershipStatus === "regional",
-          membershipType: newUser.membershipStatus === "local" ? "local" : newUser.membershipStatus === "regional" ? "regional" : null,
-        },
-        profilePicture: null,
-        isActive: true,
-        registeredBy: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      if (response.success) {
+        // Transform and add the new user to the list
+        const transformedUser: User = {
+          id: response.data._id,
+          studentNumber: response.data.studentNumber,
+          lastName: response.data.lastName,
+          firstName: response.data.firstName,
+          middleName: response.data.middleName,
+          fullName: response.data.fullName,
+          role: response.data.role,
+          yearLevel: response.data.yearLevel,
+          membershipStatus: response.data.membershipStatus,
+          profilePicture: response.data.profilePicture,
+          isActive: response.data.isActive,
+          registeredBy: response.data.registeredBy ? {
+            id: response.data.registeredBy._id,
+            fullName: `${response.data.registeredBy.firstName} ${response.data.registeredBy.lastName}`,
+          } : null,
+          createdAt: response.data.createdAt,
+          updatedAt: response.data.updatedAt,
+        };
 
-      setUsers([user, ...users]);
-      alert("User added successfully!");
-    } catch (error) {
+        setUsers([transformedUser, ...users]);
+        alert("User added successfully!");
+      }
+    } catch (error: any) {
       console.error("Error adding user:", error);
-      alert("Failed to add user. Please try again.");
+      alert(error.message || "Failed to add user. Please try again.");
     }
   };
 
   const handleExcelUpload = async (uploadedUsers: any[]) => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/users/bulk-upload', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ users: uploadedUsers }),
-      // });
-      // const data = await response.json();
+      const response = await fetchWithAuth(`${API_BASE_URL}/users/bulk-upload`, {
+        method: 'POST',
+        body: JSON.stringify({ users: uploadedUsers }),
+      });
 
-      // For now, just add to local state
-      const newUsers: User[] = uploadedUsers.map((user, index) => ({
-        id: `uploaded-${Date.now()}-${index}`,
-        studentNumber: user.studentNumber,
-        lastName: user.lastName,
-        firstName: user.firstName,
-        middleName: user.middleName || null,
-        fullName: `${user.firstName} ${user.middleName || ""} ${user.lastName}`.trim(),
-        role: user.role as any,
-        yearLevel: user.yearLevel,
-        membershipStatus: {
-          isMember: user.role === "member" || user.role === "council-officer" || user.role === "committee-officer",
-          membershipType: user.membershipStatus === "local" ? "local" : user.membershipStatus === "regional" ? "regional" : null,
-        },
-        profilePicture: null,
-        isActive: true,
-        registeredBy: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }));
-
-      setUsers([...newUsers, ...users]);
-      alert(`Successfully uploaded ${newUsers.length} users!`);
-    } catch (error) {
+      if (response.success) {
+        const successCount = response.data.success.length;
+        const failedCount = response.data.failed.length;
+        
+        // Refresh the user list
+        await fetchUsers();
+        
+        if (failedCount > 0) {
+          alert(
+            `Upload completed!\n` +
+            `✓ ${successCount} users uploaded successfully\n` +
+            `✗ ${failedCount} users failed\n\n` +
+            `Failed users:\n${response.data.failed.map((f: any) => `- ${f.studentNumber}: ${f.reason}`).join('\n')}`
+          );
+        } else {
+          alert(`Successfully uploaded ${successCount} users!`);
+        }
+      }
+    } catch (error: any) {
       console.error("Error uploading users:", error);
-      alert("Failed to upload users. Please try again.");
+      alert(error.message || "Failed to upload users. Please try again.");
     }
   };
 
@@ -181,11 +252,39 @@ export default function UsersListPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = (updatedUser: User) => {
-    // TODO: Call PUT /api/users/${updatedUser.id}
-    
-    setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
-    alert(`${updatedUser.fullName} has been updated successfully!`);
+  const handleSaveEdit = async (updatedUser: User) => {
+    try {
+      const response = await fetchWithAuth(`${API_BASE_URL}/users/${updatedUser.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          middleName: updatedUser.middleName,
+          role: updatedUser.role,
+          yearLevel: updatedUser.yearLevel,
+          membershipStatus: updatedUser.membershipStatus,
+        }),
+      });
+
+      if (response.success) {
+        // Update the user in the local state
+        setUsers(users.map(u => {
+          if (u.id === updatedUser.id) {
+            return {
+              ...updatedUser,
+              fullName: response.data.fullName,
+              updatedAt: response.data.updatedAt,
+            };
+          }
+          return u;
+        }));
+        
+        alert(`${updatedUser.fullName} has been updated successfully!`);
+      }
+    } catch (error: any) {
+      console.error("Error updating user:", error);
+      alert(error.message || "Failed to update user. Please try again.");
+    }
   };
 
   const handleDeleteUser = (user: User) => {
@@ -193,13 +292,23 @@ export default function UsersListPage() {
     setIsDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (userToDelete) {
-      // TODO: Call DELETE /api/users/${userToDelete.id}
-      
-      setUsers(users.filter(u => u.id !== userToDelete.id));
-      alert(`${userToDelete.fullName} has been deleted successfully!`);
-      setUserToDelete(null);
+      try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/users/${userToDelete.id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.success) {
+          setUsers(users.filter(u => u.id !== userToDelete.id));
+          alert(`${userToDelete.fullName} has been deleted successfully!`);
+        }
+      } catch (error: any) {
+        console.error("Error deleting user:", error);
+        alert(error.message || "Failed to delete user. Please try again.");
+      } finally {
+        setUserToDelete(null);
+      }
     }
   };
 
@@ -208,20 +317,30 @@ export default function UsersListPage() {
     setIsStatusConfirmOpen(true);
   };
 
-  const confirmToggleActive = () => {
+  const confirmToggleActive = async () => {
     if (userToToggle) {
-      // TODO: Call PATCH /api/users/${userToToggle.id}
-      // body: { isActive: !userToToggle.isActive }
-      
-      setUsers(users.map(u => 
-        u.id === userToToggle.id 
-          ? { ...u, isActive: !u.isActive, updatedAt: new Date().toISOString() }
-          : u
-      ));
-      
-      const status = userToToggle.isActive ? 'deactivated' : 'activated';
-      alert(`${userToToggle.fullName} has been ${status} successfully!`);
-      setUserToToggle(null);
+      try {
+        const response = await fetchWithAuth(
+          `${API_BASE_URL}/users/${userToToggle.id}/toggle-status`,
+          { method: 'PATCH' }
+        );
+
+        if (response.success) {
+          setUsers(users.map(u => 
+            u.id === userToToggle.id 
+              ? { ...u, isActive: response.data.isActive, updatedAt: response.data.updatedAt }
+              : u
+          ));
+          
+          const status = response.data.isActive ? 'activated' : 'deactivated';
+          alert(`${userToToggle.fullName} has been ${status} successfully!`);
+        }
+      } catch (error: any) {
+        console.error("Error toggling user status:", error);
+        alert(error.message || "Failed to update user status. Please try again.");
+      } finally {
+        setUserToToggle(null);
+      }
     }
   };
 
@@ -229,6 +348,17 @@ export default function UsersListPage() {
     setSelectedUser(user);
     setIsViewModalOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary1 mb-4"></div>
+          <p className="font-raleway text-gray-600">Loading users...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
