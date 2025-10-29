@@ -16,8 +16,6 @@ interface RawExcelRow {
   middleName?: string; // Alternate casing
   "Year Level"?: string | number;
   yearLevel?: string | number; // Alternate casing
-  "Password"?: string;
-  password?: string; // Alternate casing
   "Role"?: string;
   role?: string; // Alternate casing
   "Membership Status"?: string;
@@ -31,7 +29,6 @@ interface UploadedUser {
   firstName: string;
   middleName?: string;
   yearLevel?: number;
-  password?: string;
   role: string;
   membershipStatus: string;
   status?: "valid" | "error";
@@ -129,8 +126,7 @@ export default function ExcelUploadModal({
           firstName: getStringValue(row["First Name"] || row["firstName"]),
           middleName: getStringValue(row["Middle Name"] || row["middleName"]) || undefined,
           yearLevel: getNumberValue(row["Year Level"] || row["yearLevel"]),
-          password: getStringValue(row["Password"] || row["password"] || "123456"),
-          role: getStringValue(row["Role"] || row["role"] || "member").toLowerCase(),
+          role: getStringValue(row["Role"] || row["role"] || "student").toLowerCase(),
           membershipStatus: getStringValue(row["Membership Status"] || row["membershipStatus"] || "non-member").toLowerCase(),
           status: "valid",
         };
@@ -149,7 +145,7 @@ export default function ExcelUploadModal({
         }
         if (
           user.role &&
-          !["member", "non-member", "council-officer", "committee-officer", "faculty"].includes(user.role)
+          !["student", "council-officer", "committee-officer", "faculty"].includes(user.role)
         ) {
           errors.push("Invalid role");
         }
@@ -158,7 +154,7 @@ export default function ExcelUploadModal({
         }
         if (
           user.membershipStatus &&
-          !["member", "non-member", "local", "regional"].includes(user.membershipStatus)
+          !["local", "regional", "both", "non-member"].includes(user.membershipStatus)
         ) {
           errors.push("Invalid membership status");
         }
@@ -430,10 +426,7 @@ export default function ExcelUploadModal({
                 <strong>Year Level</strong> (optional) - Single number: 1, 2, 3, 4, or 5
               </li>
               <li>
-                Password (optional) - Default: 123456
-              </li>
-              <li>
-                Role (optional) - member, non-member, council-officer, committee-officer, faculty (Default: member)
+                Role (optional) - student, council-officer, committee-officer, faculty (Default: member)
               </li>
               <li>
                 <strong>Membership Status</strong> (optional) - member, non-member, local, regional (Default: non-member)

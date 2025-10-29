@@ -9,7 +9,7 @@ export interface IUser extends Document {
   firstName: string;
   middleName?: string;
   password: string;
-  role: 'member' | 'non-member' | 'council-officer' | 'committee-officer' | 'faculty';
+  role: 'student' | 'council-officer' | 'committee-officer' | 'faculty';
   yearLevel?: number;
   membershipStatus: {
     isMember: boolean;
@@ -65,8 +65,8 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['member', 'non-member', 'council-officer', 'committee-officer', 'faculty'],
-      default: 'member',
+      enum: ['student', 'council-officer', 'committee-officer', 'faculty'],
+      default: 'student',
     },
     yearLevel: {
       type: Number,
@@ -133,16 +133,6 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Pre-save middleware to set membershipStatus based on role
-userSchema.pre('save', function (next) {
-  if (this.isNew && this.role === 'member') {
-    this.membershipStatus.isMember = true;
-  } else if (this.role === 'non-member') {
-    this.membershipStatus.isMember = false;
-    this.membershipStatus.membershipType = null;
-  }
-  next();
-});
 
 // Method to compare password
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {

@@ -1,21 +1,32 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/user';
-import { AuthRequest } from './user.controller';
+import { AuthRequest } from './user.controller'; 
 
-// Generate JWT token
-const generateToken = (id: string): string => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'your-secret-key', {
-    expiresIn: process.env.JWT_EXPIRE || '30d',
-  });
-};
 
-// Send token response
+
 const sendTokenResponse = (user: any, statusCode: number, res: Response): void => {
-  const token = generateToken(user._id.toString());
+  // Ensure JWT_SECRET is defined
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    // This should ideally be caught earlier in your app's startup or config check
+    console.error("CRITICAL ERROR: JWT_SECRET is not defined!");
+    res.status(500).json({
+      success: false,
+      message: 'Server configuration error: JWT secret missing.',
+    });
+    return; // Exit to prevent further errors
+  }
+
+  // Generate the token INSIDE this function where 'user' is available
+  const token = jwt.sign(
+    { id: user._id, role: user.role, membershipStatus: user.membershipStatus }, // Include relevant user data
+    jwtSecret, // Use the non-null secret
+    { expiresIn: '1h' } // Token expires in 1 hour
+  );
 
   const options = {
-    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days for the cookie
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
     sameSite: 'lax' as const,
@@ -23,7 +34,7 @@ const sendTokenResponse = (user: any, statusCode: number, res: Response): void =
 
   res.status(statusCode).cookie('token', token, options).json({
     success: true,
-    token,
+    token, // Send the token in the JSON response as well
     data: {
       id: user._id,
       studentNumber: user.studentNumber,

@@ -160,10 +160,19 @@ export default function UsersListPage() {
 
   const handleExcelUpload = async (uploadedUsers: any[]) => {
     try {
+      console.log('Starting bulk upload...', {
+        url: `${API_BASE_URL}/users/bulk-upload`,
+        userCount: uploadedUsers.length,
+        sampleUser: uploadedUsers[0],
+        allUsers: uploadedUsers
+      });
+
       const response = await fetchWithAuth(`${API_BASE_URL}/users/bulk-upload`, {
         method: 'POST',
         body: JSON.stringify({ users: uploadedUsers }),
       });
+
+      console.log('Bulk upload response:', response);
 
       if (response.success) {
         const successCount = response.data.success.length;
@@ -184,8 +193,30 @@ export default function UsersListPage() {
         }
       }
     } catch (error: any) {
-      console.error("Error uploading users:", error);
-      alert(error.message || "Failed to upload users. Please try again.");
+      console.error("Detailed error uploading users:", {
+        error,
+        message: error.message,
+        stack: error.stack,
+        type: typeof error
+      });
+      
+      // More detailed error message
+      let errorMessage = "Failed to upload users. ";
+      if (error.message === "Failed to fetch") {
+        errorMessage += "\n\n⚠️ Connection Error - Possible causes:\n\n" +
+          "1. Backend server is not running on port 5000\n" +
+          "2. Wrong API URL (currently: " + API_BASE_URL + ")\n" +
+          "3. CORS issue - backend needs to allow requests from frontend\n" +
+          "4. Network connectivity problem\n\n" +
+          "💡 Quick checks:\n" +
+          "- Is your backend server running?\n" +
+          "- Can you access: " + API_BASE_URL + "/users in your browser?\n" +
+          "- Check the browser console (F12) for more details";
+      } else {
+        errorMessage += "\n\nError: " + error.message;
+      }
+      
+      alert(errorMessage);
     }
   };
 

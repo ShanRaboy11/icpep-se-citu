@@ -126,7 +126,7 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
       firstName,
       middleName,
       password = '123456',
-      role = 'member',
+      role = 'student',
       yearLevel,
       membershipStatus,
     } = req.body;
@@ -278,7 +278,7 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
           firstName: userData.firstName,
           middleName: userData.middleName || null,
           password: userData.password || '123456',
-          role: userData.role || 'member',
+          role: userData.role || 'student',
           yearLevel: userData.yearLevel,
           membershipStatus: membershipStatusObj,
           registeredBy: req.user?.id || null,

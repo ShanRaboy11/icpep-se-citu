@@ -16,8 +16,8 @@ app.use((0, cors_1.default)({
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
     credentials: true,
 }));
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
+app.use(express_1.default.json({ limit: '50mb' }));
+app.use(express_1.default.urlencoded({ extended: true, limit: '50mb' }));
 // Request logging middleware (development only)
 if (process.env.NODE_ENV === 'development') {
     app.use((req, res, next) => {
