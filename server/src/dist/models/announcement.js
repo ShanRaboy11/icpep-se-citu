@@ -140,15 +140,16 @@ announcementSchema.virtual('isExpired').get(function () {
 });
 // Virtual to format date
 announcementSchema.virtual('formattedDate').get(function () {
-    return this.publishDate.toLocaleDateString('en-US', {
+    return this.publishDate?.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
-    });
+    }) || '';
 });
 // Method to increment views
 announcementSchema.methods.incrementViews = function () {
-    this.views += 1;
+    this.views = (this.views || 0) + 1;
     return this.save();
 };
-exports.default = mongoose_1.default.model('Announcement', announcementSchema);
+const Announcement = mongoose_1.default.model('Announcement', announcementSchema);
+exports.default = Announcement;
