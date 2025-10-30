@@ -7,18 +7,25 @@ const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const cors_1 = __importDefault(require("cors"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
+const user_routes_1 = __importDefault(require("./routes/user.routes"));
 // Load environment variables
 dotenv_1.default.config();
 // Initialize express app
 const app = (0, express_1.default)();
-// Middleware
-app.use((0, cors_1.default)({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    credentials: true,
-}));
+// ✅ CRITICAL: Middleware MUST come BEFORE routes!
+// 1. Body Parser - FIRST
 app.use(express_1.default.json({ limit: '50mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '50mb' }));
-// Request logging middleware (development only)
+// 2. Cookie Parser
+app.use((0, cookie_parser_1.default)());
+// 3. CORS
+app.use((0, cors_1.default)({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+}));
+// 4. Request logging middleware (development only)
 if (process.env.NODE_ENV === 'development') {
     app.use((req, res, next) => {
         console.log(`${req.method} ${req.path}`);
@@ -104,13 +111,11 @@ app.get('/api', (req, res) => {
         ],
     });
 });
-// TODO: Add your routes here
-// import authRoutes from './routes/auth.routes.js';
-// import userRoutes from './routes/user.routes.js';
-// import announcementRoutes from './routes/announcement.routes.js';
-// etc...
-// app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
+// ✅ ROUTES - Register AFTER middleware
+app.use('/api/auth', auth_routes_1.default);
+app.use('/api/users', user_routes_1.default);
+// TODO: Add your other routes here
+// import announcementRoutes from './routes/announcement.routes';
 // app.use('/api/announcements', announcementRoutes);
 // etc...
 // 404 handler - must be after all routes
@@ -119,6 +124,7 @@ app.use((req, res) => {
         success: false,
         message: 'Route not found',
         path: req.path,
+        method: req.method,
     });
 });
 // Global error handler - must be last

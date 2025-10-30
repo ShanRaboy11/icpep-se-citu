@@ -50,6 +50,14 @@ const participantSchema = new mongoose_1.Schema({
         default: Date.now,
     },
 }, { _id: false });
+const organizerSchema = new mongoose_1.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    role: String,
+    imageUrl: String,
+}, { _id: false });
 const eventSchema = new mongoose_1.Schema({
     title: {
         type: String,
@@ -60,19 +68,30 @@ const eventSchema = new mongoose_1.Schema({
         type: String,
         required: [true, 'Event description is required'],
     },
+    details: [{
+            title: String,
+            content: String,
+        }],
+    tags: [String],
     eventType: {
         type: String,
         enum: ['workshop', 'seminar', 'competition', 'social', 'meeting', 'other'],
         default: 'other',
     },
-    dateTime: {
-        start: {
-            type: Date,
-            required: [true, 'Start date is required'],
-        },
-        end: Date,
+    date: {
+        type: Date,
+        required: [true, 'Event date is required'],
     },
-    location: String,
+    endDate: Date,
+    mode: {
+        type: String,
+        enum: ['Online', 'In-person', 'Hybrid'],
+        required: [true, 'Event mode is required'],
+    },
+    location: {
+        type: String,
+        required: [true, 'Event location is required'],
+    },
     venue: String,
     capacity: {
         type: Number,
@@ -80,14 +99,20 @@ const eventSchema = new mongoose_1.Schema({
     },
     rsvpDeadline: Date,
     participants: [participantSchema],
-    organizers: [
+    organizer: organizerSchema,
+    organizerUsers: [
         {
             type: mongoose_1.Schema.Types.ObjectId,
             ref: 'User',
         },
     ],
-    images: [String],
-    coverImage: String,
+    bannerImageUrl: {
+        type: String,
+        required: [true, 'Banner image is required'],
+    },
+    galleryImageUrls: [String],
+    images: [String], // Legacy field
+    coverImage: String, // Legacy field
     isPublished: {
         type: Boolean,
         default: false,
@@ -101,7 +126,30 @@ const eventSchema = new mongoose_1.Schema({
 eventSchema.virtual('approvedCount').get(function () {
     return this.participants.filter((p) => p.status === 'approved').length;
 });
+// Virtual for dynamic status calculation (Upcoming | Ongoing | Ended)
+eventSchema.virtual('status').get(function () {
+    const now = new Date();
+    const startDate = new Date(this.date);
+    // If endDate is not provided, assume event lasts until the end of the start date's day
+    const endDate = this.endDate
+        ? new Date(this.endDate)
+        : new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 23, 59, 59, 999); // End of the day
+    if (now < startDate) {
+        return 'Upcoming';
+    }
+    else if (now >= startDate && now <= endDate) {
+        return 'Ongoing';
+    }
+    else {
+        return 'Ended';
+    }
+});
+// Ensure virtuals are included in JSON/Object output
+eventSchema.set('toJSON', { virtuals: true });
+eventSchema.set('toObject', { virtuals: true });
 // Indexes
-eventSchema.index({ 'dateTime.start': 1 });
-eventSchema.index({ isPublished: 1, 'dateTime.start': 1 });
-exports.default = mongoose_1.default.model('Event', eventSchema);
+eventSchema.index({ date: 1 });
+eventSchema.index({ isPublished: 1, date: 1 });
+eventSchema.index({ tags: 1 });
+const Event = mongoose_1.default.model('Event', eventSchema);
+exports.default = Event;

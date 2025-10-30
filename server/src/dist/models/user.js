@@ -32,15 +32,19 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const userSchema = new mongoose_1.Schema({
     studentNumber: {
         type: String,
         required: [true, 'Student number is required'],
         unique: true,
         trim: true,
-        uppercase: true, // Normalize to uppercase
+        uppercase: true,
     },
     lastName: {
         type: String,
@@ -61,16 +65,13 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         required: [true, 'Password is required'],
         minlength: 6,
-        select: false, // Don't return password by default
+        default: '123456',
+        select: false,
     },
     role: {
         type: String,
-        enum: ['member', 'non-member', 'officer', 'faculty'],
-        default: 'member',
-    },
-    department: {
-        type: String,
-        default: 'Computer Engineering',
+        enum: ['student', 'council-officer', 'committee-officer', 'faculty'],
+        default: 'student',
     },
     yearLevel: {
         type: Number,
@@ -81,7 +82,7 @@ const userSchema = new mongoose_1.Schema({
         isMember: { type: Boolean, default: false },
         membershipType: {
             type: String,
-            enum: ['local', 'regional', null],
+            enum: ['local', 'regional', 'both', null],
             default: null,
         },
         validUntil: Date,
@@ -99,6 +100,11 @@ const userSchema = new mongoose_1.Schema({
         ref: 'User',
         default: null,
     },
+    firstLogin: {
+        type: Boolean,
+        default: true,
+        select: false,
+    },
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
@@ -111,30 +117,31 @@ userSchema.virtual('fullName').get(function () {
     }
     return `${this.firstName} ${this.lastName}`;
 });
+// Virtual for registeredBy name
+userSchema.virtual('registeredByName').get(function () {
+    if (this.registeredBy && typeof this.registeredBy === 'object') {
+        const registrar = this.registeredBy;
+        return registrar.fullName || `${registrar.firstName} ${registrar.lastName}`;
+    }
+    return 'Self-registered';
+});
 // Pre-save middleware to hash password
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password'))
         return next();
-    // Hash password (you'll need to import bcrypt)
-    const bcrypt = await Promise.resolve().then(() => __importStar(require('bcryptjs')));
-    this.password = await bcrypt.hash(this.password, 10);
+    this.password = await bcryptjs_1.default.hash(this.password, 10);
     next();
 });
-// Pre-save middleware to set membershipStatus based on role
-userSchema.pre('save', function (next) {
-    if (this.isNew && this.role === 'member') {
-        this.membershipStatus.isMember = true;
-    }
-    else if (this.role === 'non-member') {
-        this.membershipStatus.isMember = false;
-        this.membershipStatus.membershipType = null;
-    }
-    next();
-});
+// Method to compare password
+userSchema.methods.comparePassword = async function (candidatePassword) {
+    return await bcryptjs_1.default.compare(candidatePassword, this.password);
+};
 // Indexes
-userSchema.index({ email: 1 });
 userSchema.index({ studentNumber: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ 'membershipStatus.isMember': 1 });
-userSchema.index({ registrationMethod: 1 });
-exports.default = mongoose_1.default.model('User', userSchema);
+userSchema.index({ 'membershipStatus.membershipType': 1 });
+userSchema.index({ createdAt: -1 });
+userSchema.index({ updatedAt: -1 });
+const User = mongoose_1.default.model('User', userSchema);
+exports.default = User;
