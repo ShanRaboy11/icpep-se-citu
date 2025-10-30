@@ -146,7 +146,7 @@ export default function AddUserModal({
                 value={formData.studentNumber}
                 onChange={handleChange}
                 placeholder="23-2502-326"
-                className={`w-full px-4 py-2 border rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
+                className={`w-full px-4 py-2 border rounded-lg text-gray-400 font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
                   errors.studentNumber ? "border-red-500" : "border-gray-300"
                 }`}
               />
@@ -170,7 +170,7 @@ export default function AddUserModal({
                   value={formData.firstName}
                   onChange={handleChange}
                   placeholder="Juan"
-                  className={`w-full px-4 py-2 border rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
+                  className={`w-full px-4 py-2 border rounded-lg text-gray-400 font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
                     errors.firstName ? "border-red-500" : "border-gray-300"
                   }`}
                 />
@@ -191,7 +191,7 @@ export default function AddUserModal({
                   value={formData.middleName}
                   onChange={handleChange}
                   placeholder="Santos"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-400 font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50"
                 />
               </div>
 

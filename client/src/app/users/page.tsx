@@ -15,6 +15,56 @@ import EditUserModal from "./components/edit_user_modal";
 import Grid from "../components/grid";
 import { ArrowLeft, UserPlus, Download, Upload, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
+// Type definitions for API responses
+interface ApiUser {
+  _id: string;
+  studentNumber: string;
+  lastName: string;
+  firstName: string;
+  middleName?: string;
+  fullName: string;
+  role: string;
+  yearLevel?: number;
+  membershipStatus: {
+    isMember: boolean;
+    membershipType: string | null;
+  };
+  profilePicture?: string;
+  isActive: boolean;
+  registeredBy?: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+interface FailedUser {
+  studentNumber: string;
+  reason: string;
+  data: Record<string, unknown>;
+}
+
+interface UploadUserData {
+  studentNumber: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  role: string;
+  yearLevel?: number;
+  membershipStatus?: {
+    isMember: boolean;
+    membershipType: string | null;
+  };
+}
+
 // API Configuration
 const API_BASE_URL = 'http://localhost:5000/api';
 
@@ -84,7 +134,7 @@ export default function UsersListPage() {
     show: false,
     success: 0,
     failed: 0,
-    failedUsers: [] as any[],
+    failedUsers: [] as FailedUser[],
   });
   
   const [successModal, setSuccessModal] = useState({
@@ -115,24 +165,21 @@ export default function UsersListPage() {
     fetchAllUsers();
   }, []);
 
-  // 🔥 NEW: Fetch ALL users with pagination
+  // Fetch ALL users with pagination
   const fetchAllUsers = async () => {
     try {
       setIsLoading(true);
       console.log('🔍 Fetching all users...');
       
-      // Fetch with a very high limit to get all users
-      // You can also implement proper pagination if you have thousands of users
-      const response = await fetchWithAuth(`${API_BASE_URL}/users?limit=10000&page=1`);
+      const response: ApiResponse<ApiUser[]> = await fetchWithAuth(`${API_BASE_URL}/users?limit=10000&page=1`);
       
       console.log('📊 Response:', response);
       
       if (response.success) {
         // Transform backend data to match frontend User type
-        const transformedUsers: User[] = response.data.map((user: any) => ({
+        const transformedUsers: User[] = response.data.map((user: ApiUser) => ({
           id: user._id,
           studentNumber: user.studentNumber,
-          // 🔥 Capitalize names properly
           lastName: capitalizeWords(user.lastName),
           firstName: capitalizeWords(user.firstName),
           middleName: user.middleName ? capitalizeWords(user.middleName) : '',
@@ -175,7 +222,7 @@ export default function UsersListPage() {
 
   const handleAddUserSubmit = async (newUser: NewUser) => {
     try {
-      const response = await fetchWithAuth(`${API_BASE_URL}/users`, {
+      const response: ApiResponse<ApiUser> = await fetchWithAuth(`${API_BASE_URL}/users`, {
         method: 'POST',
         body: JSON.stringify(newUser),
       });
@@ -208,17 +255,18 @@ export default function UsersListPage() {
           message: `${transformedUser.fullName} has been added to the system.`,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An error occurred while adding the user.';
       console.error("Error adding user:", error);
       setErrorModal({
         show: true,
         title: 'Failed to Add User',
-        message: error.message || 'An error occurred while adding the user.',
+        message: errorMessage,
       });
     }
   };
 
-  const handleExcelUpload = async (uploadedUsers: any[]) => {
+  const handleExcelUpload = async (uploadedUsers: UploadUserData[]) => {
     try {
       setIsUploading(true);
       setUploadStats({
@@ -231,7 +279,7 @@ export default function UsersListPage() {
       
       let successCount = 0;
       let failedCount = 0;
-      const failedUsers: any[] = [];
+      const failedUsers: FailedUser[] = [];
 
       for (let i = 0; i < uploadedUsers.length; i++) {
         const userData = uploadedUsers[i];
@@ -244,7 +292,7 @@ export default function UsersListPage() {
         setUploadProgress(`Processing ${userData.studentNumber || 'user'}...`);
 
         try {
-          const response = await fetchWithAuth(`${API_BASE_URL}/users`, {
+          const response: ApiResponse<ApiUser> = await fetchWithAuth(`${API_BASE_URL}/users`, {
             method: 'POST',
             body: JSON.stringify(userData),
           });
@@ -256,12 +304,13 @@ export default function UsersListPage() {
               successful: successCount,
             }));
           }
-        } catch (error: any) {
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           failedCount++;
           failedUsers.push({
             studentNumber: userData.studentNumber || 'UNKNOWN',
-            reason: error.message || 'Unknown error',
-            data: userData,
+            reason: errorMessage,
+            data: userData as Record<string, unknown>,
           });
           setUploadStats(prev => ({
             ...prev,
@@ -280,7 +329,6 @@ export default function UsersListPage() {
       setUploadProgress('Upload complete! Refreshing user list...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // 🔥 Refresh to get ALL users again
       await fetchAllUsers();
       
       setIsUploading(false);
@@ -293,7 +341,8 @@ export default function UsersListPage() {
         failed: failedCount,
         failedUsers: failedUsers,
       });
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
       console.error("❌ Bulk upload error:", error);
       setIsUploading(false);
       setUploadProgress('');
@@ -301,9 +350,9 @@ export default function UsersListPage() {
       setErrorModal({
         show: true,
         title: 'Upload Failed',
-        message: error.message === "Failed to fetch" 
+        message: errorMessage === "Failed to fetch" 
           ? 'Connection error. Please check if the backend is running on port 5000.'
-          : error.message || 'An unknown error occurred.',
+          : errorMessage,
       });
     }
   };
@@ -367,7 +416,7 @@ export default function UsersListPage() {
 
   const handleSaveEdit = async (updatedUser: User) => {
     try {
-      const response = await fetchWithAuth(`${API_BASE_URL}/users/${updatedUser.id}`, {
+      const response: ApiResponse<ApiUser> = await fetchWithAuth(`${API_BASE_URL}/users/${updatedUser.id}`, {
         method: 'PUT',
         body: JSON.stringify({
           firstName: updatedUser.firstName,
@@ -397,12 +446,13 @@ export default function UsersListPage() {
           message: `${updatedUser.fullName} has been updated successfully.`,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update user.';
       console.error("Error updating user:", error);
       setErrorModal({
         show: true,
         title: 'Update Failed',
-        message: error.message || 'Failed to update user.',
+        message: errorMessage,
       });
     }
   };
@@ -415,7 +465,7 @@ export default function UsersListPage() {
   const confirmDelete = async () => {
     if (userToDelete) {
       try {
-        const response = await fetchWithAuth(`${API_BASE_URL}/users/${userToDelete.id}`, {
+        const response: ApiResponse<{ message: string }> = await fetchWithAuth(`${API_BASE_URL}/users/${userToDelete.id}`, {
           method: 'DELETE',
         });
 
@@ -427,12 +477,13 @@ export default function UsersListPage() {
             message: `${userToDelete.fullName} has been deleted successfully.`,
           });
         }
-      } catch (error: any) {
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to delete user.';
         console.error("Error deleting user:", error);
         setErrorModal({
           show: true,
           title: 'Delete Failed',
-          message: error.message || 'Failed to delete user.',
+          message: errorMessage,
         });
       } finally {
         setUserToDelete(null);
@@ -448,7 +499,7 @@ export default function UsersListPage() {
   const confirmToggleActive = async () => {
     if (userToToggle) {
       try {
-        const response = await fetchWithAuth(
+        const response: ApiResponse<{ isActive: boolean; updatedAt: string }> = await fetchWithAuth(
           `${API_BASE_URL}/users/${userToToggle.id}/toggle-status`,
           { method: 'PATCH' }
         );
@@ -467,12 +518,13 @@ export default function UsersListPage() {
             message: `${userToToggle.fullName} has been ${status} successfully.`,
           });
         }
-      } catch (error: any) {
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to update user status.';
         console.error("Error toggling user status:", error);
         setErrorModal({
           show: true,
           title: 'Status Update Failed',
-          message: error.message || 'Failed to update user status.',
+          message: errorMessage,
         });
       } finally {
         setUserToToggle(null);
@@ -579,7 +631,7 @@ export default function UsersListPage() {
         <Footer />
       </div>
 
-      {/* Upload Progress Overlay - Same as before */}
+      {/* Upload Progress Overlay */}
       {isUploading && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">

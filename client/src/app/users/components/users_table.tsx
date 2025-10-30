@@ -184,15 +184,7 @@ export default function UsersTable({
                     <SortIcon field="fullName" />
                   </div>
                 </th>
-                <th
-                  onClick={() => handleSort("role")}
-                  className="px-4 py-4 w-10 text-center items-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
-                >
-                  <div className="flex items-center gap-2 justify-center">
-                    Role
-                    <SortIcon field="role" />
-                  </div>
-                </th>
+
                 <th
                   onClick={() => handleSort("yearLevel")}
                   className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
@@ -202,6 +194,17 @@ export default function UsersTable({
                     <SortIcon field="yearLevel" />
                   </div>
                 </th>
+                
+                <th
+                  onClick={() => handleSort("role")}
+                  className="px-4 py-4 w-10 text-center items-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
+                >
+                  <div className="flex items-center gap-2 justify-center">
+                    Role
+                    <SortIcon field="role" />
+                  </div>
+                </th>
+                
                 <th className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 whitespace-nowrap">
                   Membership
                 </th>
