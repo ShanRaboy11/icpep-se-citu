@@ -63,12 +63,12 @@ interface UploadUserData {
 }
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 const USERS_PER_PAGE = 100;
 
 // Helper function to validate and cast role
 const validateRole = (role: string): "faculty" | "council-officer" | "committee-officer" | "student" => {
-  const validRoles = ["faculty", "council-officer", "committee-officer", "student", "member", "non-member"];
+  const validRoles = ["faculty", "council-officer", "committee-officer", "student"];
   
   // Map backend roles to frontend roles
   const roleMap: Record<string, "faculty" | "council-officer" | "committee-officer" | "student"> = {
