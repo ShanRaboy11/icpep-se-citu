@@ -5,16 +5,14 @@ const connectDB = async (): Promise<void> => {
     const conn = await mongoose.connect(process.env.MONGODB_URI as string);
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    
-    // Log database name
     console.log(`📦 Database: ${conn.connection.name}`);
 
-    // Connection event listeners
-    mongoose.connection.on('error', (err) => {
-      console.error(`❌ MongoDB connection error: ${err}`);
+    // Event listeners on the 'conn.connection' object
+    conn.connection.on('error', (err: Error) => { // Type 'err' explicitly
+      console.error(`❌ MongoDB connection error: ${err.message}`);
     });
 
-    mongoose.connection.on('disconnected', () => {
+    conn.connection.on('disconnected', () => {
       console.log('⚠️  MongoDB disconnected');
     });
 
