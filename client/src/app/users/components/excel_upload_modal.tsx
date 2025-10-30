@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { X, Upload, AlertCircle, CheckCircle, FileSpreadsheet } from "lucide-react";
+import {
+  X,
+  Upload,
+  AlertCircle,
+  CheckCircle,
+  FileSpreadsheet,
+} from "lucide-react";
 import * as XLSX from "xlsx";
 
 // Define an interface for the raw data read from the Excel sheet
@@ -16,7 +22,7 @@ interface RawExcelRow {
   middleName?: string; // Alternate casing
   "Year Level"?: string | number;
   yearLevel?: string | number; // Alternate casing
-  "Role"?: string;
+  Role?: string;
   role?: string; // Alternate casing
   "Membership Status"?: string;
   membershipStatus?: string; // Alternate casing
@@ -105,11 +111,14 @@ export default function ExcelUploadModal({
       const workbook = XLSX.read(data, { type: "array" });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      
-      // Cast the result to an array of RawExcelRow with a more specific index type
-      const jsonData = XLSX.utils.sheet_to_json<RawExcelRow>(worksheet, { defval: "" });
 
-      const processedUsers = jsonData.map((row) => { // Removed 'index' as it's unused
+      // Cast the result to an array of RawExcelRow with a more specific index type
+      const jsonData = XLSX.utils.sheet_to_json<RawExcelRow>(worksheet, {
+        defval: "",
+      });
+
+      const processedUsers = jsonData.map((row) => {
+        // Removed 'index' as it's unused
         // Helper function to safely get string value, trim, and handle potential null/undefined
         const getStringValue = (val: string | number | undefined) =>
           String(val || "").trim();
@@ -121,13 +130,21 @@ export default function ExcelUploadModal({
         };
 
         const user: UploadedUser = {
-          studentNumber: getStringValue(row["Student Number"] || row["studentNumber"]),
+          studentNumber: getStringValue(
+            row["Student Number"] || row["studentNumber"]
+          ),
           lastName: getStringValue(row["Last Name"] || row["lastName"]),
           firstName: getStringValue(row["First Name"] || row["firstName"]),
-          middleName: getStringValue(row["Middle Name"] || row["middleName"]) || undefined,
+          middleName:
+            getStringValue(row["Middle Name"] || row["middleName"]) ||
+            undefined,
           yearLevel: getNumberValue(row["Year Level"] || row["yearLevel"]),
-          role: getStringValue(row["Role"] || row["role"] || "student").toLowerCase(),
-          membershipStatus: getStringValue(row["Membership Status"] || row["membershipStatus"] || "non-member").toLowerCase(),
+          role: getStringValue(
+            row["Role"] || row["role"] || "student"
+          ).toLowerCase(),
+          membershipStatus: getStringValue(
+            row["Membership Status"] || row["membershipStatus"] || "non-member"
+          ).toLowerCase(),
           status: "valid",
         };
 
@@ -145,16 +162,26 @@ export default function ExcelUploadModal({
         }
         if (
           user.role &&
-          !["student", "council-officer", "committee-officer", "faculty"].includes(user.role)
+          ![
+            "student",
+            "council-officer",
+            "committee-officer",
+            "faculty",
+          ].includes(user.role)
         ) {
           errors.push("Invalid role");
         }
-        if (user.yearLevel !== undefined && (user.yearLevel < 1 || user.yearLevel > 5)) {
+        if (
+          user.yearLevel !== undefined &&
+          (user.yearLevel < 1 || user.yearLevel > 5)
+        ) {
           errors.push("Year Level must be between 1-5");
         }
         if (
           user.membershipStatus &&
-          !["local", "regional", "both", "non-member"].includes(user.membershipStatus)
+          !["local", "regional", "both", "non-member"].includes(
+            user.membershipStatus
+          )
         ) {
           errors.push("Invalid membership status");
         }
@@ -409,7 +436,8 @@ export default function ExcelUploadModal({
               </button>
             </div>
             <p className="font-raleway text-sm text-blue-800 mb-2">
-              Your Excel file should have the following columns in this exact order:
+              Your Excel file should have the following columns in this exact
+              order:
             </p>
             <ul className="font-raleway text-sm text-blue-700 space-y-1 list-disc list-inside">
               <li>
@@ -423,13 +451,16 @@ export default function ExcelUploadModal({
               </li>
               <li>Middle Name (optional)</li>
               <li>
-                <strong>Year Level</strong> (optional) - Single number: 1, 2, 3, 4, or 5
+                <strong>Year Level</strong> (optional) - Single number: 1, 2, 3,
+                4, or 5
               </li>
               <li>
-                Role (optional) - student, council-officer, committee-officer, faculty (Default: member)
+                Role (optional) - student, council-officer, committee-officer,
+                faculty (Default: member)
               </li>
               <li>
-                <strong>Membership Status</strong> (optional) - member, non-member, local, regional (Default: non-member)
+                <strong>Membership Status</strong> (optional) - member,
+                non-member, local, regional (Default: non-member)
               </li>
             </ul>
           </div>

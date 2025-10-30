@@ -94,6 +94,11 @@ if (type === "both") {
           </span>
         </td>
         <td className="px-4 py-4 whitespace-nowrap text-center">
+          <span className="font-raleway text-sm text-gray-600">
+            {user.yearLevel ? `${user.yearLevel}` : "N/A"}
+          </span>
+        </td>
+        <td className="px-4 py-4 whitespace-nowrap text-center">
           <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-raleway border ${getRoleBadgeColor(
               user.role
@@ -104,11 +109,6 @@ if (type === "both") {
               : user.role === "committee-officer"
               ? "Committee Officer"
               : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-          </span>
-        </td>
-        <td className="px-4 py-4 whitespace-nowrap text-center">
-          <span className="font-raleway text-sm text-gray-600">
-            {user.yearLevel ? `${user.yearLevel}` : "N/A"}
           </span>
         </td>
         <td className="px-4 py-4 whitespace-nowrap text-center">

@@ -53,7 +53,10 @@ export default function AddUserModal({
     if (!formData.firstName.trim()) {
       newErrors.firstName = "First name is required";
     }
-    if (formData.yearLevel && (formData.yearLevel < 1 || formData.yearLevel > 5)) {
+    if (
+      formData.yearLevel &&
+      (formData.yearLevel < 1 || formData.yearLevel > 5)
+    ) {
       newErrors.yearLevel = "Year level must be between 1 and 5";
     }
     if (!formData.password.trim() || formData.password.length < 6) {
@@ -66,7 +69,7 @@ export default function AddUserModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (validateForm()) {
       onAdd(formData);
       handleClose();
@@ -94,7 +97,8 @@ export default function AddUserModal({
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "yearLevel" ? (value ? parseInt(value) : undefined) : value,
+      [name]:
+        name === "yearLevel" ? (value ? parseInt(value) : undefined) : value,
     }));
     // Clear error for this field
     if (errors[name]) {
@@ -311,8 +315,8 @@ export default function AddUserModal({
             {/* Info Note */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="font-raleway text-sm text-blue-800">
-                <strong>Note:</strong> The password will be hashed before storage. 
-                User should change it upon first login.
+                <strong>Note:</strong> The password will be hashed before
+                storage. User should change it upon first login.
               </p>
             </div>
           </div>
