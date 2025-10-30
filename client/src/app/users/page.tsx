@@ -62,8 +62,33 @@ interface UploadUserData {
   membershipStatus?: string; // Changed from object to string to match Excel upload format
 }
 
-// API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// API Configuration - Production Ready
+const getApiUrl = (): string => {
+  // Use environment variable if available
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    console.log('🔗 API URL from env:', process.env.NEXT_PUBLIC_API_URL);
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  // Client-side detection
+  if (typeof window !== 'undefined') {
+    const { protocol, hostname } = window.location;
+    
+    // Production (not localhost)
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      // ⚠️ IMPORTANT: Replace this with your actual backend URL
+      const productionApiUrl = 'https://your-backend-url.com/api';
+      console.log('🔗 Production API URL:', productionApiUrl);
+      return productionApiUrl;
+    }
+  }
+  
+  // Development fallback
+  console.log('🔗 Development API URL: http://localhost:5000/api');
+  return 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = getApiUrl();
 const USERS_PER_PAGE = 100;
 
 // Helper function to validate and cast role
