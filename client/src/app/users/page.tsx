@@ -13,7 +13,7 @@ import ConfirmDialog from "./components/confirm_dialog";
 import ViewUserModal from "./components/view_user_modal";
 import EditUserModal from "./components/edit_user_modal";
 import Grid from "../components/grid";
-import { ArrowLeft, UserPlus, Download, Upload, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, UserPlus, Download, Upload, CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 // Type definitions for API responses
 interface ApiUser {
@@ -67,6 +67,7 @@ interface UploadUserData {
 
 // API Configuration
 const API_BASE_URL = 'http://localhost:5000/api';
+const USERS_PER_PAGE = 100;
 
 // Helper function to capitalize first letter of each word
 const capitalizeWords = (str: string): string => {
@@ -86,14 +87,21 @@ const getAuthToken = (): string | null => {
   return null;
 };
 
-// Helper function to make authenticated API calls
+// Fixed TypeScript headers
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const token = getAuthToken();
   
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers || {}),
   };
+
+  if (options.headers) {
+    Object.entries(options.headers).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        headers[key] = value;
+      }
+    });
+  }
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -114,10 +122,15 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 
 export default function UsersListPage() {
   const router = useRouter();
-  const [users, setUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]); // 🔥 All users
+  const [displayedUsers, setDisplayedUsers] = useState<User[]>([]); // 🔥 Current page users
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  
+  // 🔥 Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   
   // Upload progress state
   const [isUploading, setIsUploading] = useState(false);
@@ -165,18 +178,26 @@ export default function UsersListPage() {
     fetchAllUsers();
   }, []);
 
-  // Fetch ALL users with pagination
+  // 🔥 Update displayed users when page changes
+  useEffect(() => {
+    updateDisplayedUsers();
+  }, [currentPage, allUsers]);
+
+  // 🔥 Fetch ALL users from backend
   const fetchAllUsers = async () => {
     try {
       setIsLoading(true);
       console.log('🔍 Fetching all users...');
       
-      const response: ApiResponse<ApiUser[]> = await fetchWithAuth(`${API_BASE_URL}/users?limit=10000&page=1`);
+      // Fetch with high limit to get ALL users
+      const response: ApiResponse<ApiUser[]> = await fetchWithAuth(
+        `${API_BASE_URL}/users?limit=10000&page=1`
+      );
       
       console.log('📊 Response:', response);
       
       if (response.success) {
-        // Transform backend data to match frontend User type
+        // Transform backend data
         const transformedUsers: User[] = response.data.map((user: ApiUser) => ({
           id: user._id,
           studentNumber: user.studentNumber,
@@ -198,7 +219,12 @@ export default function UsersListPage() {
         }));
         
         console.log(`✅ Loaded ${transformedUsers.length} users`);
-        setUsers(transformedUsers);
+        setAllUsers(transformedUsers);
+        
+        // Calculate total pages
+        const pages = Math.ceil(transformedUsers.length / USERS_PER_PAGE);
+        setTotalPages(pages);
+        console.log(`📄 Total pages: ${pages}`);
       }
     } catch (error) {
       console.error("❌ Error fetching users:", error);
@@ -210,6 +236,16 @@ export default function UsersListPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 🔥 Update displayed users based on current page
+  const updateDisplayedUsers = () => {
+    const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+    const endIndex = startIndex + USERS_PER_PAGE;
+    const usersToDisplay = allUsers.slice(startIndex, endIndex);
+    
+    console.log(`📄 Page ${currentPage}: Showing users ${startIndex + 1}-${Math.min(endIndex, allUsers.length)} of ${allUsers.length}`);
+    setDisplayedUsers(usersToDisplay);
   };
 
   const handleBackToHome = () => {
@@ -228,31 +264,13 @@ export default function UsersListPage() {
       });
 
       if (response.success) {
-        const transformedUser: User = {
-          id: response.data._id,
-          studentNumber: response.data.studentNumber,
-          lastName: capitalizeWords(response.data.lastName),
-          firstName: capitalizeWords(response.data.firstName),
-          middleName: response.data.middleName ? capitalizeWords(response.data.middleName) : '',
-          fullName: capitalizeWords(response.data.fullName),
-          role: response.data.role,
-          yearLevel: response.data.yearLevel,
-          membershipStatus: response.data.membershipStatus,
-          profilePicture: response.data.profilePicture,
-          isActive: response.data.isActive,
-          registeredBy: response.data.registeredBy ? {
-            id: response.data.registeredBy._id,
-            fullName: capitalizeWords(`${response.data.registeredBy.firstName} ${response.data.registeredBy.lastName}`),
-          } : null,
-          createdAt: response.data.createdAt,
-          updatedAt: response.data.updatedAt,
-        };
-
-        setUsers([transformedUser, ...users]);
+        // Refresh all users
+        await fetchAllUsers();
+        
         setSuccessModal({
           show: true,
           title: 'User Added Successfully',
-          message: `${transformedUser.fullName} has been added to the system.`,
+          message: `${capitalizeWords(response.data.fullName)} has been added to the system.`,
         });
       }
     } catch (error) {
@@ -329,6 +347,7 @@ export default function UsersListPage() {
       setUploadProgress('Upload complete! Refreshing user list...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Refresh all users
       await fetchAllUsers();
       
       setIsUploading(false);
@@ -358,12 +377,12 @@ export default function UsersListPage() {
   };
 
   const handleExport = () => {
-    const csv = convertToCSV(users);
+    const csv = convertToCSV(allUsers);
     downloadCSV(csv, "users-export.csv");
     setSuccessModal({
       show: true,
       title: 'Export Successful',
-      message: `Successfully exported ${users.length} users to CSV.`,
+      message: `Successfully exported ${allUsers.length} users to CSV.`,
     });
   };
 
@@ -429,16 +448,8 @@ export default function UsersListPage() {
       });
 
       if (response.success) {
-        setUsers(users.map(u => {
-          if (u.id === updatedUser.id) {
-            return {
-              ...updatedUser,
-              fullName: capitalizeWords(response.data.fullName),
-              updatedAt: response.data.updatedAt,
-            };
-          }
-          return u;
-        }));
+        // Refresh all users
+        await fetchAllUsers();
         
         setSuccessModal({
           show: true,
@@ -470,7 +481,9 @@ export default function UsersListPage() {
         });
 
         if (response.success) {
-          setUsers(users.filter(u => u.id !== userToDelete.id));
+          // Refresh all users
+          await fetchAllUsers();
+          
           setSuccessModal({
             show: true,
             title: 'User Deleted',
@@ -505,11 +518,8 @@ export default function UsersListPage() {
         );
 
         if (response.success) {
-          setUsers(users.map(u => 
-            u.id === userToToggle.id 
-              ? { ...u, isActive: response.data.isActive, updatedAt: response.data.updatedAt }
-              : u
-          ));
+          // Refresh all users
+          await fetchAllUsers();
           
           const status = response.data.isActive ? 'activated' : 'deactivated';
           setSuccessModal({
@@ -537,9 +547,29 @@ export default function UsersListPage() {
     setIsViewModalOpen(true);
   };
 
+  // 🔥 Pagination handlers
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const progressPercentage = uploadStats.total > 0 
     ? Math.round((uploadStats.current / uploadStats.total) * 100)
     : 0;
+
+  // 🔥 Calculate display range
+  const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+  const endIndex = Math.min(startIndex + USERS_PER_PAGE, allUsers.length);
+  const displayedCount = displayedUsers.length;
 
   if (isLoading) {
     return (
@@ -590,17 +620,23 @@ export default function UsersListPage() {
             </p>
           </div>
 
-          <UserStats users={users} />
+          {/* Stats based on ALL users */}
+          <UserStats users={allUsers} />
 
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex-1"></div>
+            {/* 🔥 NEW: Display count */}
+            <div className="flex-1">
+              <span className="font-raleway text-sm text-gray-600 font-medium">
+                Showing {displayedCount} of {allUsers.length} users
+              </span>
+            </div>
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={handleExport}
                 className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-300"
               >
                 <Download className="w-4 h-4" />
-                Export
+                Export All
               </button>
               <button
                 onClick={() => setIsUploadModalOpen(true)}
@@ -620,17 +656,55 @@ export default function UsersListPage() {
             </div>
           </div>
 
+          {/* Display only current page users */}
           <UsersTable 
-            users={users}
+            users={displayedUsers}
             onEdit={handleEditUser}
             onDelete={handleDeleteUser}
             onToggleActive={handleToggleActive}
             onView={handleViewUser}
           />
+
+          {/* 🔥 UPDATED: Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
+              <div className="flex-1 flex justify-start">
+                {currentPage > 1 && (
+                  <button
+                    onClick={handlePreviousPage}
+                    className="inline-flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Previous
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="font-raleway text-sm text-gray-700">
+                  <span className="font-bold text-primary1">{currentPage}</span> of{' '}
+                  <span className="font-bold text-primary1">{totalPages}</span>
+                </span>
+              </div>
+
+              <div className="flex-1 flex justify-end">
+                {currentPage < totalPages && (
+                  <button
+                    onClick={handleNextPage}
+                    className="inline-flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </main>
         <Footer />
       </div>
 
+      {/* All modals remain the same... */}
       {/* Upload Progress Overlay */}
       {isUploading && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
