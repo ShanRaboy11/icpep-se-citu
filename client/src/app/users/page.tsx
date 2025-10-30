@@ -15,8 +15,18 @@ import EditUserModal from "./components/edit_user_modal";
 import Grid from "../components/grid";
 import { ArrowLeft, UserPlus, Download, Upload } from "lucide-react";
 
-// API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// 🔥 HARDCODED FOR TESTING - This should work!
+const API_BASE_URL = 'http://localhost:5000/api';
+
+// Debug on mount
+if (typeof window !== 'undefined') {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🔧 API Configuration:');
+  console.log('   Base URL:', API_BASE_URL);
+  console.log('   Bulk Upload URL:', `${API_BASE_URL}/users/bulk-upload`);
+  console.log('   Expected backend log: POST /api/users/bulk-upload');
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+}
 
 // Helper function to get auth token
 const getAuthToken = (): string | null => {
@@ -30,6 +40,13 @@ const getAuthToken = (): string | null => {
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const token = getAuthToken();
   
+  // 🔥 DEBUG: Log every API call
+  console.log('🌐 API Call:', {
+    url,
+    method: options.method || 'GET',
+    hasToken: !!token
+  });
+  
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
@@ -42,6 +59,12 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const response = await fetch(url, {
     ...options,
     headers,
+  });
+
+  console.log('📨 Response:', {
+    status: response.status,
+    statusText: response.statusText,
+    url: response.url
   });
 
   if (!response.ok) {
@@ -58,6 +81,10 @@ export default function UsersListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  
+  // 🔥 NEW: Upload progress state
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
   
   // Confirmation Dialogs
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -160,60 +187,72 @@ export default function UsersListPage() {
 
   const handleExcelUpload = async (uploadedUsers: any[]) => {
     try {
-      console.log('Starting bulk upload...', {
-        url: `${API_BASE_URL}/users/bulk-upload`,
-        userCount: uploadedUsers.length,
-        sampleUser: uploadedUsers[0],
-        allUsers: uploadedUsers
-      });
+      // 🔥 Set uploading state
+      setIsUploading(true);
+      setUploadProgress(`Uploading ${uploadedUsers.length} users...`);
+      
+      // 🔥 EXPLICIT URL CONSTRUCTION
+      const bulkUploadUrl = `${API_BASE_URL}/users/bulk-upload`;
+      
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('🚀 BULK UPLOAD STARTING');
+      console.log('   Full URL:', bulkUploadUrl);
+      console.log('   User count:', uploadedUsers.length);
+      console.log('   First user:', uploadedUsers[0]);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-      const response = await fetchWithAuth(`${API_BASE_URL}/users/bulk-upload`, {
+      setUploadProgress('Processing users on server...');
+
+      const response = await fetchWithAuth(bulkUploadUrl, {
         method: 'POST',
         body: JSON.stringify({ users: uploadedUsers }),
       });
 
-      console.log('Bulk upload response:', response);
+      console.log('✅ Bulk upload response:', response);
 
       if (response.success) {
         const successCount = response.data.success.length;
         const failedCount = response.data.failed.length;
         
+        setUploadProgress('Refreshing user list...');
+        
         // Refresh the user list
         await fetchUsers();
         
+        // 🔥 Reset states
+        setIsUploading(false);
+        setUploadProgress('');
+        setIsUploadModalOpen(false);
+        
+        // Show results
         if (failedCount > 0) {
           alert(
-            `Upload completed!\n` +
-            `✓ ${successCount} users uploaded successfully\n` +
-            `✗ ${failedCount} users failed\n\n` +
-            `Failed users:\n${response.data.failed.map((f: any) => `- ${f.studentNumber}: ${f.reason}`).join('\n')}`
+            `Upload completed!\n\n` +
+            `✅ ${successCount} users uploaded successfully\n` +
+            `❌ ${failedCount} users failed\n\n` +
+            `Failed users:\n${response.data.failed.map((f: any) => `• ${f.studentNumber}: ${f.reason}`).join('\n')}`
           );
         } else {
-          alert(`Successfully uploaded ${successCount} users!`);
+          alert(`🎉 Success! All ${successCount} users uploaded successfully!`);
         }
       }
     } catch (error: any) {
-      console.error("Detailed error uploading users:", {
-        error,
-        message: error.message,
-        stack: error.stack,
-        type: typeof error
-      });
+      console.error("❌ Bulk upload error:", error);
       
-      // More detailed error message
-      let errorMessage = "Failed to upload users. ";
+      // 🔥 Reset states on error
+      setIsUploading(false);
+      setUploadProgress('');
+      
+      let errorMessage = "Failed to upload users.\n\n";
       if (error.message === "Failed to fetch") {
-        errorMessage += "\n\n⚠️ Connection Error - Possible causes:\n\n" +
-          "1. Backend server is not running on port 5000\n" +
-          "2. Wrong API URL (currently: " + API_BASE_URL + ")\n" +
-          "3. CORS issue - backend needs to allow requests from frontend\n" +
-          "4. Network connectivity problem\n\n" +
-          "💡 Quick checks:\n" +
-          "- Is your backend server running?\n" +
-          "- Can you access: " + API_BASE_URL + "/users in your browser?\n" +
-          "- Check the browser console (F12) for more details";
+        errorMessage += "⚠️ Connection Error\n\n" +
+          "Check:\n" +
+          "1. Backend running on port 5000?\n" +
+          "2. CORS configured correctly?\n" +
+          "3. Network tab in DevTools (F12)\n\n" +
+          "Current API URL: " + API_BASE_URL;
       } else {
-        errorMessage += "\n\nError: " + error.message;
+        errorMessage += "Error: " + error.message;
       }
       
       alert(errorMessage);
@@ -436,9 +475,8 @@ export default function UsersListPage() {
 
           {/* Filters and Action Buttons */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            {/* This will hold filters from UsersTable component */}
             <div className="flex-1">
-              {/* Filters will be rendered here by passing as prop */}
+              {/* Filters placeholder */}
             </div>
 
             {/* Action Buttons */}
@@ -452,7 +490,8 @@ export default function UsersListPage() {
               </button>
               <button
                 onClick={() => setIsUploadModalOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300"
+                disabled={isUploading}
+                className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Upload className="w-4 h-4" />
                 Upload Excel
@@ -479,10 +518,39 @@ export default function UsersListPage() {
         <Footer />
       </div>
 
+      {/* 🔥 NEW: Upload Progress Overlay */}
+      {isUploading && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4">
+            <div className="text-center">
+              {/* Animated spinner */}
+              <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-primary1 border-t-transparent mb-6"></div>
+              
+              {/* Progress text */}
+              <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
+                Uploading Users
+              </h3>
+              <p className="font-raleway text-gray-600 mb-4">
+                {uploadProgress}
+              </p>
+              
+              {/* Progress indicator */}
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-primary1 to-primary1/80 rounded-full animate-pulse"></div>
+              </div>
+              
+              <p className="font-raleway text-sm text-gray-500 mt-4">
+                Please wait... Do not close this window.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Excel Upload Modal */}
       <ExcelUploadModal
         isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
+        onClose={() => !isUploading && setIsUploadModalOpen(false)}
         onUpload={handleExcelUpload}
       />
 

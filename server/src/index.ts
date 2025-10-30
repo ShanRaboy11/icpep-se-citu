@@ -12,13 +12,15 @@ dotenv.config();
 // Initialize express app
 const app: Application = express();
 
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-
-// Middleware
+// ✅ CRITICAL: Middleware MUST come BEFORE routes!
+// 1. Body Parser - FIRST
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 2. Cookie Parser
 app.use(cookieParser());
+
+// 3. CORS
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -26,7 +28,7 @@ app.use(
   })
 );
 
-// Request logging middleware (development only)
+// 4. Request logging middleware (development only)
 if (process.env.NODE_ENV === 'development') {
   app.use((req: Request, res: Response, next: NextFunction) => {
     console.log(`${req.method} ${req.path}`);
@@ -124,14 +126,12 @@ app.get('/api', (req: Request, res: Response) => {
   });
 });
 
-// TODO: Add your routes here
-// import authRoutes from './routes/auth.routes.js';
-// import userRoutes from './routes/user.routes.js';
-// import announcementRoutes from './routes/announcement.routes.js';
-// etc...
+// ✅ ROUTES - Register AFTER middleware
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
-// app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
+// TODO: Add your other routes here
+// import announcementRoutes from './routes/announcement.routes';
 // app.use('/api/announcements', announcementRoutes);
 // etc...
 
@@ -141,6 +141,7 @@ app.use((req: Request, res: Response) => {
     success: false,
     message: 'Route not found',
     path: req.path,
+    method: req.method,
   });
 });
 

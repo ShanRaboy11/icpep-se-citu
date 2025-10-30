@@ -232,8 +232,7 @@ export default function EditUserModal({
                 }`}
               >
                 <option value="">Select Role</option>
-                <option value="member">Member</option>
-                <option value="non-member">Non-Member</option>
+                <option value="member">Student</option>
                 <option value="council-officer">Council Officer</option>
                 <option value="committee-officer">Committee Officer</option>
                 <option value="faculty">Faculty</option>

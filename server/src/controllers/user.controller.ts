@@ -224,13 +224,40 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
-    const results = {
-      success: [] as any[],
-      failed: [] as any[],
+    console.log(`📦 Processing bulk upload of ${users.length} users...`);
+
+    interface SuccessResult {
+      studentNumber: string;
+      fullName: string;
+      id: string;
+    }
+
+    interface FailedResult {
+      studentNumber: string;
+      reason: string;
+      data?: any;
+    }
+
+    const results: {
+      success: SuccessResult[];
+      failed: FailedResult[];
+    } = {
+      success: [],
+      failed: [],
     };
 
     for (const userData of users) {
       try {
+        // Validate required fields
+        if (!userData.studentNumber || !userData.firstName || !userData.lastName) {
+          results.failed.push({
+            studentNumber: userData.studentNumber || 'UNKNOWN',
+            reason: 'Missing required fields (studentNumber, firstName, lastName)',
+            data: userData,
+          });
+          continue;
+        }
+
         // Check if user exists
         const existingUser = await User.findOne({
           studentNumber: userData.studentNumber.toUpperCase(),
@@ -239,39 +266,46 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
         if (existingUser) {
           results.failed.push({
             studentNumber: userData.studentNumber,
-            reason: 'User already exists',
+            reason: 'User with this student number already exists',
+            data: userData,
           });
           continue;
         }
 
         // Prepare membership status
-        let membershipStatusObj: any = {
+        let membershipStatusObj: {
+          isMember: boolean;
+          membershipType: 'local' | 'regional' | 'both' | null;
+        } = {
           isMember: false,
           membershipType: null,
         };
 
-        if (userData.membershipStatus === 'local') {
+        const membershipStatus = userData.membershipStatus?.toLowerCase();
+
+        if (membershipStatus === 'local') {
           membershipStatusObj = {
             isMember: true,
             membershipType: 'local',
           };
-        } else if (userData.membershipStatus === 'regional') {
+        } else if (membershipStatus === 'regional') {
           membershipStatusObj = {
             isMember: true,
             membershipType: 'regional',
           };
-        } else if (userData.membershipStatus === 'both') {
+        } else if (membershipStatus === 'both') {
           membershipStatusObj = {
             isMember: true,
             membershipType: 'both',
           };
-        } else if (userData.membershipStatus === 'member') {
+        } else if (membershipStatus === 'member') {
           membershipStatusObj = {
             isMember: true,
-            membershipType: 'local',
+            membershipType: 'local', // Default to local if just "member"
           };
         }
 
+        // Create new user
         const newUser = await User.create({
           studentNumber: userData.studentNumber,
           lastName: userData.lastName,
@@ -279,22 +313,30 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
           middleName: userData.middleName || null,
           password: userData.password || '123456',
           role: userData.role || 'student',
-          yearLevel: userData.yearLevel,
+          yearLevel: userData.yearLevel || null,
           membershipStatus: membershipStatusObj,
           registeredBy: req.user?.id || null,
         });
 
         results.success.push({
           studentNumber: userData.studentNumber,
-          id: newUser._id,
+          fullName: newUser.fullName,
+          id: newUser._id.toString(),
         });
+
+        console.log(`✅ Created user: ${newUser.fullName} (${newUser.studentNumber})`);
       } catch (error: any) {
+        console.error(`❌ Failed to create user ${userData.studentNumber}:`, error.message);
+        
         results.failed.push({
-          studentNumber: userData.studentNumber,
-          reason: error.message,
+          studentNumber: userData.studentNumber || 'UNKNOWN',
+          reason: error.message || 'Unknown error occurred',
+          data: userData,
         });
       }
     }
+
+    console.log(`✅ Bulk upload complete: ${results.success.length} succeeded, ${results.failed.length} failed`);
 
     res.status(201).json({
       success: true,
@@ -302,6 +344,7 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
       data: results,
     });
   } catch (error: any) {
+    console.error('❌ Bulk upload error:', error);
     res.status(500).json({
       success: false,
       message: 'Error during bulk upload',

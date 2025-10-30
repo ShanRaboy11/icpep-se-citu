@@ -15,7 +15,6 @@ services:
       - mongo
     environment:
       NODE_ENV: development
-      MONGO_URI: mongodb://mongo:27017/mern_db # Example: link to the mongo service directly
     command: npm run dev # Starts nodemon for hot-reloading
 
   client:
@@ -36,6 +35,7 @@ services:
       - WATCHPACK_POLLING=true   # For Webpack/Next.js HMR
       - NODE_ENV=development
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:5000 # If client needs backend URL
+      - NEXT_PUBLIC_API_URL=http://localhost:5000/api
     command: npm run dev # Starts Next.js dev server with HMR
 
   mongo:
