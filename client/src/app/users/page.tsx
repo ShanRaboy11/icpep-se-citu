@@ -13,20 +13,20 @@ import ConfirmDialog from "./components/confirm_dialog";
 import ViewUserModal from "./components/view_user_modal";
 import EditUserModal from "./components/edit_user_modal";
 import Grid from "../components/grid";
-import { ArrowLeft, UserPlus, Download, Upload } from "lucide-react";
+import { ArrowLeft, UserPlus, Download, Upload, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
-// 🔥 HARDCODED FOR TESTING - This should work!
+// API Configuration
 const API_BASE_URL = 'http://localhost:5000/api';
 
-// Debug on mount
-if (typeof window !== 'undefined') {
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🔧 API Configuration:');
-  console.log('   Base URL:', API_BASE_URL);
-  console.log('   Bulk Upload URL:', `${API_BASE_URL}/users/bulk-upload`);
-  console.log('   Expected backend log: POST /api/users/bulk-upload');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-}
+// Helper function to capitalize first letter of each word
+const capitalizeWords = (str: string): string => {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 
 // Helper function to get auth token
 const getAuthToken = (): string | null => {
@@ -40,13 +40,6 @@ const getAuthToken = (): string | null => {
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const token = getAuthToken();
   
-  // 🔥 DEBUG: Log every API call
-  console.log('🌐 API Call:', {
-    url,
-    method: options.method || 'GET',
-    hasToken: !!token
-  });
-  
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
@@ -59,12 +52,6 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const response = await fetch(url, {
     ...options,
     headers,
-  });
-
-  console.log('📨 Response:', {
-    status: response.status,
-    statusText: response.statusText,
-    url: response.url
   });
 
   if (!response.ok) {
@@ -82,9 +69,35 @@ export default function UsersListPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   
-  // 🔥 NEW: Upload progress state
+  // Upload progress state
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [uploadStats, setUploadStats] = useState({
+    total: 0,
+    current: 0,
+    successful: 0,
+    failed: 0
+  });
+  
+  // Modal states
+  const [uploadResult, setUploadResult] = useState({
+    show: false,
+    success: 0,
+    failed: 0,
+    failedUsers: [] as any[],
+  });
+  
+  const [successModal, setSuccessModal] = useState({
+    show: false,
+    title: '',
+    message: '',
+  });
+  
+  const [errorModal, setErrorModal] = useState({
+    show: false,
+    title: '',
+    message: '',
+  });
   
   // Confirmation Dialogs
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -97,25 +110,33 @@ export default function UsersListPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  // Fetch users on component mount
+  // Fetch ALL users on component mount
   useEffect(() => {
-    fetchUsers();
+    fetchAllUsers();
   }, []);
 
-  const fetchUsers = async () => {
+  // 🔥 NEW: Fetch ALL users with pagination
+  const fetchAllUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetchWithAuth(`${API_BASE_URL}/users`);
+      console.log('🔍 Fetching all users...');
+      
+      // Fetch with a very high limit to get all users
+      // You can also implement proper pagination if you have thousands of users
+      const response = await fetchWithAuth(`${API_BASE_URL}/users?limit=10000&page=1`);
+      
+      console.log('📊 Response:', response);
       
       if (response.success) {
         // Transform backend data to match frontend User type
         const transformedUsers: User[] = response.data.map((user: any) => ({
           id: user._id,
           studentNumber: user.studentNumber,
-          lastName: user.lastName,
-          firstName: user.firstName,
-          middleName: user.middleName,
-          fullName: user.fullName,
+          // 🔥 Capitalize names properly
+          lastName: capitalizeWords(user.lastName),
+          firstName: capitalizeWords(user.firstName),
+          middleName: user.middleName ? capitalizeWords(user.middleName) : '',
+          fullName: capitalizeWords(user.fullName || `${user.firstName} ${user.middleName || ''} ${user.lastName}`.trim()),
           role: user.role,
           yearLevel: user.yearLevel,
           membershipStatus: user.membershipStatus,
@@ -123,17 +144,22 @@ export default function UsersListPage() {
           isActive: user.isActive,
           registeredBy: user.registeredBy ? {
             id: user.registeredBy._id,
-            fullName: `${user.registeredBy.firstName} ${user.registeredBy.lastName}`,
+            fullName: capitalizeWords(`${user.registeredBy.firstName} ${user.registeredBy.lastName}`),
           } : null,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         }));
         
+        console.log(`✅ Loaded ${transformedUsers.length} users`);
         setUsers(transformedUsers);
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
-      alert("Failed to load users. Please try again.");
+      console.error("❌ Error fetching users:", error);
+      setErrorModal({
+        show: true,
+        title: 'Failed to Load Users',
+        message: 'Unable to fetch users from the server. Please try refreshing the page.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -155,14 +181,13 @@ export default function UsersListPage() {
       });
 
       if (response.success) {
-        // Transform and add the new user to the list
         const transformedUser: User = {
           id: response.data._id,
           studentNumber: response.data.studentNumber,
-          lastName: response.data.lastName,
-          firstName: response.data.firstName,
-          middleName: response.data.middleName,
-          fullName: response.data.fullName,
+          lastName: capitalizeWords(response.data.lastName),
+          firstName: capitalizeWords(response.data.firstName),
+          middleName: response.data.middleName ? capitalizeWords(response.data.middleName) : '',
+          fullName: capitalizeWords(response.data.fullName),
           role: response.data.role,
           yearLevel: response.data.yearLevel,
           membershipStatus: response.data.membershipStatus,
@@ -170,115 +195,134 @@ export default function UsersListPage() {
           isActive: response.data.isActive,
           registeredBy: response.data.registeredBy ? {
             id: response.data.registeredBy._id,
-            fullName: `${response.data.registeredBy.firstName} ${response.data.registeredBy.lastName}`,
+            fullName: capitalizeWords(`${response.data.registeredBy.firstName} ${response.data.registeredBy.lastName}`),
           } : null,
           createdAt: response.data.createdAt,
           updatedAt: response.data.updatedAt,
         };
 
         setUsers([transformedUser, ...users]);
-        alert("User added successfully!");
+        setSuccessModal({
+          show: true,
+          title: 'User Added Successfully',
+          message: `${transformedUser.fullName} has been added to the system.`,
+        });
       }
     } catch (error: any) {
       console.error("Error adding user:", error);
-      alert(error.message || "Failed to add user. Please try again.");
+      setErrorModal({
+        show: true,
+        title: 'Failed to Add User',
+        message: error.message || 'An error occurred while adding the user.',
+      });
     }
   };
 
   const handleExcelUpload = async (uploadedUsers: any[]) => {
     try {
-      // 🔥 Set uploading state
       setIsUploading(true);
-      setUploadProgress(`Uploading ${uploadedUsers.length} users...`);
-      
-      // 🔥 EXPLICIT URL CONSTRUCTION
-      const bulkUploadUrl = `${API_BASE_URL}/users/bulk-upload`;
-      
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('🚀 BULK UPLOAD STARTING');
-      console.log('   Full URL:', bulkUploadUrl);
-      console.log('   User count:', uploadedUsers.length);
-      console.log('   First user:', uploadedUsers[0]);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-      setUploadProgress('Processing users on server...');
-
-      const response = await fetchWithAuth(bulkUploadUrl, {
-        method: 'POST',
-        body: JSON.stringify({ users: uploadedUsers }),
+      setUploadStats({
+        total: uploadedUsers.length,
+        current: 0,
+        successful: 0,
+        failed: 0
       });
+      setUploadProgress('Preparing upload...');
+      
+      let successCount = 0;
+      let failedCount = 0;
+      const failedUsers: any[] = [];
 
-      console.log('✅ Bulk upload response:', response);
+      for (let i = 0; i < uploadedUsers.length; i++) {
+        const userData = uploadedUsers[i];
+        
+        setUploadStats(prev => ({
+          ...prev,
+          current: i + 1,
+        }));
+        
+        setUploadProgress(`Processing ${userData.studentNumber || 'user'}...`);
 
-      if (response.success) {
-        const successCount = response.data.success.length;
-        const failedCount = response.data.failed.length;
-        
-        setUploadProgress('Refreshing user list...');
-        
-        // Refresh the user list
-        await fetchUsers();
-        
-        // 🔥 Reset states
-        setIsUploading(false);
-        setUploadProgress('');
-        setIsUploadModalOpen(false);
-        
-        // Show results
-        if (failedCount > 0) {
-          alert(
-            `Upload completed!\n\n` +
-            `✅ ${successCount} users uploaded successfully\n` +
-            `❌ ${failedCount} users failed\n\n` +
-            `Failed users:\n${response.data.failed.map((f: any) => `• ${f.studentNumber}: ${f.reason}`).join('\n')}`
-          );
-        } else {
-          alert(`🎉 Success! All ${successCount} users uploaded successfully!`);
+        try {
+          const response = await fetchWithAuth(`${API_BASE_URL}/users`, {
+            method: 'POST',
+            body: JSON.stringify(userData),
+          });
+
+          if (response.success) {
+            successCount++;
+            setUploadStats(prev => ({
+              ...prev,
+              successful: successCount,
+            }));
+          }
+        } catch (error: any) {
+          failedCount++;
+          failedUsers.push({
+            studentNumber: userData.studentNumber || 'UNKNOWN',
+            reason: error.message || 'Unknown error',
+            data: userData,
+          });
+          setUploadStats(prev => ({
+            ...prev,
+            failed: failedCount,
+          }));
         }
       }
+
+      setUploadStats({
+        total: uploadedUsers.length,
+        current: uploadedUsers.length,
+        successful: successCount,
+        failed: failedCount
+      });
+      
+      setUploadProgress('Upload complete! Refreshing user list...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // 🔥 Refresh to get ALL users again
+      await fetchAllUsers();
+      
+      setIsUploading(false);
+      setUploadProgress('');
+      setIsUploadModalOpen(false);
+      
+      setUploadResult({
+        show: true,
+        success: successCount,
+        failed: failedCount,
+        failedUsers: failedUsers,
+      });
     } catch (error: any) {
       console.error("❌ Bulk upload error:", error);
-      
-      // 🔥 Reset states on error
       setIsUploading(false);
       setUploadProgress('');
       
-      let errorMessage = "Failed to upload users.\n\n";
-      if (error.message === "Failed to fetch") {
-        errorMessage += "⚠️ Connection Error\n\n" +
-          "Check:\n" +
-          "1. Backend running on port 5000?\n" +
-          "2. CORS configured correctly?\n" +
-          "3. Network tab in DevTools (F12)\n\n" +
-          "Current API URL: " + API_BASE_URL;
-      } else {
-        errorMessage += "Error: " + error.message;
-      }
-      
-      alert(errorMessage);
+      setErrorModal({
+        show: true,
+        title: 'Upload Failed',
+        message: error.message === "Failed to fetch" 
+          ? 'Connection error. Please check if the backend is running on port 5000.'
+          : error.message || 'An unknown error occurred.',
+      });
     }
   };
 
   const handleExport = () => {
-    // Export users to CSV
     const csv = convertToCSV(users);
     downloadCSV(csv, "users-export.csv");
+    setSuccessModal({
+      show: true,
+      title: 'Export Successful',
+      message: `Successfully exported ${users.length} users to CSV.`,
+    });
   };
 
   const convertToCSV = (data: User[]) => {
     const headers = [
-      "Student Number",
-      "Last Name",
-      "First Name",
-      "Middle Name",
-      "Role",
-      "Year Level",
-      "Membership Status",
-      "Membership Type",
-      "Registered By",
-      "Registration Date",
-      "Last Updated",
-      "Status",
+      "Student Number", "Last Name", "First Name", "Middle Name",
+      "Role", "Year Level", "Membership Status", "Membership Type",
+      "Registered By", "Registration Date", "Last Updated", "Status",
     ];
 
     const rows = data.map((user) => [
@@ -316,7 +360,6 @@ export default function UsersListPage() {
     document.body.removeChild(link);
   };
 
-  // Context Menu Action Handlers
   const handleEditUser = (user: User) => {
     setSelectedUser(user);
     setIsEditModalOpen(true);
@@ -337,23 +380,30 @@ export default function UsersListPage() {
       });
 
       if (response.success) {
-        // Update the user in the local state
         setUsers(users.map(u => {
           if (u.id === updatedUser.id) {
             return {
               ...updatedUser,
-              fullName: response.data.fullName,
+              fullName: capitalizeWords(response.data.fullName),
               updatedAt: response.data.updatedAt,
             };
           }
           return u;
         }));
         
-        alert(`${updatedUser.fullName} has been updated successfully!`);
+        setSuccessModal({
+          show: true,
+          title: 'User Updated',
+          message: `${updatedUser.fullName} has been updated successfully.`,
+        });
       }
     } catch (error: any) {
       console.error("Error updating user:", error);
-      alert(error.message || "Failed to update user. Please try again.");
+      setErrorModal({
+        show: true,
+        title: 'Update Failed',
+        message: error.message || 'Failed to update user.',
+      });
     }
   };
 
@@ -371,11 +421,19 @@ export default function UsersListPage() {
 
         if (response.success) {
           setUsers(users.filter(u => u.id !== userToDelete.id));
-          alert(`${userToDelete.fullName} has been deleted successfully!`);
+          setSuccessModal({
+            show: true,
+            title: 'User Deleted',
+            message: `${userToDelete.fullName} has been deleted successfully.`,
+          });
         }
       } catch (error: any) {
         console.error("Error deleting user:", error);
-        alert(error.message || "Failed to delete user. Please try again.");
+        setErrorModal({
+          show: true,
+          title: 'Delete Failed',
+          message: error.message || 'Failed to delete user.',
+        });
       } finally {
         setUserToDelete(null);
       }
@@ -403,11 +461,19 @@ export default function UsersListPage() {
           ));
           
           const status = response.data.isActive ? 'activated' : 'deactivated';
-          alert(`${userToToggle.fullName} has been ${status} successfully!`);
+          setSuccessModal({
+            show: true,
+            title: 'Status Updated',
+            message: `${userToToggle.fullName} has been ${status} successfully.`,
+          });
         }
       } catch (error: any) {
         console.error("Error toggling user status:", error);
-        alert(error.message || "Failed to update user status. Please try again.");
+        setErrorModal({
+          show: true,
+          title: 'Status Update Failed',
+          message: error.message || 'Failed to update user status.',
+        });
       } finally {
         setUserToToggle(null);
       }
@@ -418,6 +484,10 @@ export default function UsersListPage() {
     setSelectedUser(user);
     setIsViewModalOpen(true);
   };
+
+  const progressPercentage = uploadStats.total > 0 
+    ? Math.round((uploadStats.current / uploadStats.total) * 100)
+    : 0;
 
   if (isLoading) {
     return (
@@ -436,7 +506,6 @@ export default function UsersListPage() {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow w-full max-w-[1600px] mx-auto px-8 pt-[9.5rem] pb-12">
-          {/* Back Button */}
           <div className="mb-8 flex justify-start">
             <button
               onClick={handleBackToHome}
@@ -454,7 +523,6 @@ export default function UsersListPage() {
             </button>
           </div>
 
-          {/* Header Section - Centered */}
           <div className="mb-12 text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
               <div className="h-2 w-2 rounded-full bg-primary1"></div>
@@ -470,16 +538,10 @@ export default function UsersListPage() {
             </p>
           </div>
 
-          {/* Stats Cards */}
           <UserStats users={users} />
 
-          {/* Filters and Action Buttons */}
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <div className="flex-1">
-              {/* Filters placeholder */}
-            </div>
-
-            {/* Action Buttons */}
+            <div className="flex-1"></div>
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={handleExport}
@@ -506,7 +568,6 @@ export default function UsersListPage() {
             </div>
           </div>
 
-          {/* Users Table with Context Menu Actions */}
           <UsersTable 
             users={users}
             onEdit={handleEditUser}
@@ -518,28 +579,56 @@ export default function UsersListPage() {
         <Footer />
       </div>
 
-      {/* 🔥 NEW: Upload Progress Overlay */}
+      {/* Upload Progress Overlay - Same as before */}
       {isUploading && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full mx-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
             <div className="text-center">
-              {/* Animated spinner */}
               <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-primary1 border-t-transparent mb-6"></div>
               
-              {/* Progress text */}
               <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
                 Uploading Users
               </h3>
-              <p className="font-raleway text-gray-600 mb-4">
+              
+              <div className="font-raleway text-4xl font-bold text-primary1 mb-2">
+                {uploadStats.current} / {uploadStats.total}
+              </div>
+              
+              <p className="font-raleway text-gray-600 mb-4 text-sm">
                 {uploadProgress}
               </p>
               
-              {/* Progress indicator */}
-              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-primary1 to-primary1/80 rounded-full animate-pulse"></div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
+                <div 
+                  className="h-full bg-gradient-to-r from-primary1 to-primary1/80 rounded-full transition-all duration-300 ease-out"
+                  style={{ width: `${progressPercentage}%` }}
+                ></div>
               </div>
               
-              <p className="font-raleway text-sm text-gray-500 mt-4">
+              <p className="font-raleway text-sm font-semibold text-primary1 mb-4">
+                {progressPercentage}% Complete
+              </p>
+              
+              <div className="flex justify-center gap-6 mb-4">
+                <div className="text-center">
+                  <div className="font-raleway text-2xl font-bold text-green-600">
+                    {uploadStats.successful}
+                  </div>
+                  <div className="font-raleway text-xs text-gray-500">
+                    Successful
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="font-raleway text-2xl font-bold text-red-600">
+                    {uploadStats.failed}
+                  </div>
+                  <div className="font-raleway text-xs text-gray-500">
+                    Failed
+                  </div>
+                </div>
+              </div>
+              
+              <p className="font-raleway text-sm text-gray-500">
                 Please wait... Do not close this window.
               </p>
             </div>
@@ -547,21 +636,130 @@ export default function UsersListPage() {
         </div>
       )}
 
-      {/* Excel Upload Modal */}
+      {/* Upload Result Modal */}
+      {uploadResult.show && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="text-center mb-6">
+              {uploadResult.failed === 0 ? (
+                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              ) : (
+                <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+              )}
+              
+              <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
+                Upload Complete
+              </h3>
+              
+              <div className="flex justify-center gap-8 mb-6">
+                <div className="text-center">
+                  <div className="font-raleway text-3xl font-bold text-green-600">
+                    {uploadResult.success}
+                  </div>
+                  <div className="font-raleway text-sm text-gray-600">
+                    Successful
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="font-raleway text-3xl font-bold text-red-600">
+                    {uploadResult.failed}
+                  </div>
+                  <div className="font-raleway text-sm text-gray-600">
+                    Failed
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {uploadResult.failedUsers.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-raleway font-semibold text-lg mb-3 text-red-600">
+                  Failed Users:
+                </h4>
+                <div className="bg-red-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                  {uploadResult.failedUsers.map((user, index) => (
+                    <div key={index} className="mb-2 pb-2 border-b border-red-200 last:border-0">
+                      <p className="font-raleway text-sm font-semibold text-gray-800">
+                        {user.studentNumber}
+                      </p>
+                      <p className="font-raleway text-xs text-gray-600">
+                        {user.reason}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            <button
+              onClick={() => setUploadResult({ show: false, success: 0, failed: 0, failedUsers: [] })}
+              className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {successModal.show && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
+            <div className="text-center">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
+                {successModal.title}
+              </h3>
+              <p className="font-raleway text-gray-600 mb-6">
+                {successModal.message}
+              </p>
+              <button
+                onClick={() => setSuccessModal({ show: false, title: '', message: '' })}
+                className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {errorModal.show && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
+            <div className="text-center">
+              <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
+                {errorModal.title}
+              </h3>
+              <p className="font-raleway text-gray-600 mb-6">
+                {errorModal.message}
+              </p>
+              <button
+                onClick={() => setErrorModal({ show: false, title: '', message: '' })}
+                className="w-full px-6 py-3 bg-red-500 text-white font-raleway font-semibold rounded-lg hover:bg-red-600 transition-colors duration-300"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Other Modals */}
       <ExcelUploadModal
         isOpen={isUploadModalOpen}
         onClose={() => !isUploading && setIsUploadModalOpen(false)}
         onUpload={handleExcelUpload}
       />
 
-      {/* Add User Modal */}
       <AddUserModal
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
         onAdd={handleAddUserSubmit}
       />
 
-      {/* View User Details Modal */}
       {isViewModalOpen && selectedUser && (
         <ViewUserModal
           isOpen={isViewModalOpen}
@@ -573,7 +771,6 @@ export default function UsersListPage() {
         />
       )}
 
-      {/* Edit User Modal */}
       {isEditModalOpen && selectedUser && (
         <EditUserModal
           isOpen={isEditModalOpen}
@@ -586,7 +783,6 @@ export default function UsersListPage() {
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
       {isDeleteConfirmOpen && userToDelete && (
         <ConfirmDialog
           isOpen={isDeleteConfirmOpen}
@@ -603,7 +799,6 @@ export default function UsersListPage() {
         />
       )}
 
-      {/* Toggle Status Confirmation Dialog */}
       {isStatusConfirmOpen && userToToggle && (
         <ConfirmDialog
           isOpen={isStatusConfirmOpen}

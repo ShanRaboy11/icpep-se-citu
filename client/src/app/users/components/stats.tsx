@@ -24,7 +24,7 @@ export default function UserStats({ users }: UserStatsProps) {
       textColor: "text-primary1",
     },
     {
-      label: "Active Members",
+      label: "Members",
       value: activeMembers,
       icon: UserCheck,
       color: "from-green-400 to-green-500",

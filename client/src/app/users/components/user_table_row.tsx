@@ -35,12 +35,10 @@ export default function UserTableRow({
         return "bg-primary1/20 text-blue-700 border-blue-200";
       case "committee-officer":
         return "bg-indigo-100 text-indigo-700 border-indigo-200";
-      case "member":
+      case "student":
         return "bg-green-100 text-green-700 border-green-200";
-      case "non-member":
-        return "bg-gray-100 text-gray-700 border-gray-200";
       default:
-        return "bg-gray-100 text-gray-700 border-gray-200";
+        return "bg-green-100 text-green-700 border-green-200";
     }
   };
 
