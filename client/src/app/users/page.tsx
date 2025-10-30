@@ -86,6 +86,18 @@ const validateRole = (role: string): "faculty" | "council-officer" | "committee-
   return roleMap[role] || "student";
 };
 
+// Helper function to validate and cast membershipType
+const validateMembershipType = (membershipType: string | null): "regional" | "local" | "both" | null => {
+  if (membershipType === null) return null;
+  
+  const validTypes = ["regional", "local", "both"];
+  if (validTypes.includes(membershipType.toLowerCase())) {
+    return membershipType.toLowerCase() as "regional" | "local" | "both";
+  }
+  
+  return null;
+};
+
 // Helper function to capitalize first letter of each word
 const capitalizeWords = (str: string): string => {
   if (!str) return '';
@@ -224,7 +236,10 @@ export default function UsersListPage() {
           fullName: capitalizeWords(user.fullName || `${user.firstName} ${user.middleName || ''} ${user.lastName}`.trim()),
           role: validateRole(user.role),
           yearLevel: user.yearLevel,
-          membershipStatus: user.membershipStatus,
+          membershipStatus: {
+            isMember: user.membershipStatus.isMember,
+            membershipType: validateMembershipType(user.membershipStatus.membershipType),
+          },
           profilePicture: user.profilePicture,
           isActive: user.isActive,
           registeredBy: user.registeredBy ? {
