@@ -1,6 +1,14 @@
 "use client";
 
-import { X, User as UserIcon, Mail, Phone, Calendar, Shield, Award } from "lucide-react";
+import {
+  X,
+  User as UserIcon,
+  Mail,
+  Phone,
+  Calendar,
+  Shield,
+  Award,
+} from "lucide-react";
 import { User } from "../utils/user";
 import { format } from "date-fns";
 
@@ -10,7 +18,11 @@ interface ViewUserModalProps {
   user: User;
 }
 
-export default function ViewUserModal({ isOpen, onClose, user }: ViewUserModalProps) {
+export default function ViewUserModal({
+  isOpen,
+  onClose,
+  user,
+}: ViewUserModalProps) {
   if (!isOpen) return null;
 
   const formatDate = (dateString: string) => {
@@ -94,7 +106,7 @@ export default function ViewUserModal({ isOpen, onClose, user }: ViewUserModalPr
                   ? "Committee Officer"
                   : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </span>
-  
+
               <div className="flex items-center gap-2">
                 <div
                   className={`w-2 h-2 rounded-full ${
@@ -116,25 +128,33 @@ export default function ViewUserModal({ isOpen, onClose, user }: ViewUserModalPr
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="font-raleway text-sm text-gray-500 mb-1">First Name</p>
+                <p className="font-raleway text-sm text-gray-500 mb-1">
+                  First Name
+                </p>
                 <p className="font-raleway text-base font-semibold text-gray-900">
                   {user.firstName}
                 </p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="font-raleway text-sm text-gray-500 mb-1">Last Name</p>
+                <p className="font-raleway text-sm text-gray-500 mb-1">
+                  Last Name
+                </p>
                 <p className="font-raleway text-base font-semibold text-gray-900">
                   {user.lastName}
                 </p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="font-raleway text-sm text-gray-500 mb-1">Middle Name</p>
+                <p className="font-raleway text-sm text-gray-500 mb-1">
+                  Middle Name
+                </p>
                 <p className="font-raleway text-base font-semibold text-gray-900">
                   {user.middleName || "N/A"}
                 </p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="font-raleway text-sm text-gray-500 mb-1">Year Level</p>
+                <p className="font-raleway text-sm text-gray-500 mb-1">
+                  Year Level
+                </p>
                 <p className="font-raleway text-base font-semibold text-gray-900">
                   {user.yearLevel ? `Year ${user.yearLevel}` : "N/A"}
                 </p>
@@ -150,7 +170,9 @@ export default function ViewUserModal({ isOpen, onClose, user }: ViewUserModalPr
             </h4>
             <div className="bg-gray-50 p-4 rounded-lg space-y-3">
               <div className="flex items-center justify-between">
-                <p className="font-raleway text-sm text-gray-500">Membership Status</p>
+                <p className="font-raleway text-sm text-gray-500">
+                  Membership Status
+                </p>
                 <span
                   className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold font-raleway border ${
                     user.membershipStatus.isMember
@@ -161,28 +183,29 @@ export default function ViewUserModal({ isOpen, onClose, user }: ViewUserModalPr
                   {user.membershipStatus.isMember ? "Member" : "Non-Member"}
                 </span>
               </div>
-              {user.membershipStatus.isMember && user.membershipStatus.membershipType && (
-                <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                  <p className="font-raleway text-sm text-gray-500">
-                    Membership Type
-                  </p>
-                  <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold font-raleway border ${
-                      user.membershipStatus.membershipType === "regional"
-                        ? "bg-primary1/10 text-primary1 border-primary1/30"
+              {user.membershipStatus.isMember &&
+                user.membershipStatus.membershipType && (
+                  <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                    <p className="font-raleway text-sm text-gray-500">
+                      Membership Type
+                    </p>
+                    <span
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold font-raleway border ${
+                        user.membershipStatus.membershipType === "regional"
+                          ? "bg-primary1/10 text-primary1 border-primary1/30"
+                          : user.membershipStatus.membershipType === "both"
+                          ? "bg-purple-100 text-purple-700 border-purple-200"
+                          : "bg-secondary2/10 text-secondary2 border-secondary2/30"
+                      }`}
+                    >
+                      {user.membershipStatus.membershipType === "regional"
+                        ? "Regional"
                         : user.membershipStatus.membershipType === "both"
-                        ? "bg-purple-100 text-purple-700 border-purple-200"
-                        : "bg-secondary2/10 text-secondary2 border-secondary2/30"
-                    }`}
-                  >
-                    {user.membershipStatus.membershipType === "regional"
-                      ? "Regional"
-                      : user.membershipStatus.membershipType === "both"
-                      ? "Both (Local & Regional)"
-                      : "Local"}
-                  </span>
-                </div>
-              )}
+                        ? "Both (Local & Regional)"
+                        : "Local"}
+                    </span>
+                  </div>
+                )}
             </div>
           </div>
 

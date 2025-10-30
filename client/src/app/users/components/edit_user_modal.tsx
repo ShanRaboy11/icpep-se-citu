@@ -25,7 +25,7 @@ export default function EditUserModal({
     role: user.role,
     // Convert yearLevel to string for the select input.
     // Use an empty string if it's null or undefined.
-    yearLevel: user.yearLevel?.toString() || "", 
+    yearLevel: user.yearLevel?.toString() || "",
     membershipStatus: user.membershipStatus.isMember
       ? user.membershipStatus.membershipType || "local"
       : "non-member",
@@ -75,7 +75,7 @@ export default function EditUserModal({
     }
 
     // Explicitly define the type for role to match User['role']
-    const role: User['role'] = formData.role as User['role']; 
+    const role: User["role"] = formData.role as User["role"];
 
     const updatedUser: User = {
       ...user,
@@ -127,7 +127,10 @@ export default function EditUserModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-160px)]">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 overflow-y-auto max-h-[calc(90vh-160px)]"
+        >
           {/* Student Number */}
           <div className="mb-4">
             <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
@@ -297,7 +300,9 @@ export default function EditUserModal({
                   }
                   className="w-4 h-4 text-primary1 focus:ring-primary1"
                 />
-                <span className="font-raleway text-sm text-gray-700">Active</span>
+                <span className="font-raleway text-sm text-gray-700">
+                  Active
+                </span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -309,7 +314,9 @@ export default function EditUserModal({
                   }
                   className="w-4 h-4 text-primary1 focus:ring-primary1"
                 />
-                <span className="font-raleway text-sm text-gray-700">Inactive</span>
+                <span className="font-raleway text-sm text-gray-700">
+                  Inactive
+                </span>
               </label>
             </div>
           </div>

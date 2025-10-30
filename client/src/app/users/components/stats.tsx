@@ -1,7 +1,13 @@
 "use client";
 
 import { User } from "../utils/user";
-import { Users, UserCheck, GraduationCap, Shield, Handshake } from "lucide-react";
+import {
+  Users,
+  UserCheck,
+  GraduationCap,
+  Shield,
+  Handshake,
+} from "lucide-react";
 
 interface UserStatsProps {
   users: User[];
@@ -10,8 +16,12 @@ interface UserStatsProps {
 export default function UserStats({ users }: UserStatsProps) {
   const totalUsers = users.length;
   const activeMembers = users.filter((u) => u.membershipStatus.isMember).length;
-  const council_officers = users.filter((u) => u.role === "council-officer").length;
-  const committee_officers = users.filter((u) => u.role === "committee-officer").length;
+  const council_officers = users.filter(
+    (u) => u.role === "council-officer"
+  ).length;
+  const committee_officers = users.filter(
+    (u) => u.role === "committee-officer"
+  ).length;
   const faculty = users.filter((u) => u.role === "faculty").length;
 
   const stats = [
@@ -32,13 +42,13 @@ export default function UserStats({ users }: UserStatsProps) {
       textColor: "text-green-600",
     },
     {
-    label: "Committee Officers",
-    value: committee_officers,
-    icon: Handshake, 
-    color: "from-secondary2 to-secondary2/80", 
-    bgColor: "bg-green-50",
-    textColor: "text-secondary2",
-  },
+      label: "Committee Officers",
+      value: committee_officers,
+      icon: Handshake,
+      color: "from-secondary2 to-secondary2/80",
+      bgColor: "bg-green-50",
+      textColor: "text-secondary2",
+    },
     {
       label: "Council Officers",
       value: council_officers,
