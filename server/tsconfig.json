@@ -3,7 +3,7 @@
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
-    "outDir": "src/dist",
+    "outDir": "dist",
     "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
@@ -13,8 +13,8 @@
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "typeRoots": ["./node_modules/@types"],
-    "types": ["node", "mongoose"]
+    "types": ["node"]
   },
-  "include": ["src/**/*", "dist"],
-  "exclude": ["node_modules", "src/dist"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
