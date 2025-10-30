@@ -59,10 +59,7 @@ interface UploadUserData {
   middleName?: string;
   role: string;
   yearLevel?: number;
-  membershipStatus?: {
-    isMember: boolean;
-    membershipType: string | null;
-  };
+  membershipStatus?: string; // Changed from object to string to match Excel upload format
 }
 
 // API Configuration
@@ -96,6 +93,28 @@ const validateMembershipType = (membershipType: string | null): "regional" | "lo
   }
   
   return null;
+};
+
+// Helper function to parse membershipStatus from Excel format
+const parseMembershipStatus = (membershipStatus?: string): { isMember: boolean; membershipType: string | null } => {
+  if (!membershipStatus) {
+    return { isMember: false, membershipType: null };
+  }
+  
+  const statusLower = membershipStatus.toLowerCase().trim();
+  
+  // Check for membership types
+  if (statusLower === 'local' || statusLower === 'regional' || statusLower === 'both') {
+    return { isMember: true, membershipType: statusLower };
+  }
+  
+  // Check for member/non-member
+  if (statusLower === 'member') {
+    return { isMember: true, membershipType: null };
+  }
+  
+  // Default to non-member
+  return { isMember: false, membershipType: null };
 };
 
 // Helper function to capitalize first letter of each word
@@ -342,9 +361,20 @@ export default function UsersListPage() {
         setUploadProgress(`Processing ${userData.studentNumber || 'user'}...`);
 
         try {
+          // Transform membershipStatus from string to object format
+          const transformedUserData = {
+            studentNumber: userData.studentNumber,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            middleName: userData.middleName,
+            role: userData.role,
+            yearLevel: userData.yearLevel,
+            membershipStatus: parseMembershipStatus(userData.membershipStatus),
+          };
+
           const response: ApiResponse<ApiUser> = await fetchWithAuth(`${API_BASE_URL}/users`, {
             method: 'POST',
-            body: JSON.stringify(userData),
+            body: JSON.stringify(transformedUserData),
           });
 
           if (response.success) {
@@ -379,6 +409,7 @@ export default function UsersListPage() {
       setUploadProgress('Upload complete! Refreshing user list...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Refresh all users
       await fetchAllUsers();
       
       setIsUploading(false);
