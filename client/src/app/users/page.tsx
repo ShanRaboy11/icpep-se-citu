@@ -69,6 +69,23 @@ interface UploadUserData {
 const API_BASE_URL = 'http://localhost:5000/api';
 const USERS_PER_PAGE = 100;
 
+// Helper function to validate and cast role
+const validateRole = (role: string): "faculty" | "council-officer" | "committee-officer" | "student" => {
+  const validRoles = ["faculty", "council-officer", "committee-officer", "student", "member", "non-member"];
+  
+  // Map backend roles to frontend roles
+  const roleMap: Record<string, "faculty" | "council-officer" | "committee-officer" | "student"> = {
+    "faculty": "faculty",
+    "council-officer": "council-officer",
+    "committee-officer": "committee-officer",
+    "student": "student",
+    "member": "student", // Map member to student
+    "non-member": "student", // Map non-member to student
+  };
+  
+  return roleMap[role] || "student";
+};
+
 // Helper function to capitalize first letter of each word
 const capitalizeWords = (str: string): string => {
   if (!str) return '';
@@ -205,7 +222,7 @@ export default function UsersListPage() {
           firstName: capitalizeWords(user.firstName),
           middleName: user.middleName ? capitalizeWords(user.middleName) : '',
           fullName: capitalizeWords(user.fullName || `${user.firstName} ${user.middleName || ''} ${user.lastName}`.trim()),
-          role: user.role,
+          role: validateRole(user.role),
           yearLevel: user.yearLevel,
           membershipStatus: user.membershipStatus,
           profilePicture: user.profilePicture,
@@ -569,7 +586,6 @@ export default function UsersListPage() {
   // 🔥 Calculate display range
   const startIndex = (currentPage - 1) * USERS_PER_PAGE;
   const endIndex = Math.min(startIndex + USERS_PER_PAGE, allUsers.length);
-  const displayedCount = displayedUsers.length;
 
   if (isLoading) {
     return (
@@ -623,49 +639,42 @@ export default function UsersListPage() {
           {/* Stats based on ALL users */}
           <UserStats users={allUsers} />
 
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            {/* 🔥 NEW: Display count */}
-            <div className="flex-1">
-              <span className="font-raleway text-sm text-gray-600 font-medium">
-                Showing {displayedCount} of {allUsers.length} users
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-300"
-              >
-                <Download className="w-4 h-4" />
-                Export All
-              </button>
-              <button
-                onClick={() => setIsUploadModalOpen(true)}
-                disabled={isUploading}
-                className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Upload className="w-4 h-4" />
-                Upload Excel
-              </button>
-              <button
-                onClick={handleAddUser}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
-              >
-                <UserPlus className="w-4 h-4" />
-                Add User
-              </button>
-            </div>
+          <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-300"
+            >
+              <Download className="w-4 h-4" />
+              Export All
+            </button>
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              disabled={isUploading}
+              className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Upload className="w-4 h-4" />
+              Upload Excel
+            </button>
+            <button
+              onClick={handleAddUser}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
+            >
+              <UserPlus className="w-4 h-4" />
+              Add User
+            </button>
           </div>
 
           {/* Display only current page users */}
           <UsersTable 
             users={displayedUsers}
+            totalUsers={allUsers.length}
             onEdit={handleEditUser}
             onDelete={handleDeleteUser}
             onToggleActive={handleToggleActive}
             onView={handleViewUser}
           />
 
-          {/* 🔥 UPDATED: Pagination Controls */}
+          {/* 🔥 FIXED: Pagination Controls - only show when there are multiple pages */}
           {totalPages > 1 && (
             <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
               <div className="flex-1 flex justify-start">
@@ -681,7 +690,7 @@ export default function UsersListPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="font-raleway text-sm text-gray-700">
+                <span className="font-raleway text-base text-gray-700">
                   <span className="font-bold text-primary1">{currentPage}</span> of{' '}
                   <span className="font-bold text-primary1">{totalPages}</span>
                 </span>

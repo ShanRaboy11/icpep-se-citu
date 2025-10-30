@@ -17,6 +17,7 @@ type SortDirection = "asc" | "desc";
 
 interface UsersTableProps {
   users: User[];
+  totalUsers: number;
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
   onToggleActive: (user: User) => void;
@@ -25,6 +26,7 @@ interface UsersTableProps {
 
 export default function UsersTable({
   users,
+  totalUsers,
   onEdit,
   onDelete,
   onToggleActive,
@@ -156,7 +158,7 @@ export default function UsersTable({
         </div>
 
         <div className="ml-auto font-raleway text-sm text-gray-600 font-medium">
-          Showing {sortedUsers.length} of {users.length} users
+          Showing {sortedUsers.length} of {totalUsers} users
         </div>
       </div>
 
