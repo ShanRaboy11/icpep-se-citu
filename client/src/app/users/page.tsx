@@ -360,7 +360,7 @@ export default function UsersListPage() {
           failedUsers.push({
             studentNumber: userData.studentNumber || 'UNKNOWN',
             reason: errorMessage,
-            data: userData as Record<string, unknown>,
+            data: userData as unknown as Record<string, unknown>,
           });
           setUploadStats(prev => ({
             ...prev,
@@ -379,7 +379,6 @@ export default function UsersListPage() {
       setUploadProgress('Upload complete! Refreshing user list...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Refresh all users
       await fetchAllUsers();
       
       setIsUploading(false);
