@@ -12,6 +12,7 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
+    "typeRoots": ["./node_modules/@types"],
     "types": ["node", "mongoose"]
   },
   "include": ["src/**/*", "dist"],
