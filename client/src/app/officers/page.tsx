@@ -202,7 +202,7 @@ const OfficersPage = () => {
           </div>
         </div>
 
-        <div className="w-full max-w-7xl sm:text-left text-center mt-30 mb-20">
+        <div className="w-full max-w-7xl sm:text-left text-center mt-30 mb-30">
           <h2 className="text-3xl md:text-5xl sm:mx-15 font-bold font-rubik mb-5 text-black">
             Representatives
           </h2>
