@@ -8,13 +8,12 @@ const connectDB = async () => {
     try {
         const conn = await mongoose_1.default.connect(process.env.MONGODB_URI);
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-        // Log database name
         console.log(`📦 Database: ${conn.connection.name}`);
-        // Connection event listeners
-        mongoose_1.default.connection.on('error', (err) => {
-            console.error(`❌ MongoDB connection error: ${err}`);
+        // Event listeners on the 'conn.connection' object
+        conn.connection.on('error', (err) => {
+            console.error(`❌ MongoDB connection error: ${err.message}`);
         });
-        mongoose_1.default.connection.on('disconnected', () => {
+        conn.connection.on('disconnected', () => {
             console.log('⚠️  MongoDB disconnected');
         });
     }
