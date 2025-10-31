@@ -11,30 +11,25 @@ import {
   searchUsers,
 } from '../controllers/user.controller';
 
-// Import your authentication middleware
-// import { protect, restrictTo } from '../middleware/auth.middleware';
+import { protect } from '../middleware/auth.middleware'; 
 
 const router = express.Router();
 
-// IMPORTANT: Specific routes MUST come BEFORE dynamic routes (/:id)
-// The order matters because Express matches routes from top to bottom
-
 // Search and stats routes (before /:id)
-router.get('/search', searchUsers);
-router.get('/stats', getUserStats);
+router.get('/search', protect as RequestHandler, searchUsers); 
+router.get('/stats', protect as RequestHandler, getUserStats); 
 
 // Bulk upload route - MUST be before /:id routes!
-router.post('/bulk-upload', bulkUploadUsers as RequestHandler);
+router.post('/bulk-upload', protect as RequestHandler, bulkUploadUsers as RequestHandler); 
 
 // Standard CRUD routes
-router.get('/', getAllUsers);
-router.post('/', createUser as RequestHandler);
+router.get('/', protect as RequestHandler, getAllUsers); 
+router.post('/', protect as RequestHandler, createUser as RequestHandler); 
 
 // Dynamic routes with :id parameter MUST come last
-// These will match any path segment, so they should be at the end
-router.get('/:id', getUserById);
-router.put('/:id', updateUser);
-router.patch('/:id/toggle-status', toggleUserStatus);
-router.delete('/:id', deleteUser);
+router.get('/:id', protect as RequestHandler, getUserById); 
+router.put('/:id', protect as RequestHandler, updateUser); 
+router.patch('/:id/toggle-status', protect as RequestHandler, toggleUserStatus); 
+router.delete('/:id', protect as RequestHandler, deleteUser); 
 
 export default router;

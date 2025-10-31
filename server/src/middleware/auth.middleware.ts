@@ -4,8 +4,9 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 export interface JwtPayload {
-  id: string;  // Changed from userId to id to match your token generation
+  id: string;
   role: string;
+  userId?: string; // ✅ Add this to match controller
 }
 
 // Extend Express Request type to include user
@@ -28,6 +29,8 @@ export const authenticateToken = (
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
+    console.log('🔐 Token received:', token ? 'Yes' : 'No'); // ✅ DEBUG LOG
+
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -37,9 +40,14 @@ export const authenticateToken = (
 
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    
+    console.log('👤 Decoded token:', decoded); // ✅ DEBUG LOG
+    console.log('🆔 User ID from token:', decoded.id); // ✅ DEBUG LOG
+    
     req.user = decoded;
     next();
   } catch (error) {
+    console.error('❌ Token verification failed:', error); // ✅ DEBUG LOG
     return res.status(403).json({
       success: false,
       message: 'Invalid or expired token.',
