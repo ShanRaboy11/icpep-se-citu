@@ -1,6 +1,6 @@
 "use client";
 
-import Header from "../components/header"; // Assuming correct import path
+import Header from "../components/header";
 import Hero from "../components/hero";
 import Footer from "../components/footer";
 import { AboutSection } from "../components/sections/about";

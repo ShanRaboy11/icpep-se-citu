@@ -34,12 +34,12 @@ const Hero = () => {
         <SkillBox
           icon={<Code size={20} />}
           text="Programming"
-          className="top-[15%] left-[5%] md:top-1/3 md:left-1/4 animate-float-slow"
+          className="top-[10%] left-[5%] md:top-1/3 md:left-1/4 animate-float-slow"
         />
         <SkillBox
           icon={<PenTool size={20} />}
           text="UI/UX Design"
-          className="top-[17%] right-[5%] md:top-[28%] md:right-1/4 animate-float-medium"
+          className="top-[12%] right-[5%] md:top-[28%] md:right-1/4 animate-float-medium"
         />
         <SkillBox
           icon={<BrainCircuit size={20} />}

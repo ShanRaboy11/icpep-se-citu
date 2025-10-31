@@ -25,16 +25,13 @@ export default function EventDetailPage({
 }) {
   const router = useRouter();
 
-  // Find the raw event data first
   const rawEvent = events.find((e) => e.id === params.id);
 
-  // --- MODIFICATION 1: Calculate the status dynamically ---
   let event: ProcessedEvent | undefined;
 
   if (rawEvent) {
     const now = new Date();
     const startDate = new Date(rawEvent.date);
-    // For single-day events, they effectively 'end' at midnight of that day
     const endDate = rawEvent.endDate
       ? new Date(rawEvent.endDate)
       : new Date(startDate.getTime() + 24 * 60 * 60 * 1000 - 1);
@@ -48,7 +45,6 @@ export default function EventDetailPage({
       status = "Ended";
     }
 
-    // Create the final event object with the dynamic status
     event = { ...rawEvent, status };
   }
 
@@ -81,16 +77,13 @@ export default function EventDetailPage({
   }
 
   return (
-    // The original layout with the blush background
     <div className="min-h-screen flex flex-col bg-white relative overflow-hidden font-sans">
       <div className="absolute top-[-10rem] left-[-15rem] w-[35rem] h-[35rem] bg-primary1/20 rounded-full filter blur-3xl opacity-90"></div>
       <div className="absolute top-1/4 right-[-18rem] w-[35rem] h-[35rem] bg-secondary2/20 rounded-full filter blur-3xl opacity-90"></div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        {/* Adjusted padding to be consistent */}
         <main className="flex-grow w-full max-w-6xl mx-auto px-6 pt-[9.5rem] pb-12">
-          {/* --> MODIFICATION 4: Added the animated back button --- */}
           <div className="mb-8 flex justify-start">
             <button
               onClick={handleBackToEvents}
@@ -119,7 +112,6 @@ export default function EventDetailPage({
             </div>
 
             <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
-              {/* --- MODIFICATION 2: Pass the dynamic status to child components --- */}
               <EventHeader status={event.status} title={event.title} />
               <EventInfo
                 date={event.date}

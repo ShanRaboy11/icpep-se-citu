@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { events, Event } from "./utils/event"; // Import the base Event type
+import { events, Event } from "./utils/event";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import EventCard from "./components/event-card";
@@ -20,10 +20,8 @@ export default function EventsListPage() {
     router.push("/");
   };
 
-  // --- MODIFICATION: Dynamic status calculation and sorting ---
   const now = new Date();
 
-  // 1. Map over raw events to add the dynamic status
   const processedEvents: ProcessedEvent[] = events.map((event) => {
     const startDate = new Date(event.date);
     const endDate = event.endDate ? new Date(event.endDate) : startDate;
@@ -40,7 +38,6 @@ export default function EventsListPage() {
     return { ...event, status };
   });
 
-  // 2. Sort the processed events
   const sortedEvents = processedEvents.sort((a, b) => {
     const statusOrder = { Upcoming: 1, Ongoing: 2, Ended: 3 };
     if (statusOrder[a.status] !== statusOrder[b.status]) {
@@ -54,13 +51,12 @@ export default function EventsListPage() {
   });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
           <div className="mb-8 flex justify-start">
-            {/* --- updated the button icon and removed animation --- */}
             <button
               onClick={handleBackToHome}
               title="Back to Home"
@@ -93,7 +89,6 @@ export default function EventsListPage() {
             </p>
           </div>
 
-          {/* --- MODIFICATION: Added conditional rendering for the events grid --- */}
           {sortedEvents.length > 0 ? (
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
               {sortedEvents.map((event) => (
@@ -101,14 +96,12 @@ export default function EventsListPage() {
               ))}
             </div>
           ) : (
-            // --- MODIFICATION: Added a styled "Empty State" message ---
             <div className="text-center py-16">
               <p className="font-raleway text-lg text-gray-500">
                 No events yet.
               </p>
             </div>
           )}
-          
         </main>
         <Footer />
       </div>

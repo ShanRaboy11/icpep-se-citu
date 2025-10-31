@@ -28,8 +28,7 @@ const Header = () => {
             : "bg-white"
         }`}
     >
-      <div className="mx-auto flex max-w-[93%] items-center justify-between px-8 sm:px-12 lg:px-16 py-3">
-        {/* Left: Logo + Titles */}
+      <div className="flex items-center justify-between py-3 px-4 md:max-w-[93%] md:mx-auto md:px-8 lg:px-16">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Image
             src="/icpep logo.png"
@@ -109,7 +108,6 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Right side: Role-based rendering */}
         <div className="flex items-center gap-4 sm:gap-5">
           {role === "guest" && (
             <>
@@ -165,7 +163,6 @@ const Header = () => {
             </div>
           )}
 
-          {/* Menu icon */}
           <div
             aria-label="Open menu"
             aria-expanded={open}
