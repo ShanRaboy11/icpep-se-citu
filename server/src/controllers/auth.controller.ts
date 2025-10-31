@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import User, { IUser } from '../models/user';
+import { validatePassword } from '../utils/password_validator';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -78,7 +79,7 @@ export const login = async (req: Request, res: Response) => {
             membershipStatus: user.membershipStatus,
             profilePicture: user.profilePicture,
             isActive: user.isActive,
-            firstLogin: user.firstLogin, // Important for password change flow
+            firstLogin: user.firstLogin,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         };
@@ -114,18 +115,14 @@ export const firstLoginPasswordChange = async (req: AuthRequest, res: Response):
       return;
     }
 
-    if (newPassword.length < 6) {
+    // Validate password strength
+    const validation = validatePassword(newPassword);
+    
+    if (!validation.isValid) {
       res.status(400).json({
         success: false,
-        message: 'Password must be at least 6 characters',
-      });
-      return;
-    }
-
-    if (newPassword === '123456') {
-      res.status(400).json({
-        success: false,
-        message: 'Please choose a different password from the default',
+        message: 'Password does not meet security requirements',
+        errors: validation.errors,
       });
       return;
     }
@@ -163,6 +160,75 @@ export const firstLoginPasswordChange = async (req: AuthRequest, res: Response):
     res.status(500).json({
       success: false,
       message: 'Error changing password',
+      error: error.message,
+    });
+  }
+};
+
+// @desc    Change password (regular password change - requires current password)
+// @route   POST /api/auth/change-password
+// @access  Private
+export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Validation
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({
+        success: false,
+        message: 'Please provide current password and new password',
+      });
+      return;
+    }
+
+    // Validate password strength
+    const validation = validatePassword(newPassword);
+    
+    if (!validation.isValid) {
+      res.status(400).json({
+        success: false,
+        message: 'Password does not meet security requirements',
+        errors: validation.errors,
+      });
+      return;
+    }
+
+    // Find user
+    const user = await User.findById(req.user?.id).select('+password +firstLogin');
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+      return;
+    }
+
+    // Verify current password
+    const isPasswordCorrect = await user.comparePassword(currentPassword);
+
+    if (!isPasswordCorrect) {
+      res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect',
+      });
+      return;
+    }
+
+    // Update password
+    user.password = newPassword;
+    user.firstLogin = false;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully',
+    });
+  } catch (error: any) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during password change',
       error: error.message,
     });
   }

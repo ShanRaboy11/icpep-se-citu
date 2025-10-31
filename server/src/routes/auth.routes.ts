@@ -2,9 +2,9 @@ import express from 'express';
 import { 
   login, 
   changePassword, 
-  logout,
   firstLoginPasswordChange,
-  getCurrentUser
+  getCurrentUser,
+  logout 
 } from '../controllers/auth.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
@@ -21,12 +21,12 @@ router.post('/login', login);
 router.post('/logout', logout);
 
 // @route   POST /api/auth/first-login-password
-// @desc    Change password on first login
+// @desc    Change password on first login (no current password required)
 // @access  Private (requires valid token)
 router.post('/first-login-password', authenticateToken, firstLoginPasswordChange);
 
 // @route   POST /api/auth/change-password
-// @desc    Change password (regular password change)
+// @desc    Change password (requires current password)
 // @access  Private (requires valid token)
 router.post('/change-password', authenticateToken, changePassword);
 
