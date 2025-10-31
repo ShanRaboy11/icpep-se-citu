@@ -1,171 +1,115 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/user';
-import { AuthRequest } from './user.controller'; 
+import User, { IUser } from '../models/user';
 
-
-
-const sendTokenResponse = (user: any, statusCode: number, res: Response): void => {
-  // Ensure JWT_SECRET is defined
-  const jwtSecret = process.env.JWT_SECRET;
-  if (!jwtSecret) {
-    // This should ideally be caught earlier in your app's startup or config check
-    console.error("CRITICAL ERROR: JWT_SECRET is not defined!");
-    res.status(500).json({
-      success: false,
-      message: 'Server configuration error: JWT secret missing.',
-    });
-    return; // Exit to prevent further errors
-  }
-
-  // Generate the token INSIDE this function where 'user' is available
-  const token = jwt.sign(
-    { id: user._id, role: user.role, membershipStatus: user.membershipStatus }, // Include relevant user data
-    jwtSecret, // Use the non-null secret
-    { expiresIn: '1h' } // Token expires in 1 hour
-  );
-
-  const options = {
-    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days for the cookie
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-    sameSite: 'lax' as const,
+export interface AuthRequest extends Request {
+  user?: {
+    id: string;
+    role: string;
   };
+}
 
-  res.status(statusCode).cookie('token', token, options).json({
-    success: true,
-    token, // Send the token in the JSON response as well
-    data: {
-      id: user._id,
-      studentNumber: user.studentNumber,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      middleName: user.middleName,
-      fullName: user.fullName,
-      role: user.role,
-      yearLevel: user.yearLevel,
-      membershipStatus: user.membershipStatus,
-      profilePicture: user.profilePicture,
-      isActive: user.isActive,
-      firstLogin: user.firstLogin,
-    },
-  });
+// JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+// Generate JWT Token
+const generateToken = (userId: string, role: string): string => {
+    return jwt.sign({ id: userId, role }, JWT_SECRET, { expiresIn: '7d' });
 };
 
 // @desc    Login user
 // @route   POST /api/auth/login
 // @access  Public
-export const login = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { studentNumber, password } = req.body;
+export const login = async (req: Request, res: Response) => {
+    try {
+        const { studentNumber, password } = req.body;
 
-    // Validate input
-    if (!studentNumber || !password) {
+        // Validation
+        if (!studentNumber || !password) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide student number and password',
+            });
+        }
+
+        // Find user and include password and firstLogin fields
+        const user = await User.findOne({
+            studentNumber: studentNumber.toUpperCase()
+        }).select('+password +firstLogin');
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid credentials',
+            });
+        }
+
+        // Check if user is active
+        if (!user.isActive) {
+            return res.status(403).json({
+                success: false,
+                message: 'Your account has been deactivated. Please contact an administrator.',
+            });
+        }
+
+        // Check password
+        const isPasswordCorrect = await user.comparePassword(password);
+
+        if (!isPasswordCorrect) {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid credentials',
+            });
+        }
+
+        // Generate token
+        const token = generateToken(user._id.toString(), user.role);
+
+        // Prepare user data (exclude sensitive fields)
+        const userData = {
+            _id: user._id,
+            studentNumber: user.studentNumber,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            middleName: user.middleName,
+            fullName: user.fullName,
+            role: user.role,
+            yearLevel: user.yearLevel,
+            membershipStatus: user.membershipStatus,
+            profilePicture: user.profilePicture,
+            isActive: user.isActive,
+            firstLogin: user.firstLogin, // Important for password change flow
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        };
+
+        res.status(200).json({
+            success: true,
+            message: 'Login successful',
+            token,
+            user: userData,
+        });
+    }
+    catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during login',
+        });
+    }
+};
+
+// @desc    Change password on first login
+// @route   POST /api/auth/first-login-password
+// @access  Private
+export const firstLoginPasswordChange = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { newPassword } = req.body;
+
+    if (!newPassword) {
       res.status(400).json({
         success: false,
-        message: 'Please provide student number and password',
-      });
-      return;
-    }
-
-    // Find user by student number and include password
-    const user = await User.findOne({ studentNumber: studentNumber.toUpperCase() })
-      .select('+password +firstLogin');
-
-    if (!user) {
-      res.status(401).json({
-        success: false,
-        message: 'Invalid credentials',
-      });
-      return;
-    }
-
-    // Check if user is active
-    if (!user.isActive) {
-      res.status(401).json({
-        success: false,
-        message: 'Your account has been deactivated. Please contact an administrator.',
-      });
-      return;
-    }
-
-    // Check password
-    const isPasswordMatch = await user.comparePassword(password);
-
-    if (!isPasswordMatch) {
-      res.status(401).json({
-        success: false,
-        message: 'Invalid credentials',
-      });
-      return;
-    }
-
-    // Send token response
-    sendTokenResponse(user, 200, res);
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: 'Error logging in',
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Get current logged in user
-// @route   GET /api/auth/me
-// @access  Private
-export const getMe = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const user = await User.findById(req.user?.id)
-      .populate('registeredBy', 'firstName lastName middleName');
-
-    if (!user) {
-      res.status(404).json({
-        success: false,
-        message: 'User not found',
-      });
-      return;
-    }
-
-    res.status(200).json({
-      success: true,
-      data: user,
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching user data',
-      error: error.message,
-    });
-  }
-};
-
-// @desc    Logout user / clear cookie
-// @route   POST /api/auth/logout
-// @access  Private
-export const logout = async (req: Request, res: Response): Promise<void> => {
-  res.cookie('token', 'none', {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true,
-  });
-
-  res.status(200).json({
-    success: true,
-    message: 'Logged out successfully',
-  });
-};
-
-// @desc    Change password
-// @route   PUT /api/auth/change-password
-// @access  Private
-export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-
-    if (!currentPassword || !newPassword) {
-      res.status(400).json({
-        success: false,
-        message: 'Please provide current and new password',
+        message: 'Please provide new password',
       });
       return;
     }
@@ -174,6 +118,14 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
       res.status(400).json({
         success: false,
         message: 'Password must be at least 6 characters',
+      });
+      return;
+    }
+
+    if (newPassword === '123456') {
+      res.status(400).json({
+        success: false,
+        message: 'Please choose a different password from the default',
       });
       return;
     }
@@ -189,20 +141,18 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    // Check current password
-    const isPasswordMatch = await user.comparePassword(currentPassword);
-
-    if (!isPasswordMatch) {
-      res.status(401).json({
+    // Check if this is actually a first login
+    if (!user.firstLogin) {
+      res.status(400).json({
         success: false,
-        message: 'Current password is incorrect',
+        message: 'This endpoint is only for first login password change',
       });
       return;
     }
 
     // Update password
     user.password = newPassword;
-    user.firstLogin = false; // Mark that user has changed password
+    user.firstLogin = false;
     await user.save();
 
     res.status(200).json({
@@ -218,38 +168,41 @@ export const changePassword = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
-// @desc    Reset password (admin only)
-// @route   PUT /api/auth/reset-password/:id
-// @access  Private/Admin
-export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+// @desc    Get current user
+// @route   GET /api/auth/me
+// @access  Private
+export const getCurrentUser = async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
-    const { newPassword = '123456' } = req.body;
+    const userId = req.user?.id;
 
-    const user = await User.findById(id).select('+firstLogin');
+    const user = await User.findById(userId).select('-password');
 
     if (!user) {
-      res.status(404).json({
+      return res.status(404).json({
         success: false,
         message: 'User not found',
       });
-      return;
     }
-
-    // Reset password
-    user.password = newPassword;
-    user.firstLogin = true; // Force password change on next login
-    await user.save();
 
     res.status(200).json({
       success: true,
-      message: 'Password reset successfully',
+      data: user,
     });
-  } catch (error: any) {
+  } catch (error) {
+    console.error('Get current user error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error resetting password',
-      error: error.message,
+      message: 'Server error',
     });
   }
+};
+
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Public
+export const logout = async (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully',
+  });
 };

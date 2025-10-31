@@ -14,6 +14,7 @@ import ViewUserModal from "./components/view_user_modal";
 import EditUserModal from "./components/edit_user_modal";
 import Grid from "../components/grid";
 import { ArrowLeft, UserPlus, Download, Upload, CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { LoadingScreen } from "../components/loading";
 
 // Type definitions for API responses
 interface ApiUser {
@@ -658,15 +659,8 @@ export default function UsersListPage() {
   const endIndex = Math.min(startIndex + USERS_PER_PAGE, allUsers.length);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary1 mb-4"></div>
-          <p className="font-raleway text-gray-600">Loading users...</p>
-        </div>
-      </div>
-    );
-  }
+  return <LoadingScreen showEntrance={false} />;
+}
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">

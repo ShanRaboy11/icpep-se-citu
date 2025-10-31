@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { RequestHandler } from 'express';
 import {
   getAllUsers,
   getUserById,
@@ -24,11 +24,11 @@ router.get('/search', searchUsers);
 router.get('/stats', getUserStats);
 
 // Bulk upload route - MUST be before /:id routes!
-router.post('/bulk-upload', bulkUploadUsers);
+router.post('/bulk-upload', bulkUploadUsers as RequestHandler);
 
 // Standard CRUD routes
 router.get('/', getAllUsers);
-router.post('/', createUser);
+router.post('/', createUser as RequestHandler);
 
 // Dynamic routes with :id parameter MUST come last
 // These will match any path segment, so they should be at the end
