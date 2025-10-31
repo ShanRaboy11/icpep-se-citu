@@ -20,14 +20,13 @@ export default function AnnouncementDetailPage({
   const [showFullAttendance, setShowFullAttendance] = useState(false);
   const router = useRouter();
 
-  // Find the announcement by ID - later this will be a database fetch
+  // find the announcement by id - later this will be a database fetch
   const announcement = announcements.find((a) => a.id === params.id);
 
-  // Optional chaining and default fallback to avoid undefined errors
   const title = announcement?.title || "No title available";
-  const imageUrl = announcement?.imageUrl || "/default-image.jpg"; // Default fallback image
-  const galleryImageUrls = announcement?.galleryImageUrls || []; // Fallback to empty array
-  const isMeeting = announcement?.type.toLowerCase() === "meeting"; // Use optional chaining
+  const imageUrl = announcement?.imageUrl || "/default-image.jpg"; // default fallback image
+  const galleryImageUrls = announcement?.galleryImageUrls || []; // fallback to empty array
+  const isMeeting = announcement?.type.toLowerCase() === "meeting"; // use optional chaining
 
   if (!announcement) {
     return (
@@ -64,7 +63,7 @@ export default function AnnouncementDetailPage({
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow w-full max-w-6xl mx-auto px-6 pt-[9.5rem] pb-12">
+        <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-12">
           <div className="mb-8 flex justify-start">
             <button
               onClick={handleBack}

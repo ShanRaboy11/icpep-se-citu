@@ -83,7 +83,7 @@ export default function EventDetailPage({
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow w-full max-w-6xl mx-auto px-6 pt-[9.5rem] pb-12">
+        <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-12">
           <div className="mb-8 flex justify-start">
             <button
               onClick={handleBackToEvents}

@@ -31,19 +31,19 @@ export default function RsvpCard({ status, date }: Props) {
       return newTimeLeft;
     };
 
-    setTimeLeft(calculateTimeLeft()); // Initial calculation
-    const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 60000); // Update every minute
+    setTimeLeft(calculateTimeLeft());
+    const timer = setInterval(() => setTimeLeft(calculateTimeLeft()), 60000);
 
     return () => clearInterval(timer);
   }, [date]);
 
   if (status === "Ended") {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg text-center">
-        <h2 className="font-rubik font-bold text-2xl text-primary3">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg text-center">
+        <h2 className="font-rubik font-bold text-xl sm:text-2xl text-primary3">
           Registration Closed
         </h2>
-        <p className="font-raleway text-bodytext mt-2">
+        <p className="font-raleway text-bodytext mt-2 text-sm sm:text-base">
           This event has ended. Stay tuned for the next one!
         </p>
       </div>
@@ -51,7 +51,7 @@ export default function RsvpCard({ status, date }: Props) {
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg transition-all duration-300">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg transition-all duration-300">
       {hasRsvpd ? (
         <div>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -59,10 +59,10 @@ export default function RsvpCard({ status, date }: Props) {
               <img
                 src="https://i.pravatar.cc/150?img=32"
                 alt="User"
-                className="w-14 h-14 rounded-full border-2 border-green-500 p-0.5"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-green-500 p-0.5"
               />
               <div>
-                <h2 className="font-rubik font-bold text-2xl text-green-700 leading-none">
+                <h2 className="font-rubik font-bold text-xl sm:text-2xl text-green-700 leading-none">
                   You&apos;re In!
                 </h2>
               </div>
@@ -82,17 +82,16 @@ export default function RsvpCard({ status, date }: Props) {
         </div>
       ) : (
         <div className="text-center">
-          <p className="font-raleway text-lg text-bodytext mb-6">
-            Welcome! To join the event, please register below.
+          <p className="font-raleway text-base sm:text-lg text-bodytext mb-6">
+            Welcome! To join the event, please <br className="sm:hidden" />
+            register below.
           </p>
           <button
             onClick={() => setHasRsvpd(true)}
-            className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-bold py-4 rounded-xl transition-all text-xl shadow-lg hover:shadow-primary1/40 transform hover:-translate-y-0.5 cursor-pointer"
+            className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-bold py-4 rounded-xl transition-all text-lg sm:text-xl shadow-lg hover:shadow-primary1/40 transform hover:-translate-y-0.5 cursor-pointer"
           >
             RSVP Now
           </button>
-
-          {/* --- MODIFICATION: Added the stacked avatar icons --- */}
           <div className="flex items-center justify-center gap-2 mt-4 text-sm font-raleway text-gray-600">
             <div className="flex -space-x-2">
               <img

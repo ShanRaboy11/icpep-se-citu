@@ -7,7 +7,6 @@ import { Code, PenTool, BrainCircuit, Users } from "lucide-react";
 const Hero = () => {
   const router = useRouter();
 
-  // Reusable rectangular skill box
   const SkillBox = ({
     icon,
     text,
@@ -49,7 +48,7 @@ const Hero = () => {
         <SkillBox
           icon={<Users size={20} />}
           text="COMPanions"
-          className="bottom-[15%] right-[8%] md:bottom-1/3 md:right-1/3 animate-float-slow"
+          className="bottom-[18%] right-[8%] md:bottom-1/3 md:right-1/3 animate-float-slow"
         />
       </div>
 
@@ -65,7 +64,12 @@ const Hero = () => {
 
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-rubik font-bold mb-4 leading-tight">
           <span className="bg-gradient-to-r from-black via-primary1 to-black bg-clip-text text-transparent animate-gradient-flow">
-            ICpEP SE CIT-U Chapter
+            <span className="sm:hidden">
+              ICpEP SE <br />
+              CIT-U Chapter
+            </span>
+
+            <span className="hidden sm:inline">ICpEP SE CIT-U Chapter</span>
           </span>
         </h1>
 

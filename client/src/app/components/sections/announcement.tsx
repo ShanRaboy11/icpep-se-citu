@@ -25,12 +25,11 @@ export function AnnouncementsSection() {
             <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
               Latest Announcements
             </h1>
-            <p className="font-raleway text-lg text-bodytext mt-2 max-w-lg">
-              Stay in the know with the latest updates from our chapter.
+            <p className="font-raleway text-base sm:text-lg text-bodytext mt-2 max-w-lg">
+              Be in the loop with the latest from our chapter.
             </p>
           </div>
 
-          {/* Desktop View All */}
           <div className="hidden sm:block">
             <button
               onClick={() => router.push("/announcements")}
@@ -61,7 +60,7 @@ export function AnnouncementsSection() {
         <div className="mt-8 flex justify-center sm:hidden">
           <button
             onClick={() => router.push("/announcements")}
-            className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer w-[220px]"
+            className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer"
           >
             View All
           </button>

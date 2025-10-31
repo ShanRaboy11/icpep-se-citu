@@ -30,7 +30,7 @@ const ScrollingText = ({ text }: { text: string }) => {
   return (
     <div
       ref={containerRef}
-      className="max-w-5xl text-[1.5rem] md:text-[1.9rem] font-raleway font-regular leading-relaxed text-center text-gray-700 flex flex-wrap justify-center"
+      className="max-w-5xl text-xl md:text-[1.9rem] font-raleway font-regular leading-relaxed text-center text-gray-700 flex flex-wrap justify-center"
     >
       {text.split(" ").map((word, i) => (
         <span
@@ -60,7 +60,6 @@ export function AboutSection() {
 
         <ScrollingText text="We are the Institute of Computer Engineers of the Philippines (ICpEP) Student Edition at Cebu Institute of Technology-University (CIT-U), a dynamic community of aspiring computer engineers dedicated to innovation, leadership, and shaping the future of technology through impactful, student-led initiatives." />
       </div>
-      {/*<div className="absolute bottom-0 left-0 w-full h-40 bg-gradient-to-t from-[#FEFEFF] via-[#fbfdff] to-transparent z-20 pointer-events-none"></div>*/}
     </section>
   );
 }

@@ -60,8 +60,7 @@ export default function AttendanceModal({
       />
 
       <div className="relative flex flex-col w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-white text-gray-800 shadow-2xl">
-        {/* --- inverted Light Header --- */}
-        <div className="relative flex flex-col items-center justify-center p-8 text-center border-b border-gray-200">
+        <div className="relative flex flex-col items-center justify-center p-5 sm:p-8 text-center border-b border-gray-200">
           <Image
             src="/icpep logo.png"
             alt="ICpEP Logo"
@@ -69,10 +68,10 @@ export default function AttendanceModal({
             height={64}
             className="mb-4 rounded-full"
           />
-          <h2 className="font-rubik text-3xl font-bold text-primary3">
+          <h2 className="font-rubik text-[1.6rem] sm:text-3xl font-bold text-primary3">
             {`${announcement.title}`}
           </h2>
-          <p className="font-raleway text-gray-500 text-lg">
+          <p className="font-raleway text-gray-500 text-sm sm:text-lg">
             {subtitleParts.join(" • ")}
           </p>
 
@@ -84,10 +83,7 @@ export default function AttendanceModal({
           </button>
         </div>
 
-        {/* Modal Content */}
-        {/* provides the needed bottom space --- */}
-        <div className="themed-scrollbar flex-1 space-y-6 overflow-y-auto bg-gray-50 p-8">
-          {/* Council Officers with Gradient */}
+        <div className="themed-scrollbar flex-1 space-y-6 overflow-y-auto bg-gray-50 p-5 sm:p-8">
           <div
             className="rounded-xl p-4 text-white"
             style={{
@@ -97,7 +93,7 @@ export default function AttendanceModal({
               )}, #003599)`,
             }}
           >
-            <h3 className="font-rubik mb-3 flex items-center text-base font-semibold">
+            <h3 className="font-rubik mb-3 flex items-center text-sm sm:text-base font-semibold">
               <span className="w-2.5 h-2.5 rounded-full bg-white/70 mr-2"></span>
               Council Officers
             </h3>
@@ -105,18 +101,19 @@ export default function AttendanceModal({
               {councilOfficers.map((officer, index) => (
                 <div
                   key={index}
-                  className="font-raleway flex items-center justify-between rounded-lg bg-black/20 p-2.5"
+                  className="font-raleway flex items-center justify-between rounded-lg bg-black/20 p-2 sm:p-2.5"
                 >
-                  <span className="text-sm font-medium text-white min-w-[90px]">
+                  <span className="text-xs sm:text-sm font-medium text-white min-w-[90px]">
                     {officer.title}
                   </span>
-                  <span className="text-right text-sm">{officer.name}</span>
+                  <span className="text-right text-xs sm:text-sm">
+                    {officer.name}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Committees */}
           {committees.map((committee, idx) => (
             <div
               key={idx}
@@ -128,7 +125,7 @@ export default function AttendanceModal({
                 )}, ${committee.color})`,
               }}
             >
-              <h3 className="font-rubik mb-3 flex items-center text-base font-semibold">
+              <h3 className="font-rubik mb-3 flex items-center text-sm sm:text-base font-semibold">
                 <span className="w-2.5 h-2.5 rounded-full bg-white/70 mr-2"></span>
                 {committee.name}
               </h3>
@@ -136,12 +133,14 @@ export default function AttendanceModal({
                 {committee.members.map((member, index) => (
                   <div
                     key={index}
-                    className="font-raleway flex items-center justify-between rounded-lg bg-black/20 p-2.5"
+                    className="font-raleway flex items-center justify-between rounded-lg bg-black/20 p-2 sm:p-2.5"
                   >
-                    <span className="text-sm font-medium text-white min-w-[90px]">
+                    <span className="text-xs sm:text-sm font-medium text-white min-w-[90px]">
                       {member.title}
                     </span>
-                    <span className="text-right text-sm">{member.name}</span>
+                    <span className="text-right text-xs sm:text-sm">
+                      {member.name}
+                    </span>
                   </div>
                 ))}
               </div>

@@ -8,11 +8,11 @@ interface Props {
 
 export default function EventDetails({ title, description, details }: Props) {
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-lg">
-      <h2 className="font-rubik text-2xl font-bold text-primary3 mb-4 pb-2 border-b border-gray-100">
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg">
+      <h2 className="font-rubik text-xl sm:text-2xl font-bold text-primary3 mb-4 pb-2 border-b border-gray-100">
         Details
       </h2>
-      <div className="prose prose-lg max-w-none font-raleway text-bodytext">
+      <div className="prose sm:prose-lg max-w-none font-raleway text-bodytext">
         <p>
           <strong>{title}</strong> {description}
         </p>

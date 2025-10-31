@@ -13,7 +13,6 @@ export function GlassCard({ children, className = "" }: GlassCardProps) {
       className={`relative overflow-hidden rounded-3xl shadow-[0_0_25px_rgba(0,119,170,0.25)] h-full ${className}`}
       style={{ padding: "3px" }}
     >
-      {/* Thin moving gradient line along border */}
       <div className="absolute inset-0 rounded-3xl overflow-hidden">
         <div
           className="absolute inset-0 rounded-3xl"
@@ -24,16 +23,14 @@ export function GlassCard({ children, className = "" }: GlassCardProps) {
             animation: "move-border 3s linear infinite",
           }}
         />
-        {/* White mask to hide everything except border line */}
         <div
           className="absolute inset-[2px] rounded-[22px]"
           style={{ backgroundColor: "rgba(255,255,255,0.9)" }}
         />
       </div>
 
-      {/* Inner card content */}
       <div
-        className="relative z-10 rounded-[22px] p-8 h-full flex flex-col"
+        className="relative z-10 rounded-[22px] p-6 sm:p-8 h-full flex flex-col"
         style={{ backgroundColor: "#e6f7ff" }}
       >
         {children}

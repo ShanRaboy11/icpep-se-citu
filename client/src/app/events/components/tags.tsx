@@ -5,7 +5,7 @@ interface Props {
 }
 
 const Tag = ({ children }: { children: React.ReactNode }) => (
-  <span className="bg-buttonbg1 text-primary3 font-raleway font-semibold px-3 py-1 rounded-full text-sm">
+  <span className="bg-buttonbg1 text-primary3 font-raleway font-semibold px-3 py-1 rounded-full text-xs sm:text-sm">
     {children}
   </span>
 );
