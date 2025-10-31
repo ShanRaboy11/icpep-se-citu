@@ -171,7 +171,7 @@ export default function AnnouncementsPage() {
 
           {/* Main Content */}
           <div className="flex-1">
-            <form className="border border-primary1 rounded-2xl p-6 space-y-4 bg-white">
+            <form className="border border-primary1 rounded-2xl p-6 space-y-4 bg-white mb-10">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl sm:text-3xl font-semibold text-primary1 font-rubik">
                   Content
