@@ -18,6 +18,8 @@ type SortDirection = "asc" | "desc";
 interface UsersTableProps {
   users: User[];
   totalUsers: number;
+  currentPage: number;
+  usersPerPage: number;
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
   onToggleActive: (user: User) => void;
@@ -27,6 +29,8 @@ interface UsersTableProps {
 export default function UsersTable({
   users,
   totalUsers,
+  currentPage,
+  usersPerPage,
   onEdit,
   onDelete,
   onToggleActive,
@@ -60,9 +64,12 @@ export default function UsersTable({
     const roleMatch = filterRole === "all" || user.role === filterRole;
     const membershipMatch =
       filterMembership === "all" ||
-      (filterMembership === "local" && user.membershipStatus.membershipType === "local") ||
-      (filterMembership === "regional" && user.membershipStatus.membershipType === "regional") ||
-      (filterMembership === "both" && user.membershipStatus.membershipType === "both") ||
+      (filterMembership === "local" &&
+        user.membershipStatus.membershipType === "local") ||
+      (filterMembership === "regional" &&
+        user.membershipStatus.membershipType === "regional") ||
+      (filterMembership === "both" &&
+        user.membershipStatus.membershipType === "both") ||
       (filterMembership === "non-member" && !user.membershipStatus.isMember);
     return roleMatch && membershipMatch;
   });
@@ -103,15 +110,17 @@ export default function UsersTable({
     }
 
     // Now perform the comparison based on the types
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
+    if (typeof aValue === "string" && typeof bValue === "string") {
       if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-    } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+    } else if (typeof aValue === "number" && typeof bValue === "number") {
       if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
     } else if (aValue instanceof Date && bValue instanceof Date) {
-      if (aValue.getTime() < bValue.getTime()) return sortDirection === "asc" ? -1 : 1;
-      if (aValue.getTime() > bValue.getTime()) return sortDirection === "asc" ? 1 : -1;
+      if (aValue.getTime() < bValue.getTime())
+        return sortDirection === "asc" ? -1 : 1;
+      if (aValue.getTime() > bValue.getTime())
+        return sortDirection === "asc" ? 1 : -1;
     }
     // Handle cases where values might be undefined or mismatched types if necessary
     // For now, if types don't match or are undefined, they are considered equal
@@ -158,7 +167,15 @@ export default function UsersTable({
         </div>
 
         <div className="ml-auto font-raleway text-sm text-gray-600 font-medium">
-          Showing {sortedUsers.length} of {totalUsers} users
+          {sortedUsers.length > 0 ? (
+            <>
+              Showing {(currentPage - 1) * usersPerPage + 1}-
+              {Math.min(currentPage * usersPerPage, totalUsers)} of {totalUsers}{" "}
+              users
+            </>
+          ) : (
+            "No users to display"
+          )}
         </div>
       </div>
 
@@ -196,7 +213,7 @@ export default function UsersTable({
                     <SortIcon field="yearLevel" />
                   </div>
                 </th>
-                
+
                 <th
                   onClick={() => handleSort("role")}
                   className="px-4 py-4 w-10 text-center items-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
@@ -206,7 +223,7 @@ export default function UsersTable({
                     <SortIcon field="role" />
                   </div>
                 </th>
-                
+
                 <th className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 whitespace-nowrap">
                   Membership
                 </th>

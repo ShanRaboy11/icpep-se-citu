@@ -13,7 +13,17 @@ import ConfirmDialog from "./components/confirm_dialog";
 import ViewUserModal from "./components/view_user_modal";
 import EditUserModal from "./components/edit_user_modal";
 import Grid from "../components/grid";
-import { ArrowLeft, UserPlus, Download, Upload, CheckCircle, XCircle, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  UserPlus,
+  Download,
+  Upload,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { LoadingScreen } from "../components/loading";
 
 // Type definitions for API responses
@@ -67,96 +77,114 @@ interface UploadUserData {
 const getApiUrl = (): string => {
   // Use environment variable if available
   if (process.env.NEXT_PUBLIC_API_URL) {
-    console.log('🔗 API URL from env:', process.env.NEXT_PUBLIC_API_URL);
+    console.log("🔗 API URL from env:", process.env.NEXT_PUBLIC_API_URL);
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  
+
   // Client-side detection
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     const { protocol, hostname } = window.location;
-    
+
     // Production (not localhost)
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+    if (hostname !== "localhost" && hostname !== "127.0.0.1") {
       // ⚠️ IMPORTANT: Replace this with your actual backend URL
-      const productionApiUrl = 'https://your-backend-url.com/api';
-      console.log('🔗 Production API URL:', productionApiUrl);
+      const productionApiUrl = "https://your-backend-url.com/api";
+      console.log("🔗 Production API URL:", productionApiUrl);
       return productionApiUrl;
     }
   }
-  
+
   // Development fallback
-  console.log('🔗 Development API URL: http://localhost:5000/api');
-  return 'http://localhost:5000/api';
+  console.log("🔗 Development API URL: http://localhost:5000/api");
+  return "http://localhost:5000/api";
 };
 
 const API_BASE_URL = getApiUrl();
 const USERS_PER_PAGE = 100;
 
 // Helper function to validate and cast role
-const validateRole = (role: string): "faculty" | "council-officer" | "committee-officer" | "student" => {
-  const validRoles = ["faculty", "council-officer", "committee-officer", "student"];
-  
+const validateRole = (
+  role: string
+): "faculty" | "council-officer" | "committee-officer" | "student" => {
+  const validRoles = [
+    "faculty",
+    "council-officer",
+    "committee-officer",
+    "student",
+  ];
+
   // Map backend roles to frontend roles
-  const roleMap: Record<string, "faculty" | "council-officer" | "committee-officer" | "student"> = {
-    "faculty": "faculty",
+  const roleMap: Record<
+    string,
+    "faculty" | "council-officer" | "committee-officer" | "student"
+  > = {
+    faculty: "faculty",
     "council-officer": "council-officer",
     "committee-officer": "committee-officer",
-    "student": "student",
-    "member": "student", // Map member to student
+    student: "student",
+    member: "student", // Map member to student
     "non-member": "student", // Map non-member to student
   };
-  
+
   return roleMap[role] || "student";
 };
 
 // Helper function to validate and cast membershipType
-const validateMembershipType = (membershipType: string | null): "regional" | "local" | "both" | null => {
+const validateMembershipType = (
+  membershipType: string | null
+): "regional" | "local" | "both" | null => {
   if (membershipType === null) return null;
-  
+
   const validTypes = ["regional", "local", "both"];
   if (validTypes.includes(membershipType.toLowerCase())) {
     return membershipType.toLowerCase() as "regional" | "local" | "both";
   }
-  
+
   return null;
 };
 
 // Helper function to parse membershipStatus from Excel format
-const parseMembershipStatus = (membershipStatus?: string): { isMember: boolean; membershipType: string | null } => {
+const parseMembershipStatus = (
+  membershipStatus?: string
+): { isMember: boolean; membershipType: string | null } => {
   if (!membershipStatus) {
     return { isMember: false, membershipType: null };
   }
-  
+
   const statusLower = membershipStatus.toLowerCase().trim();
-  
+
   // Check for membership types
-  if (statusLower === 'local' || statusLower === 'regional' || statusLower === 'both') {
+  if (
+    statusLower === "local" ||
+    statusLower === "regional" ||
+    statusLower === "both"
+  ) {
     return { isMember: true, membershipType: statusLower };
   }
-  
+
   // Check for member/non-member
-  if (statusLower === 'member') {
+  if (statusLower === "member") {
     return { isMember: true, membershipType: null };
   }
-  
+
   // Default to non-member
   return { isMember: false, membershipType: null };
 };
 
 // Helper function to capitalize first letter of each word
 const capitalizeWords = (str: string): string => {
-  if (!str) return '';
+  if (!str) return "";
   return str
     .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 };
 
 // Helper function to get auth token
 const getAuthToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('authToken');
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("authToken");
   }
   return null;
 };
@@ -164,21 +192,21 @@ const getAuthToken = (): string | null => {
 // Fixed TypeScript headers
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const token = getAuthToken();
-  
+
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   };
 
   if (options.headers) {
     Object.entries(options.headers).forEach(([key, value]) => {
-      if (typeof value === 'string') {
+      if (typeof value === "string") {
         headers[key] = value;
       }
     });
   }
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   const response = await fetch(url, {
@@ -188,7 +216,7 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.message || 'An error occurred');
+    throw new Error(error.message || "An error occurred");
   }
 
   return response.json();
@@ -201,21 +229,21 @@ export default function UsersListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
-  
+
   // 🔥 Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+
   // Upload progress state
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<string>('');
+  const [uploadProgress, setUploadProgress] = useState<string>("");
   const [uploadStats, setUploadStats] = useState({
     total: 0,
     current: 0,
     successful: 0,
-    failed: 0
+    failed: 0,
   });
-  
+
   // Modal states
   const [uploadResult, setUploadResult] = useState({
     show: false,
@@ -223,25 +251,25 @@ export default function UsersListPage() {
     failed: 0,
     failedUsers: [] as FailedUser[],
   });
-  
+
   const [successModal, setSuccessModal] = useState({
     show: false,
-    title: '',
-    message: '',
+    title: "",
+    message: "",
   });
-  
+
   const [errorModal, setErrorModal] = useState({
     show: false,
-    title: '',
-    message: '',
+    title: "",
+    message: "",
   });
-  
+
   // Confirmation Dialogs
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isStatusConfirmOpen, setIsStatusConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userToToggle, setUserToToggle] = useState<User | null>(null);
-  
+
   // View and Edit Modals
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -261,15 +289,15 @@ export default function UsersListPage() {
   const fetchAllUsers = async () => {
     try {
       setIsLoading(true);
-      console.log('🔍 Fetching all users...');
-      
+      console.log("🔍 Fetching all users...");
+
       // Fetch with high limit to get ALL users
       const response: ApiResponse<ApiUser[]> = await fetchWithAuth(
         `${API_BASE_URL}/users?limit=10000&page=1`
       );
-      
-      console.log('📊 Response:', response);
-      
+
+      console.log("📊 Response:", response);
+
       if (response.success) {
         // Transform backend data
         const transformedUsers: User[] = response.data.map((user: ApiUser) => ({
@@ -277,27 +305,38 @@ export default function UsersListPage() {
           studentNumber: user.studentNumber,
           lastName: capitalizeWords(user.lastName),
           firstName: capitalizeWords(user.firstName),
-          middleName: user.middleName ? capitalizeWords(user.middleName) : '',
-          fullName: capitalizeWords(user.fullName || `${user.firstName} ${user.middleName || ''} ${user.lastName}`.trim()),
+          middleName: user.middleName ? capitalizeWords(user.middleName) : "",
+          fullName: capitalizeWords(
+            user.fullName ||
+              `${user.firstName} ${user.middleName || ""} ${
+                user.lastName
+              }`.trim()
+          ),
           role: validateRole(user.role),
           yearLevel: user.yearLevel,
           membershipStatus: {
             isMember: user.membershipStatus.isMember,
-            membershipType: validateMembershipType(user.membershipStatus.membershipType),
+            membershipType: validateMembershipType(
+              user.membershipStatus.membershipType
+            ),
           },
           profilePicture: user.profilePicture,
           isActive: user.isActive,
-          registeredBy: user.registeredBy ? {
-            id: user.registeredBy._id,
-            fullName: capitalizeWords(`${user.registeredBy.firstName} ${user.registeredBy.lastName}`),
-          } : null,
+          registeredBy: user.registeredBy
+            ? {
+                id: user.registeredBy._id,
+                fullName: capitalizeWords(
+                  `${user.registeredBy.firstName} ${user.registeredBy.lastName}`
+                ),
+              }
+            : null,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         }));
-        
+
         console.log(`✅ Loaded ${transformedUsers.length} users`);
         setAllUsers(transformedUsers);
-        
+
         // Calculate total pages
         const pages = Math.ceil(transformedUsers.length / USERS_PER_PAGE);
         setTotalPages(pages);
@@ -307,8 +346,9 @@ export default function UsersListPage() {
       console.error("❌ Error fetching users:", error);
       setErrorModal({
         show: true,
-        title: 'Failed to Load Users',
-        message: 'Unable to fetch users from the server. Please try refreshing the page.',
+        title: "Failed to Load Users",
+        message:
+          "Unable to fetch users from the server. Please try refreshing the page.",
       });
     } finally {
       setIsLoading(false);
@@ -320,8 +360,13 @@ export default function UsersListPage() {
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
     const endIndex = startIndex + USERS_PER_PAGE;
     const usersToDisplay = allUsers.slice(startIndex, endIndex);
-    
-    console.log(`📄 Page ${currentPage}: Showing users ${startIndex + 1}-${Math.min(endIndex, allUsers.length)} of ${allUsers.length}`);
+
+    console.log(
+      `📄 Page ${currentPage}: Showing users ${startIndex + 1}-${Math.min(
+        endIndex,
+        allUsers.length
+      )} of ${allUsers.length}`
+    );
     setDisplayedUsers(usersToDisplay);
   };
 
@@ -335,27 +380,35 @@ export default function UsersListPage() {
 
   const handleAddUserSubmit = async (newUser: NewUser) => {
     try {
-      const response: ApiResponse<ApiUser> = await fetchWithAuth(`${API_BASE_URL}/users`, {
-        method: 'POST',
-        body: JSON.stringify(newUser),
-      });
+      const response: ApiResponse<ApiUser> = await fetchWithAuth(
+        `${API_BASE_URL}/users`,
+        {
+          method: "POST",
+          body: JSON.stringify(newUser),
+        }
+      );
 
       if (response.success) {
         // Refresh all users
         await fetchAllUsers();
-        
+
         setSuccessModal({
           show: true,
-          title: 'User Added Successfully',
-          message: `${capitalizeWords(response.data.fullName)} has been added to the system.`,
+          title: "User Added Successfully",
+          message: `${capitalizeWords(
+            response.data.fullName
+          )} has been added to the system.`,
         });
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An error occurred while adding the user.';
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An error occurred while adding the user.";
       console.error("Error adding user:", error);
       setErrorModal({
         show: true,
-        title: 'Failed to Add User',
+        title: "Failed to Add User",
         message: errorMessage,
       });
     }
@@ -368,23 +421,23 @@ export default function UsersListPage() {
         total: uploadedUsers.length,
         current: 0,
         successful: 0,
-        failed: 0
+        failed: 0,
       });
-      setUploadProgress('Preparing upload...');
-      
+      setUploadProgress("Preparing upload...");
+
       let successCount = 0;
       let failedCount = 0;
       const failedUsers: FailedUser[] = [];
 
       for (let i = 0; i < uploadedUsers.length; i++) {
         const userData = uploadedUsers[i];
-        
-        setUploadStats(prev => ({
+
+        setUploadStats((prev) => ({
           ...prev,
           current: i + 1,
         }));
-        
-        setUploadProgress(`Processing ${userData.studentNumber || 'user'}...`);
+
+        setUploadProgress(`Processing ${userData.studentNumber || "user"}...`);
 
         try {
           // Transform membershipStatus from string to object format
@@ -398,27 +451,31 @@ export default function UsersListPage() {
             membershipStatus: parseMembershipStatus(userData.membershipStatus),
           };
 
-          const response: ApiResponse<ApiUser> = await fetchWithAuth(`${API_BASE_URL}/users`, {
-            method: 'POST',
-            body: JSON.stringify(transformedUserData),
-          });
+          const response: ApiResponse<ApiUser> = await fetchWithAuth(
+            `${API_BASE_URL}/users`,
+            {
+              method: "POST",
+              body: JSON.stringify(transformedUserData),
+            }
+          );
 
           if (response.success) {
             successCount++;
-            setUploadStats(prev => ({
+            setUploadStats((prev) => ({
               ...prev,
               successful: successCount,
             }));
           }
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
           failedCount++;
           failedUsers.push({
-            studentNumber: userData.studentNumber || 'UNKNOWN',
+            studentNumber: userData.studentNumber || "UNKNOWN",
             reason: errorMessage,
             data: userData as unknown as Record<string, unknown>,
           });
-          setUploadStats(prev => ({
+          setUploadStats((prev) => ({
             ...prev,
             failed: failedCount,
           }));
@@ -429,19 +486,19 @@ export default function UsersListPage() {
         total: uploadedUsers.length,
         current: uploadedUsers.length,
         successful: successCount,
-        failed: failedCount
+        failed: failedCount,
       });
-      
-      setUploadProgress('Upload complete! Refreshing user list...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
+      setUploadProgress("Upload complete! Refreshing user list...");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Refresh all users
       await fetchAllUsers();
-      
+
       setIsUploading(false);
-      setUploadProgress('');
+      setUploadProgress("");
       setIsUploadModalOpen(false);
-      
+
       setUploadResult({
         show: true,
         success: successCount,
@@ -449,17 +506,19 @@ export default function UsersListPage() {
         failedUsers: failedUsers,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred.";
       console.error("❌ Bulk upload error:", error);
       setIsUploading(false);
-      setUploadProgress('');
-      
+      setUploadProgress("");
+
       setErrorModal({
         show: true,
-        title: 'Upload Failed',
-        message: errorMessage === "Failed to fetch" 
-          ? 'Connection error. Please check if the backend is running on port 5000.'
-          : errorMessage,
+        title: "Upload Failed",
+        message:
+          errorMessage === "Failed to fetch"
+            ? "Connection error. Please check if the backend is running on port 5000."
+            : errorMessage,
       });
     }
   };
@@ -469,16 +528,25 @@ export default function UsersListPage() {
     downloadCSV(csv, "users-export.csv");
     setSuccessModal({
       show: true,
-      title: 'Export Successful',
+      title: "Export Successful",
       message: `Successfully exported ${allUsers.length} users to CSV.`,
     });
   };
 
   const convertToCSV = (data: User[]) => {
     const headers = [
-      "Student Number", "Last Name", "First Name", "Middle Name",
-      "Role", "Year Level", "Membership Status", "Membership Type",
-      "Registered By", "Registration Date", "Last Updated", "Status",
+      "Student Number",
+      "Last Name",
+      "First Name",
+      "Middle Name",
+      "Role",
+      "Year Level",
+      "Membership Status",
+      "Membership Type",
+      "Registered By",
+      "Registration Date",
+      "Last Updated",
+      "Status",
     ];
 
     const rows = data.map((user) => [
@@ -523,34 +591,38 @@ export default function UsersListPage() {
 
   const handleSaveEdit = async (updatedUser: User) => {
     try {
-      const response: ApiResponse<ApiUser> = await fetchWithAuth(`${API_BASE_URL}/users/${updatedUser.id}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          firstName: updatedUser.firstName,
-          lastName: updatedUser.lastName,
-          middleName: updatedUser.middleName,
-          role: updatedUser.role,
-          yearLevel: updatedUser.yearLevel,
-          membershipStatus: updatedUser.membershipStatus,
-        }),
-      });
+      const response: ApiResponse<ApiUser> = await fetchWithAuth(
+        `${API_BASE_URL}/users/${updatedUser.id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            firstName: updatedUser.firstName,
+            lastName: updatedUser.lastName,
+            middleName: updatedUser.middleName,
+            role: updatedUser.role,
+            yearLevel: updatedUser.yearLevel,
+            membershipStatus: updatedUser.membershipStatus,
+          }),
+        }
+      );
 
       if (response.success) {
         // Refresh all users
         await fetchAllUsers();
-        
+
         setSuccessModal({
           show: true,
-          title: 'User Updated',
+          title: "User Updated",
           message: `${updatedUser.fullName} has been updated successfully.`,
         });
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update user.';
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update user.";
       console.error("Error updating user:", error);
       setErrorModal({
         show: true,
-        title: 'Update Failed',
+        title: "Update Failed",
         message: errorMessage,
       });
     }
@@ -564,26 +636,30 @@ export default function UsersListPage() {
   const confirmDelete = async () => {
     if (userToDelete) {
       try {
-        const response: ApiResponse<{ message: string }> = await fetchWithAuth(`${API_BASE_URL}/users/${userToDelete.id}`, {
-          method: 'DELETE',
-        });
+        const response: ApiResponse<{ message: string }> = await fetchWithAuth(
+          `${API_BASE_URL}/users/${userToDelete.id}`,
+          {
+            method: "DELETE",
+          }
+        );
 
         if (response.success) {
           // Refresh all users
           await fetchAllUsers();
-          
+
           setSuccessModal({
             show: true,
-            title: 'User Deleted',
+            title: "User Deleted",
             message: `${userToDelete.fullName} has been deleted successfully.`,
           });
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to delete user.';
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to delete user.";
         console.error("Error deleting user:", error);
         setErrorModal({
           show: true,
-          title: 'Delete Failed',
+          title: "Delete Failed",
           message: errorMessage,
         });
       } finally {
@@ -600,28 +676,32 @@ export default function UsersListPage() {
   const confirmToggleActive = async () => {
     if (userToToggle) {
       try {
-        const response: ApiResponse<{ isActive: boolean; updatedAt: string }> = await fetchWithAuth(
-          `${API_BASE_URL}/users/${userToToggle.id}/toggle-status`,
-          { method: 'PATCH' }
-        );
+        const response: ApiResponse<{ isActive: boolean; updatedAt: string }> =
+          await fetchWithAuth(
+            `${API_BASE_URL}/users/${userToToggle.id}/toggle-status`,
+            { method: "PATCH" }
+          );
 
         if (response.success) {
           // Refresh all users
           await fetchAllUsers();
-          
-          const status = response.data.isActive ? 'activated' : 'deactivated';
+
+          const status = response.data.isActive ? "activated" : "deactivated";
           setSuccessModal({
             show: true,
-            title: 'Status Updated',
+            title: "Status Updated",
             message: `${userToToggle.fullName} has been ${status} successfully.`,
           });
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to update user status.';
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to update user status.";
         console.error("Error toggling user status:", error);
         setErrorModal({
           show: true,
-          title: 'Status Update Failed',
+          title: "Status Update Failed",
           message: errorMessage,
         });
       } finally {
@@ -639,28 +719,29 @@ export default function UsersListPage() {
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
-  const progressPercentage = uploadStats.total > 0 
-    ? Math.round((uploadStats.current / uploadStats.total) * 100)
-    : 0;
+  const progressPercentage =
+    uploadStats.total > 0
+      ? Math.round((uploadStats.current / uploadStats.total) * 100)
+      : 0;
 
   // 🔥 Calculate display range
   const startIndex = (currentPage - 1) * USERS_PER_PAGE;
   const endIndex = Math.min(startIndex + USERS_PER_PAGE, allUsers.length);
 
   if (isLoading) {
-  return <LoadingScreen showEntrance={false} />;
-}
+    return <LoadingScreen showEntrance={false} />;
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative">
@@ -696,7 +777,8 @@ export default function UsersListPage() {
               Registered Users
             </h1>
             <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-              Manage and view all registered users, members, officers, and faculty.
+              Manage and view all registered users, members, officers, and
+              faculty.
             </p>
           </div>
 
@@ -729,9 +811,11 @@ export default function UsersListPage() {
           </div>
 
           {/* Display only current page users */}
-          <UsersTable 
+          <UsersTable
             users={displayedUsers}
             totalUsers={allUsers.length}
+            currentPage={currentPage}
+            usersPerPage={USERS_PER_PAGE}
             onEdit={handleEditUser}
             onDelete={handleDeleteUser}
             onToggleActive={handleToggleActive}
@@ -740,35 +824,51 @@ export default function UsersListPage() {
 
           {/* 🔥 FIXED: Pagination Controls - only show when there are multiple pages */}
           {totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-between border-t border-gray-200 pt-6">
-              <div className="flex-1 flex justify-start">
-                {currentPage > 1 && (
+            <div className="mt-8 flex items-center justify-center border-t border-gray-200 pt-6">
+              <div className="flex items-center gap-4">
+                {/* Previous Arrow - Invisible when disabled */}
+                {currentPage > 1 ? (
                   <button
-                    onClick={handlePreviousPage}
-                    className="inline-flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300"
+                    onClick={() => {
+                      handlePreviousPage();
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300"
+                    title="Previous page"
                   >
-                    <ChevronLeft className="w-4 h-4" />
-                    Previous
+                    <ChevronLeft className="w-5 h-5" />
                   </button>
+                ) : (
+                  <div className="w-[42px]"></div> // Invisible spacer to maintain alignment
                 )}
-              </div>
 
-              <div className="flex items-center gap-2">
-                <span className="font-raleway text-base text-gray-700">
-                  <span className="font-bold text-primary1">{currentPage}</span> of{' '}
-                  <span className="font-bold text-primary1">{totalPages}</span>
-                </span>
-              </div>
+                {/* Page Info */}
+                <div className="flex items-center gap-2 min-w-[100px] justify-center">
+                  <span className="font-raleway text-base text-gray-700">
+                    <span className="font-bold text-primary1">
+                      {currentPage}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-bold text-primary1">
+                      {totalPages}
+                    </span>
+                  </span>
+                </div>
 
-              <div className="flex-1 flex justify-end">
-                {currentPage < totalPages && (
+                {/* Next Arrow - Invisible when disabled */}
+                {currentPage < totalPages ? (
                   <button
-                    onClick={handleNextPage}
-                    className="inline-flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300"
+                    onClick={() => {
+                      handleNextPage();
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300"
+                    title="Next page"
                   >
-                    Next
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight className="w-5 h-5" />
                   </button>
+                ) : (
+                  <div className="w-[42px]"></div> // Invisible spacer to maintain alignment
                 )}
               </div>
             </div>
@@ -784,30 +884,30 @@ export default function UsersListPage() {
           <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-primary1 border-t-transparent mb-6"></div>
-              
+
               <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
                 Uploading Users
               </h3>
-              
+
               <div className="font-raleway text-4xl font-bold text-primary1 mb-2">
                 {uploadStats.current} / {uploadStats.total}
               </div>
-              
+
               <p className="font-raleway text-gray-600 mb-4 text-sm">
                 {uploadProgress}
               </p>
-              
+
               <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
-                <div 
+                <div
                   className="h-full bg-gradient-to-r from-primary1 to-primary1/80 rounded-full transition-all duration-300 ease-out"
                   style={{ width: `${progressPercentage}%` }}
                 ></div>
               </div>
-              
+
               <p className="font-raleway text-sm font-semibold text-primary1 mb-4">
                 {progressPercentage}% Complete
               </p>
-              
+
               <div className="flex justify-center gap-6 mb-4">
                 <div className="text-center">
                   <div className="font-raleway text-2xl font-bold text-green-600">
@@ -826,7 +926,7 @@ export default function UsersListPage() {
                   </div>
                 </div>
               </div>
-              
+
               <p className="font-raleway text-sm text-gray-500">
                 Please wait... Do not close this window.
               </p>
@@ -845,11 +945,11 @@ export default function UsersListPage() {
               ) : (
                 <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
               )}
-              
+
               <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
                 Upload Complete
               </h3>
-              
+
               <div className="flex justify-center gap-8 mb-6">
                 <div className="text-center">
                   <div className="font-raleway text-3xl font-bold text-green-600">
@@ -869,7 +969,7 @@ export default function UsersListPage() {
                 </div>
               </div>
             </div>
-            
+
             {uploadResult.failedUsers.length > 0 && (
               <div className="mb-6">
                 <h4 className="font-raleway font-semibold text-lg mb-3 text-red-600">
@@ -877,7 +977,10 @@ export default function UsersListPage() {
                 </h4>
                 <div className="bg-red-50 rounded-lg p-4 max-h-60 overflow-y-auto">
                   {uploadResult.failedUsers.map((user, index) => (
-                    <div key={index} className="mb-2 pb-2 border-b border-red-200 last:border-0">
+                    <div
+                      key={index}
+                      className="mb-2 pb-2 border-b border-red-200 last:border-0"
+                    >
                       <p className="font-raleway text-sm font-semibold text-gray-800">
                         {user.studentNumber}
                       </p>
@@ -889,9 +992,16 @@ export default function UsersListPage() {
                 </div>
               </div>
             )}
-            
+
             <button
-              onClick={() => setUploadResult({ show: false, success: 0, failed: 0, failedUsers: [] })}
+              onClick={() =>
+                setUploadResult({
+                  show: false,
+                  success: 0,
+                  failed: 0,
+                  failedUsers: [],
+                })
+              }
               className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300"
             >
               Close
@@ -913,7 +1023,9 @@ export default function UsersListPage() {
                 {successModal.message}
               </p>
               <button
-                onClick={() => setSuccessModal({ show: false, title: '', message: '' })}
+                onClick={() =>
+                  setSuccessModal({ show: false, title: "", message: "" })
+                }
                 className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300"
               >
                 Close
@@ -936,7 +1048,9 @@ export default function UsersListPage() {
                 {errorModal.message}
               </p>
               <button
-                onClick={() => setErrorModal({ show: false, title: '', message: '' })}
+                onClick={() =>
+                  setErrorModal({ show: false, title: "", message: "" })
+                }
                 className="w-full px-6 py-3 bg-red-500 text-white font-raleway font-semibold rounded-lg hover:bg-red-600 transition-colors duration-300"
               >
                 Close

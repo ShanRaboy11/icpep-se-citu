@@ -104,6 +104,7 @@ export default function Login() {
       localStorage.setItem('authToken', data.token);
       localStorage.setItem('userId', data.user._id);
       localStorage.setItem('userRole', data.user.role);
+      localStorage.setItem('userName', data.user.fullName || `${data.user.firstName} ${data.user.lastName}`);
 
       // Check if first login
       if (data.user.firstLogin) {
