@@ -281,8 +281,7 @@ export default function AddUserModal({
                   onChange={handleChange}
                   className="w-full px-4 py-2 text-gray-400 border border-gray-300 rounded-lg text-gray-500 font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50"
                 >
-                  <option value="member">Member</option>
-                  <option value="non-member">Non-Member</option>
+                  <option value="student">Student</option>
                   <option value="council-officer">Council Officer</option>
                   <option value="committee-officer">Committee Officer</option>
                   <option value="faculty">Faculty</option>
@@ -303,7 +302,7 @@ export default function AddUserModal({
                   <option value="member">Member</option>
                   <option value="local">Local</option>
                   <option value="regional">Regional</option>
-                  <option value="regional">Both (Local & Regional)</option>
+                  <option value="both">Both (Local & Regional)</option>
                 </select>
               </div>
             </div>
