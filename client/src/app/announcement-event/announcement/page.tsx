@@ -15,6 +15,7 @@ type FormErrors = {
   summary: boolean;
   body: boolean;
   visibility: boolean;
+  attendanceLink?: boolean;
 };
 type Attachment =
   | { name: string; type: "file"; file: File }
@@ -25,7 +26,7 @@ export default function AnnouncementsPage() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [newLink, setNewLink] = useState("");
-  const [activeTab, setActiveTab] = useState<string>("All");
+  const [activeTab, setActiveTab] = useState<string>("General");
   const [showOrganizerInput, setShowOrganizerInput] = useState(false);
   const [organizer, setOrganizer] = useState("");
   const [showSchedule, setShowSchedule] = useState(false);
@@ -35,6 +36,8 @@ export default function AnnouncementsPage() {
     { name: "", program: "", year: "", award: "" },
   ]);
   const [showGlobalError, setShowGlobalError] = useState(false);
+  const [attendanceLink, setAttendanceLink] = useState("");
+  const [attendanceFile, setAttendanceFile] = useState<File | null>(null);
 
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -49,6 +52,7 @@ export default function AnnouncementsPage() {
     visibility: "",
     date: "",
     time: "",
+    attendanceLink: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({
@@ -58,36 +62,31 @@ export default function AnnouncementsPage() {
     summary: false,
     body: false,
     visibility: false,
+    attendanceLink: false,
   });
 
   const handlePublish = () => {
     const newErrors: FormErrors = {
-      date: !date.trim(),
-      time: !time.trim(),
-      title: !title.trim(),
-      summary: !summary.trim(),
-      body: !body.trim(),
-      visibility: !visibility.trim(),
+      date: !formData.date.trim(),
+      time: !formData.time.trim(),
+      title: !formData.title.trim(),
+      summary: !formData.summary.trim(),
+      body: !formData.body.trim(),
+      visibility: !formData.visibility.trim(),
     };
+
+    if (activeTab === "Meeting" && !formData.attendanceLink.trim()) {
+      newErrors.attendanceLink = true;
+    }
 
     setErrors(newErrors);
 
-    // If ANY errors exist → show message + scroll first invalid field
     if (Object.values(newErrors).some((err) => err)) {
       setShowGlobalError(true);
-
-      const firstErrorField = Object.keys(newErrors)[0];
-      const el = document.getElementById(firstErrorField);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.classList.add("animate-shake");
-        setTimeout(() => el.classList.remove("animate-shake"), 400);
-      }
       return;
     }
 
-    // ✅ No errors → Submit successfully
-    console.log("Submitted successfully");
+    console.log("✅ Submitted successfully");
   };
 
   const handleInputChange = (
@@ -547,6 +546,32 @@ export default function AnnouncementsPage() {
                   </span>
                 ))}
               </div>
+              {activeTab === "Meeting" && (
+                <div className="mt-6">
+                  <label className="text-md font-normal text-primary3 font-raleway block mb-1 mt-1">
+                    Attendance Transparency (optional)
+                  </label>
+
+                  <input
+                    type="url"
+                    id="url"
+                    name="url"
+                    value={formData.attendanceLink}
+                    onChange={handleInputChange}
+                    placeholder="Link to attendance Google Sheet / Drive folder"
+                    className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
+  border transition-all
+  ${
+    errors.attendanceLink
+      ? "border-2 border-red-500 bg-red-50"
+      : "border-gray-300 bg-white text-gray-600"
+  }
+  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
+`}
+                  />
+                </div>
+              )}
+
               <Button
                 variant="outline"
                 size="sm"
