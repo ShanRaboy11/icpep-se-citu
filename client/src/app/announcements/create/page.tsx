@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Sidebar from "../components/sidebar";
+import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
-import PreviewModal from "../components/previewdialog";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
-import { Eye } from "lucide-react";
+import { Eye, ChevronDown } from "lucide-react";
 
 type FormErrors = {
   date: boolean;
@@ -455,7 +454,8 @@ export default function AnnouncementsPage() {
                   <option value="officers">Officers Only</option>
                 </select>
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-primary3">
-                  ▼
+                  {" "}
+                  <ChevronDown className="w-4 h-4" />
                 </span>
               </div>
 
@@ -644,13 +644,6 @@ export default function AnnouncementsPage() {
             </form>
           </div>
         </div>
-
-        {/* Preview Modal */}
-        <PreviewModal
-          open={previewOpen}
-          onClose={() => setPreviewOpen(false)}
-          content={<p>Your announcement preview will appear here.</p>}
-        />
       </main>
 
       {/* Global Footer */}

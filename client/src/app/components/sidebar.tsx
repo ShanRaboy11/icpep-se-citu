@@ -11,12 +11,12 @@ const Sidebar = () => {
   const links = [
     {
       name: "Announcements",
-      href: "/announcement-event/announcement",
+      href: "/announcements/create",
       icon: <Megaphone size={20} />,
     },
     {
       name: "Events",
-      href: "/announcement-event/event",
+      href: "/events/create",
       icon: <CalendarDays size={20} />,
     },
   ];

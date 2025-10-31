@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Sidebar from "../components/sidebar";
+import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
-import PreviewModal from "../components/previewdialog";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 
@@ -647,12 +646,6 @@ export default function EventsPage() {
                 </div>
               </div>
             </form>
-
-            <PreviewModal
-              open={previewOpen}
-              onClose={() => setPreviewOpen(false)}
-              content={<p>Your event preview will appear here.</p>}
-            />
           </div>
         </div>
       </main>
