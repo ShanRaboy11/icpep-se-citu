@@ -138,7 +138,6 @@ body {
 }
 
 /* Base blob styles */
-/* Base blob styles */
 .blob {
   position: absolute;
   width: 400px;
@@ -149,7 +148,6 @@ body {
   mix-blend-mode: multiply;
 }
 
-/* Floating animations (random paths) */
 @keyframes blob-1 {
   0% {
     transform: translate(0px, 0px) scale(1);
@@ -243,7 +241,6 @@ body {
   }
 }
 
-/* Assign animations with different durations & easing */
 .animate-blob-1 {
   animation: blob-1 20s ease-in-out infinite;
 }
@@ -268,7 +265,6 @@ html {
 }
 
 .interactive-grid {
-  /* The static background grid */
   background-image: linear-gradient(
       to right,
       rgba(0, 167, 238, 0.1) 1px,
@@ -276,22 +272,18 @@ html {
     ),
     linear-gradient(to bottom, rgba(0, 167, 238, 0.1) 1px, transparent 1px);
   background-size: 40px 40px;
-  background-color: #ffffff; /* Ensure a solid white background */
+  background-color: #ffffff;
 }
 
-/* This pseudo-element creates the moving "spotlight" */
 .interactive-grid::before {
   content: "";
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    /* The size of the spotlight circle */ 600px circle at var(--mouse-x)
-      var(--mouse-y),
-    /* The color of the glow, using your brand's primary blue */
-      rgba(0, 167, 238, 0.15),
-    /* Fade to transparent */ transparent 80%
+    600px circle at var(--mouse-x) var(--mouse-y),
+    rgba(0, 167, 238, 0.15),
+    transparent 80%
   );
-  /* This transition smooths the spotlight's movement */
   transition: background 0.1s ease-out;
 }
 
@@ -301,7 +293,7 @@ html {
     transform: translateX(0);
   }
   50% {
-    transform: translateX(-5px); /* Adjust distance as needed */
+    transform: translateX(-5px);
   }
 }
 
@@ -320,20 +312,19 @@ html {
   min-width: 0;
 }
 
-/* Add/update these styles for a custom LIGHT scrollbar */
 .themed-scrollbar::-webkit-scrollbar {
   width: 7px;
 }
 .themed-scrollbar::-webkit-scrollbar-track {
-  background: #f1f5f9; /* A light gray track */
+  background: #f1f5f9;
   border-radius: 10px;
 }
 .themed-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1; /* A slightly darker gray thumb */
+  background-color: #cbd5e1;
   border-radius: 10px;
 }
 .themed-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: #94a3b8; /* Darken on hover */
+  background-color: #94a3b8;
 }
 
 @keyframes spin-and-fade {

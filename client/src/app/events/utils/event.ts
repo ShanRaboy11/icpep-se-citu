@@ -117,4 +117,67 @@ export const events: Event[] = [
       },
     ],
   },
+  {
+    id: "4",
+    title: "TechXplore 2025: Beyond Circuits and Code",
+    date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), // Starts in 10 days
+    endDate: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString(), // 3-day event
+    mode: "Onsite",
+    location: "CIT-U Innovation Hall",
+    organizer: {
+      name: "ICpEP.SE R7 CIT-U",
+      avatarImageUrl: "/icpep logo.png",
+    },
+    tags: ["Seminar", "TechTalks", "Networking"],
+    bannerImageUrl:
+      "https://images.unsplash.com/photo-1526498460520-4c246339dccb?q=80&w=2069&auto=format&fit=crop",
+    description:
+      "A 3-day interactive series of seminars and networking sessions that dive into cutting-edge technologies shaping the future of engineering and computing.",
+    details: [
+      {
+        title: "Event Highlights",
+        items: [
+          "Talks on Artificial Intelligence and Embedded Systems",
+          "Panel Discussion with Industry Experts",
+          "Student Innovation Booths",
+        ],
+      },
+      {
+        title: "What to Bring",
+        items: ["Valid ID", "Notebook and Pen", "Laptop (optional)"],
+      },
+    ],
+  },
+  {
+    id: "5",
+    title: "CodeQuest 2025: The Intercampus Programming Battle",
+    date: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+    mode: "Online",
+    location: "Discord Server + HackerRank",
+    organizer: {
+      name: "ICpEP.SE R7",
+      avatarImageUrl: "/icpep logo.png",
+    },
+    tags: ["Competition", "Programming", "Team Event"],
+    bannerImageUrl:
+      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2069&auto=format&fit=crop",
+    description:
+      "An intercampus programming competition where participants race to solve algorithmic challenges and prove their coding prowess.",
+    details: [
+      {
+        title: "Competition Rounds",
+        items: [
+          "Elimination Round – Online Coding Challenge",
+          "Final Round – Live Problem Solving Battle",
+        ],
+      },
+      {
+        title: "Eligibility",
+        items: [
+          "Open to all ICpEP.SE members",
+          "Teams of up to 3 participants",
+        ],
+      },
+    ],
+  },
 ];
