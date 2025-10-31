@@ -20,10 +20,30 @@ app.use(express_1.default.json({ limit: '50mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '50mb' }));
 // 2. Cookie Parser
 app.use((0, cookie_parser_1.default)());
-// 3. CORS
+// 3. CORS - Allow multiple origins
+const allowedOrigins = [
+    'http://localhost:3000',
+    'https://icpep-se-citu.vercel.app',
+    process.env.FRONTEND_URL,
+].filter(Boolean);
+console.log('🌐 Allowed CORS origins:', allowedOrigins);
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, Postman, etc.)
+        if (!origin)
+            return callback(null, true);
+        if (allowedOrigins.includes(origin)) {
+            console.log('✅ CORS allowed for:', origin);
+            callback(null, true);
+        }
+        else {
+            console.log('❌ CORS blocked for:', origin);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 // 4. Request logging middleware (development only)
 if (process.env.NODE_ENV === 'development') {
