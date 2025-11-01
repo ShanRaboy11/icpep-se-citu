@@ -1,304 +1,158 @@
 "use client";
 
-import Header from "../components/header";
-import Footer from "../components/footer";
-import { FunctionComponent, useCallback } from 'react';
-import { useRouter } from "next/navigation";
+import Header from "../components/header"; 
+import Footer from "../components/footer"; 
+import { FunctionComponent, useCallback, useState } from 'react'; 
+import { useRouter } from 'next/navigation'; // Import useRouter
 
 const CommeetPage = () => {
-  const router = useRouter();
+  const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set()); 
+  const router = useRouter(); // Initialize useRouter
 
   const onLetsMeetBtnClick = useCallback(() => {
-    router.push("/commeet/meetinfo"); // navigate to commeetpage1
-  }, [router]);
-  	
-  	return (
-        <div className="min-h-screen flex flex-col overflow-hidden">
-      <Header />
-    		<div className="w-full relative bg-white overflow-hidden text-left text-[60px] text-black font-rubik flex-1">
-      			<b className="absolute top-[150px] left-[75px] leading-[125%] inline-block w-[287px] text-primary1">
-        				<span>com</span>
-        				<span className="text-black">meet</span>
-      			</b>
-      			<div className="absolute top-[305px] left-[calc(50%_-_627px)] text-[32px] tracking-[0.01em] leading-[125%] font-raleway text-center inline-block w-[612px]">What days would you like to meet on?</div>
-        				<img className="absolute top-[calc(50%_-_65px)] left-[calc(50%_+_596px)] w-[35px] h-[57px]" alt="" />
-        				<img className="absolute top-[calc(50%_-_65px)] left-[calc(50%_-_636px)] w-[35px] h-[57px] object-contain" alt="" />
-        				<div className="absolute top-[299px] left-[1187px] w-40 h-[52px] cursor-pointer text-[16px] font-manrope" onClick={onLetsMeetBtnClick}>
-          					<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[20px] border-black border-solid border-[2px] box-border overflow-hidden flex items-center py-4 px-2.5">
-            						<div className="flex items-start py-0 px-4">
-              							<div className="relative leading-[125%] font-semibold">Let's meet</div>
-            						</div>
-          					</div>
-          					<img className="absolute h-[57.69%] w-[18.75%] top-[21.15%] right-[10%] bottom-[21.15%] left-[71.25%] max-w-full overflow-hidden max-h-full" alt="" />
-        				</div>
-        				<div className="absolute top-[459px] left-[calc(50%_-_570px)] w-[1140px] h-[958px] text-center text-[37px] text-white font-inter mb-8">
-          					<div className="absolute top-[0px] left-[calc(50%_-_570px)] shadow-[4px_4px_4px_3px_rgba(0,_0,_0,_0.25)] rounded-[20px] border-gray-500 border-solid border-[3px] box-border w-[1140px] h-[958px]" />
-          					<div className="absolute top-[72px] left-[35px] w-[1070px] h-[70px]">
-            						<div className="absolute top-[0px] left-[0px] rounded-[15px] bg-primary1 w-[1070px] h-[70px]" />
-            						<div className="absolute top-[12px] left-[calc(50%_-_141px)] tracking-[2px] font-extrabold">October 2025</div>
-          					</div>
-          					<div className="absolute top-[175px] left-[33px] w-[1074px] h-[750px] text-[35px] text-black">
-            						<div className="absolute top-[0px] left-[5px] w-[1060px] h-[100px]">
-              							<div className="absolute top-[0px] left-[0px] w-[100px] h-[100px]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                  									<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                  									<div className="absolute top-[29%] left-[17%]">Sun</div>
-                								</div>
-              							</div>
-              							<div className="absolute top-[0px] left-[160px] w-[100px] h-[100px]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                  									<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                  									<div className="absolute top-[29%] left-[13%]">Mon</div>
-                								</div>
-              							</div>
-              							<div className="absolute top-[0px] left-[320px] w-[100px] h-[100px]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                  									<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                  									<div className="absolute top-[29%] left-[19%]">Tue</div>
-                								</div>
-              							</div>
-              							<div className="absolute top-[0px] left-[480px] w-[100px] h-[100px]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                  									<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                  									<div className="absolute top-[29%] left-[12%]">Wed</div>
-                								</div>
-              							</div>
-              							<div className="absolute top-[0px] left-[640px] w-[100px] h-[100px]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                  									<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                  									<div className="absolute top-[29%] left-[17%]">Thu</div>
-                								</div>
-              							</div>
-              							<div className="absolute top-[0px] left-[800px] w-[100px] h-[100px]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                  									<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                  									<div className="absolute top-[29%] left-[28%]">Fri</div>
-                								</div>
-              							</div>
-              							<div className="absolute top-[0px] left-[960px] w-[100px] h-[100px]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                  									<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                  									<div className="absolute top-[29%] left-[22%]">Sat</div>
-                								</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[130px] left-[5px] w-[100px] h-[100px] text-gray-400">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[28%]">28</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[130px] left-[165px] w-[100px] h-[100px] text-gray-400">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[27%]">29</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[130px] left-[325px] w-[100px] h-[100px] text-gray-400">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[27%]">30</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[130px] left-[485px] w-[100px] h-[100px] text-left">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[41%]">1</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[130px] left-[645px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[38%]">2</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[130px] left-[805px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[38%]">3</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[130px] left-[965px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[38%]">4</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[260px] left-[5px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[38%]">5</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[260px] left-[165px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[38%]">6</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[260px] left-[325px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[39%]">7</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[260px] left-[485px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[38%]">8</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[260px] left-[645px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[38%]">9</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[260px] left-[805px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[30%]">10</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[260px] left-[965px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[33%]">11</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[390px] left-[5px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[30%]">12</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[390px] left-[165px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[30%]">13</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[390px] left-[325px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[30%]">14</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[390px] left-[485px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[30%]">15</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[390px] left-[645px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[30%]">16</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[390px] left-[805px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[31%]">17</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[390px] left-[965px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[30%]">18</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[520px] left-[5px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[30%]">19</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[520px] left-[165px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[27%]">20</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[520px] left-[325px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[30%]">21</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[520px] left-[485px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[28%]">22</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[520px] left-[645px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[27%]">23</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[520px] left-[805px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[27%]">24</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[520px] left-[965px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[28%]">25</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[650px] left-[5px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[27%]">26</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[650px] left-[165px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[28%]">27</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[650px] left-[325px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[28%]">28</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[650px] left-[485px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[27%]">29</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[650px] left-[645px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[27%]">30</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[650px] left-[805px] w-[100px] h-[100px]">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[30%]">31</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[650px] left-[965px] w-[100px] h-[100px] text-left text-gray-400">
-              							<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%]">
-                								<div className="absolute h-full w-full top-[0%] right-[0%] bottom-[0%] left-[0%] rounded-[50px] bg-gray-300" />
-                								<div className="absolute top-[29%] left-[41%]">1</div>
-              							</div>
-            						</div>
-            						<div className="absolute top-[99.91px] left-[0px] border-gray-300 border-solid border-t-[1px] box-border w-[1075px] h-px" />
-          					</div>
-        				</div>
-        				</div>
-      			<Footer />
-        				</div>);
+    // Navigate to the next page instead of showing an alert
+    router.push('/commeet/meetinfo'); // Replace '/next-page' with the actual path to your next page
+  }, []); 
 
-      			};
-      			
-      			export default CommeetPage as FunctionComponent;
+  const handleDateClick = (day: string) => {
+    // Only allow selection for active (not inactive) dates
+    const dateObject = dates.find(d => d.day === day && !d.inactive);
+    if (!dateObject) return; // Do nothing if it's an inactive date
+
+    setSelectedDates(prevSelectedDates => {
+      const newSelectedDates = new Set(prevSelectedDates);
+      const uniqueDateKey = `2025-10-${day}`; 
+      if (newSelectedDates.has(uniqueDateKey)) {
+        newSelectedDates.delete(uniqueDateKey); // Deselect
+      } else {
+        newSelectedDates.add(uniqueDateKey); // Select
+      }
+      return newSelectedDates;
+    });
+  };
+
+  // Added isSelected prop and onClick handler prop
+  const renderDayCell = (
+    day: string,
+    isHeader: boolean = false,
+    isInactive: boolean = false,
+    isSelected: boolean = false, 
+    onClick?: (day: string) => void 
+  ) => {
+    const headerClasses = "font-extrabold text-white bg-sky-500 rounded-xl";
+    const baseDayClasses = "flex items-center justify-center h-24 w-24 sm:h-28 sm:w-28 text-3xl font-semibold";
+    const inactiveClasses = "text-gray-400 bg-gray-100 rounded-xl";
+    const activeClasses = "text-gray-800 bg-white rounded-xl shadow-sm hover:bg-sky-100 cursor-pointer";
+
+    const selectedClasses = "bg-sky-400 text-white rounded-full"; 
+    const finalClasses = isHeader
+      ? headerClasses
+      : isInactive
+        ? inactiveClasses
+        : isSelected
+          ? selectedClasses
+          : activeClasses;
+
+    const clickableProps = (!isHeader && !isInactive && onClick)
+      ? { onClick: () => onClick(day) }
+      : {};
+
+    return (
+      <div className={`${baseDayClasses} ${finalClasses}`} {...clickableProps}>
+        {day}
+      </div>
+    );
+  };
+
+  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const dates = [
+    { day: "28", inactive: true }, { day: "29", inactive: true }, { day: "30", inactive: true },
+    { day: "1", inactive: false }, { day: "2", inactive: false }, { day: "3", inactive: false }, { day: "4", inactive: false },
+    { day: "5", inactive: false }, { day: "6", inactive: false }, { day: "7", inactive: false }, { day: "8", inactive: false }, { day: "9", inactive: false }, { day: "10", inactive: false }, { day: "11", inactive: false },
+    { day: "12", inactive: false }, { day: "13", inactive: false }, { day: "14", inactive: false }, { day: "15", inactive: false }, { day: "16", inactive: false }, { day: "17", inactive: false }, { day: "18", inactive: false },
+    { day: "19", inactive: false }, { day: "20", inactive: false }, { day: "21", inactive: false }, { day: "22", inactive: false }, { day: "23", inactive: false }, { day: "24", inactive: false }, { day: "25", inactive: false },
+    { day: "26", inactive: false }, { day: "27", inactive: false }, { day: "28", inactive: false }, { day: "29", inactive: false }, { day: "30", inactive: false }, { day: "31", inactive: false },
+    { day: "1", inactive: true }
+  ];
+
+
+  return (
+    <div className="min-h-screen flex flex-col overflow-hidden bg-gray-50">
+      <Header />
+      <div className="flex-1 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
+        {/* Main Content Area */}
+        <div className="max-w-7xl w-full flex flex-col lg:flex-row lg:justify-between items-start lg:items-start space-y-8 lg:space-y-0 lg:space-x-12">
+          {/* Left Section - Commeet Intro */}
+          <div className="flex-shrink-0 text-center lg:text-left">
+            <h1 className="text-6xl sm:text-7xl font-rubik leading-tight mt-12">
+              <span className="text-sky-500 font-bold">com</span>
+              <span className="text-gray-900 font-bold">meet</span>
+            </h1>
+            <p className="mt-8 text-2xl sm:text-3xl font-raleway text-gray-700 max-w-lg whitespace-nowrap">
+              What days would you like to meet on?
+            </p>
+          </div>
+
+          {/* Right Section - Let's Meet Button */}
+          <div className="flex-shrink-0 mt-8 lg:mt-32">
+            <button
+              className="px-6 py-3 border-2 border-gray-900 rounded-full font-manrope text-gray-700 font-semibold flex items-center justify-center space-x-2
+                         hover:bg-sky-200 hover:text-white hover:border-sky-400 active:bg-sky-600 active:border-sky-600 active:text-white transition-colors duration-200" 
+              onClick={onLetsMeetBtnClick}
+            >
+              <span>Let's meet</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Calendar Section */}
+        <div className="relative mt-16 mb-12 w-full max-w-5xl p-6 bg-white shadow-xl rounded-2xl border-2 border-gray-300 transform transition-all duration-300">
+          {/* Calendar Header */}
+          <div className="p-4 bg-sky-500 rounded-lg text-white text-center text-4xl font-extrabold tracking-wide">
+            October 2025
+          </div>
+
+          {/* Day of Week Headers */}
+          <div className="grid grid-cols-7 gap-2 sm:gap-4 mt-8">
+            {daysOfWeek.map(day => (
+              <div key={day}>
+                {renderDayCell(day, true)}
+              </div>
+            ))}
+          </div>
+
+          {/* Dates Grid */}
+          <div className="grid grid-cols-7 gap-2 sm:gap-4 mt-4">
+            {dates.map((date, index) => {
+              const uniqueDateKey = `2025-10-${date.day}`; 
+              const isSelected = selectedDates.has(uniqueDateKey); 
+              return (
+                <div key={index}>
+                  {renderDayCell(date.day, false, date.inactive, isSelected, handleDateClick)}
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
+        {/* Navigation Arrows outside the calendar */}
+        <button className="absolute top-1/2 left-4 sm:left-12 lg:left-24 transform -translate-y-1/2 p-2 bg-white rounded-full shadow-md hover:bg-sky-300 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button className="absolute top-1/2 right-4 sm:right-12 lg:right-24 transform -translate-y-1/2 p-2 bg-white rounded-full shadow-md hover:bg-sky-300 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+      <Footer />
+    </div>
+  );
+};
+
+export default CommeetPage as FunctionComponent;
