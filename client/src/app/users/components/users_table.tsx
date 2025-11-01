@@ -2,7 +2,7 @@
 
 import { User } from "../utils/user";
 import UserTableRow from "./user_table_row";
-import { ChevronUp, ChevronDown, Search } from "lucide-react";
+import { ChevronUp, ChevronDown } from "lucide-react";
 
 type SortField =
   | "studentNumber"
@@ -29,8 +29,6 @@ interface UsersTableProps {
   sortField: SortField;
   sortDirection: SortDirection;
   onSortChange: (field: SortField, direction: SortDirection) => void;
-  searchQuery: string;
-  onClearSearch: () => void;
 }
 
 export default function UsersTable({
@@ -48,15 +46,15 @@ export default function UsersTable({
   sortField,
   sortDirection,
   onSortChange,
-  searchQuery,
-  onClearSearch,
 }: UsersTableProps) {
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
+      // Toggle direction
       const newDirection = sortDirection === "asc" ? "desc" : "asc";
       onSortChange(field, newDirection);
     } else {
+      // New field, start with asc
       onSortChange(field, "asc");
     }
   };
@@ -74,24 +72,6 @@ export default function UsersTable({
     <div className="space-y-6">
       {/* Filters */}
       <div className="flex flex-wrap gap-4 items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
-        {searchQuery && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-primary1 rounded-lg shadow-sm">
-            <Search className="w-4 h-4 text-white" />
-            <span className="font-raleway text-sm font-semibold text-white">
-              "{searchQuery}"
-            </span>
-            <button
-              onClick={onClearSearch}
-              className="text-white hover:bg-white/20 rounded-full p-0.5 transition-colors ml-1"
-              title="Clear search"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
-        
         <div className="flex items-center gap-2">
           <label className="font-raleway text-sm font-medium text-gray-700">
             Role:

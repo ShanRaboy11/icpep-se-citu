@@ -1058,7 +1058,7 @@ export default function UsersListPage() {
             </button>
           </div>
 
-          {/* 🔥 Pass sort state and handler to UsersTable */}
+          {/* Pass props to UsersTable */}
           <UsersTable
             users={displayedUsers}
             totalUsers={getFilteredUsers().length}
@@ -1074,8 +1074,6 @@ export default function UsersListPage() {
             sortField={sortField}
             sortDirection={sortDirection}
             onSortChange={handleSortChange}
-            searchQuery={searchQuery}
-            onClearSearch={handleClearSearch}
           />
 
           {totalPages > 1 && (
