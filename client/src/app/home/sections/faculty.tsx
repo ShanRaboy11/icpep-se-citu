@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import FacultyOfficerCard from "@/app/components/cards/facultyofficercard";
+import FacultyOfficerCard from "@/app/home/components/faculty-officer-card";
 
 export function FacultyOfficersSection() {
   const facultyAndOfficers = [
@@ -49,24 +49,33 @@ export function FacultyOfficersSection() {
     { name: "Kyla Fernandez", title: "Technical Lead", image: "/faculty.png" },
   ];
 
-  const duplicated = [...facultyAndOfficers, ...facultyAndOfficers];
+  const MINIMUM_BASE_LENGTH = 15;
+  let extendedList = [...facultyAndOfficers];
+
+  if (extendedList.length > 0 && extendedList.length < MINIMUM_BASE_LENGTH) {
+    const repeatsNeeded = Math.ceil(MINIMUM_BASE_LENGTH / extendedList.length);
+    extendedList = Array.from(
+      { length: repeatsNeeded },
+      () => facultyAndOfficers
+    ).flat();
+  }
+
+  const duplicated = [...extendedList, ...extendedList];
 
   return (
-    <section
-      className="w-full py-16 overflow-hidden mb-20"
-      style={{ backgroundColor: "#FEFEFF" }}
-    >
-      <div className="text-center mb-10">
-        <h2 className="font-rubik text-2xl sm:text-5xl font-extrabold mb-4 text-black">
-          COUNCIL OFFICERS & FACULTIES
-        </h2>
-        <p className="font-raleway text-base sm:text-lg text-gray-600 mt-5 max-w-2xl mx-auto">
-          Meet the council officers, who lead the community, and the faculty,
-          who provide direction and support.
-        </p>
+    <section className="light-dark-background relative pt-28 pb-16 sm:pt-36 sm:pb-20">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="mb-12 md:mb-16 text-center">
+          <h1 className="relative font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
+            Council Officers & Faculty
+          </h1>
+          <p className="relative font-raleway text-base sm:text-lg text-bodytext mt-2 max-w-lg mx-auto">
+            Meet the framework of our community.
+          </p>
+        </div>
       </div>
 
-      <div className="overflow-hidden">
+      <div className="relative z-10 w-full overflow-hidden">
         <motion.div
           className="flex w-max gap-6 p-5 cursor-grab active:cursor-grabbing"
           animate={{ x: ["0%", "-50%"] }}
@@ -83,11 +92,9 @@ export function FacultyOfficersSection() {
             </div>
           ))}
         </motion.div>
-      </div>
 
-      <div className="-mt-5 overflow-hidden">
         <motion.div
-          className="flex w-max gap-6 p-5 cursor-grab active:cursor-grabbing"
+          className="flex w-max gap-6 p-5 cursor-grab active:cursor-grabbing -mt-5"
           animate={{ x: ["-50%", "0%"] }}
           transition={{ repeat: Infinity, ease: "linear", duration: 60 }}
         >

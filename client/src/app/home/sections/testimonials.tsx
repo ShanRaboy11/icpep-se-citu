@@ -61,7 +61,7 @@ export function TestimonialsSection() {
   }, [currentIndex]);
 
   return (
-    <section className="dark-light-background relative min-h-screen">
+    <section className="dark-light-background relative min-h-screen overflow-visible z-[2]">
       {/* --- Desktop Blobs --- */}
       <div className="absolute inset-0 z-0 opacity-90 hidden lg:block">
         <div className="blob bg-sky-400 top-0 left-0 animate-blob-1"></div>
