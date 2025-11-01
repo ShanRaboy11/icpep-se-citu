@@ -1,7 +1,7 @@
 "use client";
 import Header from "../components/header";
 import Footer from "../components/footer";
-import DeveloperCard from "../components/cards/developercard";
+import DeveloperCard from "./components/developer-card";
 import Grid from "../components/grid";
 
 export default function DevelopersPage() {

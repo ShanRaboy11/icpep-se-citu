@@ -62,7 +62,7 @@ export function TestimonialsSection() {
 
   return (
     <section className="dark-light-background relative min-h-screen">
-      {/* --- Desktop Blobs (Unchanged) --- */}
+      {/* --- Desktop Blobs --- */}
       <div className="absolute inset-0 z-0 opacity-90 hidden lg:block">
         <div className="blob bg-sky-400 top-0 left-0 animate-blob-1"></div>
         <div className="blob bg-indigo-400 top-0 right-0 animate-blob-2"></div>
@@ -71,7 +71,6 @@ export function TestimonialsSection() {
 
       {/* --- Mobile-only Blobs --- */}
       <div className="absolute inset-0 z-0 opacity-60 lg:hidden">
-        {/* CHANGE: Repositioned blobs to the title and arrow areas */}
         <div className="blob bg-sky-400 top-[5%] right-[-20%] animate-blob-1"></div>
         <div className="blob bg-indigo-400 bottom-[5%] left-[-20%] animate-blob-3"></div>
       </div>
@@ -154,14 +153,14 @@ export function TestimonialsSection() {
           <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
-            className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
             <ArrowLeft size={24} />
           </button>
           <button
             onClick={handleNext}
             disabled={currentIndex === testimonials.length - 1}
-            className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
             <ArrowRight size={24} />
           </button>

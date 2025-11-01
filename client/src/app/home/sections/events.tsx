@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { events, Event } from "@/app/events/utils/event";
-import EventCard from "@/app/components/cards/event-card";
+import EventCard from "@/app/home/components/event-card";
 import ParticleNetwork from "@/app/home/components/particle";
 
 export function EventsSection() {

@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { GlassCard } from "../../home/components/glass-card";
-import FeaturedAnnouncementCard from "../../home/components/featured-announcement";
-import MiniAnnouncementCard from "../../home/components/mini-announcement";
+import { GlassCard } from "../components/glass-card";
+import FeaturedAnnouncementCard from "../components/featured-announcement";
+import MiniAnnouncementCard from "../components/mini-announcement";
 import { announcements } from "../../announcements/utils/announcements";
 
 export function AnnouncementsSection() {

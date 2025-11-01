@@ -3,14 +3,14 @@
 import Header from "../components/header";
 import Hero from "../components/hero";
 import Footer from "../components/footer";
-import { AboutSection } from "../components/sections/about";
-import { WhyJoinSection } from "../components/sections/join";
-import { AnnouncementsSection } from "../components/sections/announcement";
-import { EventsSection } from "../components/sections/events";
-import { TestimonialsSection } from "../components/sections/testimonials";
-import { FacultyOfficersSection } from "../components/sections/faculty";
-import { PartnersSection } from "../components/sections/partner";
-import { FAQSection } from "../components/sections/faq";
+import { AboutSection } from "./sections/about";
+import { WhyJoinSection } from "./sections/join";
+import { AnnouncementsSection } from "./sections/announcement";
+import { EventsSection } from "./sections/events";
+import { TestimonialsSection } from "./sections/testimonials";
+import { FacultyOfficersSection } from "./sections/faculty";
+import { PartnersSection } from "./sections/partner";
+import { FAQSection } from "./sections/faq";
 
 export default function LandingPage() {
   return (
@@ -26,9 +26,7 @@ export default function LandingPage() {
           <AboutSection />
         </section>
 
-        <section
-          id="about"
-        >
+        <section id="about">
           <WhyJoinSection />
         </section>
 

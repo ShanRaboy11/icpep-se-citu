@@ -1,5 +1,5 @@
 import { ArrowUpRight, Cpu, Rocket, Target, Network } from "lucide-react";
-import { CardStack } from "../../home/components/photo-card";
+import { CardStack } from "../components/photo-card";
 import React, { useRef, useEffect } from "react";
 
 const BenefitCard = ({

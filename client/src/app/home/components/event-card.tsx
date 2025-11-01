@@ -6,7 +6,6 @@ import { CalendarPlus } from "lucide-react";
 
 interface Props {
   event: Event;
-  // onRSVP prop is no longer needed
 }
 
 export default function EventCard({ event }: Props) {
@@ -17,10 +16,7 @@ export default function EventCard({ event }: Props) {
     year: "numeric",
   });
 
-  // The handleRsvpClick function is no longer needed
-
   return (
-    // The main card is the `group` that triggers the animation
     <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1">
       <Link
         href={`/events/${event.id}`}
@@ -32,17 +28,10 @@ export default function EventCard({ event }: Props) {
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
 
-        {/* --- FIX: Changed <button> to a non-clickable <div> and removed click-related styles --- */}
-        <div
-          className="absolute top-3 right-3 z-10 flex h-9 items-center rounded-full bg-black/50 px-2.5 text-white backdrop-blur-sm transition-colors duration-300 ease-in-out group-hover:bg-primary1"
-        >
-          {/* Icon is always visible and perfectly centered */}
+        <div className="absolute top-3 right-3 z-10 flex h-9 items-center rounded-full bg-black/50 px-2.5 text-white backdrop-blur-sm transition-colors duration-300 ease-in-out group-hover:bg-primary1">
           <CalendarPlus size={20} className="flex-shrink-0" />
 
-          {/* Text animates smoothly in both directions */}
-          <span
-            className="font-raleway whitespace-nowrap text-sm font-semibold opacity-0 max-w-0 group-hover:opacity-100 group-hover:max-w-xs group-hover:ml-1.5 transition-[max-width,opacity,margin] duration-300 ease-in-out"
-          >
+          <span className="font-raleway whitespace-nowrap text-sm font-semibold opacity-0 max-w-0 group-hover:opacity-100 group-hover:max-w-xs group-hover:ml-1.5 transition-[max-width,opacity,margin] duration-300 ease-in-out">
             RSVP
           </span>
         </div>
