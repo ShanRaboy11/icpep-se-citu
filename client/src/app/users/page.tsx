@@ -224,8 +224,8 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 
 export default function UsersListPage() {
   const router = useRouter();
-  const [allUsers, setAllUsers] = useState<User[]>([]); // 🔥 All users
-  const [displayedUsers, setDisplayedUsers] = useState<User[]>([]); // 🔥 Current page users
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [displayedUsers, setDisplayedUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
@@ -233,6 +233,10 @@ export default function UsersListPage() {
   // 🔥 Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // ✅ Filter state
+  const [filterRole, setFilterRole] = useState<string>("all");
+  const [filterMembership, setFilterMembership] = useState<string>("all");
 
   // Upload progress state
   const [isUploading, setIsUploading] = useState(false);
@@ -275,15 +279,32 @@ export default function UsersListPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
+  // ✅ Get filtered users
+  const getFilteredUsers = () => {
+    return allUsers.filter((user) => {
+      const roleMatch = filterRole === "all" || user.role === filterRole;
+      const membershipMatch =
+        filterMembership === "all" ||
+        (filterMembership === "local" &&
+          user.membershipStatus.membershipType === "local") ||
+        (filterMembership === "regional" &&
+          user.membershipStatus.membershipType === "regional") ||
+        (filterMembership === "both" &&
+          user.membershipStatus.membershipType === "both") ||
+        (filterMembership === "non-member" && !user.membershipStatus.isMember);
+      return roleMatch && membershipMatch;
+    });
+  };
+
   // Fetch ALL users on component mount
   useEffect(() => {
     fetchAllUsers();
   }, []);
 
-  // 🔥 Update displayed users when page changes
+  // ✅ Update displayed users when page OR filters change
   useEffect(() => {
     updateDisplayedUsers();
-  }, [currentPage, allUsers]);
+  }, [currentPage, allUsers, filterRole, filterMembership]);
 
   // 🔥 Fetch ALL users from backend
   const fetchAllUsers = async () => {
@@ -291,7 +312,6 @@ export default function UsersListPage() {
       setIsLoading(true);
       console.log("🔍 Fetching all users...");
 
-      // Fetch with high limit to get ALL users
       const response: ApiResponse<ApiUser[]> = await fetchWithAuth(
         `${API_BASE_URL}/users?limit=10000&page=1`
       );
@@ -299,7 +319,6 @@ export default function UsersListPage() {
       console.log("📊 Response:", response);
 
       if (response.success) {
-        // Transform backend data
         const transformedUsers: User[] = response.data.map((user: ApiUser) => ({
           id: user._id,
           studentNumber: user.studentNumber,
@@ -336,11 +355,6 @@ export default function UsersListPage() {
 
         console.log(`✅ Loaded ${transformedUsers.length} users`);
         setAllUsers(transformedUsers);
-
-        // Calculate total pages
-        const pages = Math.ceil(transformedUsers.length / USERS_PER_PAGE);
-        setTotalPages(pages);
-        console.log(`📄 Total pages: ${pages}`);
       }
     } catch (error) {
       console.error("❌ Error fetching users:", error);
@@ -355,19 +369,37 @@ export default function UsersListPage() {
     }
   };
 
-  // 🔥 Update displayed users based on current page
+  // ✅ Update displayed users based on current page AND filters
   const updateDisplayedUsers = () => {
+    // Filter first
+    const filteredUsers = getFilteredUsers();
+
+    // Calculate total pages based on FILTERED users
+    const pages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+    setTotalPages(pages);
+
+    // Then paginate
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
     const endIndex = startIndex + USERS_PER_PAGE;
-    const usersToDisplay = allUsers.slice(startIndex, endIndex);
+    const usersToDisplay = filteredUsers.slice(startIndex, endIndex);
 
     console.log(
       `📄 Page ${currentPage}: Showing users ${startIndex + 1}-${Math.min(
         endIndex,
-        allUsers.length
-      )} of ${allUsers.length}`
+        filteredUsers.length
+      )} of ${filteredUsers.length} (filtered from ${allUsers.length} total)`
     );
     setDisplayedUsers(usersToDisplay);
+  };
+
+  // ✅ Reset to page 1 when filters change
+  const handleFilterChange = (type: 'role' | 'membership', value: string) => {
+    if (type === 'role') {
+      setFilterRole(value);
+    } else {
+      setFilterMembership(value);
+    }
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleBackToHome = () => {
@@ -389,9 +421,7 @@ export default function UsersListPage() {
       );
 
       if (response.success) {
-        // Refresh all users
         await fetchAllUsers();
-
         setSuccessModal({
           show: true,
           title: "User Added Successfully",
@@ -440,7 +470,6 @@ export default function UsersListPage() {
         setUploadProgress(`Processing ${userData.studentNumber || "user"}...`);
 
         try {
-          // Transform membershipStatus from string to object format
           const transformedUserData = {
             studentNumber: userData.studentNumber,
             firstName: userData.firstName,
@@ -492,7 +521,6 @@ export default function UsersListPage() {
       setUploadProgress("Upload complete! Refreshing user list...");
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Refresh all users
       await fetchAllUsers();
 
       setIsUploading(false);
@@ -607,9 +635,7 @@ export default function UsersListPage() {
       );
 
       if (response.success) {
-        // Refresh all users
         await fetchAllUsers();
-
         setSuccessModal({
           show: true,
           title: "User Updated",
@@ -644,9 +670,7 @@ export default function UsersListPage() {
         );
 
         if (response.success) {
-          // Refresh all users
           await fetchAllUsers();
-
           setSuccessModal({
             show: true,
             title: "User Deleted",
@@ -683,9 +707,7 @@ export default function UsersListPage() {
           );
 
         if (response.success) {
-          // Refresh all users
           await fetchAllUsers();
-
           const status = response.data.isActive ? "activated" : "deactivated";
           setSuccessModal({
             show: true,
@@ -715,7 +737,6 @@ export default function UsersListPage() {
     setIsViewModalOpen(true);
   };
 
-  // 🔥 Pagination handlers
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -734,10 +755,6 @@ export default function UsersListPage() {
     uploadStats.total > 0
       ? Math.round((uploadStats.current / uploadStats.total) * 100)
       : 0;
-
-  // 🔥 Calculate display range
-  const startIndex = (currentPage - 1) * USERS_PER_PAGE;
-  const endIndex = Math.min(startIndex + USERS_PER_PAGE, allUsers.length);
 
   if (isLoading) {
     return <LoadingScreen showEntrance={false} />;
@@ -810,39 +827,37 @@ export default function UsersListPage() {
             </button>
           </div>
 
-          {/* Display only current page users */}
+          {/* ✅ Pass filter props to UsersTable */}
           <UsersTable
             users={displayedUsers}
-            totalUsers={allUsers.length}
+            totalUsers={getFilteredUsers().length}
             currentPage={currentPage}
             usersPerPage={USERS_PER_PAGE}
             onEdit={handleEditUser}
             onDelete={handleDeleteUser}
             onToggleActive={handleToggleActive}
             onView={handleViewUser}
+            filterRole={filterRole}
+            filterMembership={filterMembership}
+            onFilterChange={handleFilterChange}
           />
 
-          {/* 🔥 FIXED: Pagination Controls - only show when there are multiple pages */}
+          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="mt-8 flex items-center justify-center border-t border-gray-200 pt-6">
               <div className="flex items-center gap-4">
-                {/* Previous Arrow - Invisible when disabled */}
                 {currentPage > 1 ? (
                   <button
-                    onClick={() => {
-                      handlePreviousPage();
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
+                    onClick={handlePreviousPage}
                     className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300"
                     title="Previous page"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                 ) : (
-                  <div className="w-[42px]"></div> // Invisible spacer to maintain alignment
+                  <div className="w-[42px]"></div>
                 )}
 
-                {/* Page Info */}
                 <div className="flex items-center gap-2 min-w-[100px] justify-center">
                   <span className="font-raleway text-base text-gray-700">
                     <span className="font-bold text-primary1">
@@ -855,20 +870,16 @@ export default function UsersListPage() {
                   </span>
                 </div>
 
-                {/* Next Arrow - Invisible when disabled */}
                 {currentPage < totalPages ? (
                   <button
-                    onClick={() => {
-                      handleNextPage();
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
+                    onClick={handleNextPage}
                     className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300"
                     title="Next page"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
                 ) : (
-                  <div className="w-[42px]"></div> // Invisible spacer to maintain alignment
+                  <div className="w-[42px]"></div>
                 )}
               </div>
             </div>
@@ -876,6 +887,7 @@ export default function UsersListPage() {
         </main>
         <Footer />
       </div>
+
 
       {/* All modals remain the same... */}
       {/* Upload Progress Overlay */}

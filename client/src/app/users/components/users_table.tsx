@@ -24,6 +24,9 @@ interface UsersTableProps {
   onDelete: (user: User) => void;
   onToggleActive: (user: User) => void;
   onView: (user: User) => void;
+  filterRole: string;
+  filterMembership: string;
+  onFilterChange: (type: 'role' | 'membership', value: string) => void;
 }
 
 export default function UsersTable({
@@ -35,11 +38,12 @@ export default function UsersTable({
   onDelete,
   onToggleActive,
   onView,
+  filterRole,
+  filterMembership,
+  onFilterChange,
 }: UsersTableProps) {
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [filterRole, setFilterRole] = useState<string>("all");
-  const [filterMembership, setFilterMembership] = useState<string>("all");
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -59,24 +63,8 @@ export default function UsersTable({
     );
   };
 
-  // Filter users
-  const filteredUsers = users.filter((user) => {
-    const roleMatch = filterRole === "all" || user.role === filterRole;
-    const membershipMatch =
-      filterMembership === "all" ||
-      (filterMembership === "local" &&
-        user.membershipStatus.membershipType === "local") ||
-      (filterMembership === "regional" &&
-        user.membershipStatus.membershipType === "regional") ||
-      (filterMembership === "both" &&
-        user.membershipStatus.membershipType === "both") ||
-      (filterMembership === "non-member" && !user.membershipStatus.isMember);
-    return roleMatch && membershipMatch;
-  });
-
-  // Sort users
-  const sortedUsers = [...filteredUsers].sort((a, b) => {
-    // Define a union type for the possible values that aValue and bValue can hold
+  // Sort users (no filtering here - it's done in parent)
+  const sortedUsers = [...users].sort((a, b) => {
     let aValue: string | number | Date | undefined;
     let bValue: string | number | Date | undefined;
 
@@ -94,8 +82,8 @@ export default function UsersTable({
         bValue = b.role;
         break;
       case "yearLevel":
-        aValue = a.yearLevel || 0; // Provide a default number if yearLevel is undefined
-        bValue = b.yearLevel || 0; // Provide a default number if yearLevel is undefined
+        aValue = a.yearLevel;
+        bValue = b.yearLevel;
         break;
       case "createdAt":
         aValue = new Date(a.createdAt);
@@ -109,7 +97,21 @@ export default function UsersTable({
         return 0;
     }
 
-    // Now perform the comparison based on the types
+    if (sortField === "yearLevel") {
+      // Handle null/undefined year levels
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1; // Put null values at the end
+      if (bValue == null) return -1; // Put null values at the end
+      
+      // Both have values, compare normally
+      const aNum = aValue as number;
+      const bNum = bValue as number;
+      
+      if (aNum < bNum) return sortDirection === "asc" ? -1 : 1;
+      if (aNum > bNum) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    }
+
     if (typeof aValue === "string" && typeof bValue === "string") {
       if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
@@ -122,8 +124,6 @@ export default function UsersTable({
       if (aValue.getTime() > bValue.getTime())
         return sortDirection === "asc" ? 1 : -1;
     }
-    // Handle cases where values might be undefined or mismatched types if necessary
-    // For now, if types don't match or are undefined, they are considered equal
     return 0;
   });
 
@@ -137,8 +137,8 @@ export default function UsersTable({
           </label>
           <select
             value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
-            className="font-raleway text-sm text-gray-400 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
+            onChange={(e) => onFilterChange('role', e.target.value)}
+            className="font-raleway text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
           >
             <option value="all">All Roles</option>
             <option value="student">Student</option>
@@ -154,8 +154,8 @@ export default function UsersTable({
           </label>
           <select
             value={filterMembership}
-            onChange={(e) => setFilterMembership(e.target.value)}
-            className="font-raleway text-sm text-gray-400 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
+            onChange={(e) => onFilterChange('membership', e.target.value)}
+            className="font-raleway text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
           >
             <option value="all">All</option>
             <option value="local">Local</option>
@@ -182,7 +182,7 @@ export default function UsersTable({
       <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-max">
-            <thead className="bg-gradient-to-r from-primary1/5 to-secondary2/5">
+            <thead className="bg-blue-100">
               <tr>
                 <th
                   onClick={() => handleSort("studentNumber")}
@@ -202,7 +202,6 @@ export default function UsersTable({
                     <SortIcon field="fullName" />
                   </div>
                 </th>
-
                 <th
                   onClick={() => handleSort("yearLevel")}
                   className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
@@ -212,7 +211,6 @@ export default function UsersTable({
                     <SortIcon field="yearLevel" />
                   </div>
                 </th>
-
                 <th
                   onClick={() => handleSort("role")}
                   className="px-4 py-4 w-10 text-center items-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
@@ -222,7 +220,6 @@ export default function UsersTable({
                     <SortIcon field="role" />
                   </div>
                 </th>
-
                 <th className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 whitespace-nowrap">
                   Membership
                 </th>
