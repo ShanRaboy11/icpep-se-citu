@@ -206,4 +206,4 @@ const CommeetPage = () => {
   );
 };
 
-export default CommeetPage as FunctionComponent;
+export default CommeetPage;
