@@ -60,6 +60,15 @@ export const TierCard = ({
       className={`relative w-full overflow-hidden rounded-3xl backdrop-blur-xl border border-[var(--primary3)]/20 shadow-lg bg-gradient-to-br ${tierGradients[tier]}`}
     >
       <div
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(0,0,0,0.1) 1px, transparent 1px)",
+          backgroundSize: "16px 16px",
+        }}
+      />
+
+      <div
         className="absolute inset-0 opacity-70 pointer-events-none"
         style={{
           background: `radial-gradient(circle farthest-corner at 0% 0%, ${data.glowColor} 0%, transparent 100%)`,
@@ -72,12 +81,12 @@ export const TierCard = ({
           style={{
             color:
               tier === "platinum"
-                ? "#0c4a6e" // darkest bluish
+                ? "#0c4a6e"
                 : tier === "gold"
-                ? "#78350f" // darkest gold/amber
+                ? "#78350f"
                 : tier === "silver"
-                ? "#4b5563" // darkest gray
-                : "#7c2d12", // darkest bronze/orange
+                ? "#4b5563"
+                : "#7c2d12",
           }}
         >
           {data.title}
