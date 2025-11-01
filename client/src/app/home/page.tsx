@@ -1,7 +1,7 @@
 "use client";
 
 import Header from "../components/header";
-import Hero from "../components/hero";
+import Hero from "./sections/hero";
 import Footer from "../components/footer";
 import { AboutSection } from "./sections/about";
 import { WhyJoinSection } from "./sections/join";
