@@ -2,7 +2,6 @@
 
 import { User } from "../utils/user";
 import UserTableRow from "./user_table_row";
-import { useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 
 type SortField =
@@ -27,6 +26,9 @@ interface UsersTableProps {
   filterRole: string;
   filterMembership: string;
   onFilterChange: (type: 'role' | 'membership', value: string) => void;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSortChange: (field: SortField, direction: SortDirection) => void;
 }
 
 export default function UsersTable({
@@ -41,16 +43,19 @@ export default function UsersTable({
   filterRole,
   filterMembership,
   onFilterChange,
+  sortField,
+  sortDirection,
+  onSortChange,
 }: UsersTableProps) {
-  const [sortField, setSortField] = useState<SortField>("createdAt");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      // Toggle direction
+      const newDirection = sortDirection === "asc" ? "desc" : "asc";
+      onSortChange(field, newDirection);
     } else {
-      setSortField(field);
-      setSortDirection("asc");
+      // New field, start with asc
+      onSortChange(field, "asc");
     }
   };
 
@@ -62,70 +67,6 @@ export default function UsersTable({
       <ChevronDown className="w-4 h-4" />
     );
   };
-
-  // Sort users (no filtering here - it's done in parent)
-  const sortedUsers = [...users].sort((a, b) => {
-    let aValue: string | number | Date | undefined;
-    let bValue: string | number | Date | undefined;
-
-    switch (sortField) {
-      case "studentNumber":
-        aValue = a.studentNumber;
-        bValue = b.studentNumber;
-        break;
-      case "fullName":
-        aValue = a.fullName.toLowerCase();
-        bValue = b.fullName.toLowerCase();
-        break;
-      case "role":
-        aValue = a.role;
-        bValue = b.role;
-        break;
-      case "yearLevel":
-        aValue = a.yearLevel;
-        bValue = b.yearLevel;
-        break;
-      case "createdAt":
-        aValue = new Date(a.createdAt);
-        bValue = new Date(b.createdAt);
-        break;
-      case "updatedAt":
-        aValue = new Date(a.updatedAt);
-        bValue = new Date(b.updatedAt);
-        break;
-      default:
-        return 0;
-    }
-
-    if (sortField === "yearLevel") {
-      // Handle null/undefined year levels
-      if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return 1; // Put null values at the end
-      if (bValue == null) return -1; // Put null values at the end
-      
-      // Both have values, compare normally
-      const aNum = aValue as number;
-      const bNum = bValue as number;
-      
-      if (aNum < bNum) return sortDirection === "asc" ? -1 : 1;
-      if (aNum > bNum) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    }
-
-    if (typeof aValue === "string" && typeof bValue === "string") {
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-    } else if (typeof aValue === "number" && typeof bValue === "number") {
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-    } else if (aValue instanceof Date && bValue instanceof Date) {
-      if (aValue.getTime() < bValue.getTime())
-        return sortDirection === "asc" ? -1 : 1;
-      if (aValue.getTime() > bValue.getTime())
-        return sortDirection === "asc" ? 1 : -1;
-    }
-    return 0;
-  });
 
   return (
     <div className="space-y-6">
@@ -166,7 +107,7 @@ export default function UsersTable({
         </div>
 
         <div className="ml-auto font-raleway text-sm text-gray-600 font-medium">
-          {sortedUsers.length > 0 ? (
+          {users.length > 0 ? (
             <>
               Showing {(currentPage - 1) * usersPerPage + 1}-
               {Math.min(currentPage * usersPerPage, totalUsers)} of {totalUsers}{" "}
@@ -253,7 +194,7 @@ export default function UsersTable({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {sortedUsers.map((user) => (
+              {users.map((user) => (
                 <UserTableRow
                   key={user.id}
                   user={user}
@@ -268,7 +209,7 @@ export default function UsersTable({
         </div>
       </div>
 
-      {sortedUsers.length === 0 && (
+      {users.length === 0 && (
         <div className="text-center py-12">
           <p className="font-raleway text-gray-500">
             No users found matching the filters.

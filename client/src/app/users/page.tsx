@@ -70,31 +70,29 @@ interface UploadUserData {
   middleName?: string;
   role: string;
   yearLevel?: number;
-  membershipStatus?: string; // Changed from object to string to match Excel upload format
+  membershipStatus?: string;
 }
+
+type SortField = "studentNumber" | "fullName" | "role" | "yearLevel" | "createdAt" | "updatedAt";
+type SortDirection = "asc" | "desc";
 
 // API Configuration - Production Ready
 const getApiUrl = (): string => {
-  // Use environment variable if available
   if (process.env.NEXT_PUBLIC_API_URL) {
     console.log("🔗 API URL from env:", process.env.NEXT_PUBLIC_API_URL);
     return process.env.NEXT_PUBLIC_API_URL;
   }
 
-  // Client-side detection
   if (typeof window !== "undefined") {
     const { protocol, hostname } = window.location;
 
-    // Production (not localhost)
     if (hostname !== "localhost" && hostname !== "127.0.0.1") {
-      // ⚠️ IMPORTANT: Replace this with your actual backend URL
       const productionApiUrl = "https://your-backend-url.com/api";
       console.log("🔗 Production API URL:", productionApiUrl);
       return productionApiUrl;
     }
   }
 
-  // Development fallback
   console.log("🔗 Development API URL: http://localhost:5000/api");
   return "http://localhost:5000/api";
 };
@@ -102,18 +100,10 @@ const getApiUrl = (): string => {
 const API_BASE_URL = getApiUrl();
 const USERS_PER_PAGE = 100;
 
-// Helper function to validate and cast role
+// Helper functions
 const validateRole = (
   role: string
 ): "faculty" | "council-officer" | "committee-officer" | "student" => {
-  const validRoles = [
-    "faculty",
-    "council-officer",
-    "committee-officer",
-    "student",
-  ];
-
-  // Map backend roles to frontend roles
   const roleMap: Record<
     string,
     "faculty" | "council-officer" | "committee-officer" | "student"
@@ -122,14 +112,13 @@ const validateRole = (
     "council-officer": "council-officer",
     "committee-officer": "committee-officer",
     student: "student",
-    member: "student", // Map member to student
-    "non-member": "student", // Map non-member to student
+    member: "student",
+    "non-member": "student",
   };
 
   return roleMap[role] || "student";
 };
 
-// Helper function to validate and cast membershipType
 const validateMembershipType = (
   membershipType: string | null
 ): "regional" | "local" | "both" | null => {
@@ -143,7 +132,6 @@ const validateMembershipType = (
   return null;
 };
 
-// Helper function to parse membershipStatus from Excel format
 const parseMembershipStatus = (
   membershipStatus?: string
 ): { isMember: boolean; membershipType: string | null } => {
@@ -153,7 +141,6 @@ const parseMembershipStatus = (
 
   const statusLower = membershipStatus.toLowerCase().trim();
 
-  // Check for membership types
   if (
     statusLower === "local" ||
     statusLower === "regional" ||
@@ -162,16 +149,13 @@ const parseMembershipStatus = (
     return { isMember: true, membershipType: statusLower };
   }
 
-  // Check for member/non-member
   if (statusLower === "member") {
     return { isMember: true, membershipType: null };
   }
 
-  // Default to non-member
   return { isMember: false, membershipType: null };
 };
 
-// Helper function to capitalize first letter of each word
 const capitalizeWords = (str: string): string => {
   if (!str) return "";
   return str
@@ -181,7 +165,6 @@ const capitalizeWords = (str: string): string => {
     .join(" ");
 };
 
-// Helper function to get auth token
 const getAuthToken = (): string | null => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("authToken");
@@ -189,7 +172,6 @@ const getAuthToken = (): string | null => {
   return null;
 };
 
-// Fixed TypeScript headers
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const token = getAuthToken();
 
@@ -230,13 +212,15 @@ export default function UsersListPage() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
-  // 🔥 Pagination state
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // ✅ Filter state
+  // Filter and Sort state - MOVED FROM UsersTable
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterMembership, setFilterMembership] = useState<string>("all");
+  const [sortField, setSortField] = useState<SortField>("createdAt");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   // Upload progress state
   const [isUploading, setIsUploading] = useState(false);
@@ -279,7 +263,7 @@ export default function UsersListPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  // ✅ Get filtered users
+  // Get filtered users
   const getFilteredUsers = () => {
     return allUsers.filter((user) => {
       const roleMatch = filterRole === "all" || user.role === filterRole;
@@ -296,17 +280,84 @@ export default function UsersListPage() {
     });
   };
 
+  // 🔥 NEW: Sort users function
+  const sortUsers = (users: User[]): User[] => {
+    return [...users].sort((a, b) => {
+      let aValue: string | number | Date | undefined;
+      let bValue: string | number | Date | undefined;
+
+      switch (sortField) {
+        case "studentNumber":
+          aValue = a.studentNumber;
+          bValue = b.studentNumber;
+          break;
+        case "fullName":
+          aValue = a.fullName.toLowerCase();
+          bValue = b.fullName.toLowerCase();
+          break;
+        case "role":
+          aValue = a.role;
+          bValue = b.role;
+          break;
+        case "yearLevel":
+          aValue = a.yearLevel;
+          bValue = b.yearLevel;
+          break;
+        case "createdAt":
+          aValue = new Date(a.createdAt);
+          bValue = new Date(b.createdAt);
+          break;
+        case "updatedAt":
+          aValue = new Date(a.updatedAt);
+          bValue = new Date(b.updatedAt);
+          break;
+        default:
+          return 0;
+      }
+
+      // Special handling for yearLevel
+      if (sortField === "yearLevel") {
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1; // nulls at end
+        if (bValue == null) return -1; // nulls at end
+        
+        const aNum = aValue as number;
+        const bNum = bValue as number;
+        
+        return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
+      }
+
+      // String comparison
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      } 
+      // Number comparison
+      else if (typeof aValue === "number" && typeof bValue === "number") {
+        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      } 
+      // Date comparison
+      else if (aValue instanceof Date && bValue instanceof Date) {
+        if (aValue.getTime() < bValue.getTime())
+          return sortDirection === "asc" ? -1 : 1;
+        if (aValue.getTime() > bValue.getTime())
+          return sortDirection === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+  };
+
   // Fetch ALL users on component mount
   useEffect(() => {
     fetchAllUsers();
   }, []);
 
-  // ✅ Update displayed users when page OR filters change
+  // Update displayed users when page, filters, OR SORT changes
   useEffect(() => {
     updateDisplayedUsers();
-  }, [currentPage, allUsers, filterRole, filterMembership]);
+  }, [currentPage, allUsers, filterRole, filterMembership, sortField, sortDirection]);
 
-  // 🔥 Fetch ALL users from backend
   const fetchAllUsers = async () => {
     try {
       setIsLoading(true);
@@ -369,37 +420,48 @@ export default function UsersListPage() {
     }
   };
 
-  // ✅ Update displayed users based on current page AND filters
+  // 🔥 FIXED: Update displayed users with proper flow: Filter -> Sort -> Paginate
   const updateDisplayedUsers = () => {
-    // Filter first
-    const filteredUsers = getFilteredUsers();
+    // Step 1: Filter
+    let processedUsers = getFilteredUsers();
+    
+    // Step 2: Sort ALL filtered users
+    processedUsers = sortUsers(processedUsers);
 
-    // Calculate total pages based on FILTERED users
-    const pages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+    // Step 3: Calculate pagination
+    const pages = Math.ceil(processedUsers.length / USERS_PER_PAGE);
     setTotalPages(pages);
 
-    // Then paginate
+    // Step 4: Paginate
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
     const endIndex = startIndex + USERS_PER_PAGE;
-    const usersToDisplay = filteredUsers.slice(startIndex, endIndex);
+    const usersToDisplay = processedUsers.slice(startIndex, endIndex);
 
     console.log(
       `📄 Page ${currentPage}: Showing users ${startIndex + 1}-${Math.min(
         endIndex,
-        filteredUsers.length
-      )} of ${filteredUsers.length} (filtered from ${allUsers.length} total)`
+        processedUsers.length
+      )} of ${processedUsers.length} (filtered from ${allUsers.length} total, sorted by ${sortField} ${sortDirection})`
     );
     setDisplayedUsers(usersToDisplay);
   };
 
-  // ✅ Reset to page 1 when filters change
+  // Reset to page 1 when filters or sort changes
   const handleFilterChange = (type: 'role' | 'membership', value: string) => {
     if (type === 'role') {
       setFilterRole(value);
     } else {
       setFilterMembership(value);
     }
-    setCurrentPage(1); // Reset to first page when filter changes
+    setCurrentPage(1);
+  };
+
+  // 🔥 NEW: Handle sort changes from table
+  const handleSortChange = (field: SortField, direction: SortDirection) => {
+    console.log(`🔄 Sort changed: ${field} ${direction}`);
+    setSortField(field);
+    setSortDirection(direction);
+    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
   const handleBackToHome = () => {
@@ -799,7 +861,6 @@ export default function UsersListPage() {
             </p>
           </div>
 
-          {/* Stats based on ALL users */}
           <UserStats users={allUsers} />
 
           <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
@@ -827,7 +888,7 @@ export default function UsersListPage() {
             </button>
           </div>
 
-          {/* ✅ Pass filter props to UsersTable */}
+          {/* 🔥 Pass sort state and handler to UsersTable */}
           <UsersTable
             users={displayedUsers}
             totalUsers={getFilteredUsers().length}
@@ -840,9 +901,11 @@ export default function UsersListPage() {
             filterRole={filterRole}
             filterMembership={filterMembership}
             onFilterChange={handleFilterChange}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSortChange={handleSortChange}
           />
 
-          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="mt-8 flex items-center justify-center border-t border-gray-200 pt-6">
               <div className="flex items-center gap-4">
@@ -888,9 +951,7 @@ export default function UsersListPage() {
         <Footer />
       </div>
 
-
       {/* All modals remain the same... */}
-      {/* Upload Progress Overlay */}
       {isUploading && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
@@ -947,7 +1008,6 @@ export default function UsersListPage() {
         </div>
       )}
 
-      {/* Upload Result Modal */}
       {uploadResult.show && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
@@ -1022,7 +1082,6 @@ export default function UsersListPage() {
         </div>
       )}
 
-      {/* Success Modal */}
       {successModal.show && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
@@ -1047,7 +1106,6 @@ export default function UsersListPage() {
         </div>
       )}
 
-      {/* Error Modal */}
       {errorModal.show && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
@@ -1072,7 +1130,6 @@ export default function UsersListPage() {
         </div>
       )}
 
-      {/* Other Modals */}
       <ExcelUploadModal
         isOpen={isUploadModalOpen}
         onClose={() => !isUploading && setIsUploadModalOpen(false)}
