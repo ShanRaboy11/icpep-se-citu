@@ -5,7 +5,7 @@ import Footer from "../components/footer";
 import { FunctionComponent, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation'; 
 
-const CommeetPage = () => {
+const CommeetPage: FunctionComponent = () => {
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
   const [currentDate, setCurrentDate] = useState(new Date(2025, 9, 1)); 
   const router = useRouter(); 
