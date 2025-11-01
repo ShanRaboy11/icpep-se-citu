@@ -75,7 +75,7 @@ const CommeetPage: FunctionComponent = () => {
           {/* What's your meeting about? */}
           <div className="flex flex-col gap-2">
             <p className="text-[24px] text-gray-900 font-raleway">
-              What's your meeting about?
+                What&apos;s your meeting about?
             </p>
             <div className="w-[960px] h-10 text-gray-300">
               <input
