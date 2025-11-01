@@ -1,16 +1,84 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import TestimonialCard from "@/app/components/cards/testimonialcard";
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import Image from "next/image";
 
+// --- Testimonial Card ---
+interface TestimonialCardProps {
+  name: string;
+  title: string;
+  imageSrc: string;
+  testimonial: string;
+  position: number;
+}
+
+const TestimonialCard = ({
+  name,
+  title,
+  imageSrc,
+  testimonial,
+  position,
+}: TestimonialCardProps) => {
+  const isCenter = position === 0;
+
+  return (
+    <div
+      className={`relative h-full w-full rounded-3xl p-8 transition-all duration-500
+      ${
+        isCenter
+          ? "bg-gradient-to-b from-[#cde4fa] to-[#a9d3f9] shadow-xl shadow-primary3/20"
+          : "bg-white shadow-lg shadow-gray-400/20"
+      }`}
+    >
+      {/* Avatar - Now floating, not clipped */}
+      <motion.div
+        className="absolute left-1/2 -translate-x-1/2 -top-16 z-20"
+        animate={{ scale: isCenter ? 1 : 0.85, y: isCenter ? 0 : 10 }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+      >
+        <div className="relative h-28 w-28 rounded-full border-4 border-white bg-white shadow-md overflow-hidden">
+          <Image src={imageSrc} alt={name} fill className="object-cover" />
+        </div>
+      </motion.div>
+
+      {/* Card Content */}
+      <div className="relative flex h-full flex-col justify-center text-center pt-16">
+        <div className="absolute top-4 left-4 text-[12rem] font-bold text-primary1/10 leading-none">
+          “
+        </div>
+
+        <p className="relative z-10 font-raleway text-xl leading-relaxed text-bodytext px-8">
+          {testimonial}
+        </p>
+
+        <div className="absolute bottom-4 right-4 text-[12rem] font-bold text-primary1/10 leading-none">
+          ”
+        </div>
+
+        <div className="mt-16">
+          <h3 className="font-rubik text-2xl font-bold text-primary3">
+            {name}
+          </h3>
+          <p className="font-raleway text-base font-medium text-primary3/90">
+            {title}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Main Testimonials Section ---
 export function TestimonialsSection() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const testimonials = [
     {
       name: "Alyssa Cruz",
       title: "President, ICpEP.SE",
-      imageSrc: "/faculty.png",
+      imageSrc: "/gle.png",
       testimonial:
         "Being part of ICpEP.SE has helped me build confidence, leadership, and technical skills that go beyond the classroom.",
     },
@@ -24,7 +92,7 @@ export function TestimonialsSection() {
     {
       name: "Rina Lopez",
       title: "Event Organizer",
-      imageSrc: "/faculty.png",
+      imageSrc: "/gle.png",
       testimonial:
         "Organizing events under ICpEP.SE allowed me to grow as both a professional and a student leader.",
     },
@@ -37,119 +105,91 @@ export function TestimonialsSection() {
     },
   ];
 
-  const extendedTestimonials = [
-    testimonials[testimonials.length - 1],
-    ...testimonials,
-    testimonials[0],
-  ];
+  const handleNext = () => {
+    if (currentIndex < testimonials.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const cards = container.querySelectorAll(".testimonial-card");
-      const center = container.scrollLeft + container.clientWidth / 2;
-
-      cards.forEach((card: Element) => {
-        const rect = (card as HTMLElement).getBoundingClientRect();
-        const distance = Math.abs(center - (rect.left + rect.width / 2));
-        const maxDistance = container.clientWidth / 2;
-        const scale = Math.max(0.8, 1.1 - distance / maxDistance);
-        (card as HTMLElement).style.transform = `scale(${scale})`;
-        (card as HTMLElement).style.zIndex = String(scale > 1.0 ? 10 : 1);
-      });
-    };
-
-    container.addEventListener("scroll", handleScroll);
-    handleScroll();
-
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, []);
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
 
   return (
-    <div
-      className="relative w-full flex flex-col items-center py-8 sm:py-12 md:py-16 lg:py-20 overflow-visible mb-10 sm:mb-15"
-      style={{ backgroundColor: "#FEFEFF" }}
-    >
+    <section className="dark-light-background relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-16 sm:px-6 sm:py-20">
+      {/* Background blobs */}
       <div className="absolute inset-0 z-0 opacity-90">
-        <div className="orbit animate-blob-1">
-          <div className="blob bg-sky-400"></div>
-        </div>
-        <div className="orbit animate-blob-2">
-          <div className="blob bg-indigo-400"></div>
-        </div>
-        <div className="orbit animate-blob-2">
-          <div className="blob bg-blue-300"></div>
-        </div>
+        <div className="blob bg-sky-400 top-0 left-0 animate-blob-1"></div>
+        <div className="blob bg-indigo-400 top-0 right-0 animate-blob-2"></div>
+        <div className="blob bg-blue-300 bottom-0 left-1/4 animate-blob-3"></div>
       </div>
 
-      <div className="text-center max-w-4xl mx-auto mb-8 sm:mb-10 md:mb-12 lg:mb-15 px-4 sm:px-6 md:px-8 relative z-10">
-        <h2 className="font-rubik text-3xl sm:text-5xl font-extrabold mb-3 sm:mb-4 tracking-tight text-black">
-          TESTIMONIALS
-        </h2>
-        <p className="font-raleway text-gray-700 text-sm sm:text-base md:text-lg lg:text-xl leading-relaxed mt-3 sm:mt-4 md:mt-5">
-          Discover how ICpEP.SE has impacted students through their stories and
-          feedback.
+      {/* Header */}
+      <div className="relative z-20 mb-24 text-center">
+        <h1 className="font-rubik text-4xl font-bold text-primary3 sm:text-5xl leading-tight">
+          Testimonials
+        </h1>
+        <p className="font-raleway mt-2 text-base text-bodytext sm:text-lg max-w-lg mx-auto">
+          Sync with the experiences that define ICpEP SE.
         </p>
       </div>
 
-      <div
-        ref={containerRef}
-        className="flex gap-4 h-130 sm:gap-6 md:gap-8 items-center overflow-x-auto scroll-smooth snap-x snap-mandatory px-4 sm:px-6 md:px-10 lg:px-20 pb-6 sm:pb-8 hide-scrollbar relative z-10 w-full"
-        style={{
-          scrollbarWidth: "none",
-          minHeight: "clamp(300px, 40vh, 500px)",
-        }}
-      >
-        {extendedTestimonials.map((t, index) => (
-          <div
-            key={index}
-            className="flex-shrink-0 snap-center w-[95%] sm:w-[75%] md:w-[60%] lg:w-[45%] xl:w-[33%] flex justify-center items-center"
-          >
-            <div className="testimonial-card transition-transform duration-300 ease-in-out origin-center w-full">
-              <TestimonialCard
-                name={t.name}
-                title={t.title}
-                imageSrc={t.imageSrc}
-                testimonial={t.testimonial}
-              />
-            </div>
-          </div>
-        ))}
+      {/* Cards */}
+      <div className="relative z-20 h-[420px] w-full max-w-7xl overflow-visible">
+        {testimonials.map((testimonial, index) => {
+          const position = index - currentIndex;
+
+          let animateProps = { x: "0%", scale: 0.7, opacity: 0, zIndex: 0 };
+          if (position === 0) {
+            animateProps = { x: "0%", scale: 1, opacity: 1, zIndex: 3 };
+          } else if (position === 1) {
+            animateProps = { x: "40%", scale: 0.85, opacity: 0.7, zIndex: 2 };
+          } else if (position === -1) {
+            animateProps = { x: "-40%", scale: 0.85, opacity: 0.7, zIndex: 2 };
+          } else {
+            animateProps = {
+              x: `${position > 0 ? 100 : -100}%`,
+              scale: 0.7,
+              opacity: 0,
+              zIndex: 1,
+            };
+          }
+
+          return (
+            <motion.div
+              key={index}
+              className="absolute top-0 left-0 w-full h-full flex items-center justify-center overflow-visible"
+              initial={false}
+              animate={animateProps}
+              transition={{ type: "spring", stiffness: 100, damping: 20 }}
+            >
+              <div className="w-full max-w-2xl h-[90%] overflow-visible">
+                <TestimonialCard {...testimonial} position={position} />
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
-      <style>{`
-        .blob {
-          position: absolute;
-          width: 400px;
-          height: 400px;
-          border-radius: 50%;
-          filter: blur(120px);
-          opacity: 0.7;
-          mix-blend-mode: multiply;
-        }
-
-        .orbit {
-          position: absolute;
-          top: 40%;
-          left: 40%;
-          transform-origin: center;
-        }
-
-        @keyframes orbit-1 {
-          0% { transform: rotate(0deg) translateX(120px) rotate(0deg); }
-          100% { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
-        }
-
-        @keyframes orbit-2 {
-          0% { transform: rotate(0deg) translateX(180px) rotate(0deg); }
-          100% { transform: rotate(-360deg) translateX(180px) rotate(360deg); }
-        }
-
-        .animate-blob-1 { animation: orbit-1 8s linear infinite; }
-        .animate-blob-2 { animation: orbit-2 8s linear infinite; }
-      `}</style>
-    </div>
+      {/* Navigation Buttons */}
+      <div className="relative z-30 mt-8 flex gap-4">
+        <button
+          onClick={handlePrev}
+          disabled={currentIndex === 0}
+          className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+        >
+          <ArrowLeft size={24} />
+        </button>
+        <button
+          onClick={handleNext}
+          disabled={currentIndex === testimonials.length - 1}
+          className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+        >
+          <ArrowRight size={24} />
+        </button>
+      </div>
+    </section>
   );
 }

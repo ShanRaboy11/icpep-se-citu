@@ -374,3 +374,42 @@ html {
     background-position: 200% 0%;
   }
 }
+
+@keyframes blobby-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(20vw, -10vh) scale(1.1);
+  }
+  50% {
+    transform: translate(0, 20vh) scale(0.9);
+  }
+  75% {
+    transform: translate(-20vw, -10vh) scale(1.1);
+  }
+}
+
+@keyframes blobby-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(-15vw, 15vh) scale(0.9);
+  }
+  50% {
+    transform: translate(0, -15vh) scale(1.1);
+  }
+  75% {
+    transform: translate(15vw, 15vh) scale(0.9);
+  }
+}
+
+.animate-blobby-1 {
+  animation: blobby-1 20s infinite ease-in-out;
+}
+.animate-blobby-2 {
+  animation: blobby-2 20s infinite ease-in-out;
+}
