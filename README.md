@@ -1,6 +1,6 @@
 # 🔵 ICPEP.SE CIT-U CHAPTER OFFICIAL WEBSITE  
 
-This project is the **official website of the ICPEP.SE CIT-U Student Organization**, developed using the **MERN stack** (MongoDB, Express, React/Next.js, Node.js). 
+This project is the **official website of the ICPEP.SE CIT-U Chapter**, developed using the **MERN stack** (MongoDB, Express, React/Next.js, Node.js). 
 
 ---
 

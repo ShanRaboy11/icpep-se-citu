@@ -7,13 +7,24 @@ const express_1 = __importDefault(require("express"));
 const auth_controller_1 = require("../controllers/auth.controller");
 const auth_middleware_1 = require("../middleware/auth.middleware");
 const router = express_1.default.Router();
-// Public routes
+// @route   POST /api/auth/login
+// @desc    Login user with student number and password
+// @access  Public
 router.post('/login', auth_controller_1.login);
-// Protected routes
-router.use(auth_middleware_1.protect); // All routes after this are protected
-router.get('/me', auth_controller_1.getMe);
+// @route   POST /api/auth/logout
+// @desc    Logout user (client-side token removal)
+// @access  Public
 router.post('/logout', auth_controller_1.logout);
-router.put('/change-password', auth_controller_1.changePassword);
-// Admin only
-router.put('/reset-password/:id', (0, auth_middleware_1.restrictTo)('council-officer', 'faculty'), auth_controller_1.resetPassword);
+// @route   POST /api/auth/first-login-password
+// @desc    Change password on first login
+// @access  Private (requires valid token)
+router.post('/first-login-password', auth_middleware_1.authenticateToken, auth_controller_1.firstLoginPasswordChange);
+// @route   POST /api/auth/change-password
+// @desc    Change password (regular password change)
+// @access  Private (requires valid token)
+router.post('/change-password', auth_middleware_1.authenticateToken, auth_controller_1.changePassword);
+// @route   GET /api/auth/me
+// @desc    Get current logged-in user
+// @access  Private (requires valid token)
+router.get('/me', auth_middleware_1.authenticateToken, auth_controller_1.getCurrentUser);
 exports.default = router;
