@@ -1,34 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Megaphone, Bell, BadgeCheck, Calendar, Menu, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import {
+  Megaphone,
+  Bell,
+  BadgeCheck,
+  Calendar,
+  Menu,
+  X,
+  SquareMenu,
+} from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
 
 const Sidebar = () => {
-  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeType = searchParams.get("type");
   const [open, setOpen] = useState(false);
 
   const links = [
     {
+      name: "All",
+      href: "/notification",
+      icon: <SquareMenu size={20} />,
+    },
+    {
       name: "Announcements",
-      href: "/announcements/create",
+      href: "/notification?type=megaphone",
       icon: <Megaphone size={20} />,
     },
     {
       name: "Approval",
-      href: "/approval",
+      href: "/notification?type=member",
       icon: <BadgeCheck size={20} />,
     },
     {
       name: "Events",
-      href: "/events",
+      href: "/notification?type=calendar",
       icon: <Calendar size={20} />,
     },
     {
       name: "Reminders",
-      href: "/reminders",
+      href: "/notification?type=notification",
       icon: <Bell size={20} />,
     },
   ];
@@ -74,7 +88,7 @@ const Sidebar = () => {
               href={link.href}
               className={clsx(
                 "flex items-center gap-2 px-4 py-3 rounded-lg font-rubik font-normal transition-all text-sm",
-                pathname === link.href
+                activeType === link.href.split("=")[1]
                   ? "bg-primary1 text-white"
                   : "hover:bg-gray-100 text-gray-800"
               )}

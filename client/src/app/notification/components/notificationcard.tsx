@@ -66,7 +66,7 @@ export default function NotificationCard({
       </div>
 
       {!item.read && (
-        <span className="w-2 h-2 rounded-full bg-primary3 mt-2"></span>
+        <span className="w-2 h-2 rounded-full bg-primary3 mt-5"></span>
       )}
     </button>
   );
