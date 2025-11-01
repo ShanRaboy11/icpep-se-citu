@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { User } from "./utils/user";
 import Header from "../components/header";
 import Footer from "../components/footer";
@@ -23,6 +23,8 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  Search,
+  X,
 } from "lucide-react";
 import { LoadingScreen } from "../components/loading";
 
@@ -206,6 +208,7 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 
 export default function UsersListPage() {
   const router = useRouter();
+  const searchContainerRef = useRef<HTMLDivElement>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [displayedUsers, setDisplayedUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -221,6 +224,10 @@ export default function UsersListPage() {
   const [filterMembership, setFilterMembership] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  
+  // 🔍 NEW: Search state
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
 
   // Upload progress state
   const [isUploading, setIsUploading] = useState(false);
@@ -263,10 +270,13 @@ export default function UsersListPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-  // Get filtered users
+  // Get filtered users with search
   const getFilteredUsers = () => {
     return allUsers.filter((user) => {
+      // Role filter
       const roleMatch = filterRole === "all" || user.role === filterRole;
+      
+      // Membership filter
       const membershipMatch =
         filterMembership === "all" ||
         (filterMembership === "local" &&
@@ -276,7 +286,18 @@ export default function UsersListPage() {
         (filterMembership === "both" &&
           user.membershipStatus.membershipType === "both") ||
         (filterMembership === "non-member" && !user.membershipStatus.isMember);
-      return roleMatch && membershipMatch;
+      
+      // 🔍 Search filter - searches across multiple fields
+      const searchMatch = searchQuery === "" || 
+        user.studentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (user.middleName && user.middleName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        user.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (user.yearLevel && user.yearLevel.toString().includes(searchQuery));
+      
+      return roleMatch && membershipMatch && searchMatch;
     });
   };
 
@@ -356,7 +377,21 @@ export default function UsersListPage() {
   // Update displayed users when page, filters, OR SORT changes
   useEffect(() => {
     updateDisplayedUsers();
-  }, [currentPage, allUsers, filterRole, filterMembership, sortField, sortDirection]);
+  }, [currentPage, allUsers, filterRole, filterMembership, sortField, sortDirection, searchQuery]);
+  
+  // 🔍 Close search suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSearchSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const fetchAllUsers = async () => {
     try {
@@ -454,6 +489,34 @@ export default function UsersListPage() {
       setFilterMembership(value);
     }
     setCurrentPage(1);
+  };
+  
+  // 🔍 NEW: Handle search input
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1); // Reset to first page when searching
+    setShowSearchSuggestions(value.length > 0);
+  };
+  
+  // 🔍 NEW: Clear search
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setShowSearchSuggestions(false);
+  };
+  
+  // 🔍 NEW: Get search suggestions (top 10 matches)
+  const getSearchSuggestions = () => {
+    if (searchQuery.length === 0) return [];
+    
+    const filtered = allUsers.filter((user) => {
+      return user.studentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (user.middleName && user.middleName.toLowerCase().includes(searchQuery.toLowerCase()));
+    });
+    
+    return filtered.slice(0, 10); // Limit to 10 suggestions
   };
 
   // 🔥 NEW: Handle sort changes from table
@@ -863,6 +926,113 @@ export default function UsersListPage() {
 
           <UserStats users={allUsers} />
 
+          {/* 🔍 Search Bar - Redesigned */}
+          <div className="mb-6">
+            <div className="relative max-w-3xl mx-auto" ref={searchContainerRef}>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-primary1" />
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  onFocus={() => setShowSearchSuggestions(searchQuery.length > 0)}
+                  placeholder="Search users by name, student number, role, or year level..."
+                  className="w-full pl-14 pr-14 py-4 font-raleway text-base text-gray-900 placeholder-gray-500 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-primary1 transition-all duration-300 shadow-sm hover:shadow-md"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-primary1 transition-colors"
+                    title="Clear search"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+              
+              {/* Search Suggestions Dropdown - Redesigned */}
+              {showSearchSuggestions && searchQuery.length > 0 && (
+                <div className="absolute z-50 mt-3 w-full bg-white rounded-xl shadow-2xl border border-gray-200 max-h-[32rem] overflow-hidden">
+                  {getSearchSuggestions().length > 0 ? (
+                    <>
+                      <div className="px-5 py-3 bg-gradient-to-r from-primary1/5 to-primary1/10 border-b border-gray-200">
+                        <p className="font-raleway text-sm font-semibold text-primary3">
+                          Found {getSearchSuggestions().length} result{getSearchSuggestions().length !== 1 ? 's' : ''}
+                          {getSearchSuggestions().length === 10 && ' (showing top 10)'}
+                        </p>
+                      </div>
+                      <div className="overflow-y-auto max-h-[28rem]">
+                        {getSearchSuggestions().map((user, index) => (
+                          <div
+                            key={user.id}
+                            onClick={() => {
+                              handleViewUser(user);
+                              setShowSearchSuggestions(false);
+                            }}
+                            className="px-5 py-4 hover:bg-primary1/5 cursor-pointer transition-all duration-200 border-b border-gray-100 last:border-0 group"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-1">
+                                  <h4 className="font-raleway font-bold text-base text-gray-900 truncate group-hover:text-primary1 transition-colors">
+                                    {user.fullName}
+                                  </h4>
+                                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${user.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="font-raleway text-sm text-gray-600 font-medium">
+                                    {user.studentNumber}
+                                  </span>
+                                  <span className="text-gray-400">•</span>
+                                  <span className="font-raleway text-sm text-gray-600 capitalize">
+                                    {user.role.replace('-', ' ')}
+                                  </span>
+                                  {user.yearLevel && (
+                                    <>
+                                      <span className="text-gray-400">•</span>
+                                      <span className="font-raleway text-sm text-gray-600">
+                                        Year {user.yearLevel}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex-shrink-0">
+                                {user.membershipStatus.isMember ? (
+                                  <span className="inline-block px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-raleway font-bold rounded-full uppercase tracking-wide shadow-sm">
+                                    {user.membershipStatus.membershipType || 'Member'}
+                                  </span>
+                                ) : (
+                                  <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-raleway font-semibold rounded-full">
+                                    Non-Member
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="px-5 py-12 text-center">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                        <Search className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="font-raleway text-base font-semibold text-gray-700 mb-1">
+                        No users found
+                      </p>
+                      <p className="font-raleway text-sm text-gray-500">
+                        Try searching with a different keyword
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
             <button
               onClick={handleExport}
@@ -904,6 +1074,8 @@ export default function UsersListPage() {
             sortField={sortField}
             sortDirection={sortDirection}
             onSortChange={handleSortChange}
+            searchQuery={searchQuery}
+            onClearSearch={handleClearSearch}
           />
 
           {totalPages > 1 && (
