@@ -52,7 +52,7 @@ const MembershipCard: FC<MembershipCardProps> = ({
 
   const cardClasses = `
     flex flex-col rounded-3xl p-8 h-full border relative
-    bg-slate-900/50 backdrop-blur-xl transition-all duration-300
+    bg-slate-900 transition-all duration-300 // CHANGED: Replaced semi-transparent bg with solid bg
     ${
       isHighlighted
         ? `border-slate-700 shadow-2xl ${currentAccent.shadow}`
@@ -63,8 +63,10 @@ const MembershipCard: FC<MembershipCardProps> = ({
   const buttonClasses = `
     mt-auto w-full rounded-lg py-3 font-rubik font-semibold text-lg flex items-center justify-center gap-2
     transition-all duration-300 border border-slate-700 text-slate-200
-    hover:border-slate-500 hover:bg-slate-800/50 hover:text-white
-    ${isHighlighted ? `bg-slate-800/50` : "bg-slate-900/30"}
+    hover:border-slate-500 hover:bg-slate-800/50 text-white
+    ${
+      isHighlighted ? `bg-slate-800` : "bg-slate-900 border-slate-800"
+    } // CHANGED: Made button backgrounds solid
   `;
 
   return (
