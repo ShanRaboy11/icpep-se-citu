@@ -1,14 +1,14 @@
-// app/membership/page.tsx
 "use client";
 
 import Header from "../components/header";
 import Footer from "../components/footer";
 import Grid from "../components/grid";
 import MembershipCard from "./components/membership-card";
+import InteractiveCta from "./components/cta";
 import { User, Globe, Zap, ArrowRight } from "lucide-react";
-import { useRef, type FC, type ReactNode, type MouseEvent } from "react";
+import { type FC, type ReactNode } from "react";
 
-// Define the type for a single membership tier
+// define the type for a single membership tier
 interface MembershipTier {
   planLabel: string;
   title: string;
@@ -20,81 +20,6 @@ interface MembershipTier {
   icon: ReactNode;
   buttonIcon: ReactNode;
 }
-
-// Interactive CTA where the effect only triggers on title hover
-const InteractiveCta = () => {
-  const textRef = useRef<HTMLHeadingElement | null>(null);
-
-  const handleMouseMove = (e: MouseEvent<HTMLHeadingElement>) => {
-    const textElement = textRef.current;
-    if (!textElement) return;
-
-    const { left, top } = textElement.getBoundingClientRect();
-    const x = e.clientX - left;
-    const y = e.clientY - top;
-
-    textElement.style.setProperty("--mouse-x", `${x}px`);
-    textElement.style.setProperty("--mouse-y", `${y}px`);
-    textElement.style.setProperty("--opacity", "1");
-  };
-
-  const handleMouseLeave = () => {
-    const textElement = textRef.current;
-    if (textElement) {
-      textElement.style.setProperty("--opacity", "0");
-    }
-  };
-
-  return (
-    // Increased top margin to mt-40
-    <div className="relative text-center max-w-full mx-auto mt-40 py-16">
-      <h2
-        ref={textRef}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        className="font-rubik text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-primary3 relative cursor-default"
-        style={
-          {
-            "--mouse-x": "50%",
-            "--mouse-y": "50%",
-            "--opacity": "0",
-          } as React.CSSProperties
-        }
-      >
-        <span
-          className="absolute inset-0 transition-opacity duration-500"
-          style={{
-            opacity: "var(--opacity)",
-            background:
-              "radial-gradient(250px circle at var(--mouse-x) var(--mouse-y), #10b981 0%, #06b6d4 100%)",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          Engineer Your Future!
-        </span>
-        Engineer Your Future!
-      </h2>
-
-      <p className="font-raleway text-gray-500 mt-8 mb-10 text-lg max-w-3xl mx-auto px-4">
-        Ready to elevate your journey? Choose your plan and start enjoying the
-        benefits today. The registration process is quick and easy.
-      </p>
-
-      <button
-        onClick={() =>
-          window.open("https://forms.gle/your-registration-form-link", "_blank")
-        }
-        className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 
-                   rounded-full transition-all duration-300 transform hover:scale-105 
-                   shadow-lg cursor-pointer"
-      >
-        Register Now
-      </button>
-    </div>
-  );
-};
 
 const MembershipPage: FC = () => {
   const membershipTiers: MembershipTier[] = [
@@ -179,13 +104,12 @@ const MembershipPage: FC = () => {
               <div className="w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
                 <MembershipCard {...membershipTiers[1]} />
               </div>
-              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
+              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:-translate-x-8">
                 <MembershipCard {...membershipTiers[2]} />
               </div>
             </div>
           </div>
 
-          {/* --- Final CTA Section: Replaced with the new Interactive CTA --- */}
           <InteractiveCta />
         </main>
         <Footer />
