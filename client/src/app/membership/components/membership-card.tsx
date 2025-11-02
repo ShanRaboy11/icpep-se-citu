@@ -1,4 +1,3 @@
-// app/membership/components/membership-card.tsx
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
@@ -39,12 +38,10 @@ const accentClasses: Record<
       "bg-transparent text-[#006fa1] border border-[#006fa1] hover:bg-[#006fa1]/15 hover:-translate-y-1",
   },
   sky: {
-    // --- ADJUSTED --- Darkened the base color one more step for final balance.
     text: "text-[#0073AD]",
     border: "border-sky-300",
     glow: "group-hover:shadow-[inset_0_0_15px_rgba(125,211,252,0.5)]",
     bg: "bg-gradient-to-b from-sky-50 to-sky-300",
-    // --- ADJUSTED --- Button colors updated to match the new darker shade.
     button:
       "bg-transparent text-[#0073AD] border border-[#0073AD] hover:bg-[#0073AD]/15 hover:-translate-y-1",
   },
@@ -52,7 +49,6 @@ const accentClasses: Record<
 
 const MembershipCard: FC<MembershipCardProps> = ({
   planLabel,
-  title,
   price,
   description,
   benefits,

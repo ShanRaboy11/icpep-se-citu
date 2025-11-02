@@ -1,4 +1,3 @@
-// app/membership/page.tsx
 "use client";
 
 import Header from "../components/header";
@@ -35,7 +34,7 @@ const MembershipPage: FC = () => {
         "Priority registration for local competitions.",
       ],
       isHighlighted: false,
-      accentColor: "steel", // Assign the 'steel' theme
+      accentColor: "steel",
       icon: <User size={24} />,
       buttonIcon: <ArrowRight size={20} />,
     },
@@ -51,7 +50,7 @@ const MembershipPage: FC = () => {
         "Exclusive 'members-only' networking channels.",
       ],
       isHighlighted: true,
-      accentColor: "primary", // Assign the 'primary' theme to the center card
+      accentColor: "primary",
       icon: <Zap size={24} />,
       buttonIcon: <Zap size={20} />,
     },
@@ -67,7 +66,7 @@ const MembershipPage: FC = () => {
         "Broad networking opportunities.",
       ],
       isHighlighted: false,
-      accentColor: "sky", // Assign the 'sky' theme
+      accentColor: "sky",
       icon: <Globe size={24} />,
       buttonIcon: <ArrowRight size={20} />,
     },
@@ -79,33 +78,17 @@ const MembershipPage: FC = () => {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
-          {/* Section header updated with your brand colors */}
           <div className="mb-20 text-center">
-            <div
-              className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-4"
-              style={{ backgroundColor: "var(--buttonbg1)" }}
-            >
-              <div
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: "var(--primary1)" }}
-              ></div>
-              <span
-                className="font-raleway text-sm font-semibold"
-                style={{ color: "var(--primary3)" }}
-              >
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+              <div className="h-2 w-2 rounded-full bg-primary1"></div>
+              <span className="font-raleway text-sm font-semibold text-primary1">
                 Join Our Community
               </span>
             </div>
-            <h1
-              className="font-rubik text-4xl sm:text-5xl font-bold leading-tight mb-4"
-              style={{ color: "var(--primary3)" }}
-            >
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
               Unlock Your Potential
             </h1>
-            <p
-              className="font-raleway text-base sm:text-lg max-w-3xl mx-auto"
-              style={{ color: "var(--bodytext)" }}
-            >
+            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
               Become a member and gain access to exclusive events, workshops,
               and resources designed to boost your career in computer
               engineering.

@@ -45,7 +45,7 @@ const InteractiveCta = () => {
           style={{
             opacity: "var(--opacity)",
             background:
-              "radial-gradient(250px circle at var(--mouse-x) var(--mouse-y), #10b981 0%, #06b6d4 100%)",
+              "radial-gradient(250px circle at var(--mouse-x) var(--mouse-y), #003599 0%, #04a6ef 100%)",
             WebkitBackgroundClip: "text",
             backgroundClip: "text",
             WebkitTextFillColor: "transparent",
