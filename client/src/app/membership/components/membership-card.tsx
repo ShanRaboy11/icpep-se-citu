@@ -24,7 +24,7 @@ const accentClasses: Record<
   primary: {
     text: "text-[#003599]",
     border: "border-blue-300",
-    glow: "group-hover:shadow-[inset_0_0_15px_rgba(147,197,253,0.5)]",
+    glow: "shadow-[inset_0_0_15px_rgba(147,197,253,0.5)] lg:shadow-none lg:group-hover:shadow-[inset_0_0_15px_rgba(147,197,253,0.5)]",
     bg: "bg-gradient-to-b from-blue-50 to-blue-300",
     button:
       "bg-[#003599] text-white shadow-lg shadow-blue-500/30 hover:bg-[#004ab3] hover:-translate-y-1",
@@ -32,23 +32,24 @@ const accentClasses: Record<
   steel: {
     text: "text-[#006fa1]",
     border: "border-cyan-300",
-    glow: "group-hover:shadow-[inset_0_0_15px_rgba(103,232,249,0.5)]",
+    glow: "shadow-[inset_0_0_15px_rgba(103,232,249,0.5)] lg:shadow-none lg:group-hover:shadow-[inset_0_0_15px_rgba(103,232,249,0.5)]",
     bg: "bg-gradient-to-b from-cyan-50 to-cyan-300",
     button:
-      "bg-transparent text-[#006fa1] border border-[#006fa1] hover:bg-[#006fa1]/15 hover:-translate-y-1",
+      "bg-[#006fa1] text-white shadow-lg shadow-cyan-500/30 lg:shadow-none lg:bg-transparent lg:text-[#006fa1] lg:border lg:border-[#006fa1] hover:-translate-y-1 lg:hover:bg-[#006fa1]/15",
   },
   sky: {
     text: "text-[#0073AD]",
     border: "border-sky-300",
-    glow: "group-hover:shadow-[inset_0_0_15px_rgba(125,211,252,0.5)]",
+    glow: "shadow-[inset_0_0_15px_rgba(125,211,252,0.5)] lg:shadow-none lg:group-hover:shadow-[inset_0_0_15px_rgba(125,211,252,0.5)]",
     bg: "bg-gradient-to-b from-sky-50 to-sky-300",
     button:
-      "bg-transparent text-[#0073AD] border border-[#0073AD] hover:bg-[#0073AD]/15 hover:-translate-y-1",
+      "bg-[#0073AD] text-white shadow-lg shadow-sky-500/30 lg:shadow-none lg:bg-transparent lg:text-[#0073AD] lg:border lg:border-[#0073AD] hover:-translate-y-1 lg:hover:bg-[#0073AD]/15",
   },
 };
 
 const MembershipCard: FC<MembershipCardProps> = ({
   planLabel,
+  title,
   price,
   description,
   benefits,
@@ -62,7 +63,7 @@ const MembershipCard: FC<MembershipCardProps> = ({
   const cardClasses = `
     flex flex-col rounded-3xl p-8 h-full border relative group
     transition-all duration-300 ${currentAccent.bg} ${currentAccent.border}
-    ${isHighlighted ? "shadow-xl" : "shadow-md"}
+    ${isHighlighted ? "shadow-md lg:shadow-xl" : "shadow-md"}
   `;
 
   const buttonClasses = `
@@ -72,7 +73,6 @@ const MembershipCard: FC<MembershipCardProps> = ({
 
   return (
     <div className={cardClasses}>
-      {/* Icon */}
       <div
         className={`absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 h-14 w-14 rounded-full border ${currentAccent.border} bg-white flex items-center justify-center`}
       >
@@ -83,7 +83,6 @@ const MembershipCard: FC<MembershipCardProps> = ({
         </div>
       </div>
 
-      {/* Plan label */}
       <div className="text-center mt-10 mb-6">
         <span
           className={`inline-block rounded-full border ${currentAccent.border} px-4 py-1 text-sm font-semibold ${currentAccent.text} font-raleway bg-white/60`}
@@ -92,7 +91,6 @@ const MembershipCard: FC<MembershipCardProps> = ({
         </span>
       </div>
 
-      {/* Price */}
       <div className="text-center mb-2">
         <span className="font-rubik text-5xl font-bold text-slate-900">
           {price}
@@ -100,12 +98,10 @@ const MembershipCard: FC<MembershipCardProps> = ({
         <span className="font-raleway text-slate-500 text-lg">/ year</span>
       </div>
 
-      {/* Description */}
       <p className="font-raleway text-[#373d47] text-center mb-8 h-10">
         {description}
       </p>
 
-      {/* Benefits */}
       <ul className="space-y-3 font-raleway text-[#373d47] flex-grow mb-8">
         {benefits.map((benefit, index) => (
           <li key={index} className="flex items-start gap-3">
@@ -117,7 +113,6 @@ const MembershipCard: FC<MembershipCardProps> = ({
         ))}
       </ul>
 
-      {/* Button */}
       <button className={buttonClasses}>
         {buttonIcon}
         <span>Get Started</span>

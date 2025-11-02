@@ -95,16 +95,20 @@ const MembershipPage: FC = () => {
             </p>
           </div>
 
-          {/* Cards */}
           <div className="w-full">
-            <div className="group flex flex-col lg:flex-row justify-center items-center gap-8 lg:pt-12">
-              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-8 group-hover:lg:-translate-x-8">
+            <div className="group flex flex-col lg:flex-row justify-center items-center gap-16 lg:gap-8 lg:pt-12">
+              {/* Student Card */}
+              <div className="order-2 lg:order-1 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-8 group-hover:lg:-translate-x-8">
                 <MembershipCard {...membershipTiers[0]} />
               </div>
-              <div className="w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
+
+              {/* All-Access Card */}
+              <div className="order-1 lg:order-2 w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
                 <MembershipCard {...membershipTiers[1]} />
               </div>
-              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
+
+              {/* National Card */}
+              <div className="order-3 lg:order-3 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
                 <MembershipCard {...membershipTiers[2]} />
               </div>
             </div>

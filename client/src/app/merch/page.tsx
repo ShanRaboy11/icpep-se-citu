@@ -85,7 +85,7 @@ const MerchPage: FC = () => {
               Wear Your Pride
             </h1>
             <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
-              Show your support for the ICPEP.SE CIT-U Chapter with our
+              Show your support for the ICPEP SE CIT-U Chapter with our
               exclusive collection of high-quality merchandise.
             </p>
           </div>
