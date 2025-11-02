@@ -1,15 +1,13 @@
-// app/membership/page.tsx
 "use client";
 
 import Header from "../components/header";
 import Footer from "../components/footer";
 import Grid from "../components/grid";
 import MembershipCard from "./components/membership-card";
-import InteractiveCta from "./components/cta"; // Corrected path
+import InteractiveCta from "./components/cta";
 import { User, Globe, Zap, ArrowRight } from "lucide-react";
 import { type FC, type ReactNode } from "react";
 
-// NOTE: accentColor type now uses 'indigo'
 interface MembershipTier {
   planLabel: string;
   title: string;
@@ -36,7 +34,7 @@ const MembershipPage: FC = () => {
         "Priority registration for local competitions.",
       ],
       isHighlighted: false,
-      accentColor: "indigo", // Changed from 'cyanLight'
+      accentColor: "indigo",
       icon: <User size={24} />,
       buttonIcon: <ArrowRight size={20} />,
     },
@@ -80,14 +78,16 @@ const MembershipPage: FC = () => {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
+          {/* Section header */}
           <div className="mb-20 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-              <div className="h-2 w-2 rounded-full bg-primary1"></div>
-              <span className="font-raleway text-sm font-semibold text-primary1">
+            {/* THEME SWAP: Text and background colors updated for light mode */}
+            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-100 px-3 py-1 mb-4">
+              <div className="h-2 w-2 rounded-full bg-indigo-500"></div>
+              <span className="font-raleway text-sm font-semibold text-indigo-600">
                 Join Our Community
               </span>
             </div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-slate-900 leading-tight mb-4">
               Unlock Your Potential
             </h1>
             <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
@@ -97,6 +97,7 @@ const MembershipPage: FC = () => {
             </p>
           </div>
 
+          {/* Cards */}
           <div className="w-full">
             <div className="group flex flex-col lg:flex-row justify-center items-center gap-8 lg:pt-12">
               <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-8 group-hover:lg:-translate-x-8">
@@ -105,7 +106,7 @@ const MembershipPage: FC = () => {
               <div className="w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
                 <MembershipCard {...membershipTiers[1]} />
               </div>
-              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:-translate-x-8">
+              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
                 <MembershipCard {...membershipTiers[2]} />
               </div>
             </div>

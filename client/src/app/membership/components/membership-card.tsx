@@ -1,10 +1,8 @@
-// app/membership/components/membership-card.tsx
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
 import type { FC, ReactNode } from "react";
 
-// THE FIX: Replaced 'cyanLight' with a more distinct 'indigo'
 type AccentColor = "indigo" | "cyanDark" | "green";
 
 interface MembershipCardProps {
@@ -19,28 +17,31 @@ interface MembershipCardProps {
   buttonIcon: ReactNode;
 }
 
+// THEME SWAP: All colors updated for a light mode theme.
 const accentClasses: Record<
   AccentColor,
-  { text: string; border: string; glow: string; bg: string }
+  { text: string; border: string; glow: string; bg: string; buttonBg: string }
 > = {
-  // New indigo theme
   indigo: {
-    text: "text-indigo-400",
-    border: "border-indigo-500/60",
-    glow: "group-hover:shadow-[inset_0_0_15px_rgba(129,140,248,0.6)]",
-    bg: "bg-gradient-to-b from-indigo-950 to-slate-950",
+    text: "text-indigo-600",
+    border: "border-indigo-200",
+    glow: "group-hover:shadow-[inset_0_0_15px_rgba(99,102,241,0.4)]",
+    bg: "bg-gradient-to-b from-slate-50 to-indigo-100",
+    buttonBg: "bg-indigo-500 hover:bg-indigo-600 text-white",
   },
   cyanDark: {
-    text: "text-cyan-500",
-    border: "border-cyan-600/60",
-    glow: "group-hover:shadow-[inset_0_0_15px_rgba(6,182,212,0.6)]",
-    bg: "bg-gradient-to-b from-cyan-950 to-slate-950",
+    text: "text-cyan-600",
+    border: "border-cyan-200",
+    glow: "group-hover:shadow-[inset_0_0_15px_rgba(8,145,178,0.4)]",
+    bg: "bg-gradient-to-b from-slate-50 to-cyan-100",
+    buttonBg: "bg-cyan-600 hover:bg-cyan-700 text-white",
   },
   green: {
-    text: "text-green-400",
-    border: "border-green-500/60",
-    glow: "group-hover:shadow-[inset_0_0_15px_rgba(34,197,94,0.6)]",
-    bg: "bg-gradient-to-b from-green-950 to-slate-950",
+    text: "text-green-600",
+    border: "border-green-200",
+    glow: "group-hover:shadow-[inset_0_0_15px_rgba(22,163,74,0.4)]",
+    bg: "bg-gradient-to-b from-slate-50 to-green-100",
+    buttonBg: "bg-green-500 hover:bg-green-600 text-white",
   },
 };
 
@@ -60,47 +61,51 @@ const MembershipCard: FC<MembershipCardProps> = ({
   const cardClasses = `
     flex flex-col rounded-3xl p-8 h-full border relative group
     transition-all duration-300 ${currentAccent.bg} ${currentAccent.border}
+    ${isHighlighted ? "shadow-xl" : "shadow-md"}
   `;
 
   const buttonClasses = `
     mt-auto w-full rounded-lg py-3 font-rubik font-semibold text-lg flex items-center justify-center gap-2
-    transition-all duration-300 border border-slate-700 text-slate-200
-    hover:border-slate-500 hover:bg-slate-800/50 cursor-pointer
-    ${isHighlighted ? `bg-slate-800` : "bg-slate-900 border-slate-800"}
+    transition-all duration-300 cursor-pointer ${currentAccent.buttonBg}
   `;
 
   return (
     <div className={cardClasses}>
+      {/* Icon container */}
       <div
-        className={`absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 h-14 w-14 rounded-full border ${currentAccent.border} bg-slate-900 flex items-center justify-center`}
+        className={`absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 h-14 w-14 rounded-full border ${currentAccent.border} bg-white flex items-center justify-center`}
       >
         <div
-          className={`h-12 w-12 rounded-full flex items-center justify-center ${currentAccent.text} bg-slate-950 transition-shadow duration-300 ${currentAccent.glow}`}
+          className={`h-12 w-12 rounded-full flex items-center justify-center ${currentAccent.text} bg-slate-50 transition-shadow duration-300 ${currentAccent.glow}`}
         >
           {icon}
         </div>
       </div>
 
+      {/* Plan label */}
       <div className="text-center mt-10 mb-6">
         <span
-          className={`inline-block rounded-full border ${currentAccent.border} px-4 py-1 text-sm font-semibold ${currentAccent.text} font-raleway`}
+          className={`inline-block rounded-full border ${currentAccent.border} px-4 py-1 text-sm font-semibold ${currentAccent.text} font-raleway bg-white/50`}
         >
           {planLabel}
         </span>
       </div>
 
+      {/* Price */}
       <div className="text-center mb-2">
-        <span className="font-rubik text-5xl font-bold text-slate-100">
+        <span className="font-rubik text-5xl font-bold text-slate-900">
           {price}
         </span>
-        <span className="font-raleway text-slate-400 text-lg">/ year</span>
+        <span className="font-raleway text-slate-500 text-lg">/ year</span>
       </div>
 
-      <p className="font-raleway text-slate-400 text-center mb-8 h-10">
+      {/* Description */}
+      <p className="font-raleway text-slate-600 text-center mb-8 h-10">
         {description}
       </p>
 
-      <ul className="space-y-3 font-raleway text-slate-300 flex-grow mb-8">
+      {/* Benefits */}
+      <ul className="space-y-3 font-raleway text-slate-700 flex-grow mb-8">
         {benefits.map((benefit, index) => (
           <li key={index} className="flex items-start gap-3">
             <CheckCircle2
@@ -111,11 +116,13 @@ const MembershipCard: FC<MembershipCardProps> = ({
         ))}
       </ul>
 
+      {/* Button */}
       <button className={buttonClasses}>
         {buttonIcon}
         <span>Get Started</span>
       </button>
 
+      {/* Highlight note */}
       {isHighlighted && (
         <div className="text-center mt-4">
           <span className="font-raleway text-xs text-slate-500">
