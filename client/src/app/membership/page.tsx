@@ -8,7 +8,6 @@ import InteractiveCta from "./components/cta";
 import { User, Globe, Zap, ArrowRight } from "lucide-react";
 import { type FC, type ReactNode } from "react";
 
-// define the type for a single membership tier
 interface MembershipTier {
   planLabel: string;
   title: string;
@@ -26,7 +25,7 @@ const MembershipPage: FC = () => {
     {
       planLabel: "Student",
       title: "Student Chapter",
-      price: "₱50",
+      price: "₱160",
       description: "For active students within the CIT-U chapter.",
       benefits: [
         "Access to exclusive local workshops & seminars.",
@@ -42,7 +41,7 @@ const MembershipPage: FC = () => {
     {
       planLabel: "All-Access",
       title: "All-Access Pass",
-      price: "₱300",
+      price: "₱290",
       description: "The complete package for the dedicated student.",
       benefits: [
         "Includes ALL Student and National benefits.",
@@ -58,7 +57,7 @@ const MembershipPage: FC = () => {
     {
       planLabel: "National",
       title: "National Membership",
-      price: "₱280",
+      price: "₱150",
       description: "Connect with the nationwide ICPEP.SE community.",
       benefits: [
         "Official Certificate of Membership.",
@@ -104,7 +103,7 @@ const MembershipPage: FC = () => {
               <div className="w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
                 <MembershipCard {...membershipTiers[1]} />
               </div>
-              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:-translate-x-8">
+              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
                 <MembershipCard {...membershipTiers[2]} />
               </div>
             </div>
