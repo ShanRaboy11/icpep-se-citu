@@ -31,7 +31,7 @@ const InteractiveCta = () => {
         ref={textRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
-        className="font-rubik text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-primary3 relative cursor-default"
+        className="font-rubik text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-extrabold text-primary3 relative cursor-default"
         style={
           {
             "--mouse-x": "50%",

@@ -5,7 +5,12 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
 interface MenuProps {
-  userRole: "guest" | "student" | "council-officer" | "committee-officer" | "faculty";
+  userRole:
+    | "guest"
+    | "student"
+    | "council-officer"
+    | "committee-officer"
+    | "faculty";
   onExit: () => void;
 }
 
@@ -48,7 +53,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
 
   if (userRole === "council-officer") {
     submenus.Commeet = ["Lettucemeet", "Schedule"];
-    submenus.Users = ["User Management"]; 
+    submenus.Users = ["User Management"];
   }
 
   // Handle navigation for menu items
@@ -61,16 +66,15 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     } else if (item === "Events") {
       router.push("/events");
     } else if (item === "About") {
-      router.push("/about"); 
+      router.push("/about");
     } else if (item === "Membership") {
-      router.push("/membership"); 
+      router.push("/membership");
     } else if (item === "Commeet") {
-      router.push("/commeet"); 
+      router.push("/commeet");
     } else if (item === "Users") {
-      router.push("/users"); 
-    }
-     else {
-      console.log(`Navigate to /${item.toLowerCase().replace(/\s/g, '-')}`); // Basic fallback
+      router.push("/users");
+    } else {
+      console.log(`Navigate to /${item.toLowerCase().replace(/\s/g, "-")}`); // Basic fallback
       // Add other specific navigation logic here as needed
     }
   };
@@ -85,12 +89,22 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     } else if (parentItem === "Users" && submenuItem === "User Management") {
       router.push("/users/management"); // Example for a specific user management page
     } else if (parentItem === "Connect" && submenuItem === "Lettucemeet") {
-        router.push("/connect/lettucemeet"); // Example
+      router.push("/connect/lettucemeet"); // Example
+    } else if (
+      parentItem === "Membership" &&
+      submenuItem === "Membership details"
+    ) {
+      router.push("/membership"); // Example
+    } else if (parentItem === "Membership" && submenuItem === "Merch") {
+      router.push("/merch"); // Example
     }
     // Add more specific submenu navigation here
-    console.log(`Navigate to /${parentItem.toLowerCase().replace(/\s/g, '-')}/${submenuItem.toLowerCase().replace(/\s/g, '-')}`);
+    console.log(
+      `Navigate to /${parentItem
+        .toLowerCase()
+        .replace(/\s/g, "-")}/${submenuItem.toLowerCase().replace(/\s/g, "-")}`
+    );
   };
-
 
   // Cancel timeout when hovered changes (user re-enters)
   useEffect(() => {
@@ -197,7 +211,10 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
             onMouseLeave={handleMouseLeave}
           >
             {currentMenu && submenus[currentMenu]?.length > 0 && (
-              <div className="flex flex-col space-y-4" onMouseEnter={() => handleMouseEnter(currentMenu!)}>
+              <div
+                className="flex flex-col space-y-4"
+                onMouseEnter={() => handleMouseEnter(currentMenu!)}
+              >
                 {submenus[currentMenu].map((submenu) => (
                   <div
                     key={submenu}
