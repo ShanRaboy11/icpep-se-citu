@@ -17,18 +17,15 @@ const CommeetPage: FunctionComponent = () => {
   const handleDateClick = (day: number) => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    const dateKey = `${year}-${month + 1}-${day}`; // Format as YYYY-M-D
+    const dateKey = `${year}-${month + 1}-${day}`; 
 
-    // Check if the date is active before allowing selection
     const firstDayOfMonth = new Date(year, month, 1).getDay();
     const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
-    const prevMonthDays = new Date(year, month, 0).getDate();
 
-    let dayIndex = day + firstDayOfMonth - 1;
-    let actualDay = day;
+    const dayIndex = day + firstDayOfMonth - 1;
+    const actualDay = day;
 
     if (dayIndex < firstDayOfMonth) { // Previous month's inactive days
-      // This case is for the visual rendering, actual selection should prevent it.
       return;
     }
     if (day > totalDaysInMonth) { // Next month's inactive days
@@ -48,7 +45,6 @@ const CommeetPage: FunctionComponent = () => {
   };
 
 
-  // Added isSelected prop and onClick handler prop
   const renderDayCell = (
     day: string | number, 
     isHeader: boolean = false,
@@ -83,7 +79,6 @@ const CommeetPage: FunctionComponent = () => {
 
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  // Function to generate calendar days for the current month
   const generateCalendarDays = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -93,12 +88,10 @@ const CommeetPage: FunctionComponent = () => {
 
     const days = [];
 
-    // Add inactive days from the previous month
     for (let i = firstDayOfMonth - 1; i >= 0; i--) {
       days.push({ day: totalDaysInPrevMonth - i, inactive: true });
     }
 
-    // Add active days for the current month
     for (let i = 1; i <= totalDaysInMonth; i++) {
       days.push({ day: i, inactive: false });
     }
