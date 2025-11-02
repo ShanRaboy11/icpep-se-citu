@@ -1,82 +1,132 @@
 // app/membership/components/membership-card.tsx
 "use client";
 
-import { Check } from "lucide-react";
-import type { FC } from "react";
+import { CheckCircle2 } from "lucide-react";
+import type { FC, ReactNode } from "react";
 
-// Define the type for the component's props
+// Define a stricter type for accentColor for better type safety
+type AccentColor = "cyan" | "green";
+
+// Define the component's props
 interface MembershipCardProps {
+  planLabel: string;
   title: string;
   price: string;
   description: string;
   benefits: string[];
-  isHighlighted?: boolean; // isHighlighted is optional
+  isHighlighted?: boolean;
+  accentColor: AccentColor;
+  icon: ReactNode;
+  buttonIcon: ReactNode;
 }
 
+// Map accent colors to full Tailwind class names
+const accentClasses: Record<
+  AccentColor,
+  { text: string; shadow: string; border: string }
+> = {
+  cyan: {
+    text: "text-cyan-400",
+    shadow: "shadow-cyan-500/30",
+    border: "border-cyan-500/50",
+  },
+  green: {
+    text: "text-green-400",
+    shadow: "shadow-green-500/30",
+    border: "border-green-500/50",
+  },
+};
+
 const MembershipCard: FC<MembershipCardProps> = ({
+  planLabel,
   title,
   price,
   description,
   benefits,
   isHighlighted = false,
+  accentColor,
+  icon,
+  buttonIcon,
 }) => {
+  const currentAccent = accentClasses[accentColor];
+
   const cardClasses = `
-    flex flex-col rounded-2xl p-8 h-full border-2 relative
+    flex flex-col rounded-3xl p-8 h-full border relative
+    bg-slate-900/50 backdrop-blur-xl transition-all duration-300
     ${
       isHighlighted
-        ? "bg-primary1/5 border-primary1 shadow-lg"
-        : "bg-white border-gray-200"
+        ? `border-slate-700 shadow-2xl ${currentAccent.shadow}`
+        : "border-slate-800"
     }
-    transition-all duration-300 hover:shadow-xl hover:scale-[1.02]
   `;
 
   const buttonClasses = `
-    mt-8 w-full rounded-lg py-3 font-rubik font-semibold text-lg
-    transition-all duration-300
-    ${
-      isHighlighted
-        ? "bg-primary1 text-white hover:bg-primary1/90 shadow-md hover:shadow-lg"
-        : "bg-primary3 text-white hover:bg-primary3/90"
-    }
+    mt-auto w-full rounded-lg py-3 font-rubik font-semibold text-lg flex items-center justify-center gap-2
+    transition-all duration-300 border border-slate-700 text-slate-200
+    hover:border-slate-500 hover:bg-slate-800/50 hover:text-white
+    ${isHighlighted ? `bg-slate-800/50` : "bg-slate-900/30"}
   `;
 
   return (
     <div className={cardClasses}>
-      {isHighlighted && (
-        <div className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 w-max">
-          <span className="inline-block rounded-full bg-primary1 px-4 py-1 text-sm font-semibold text-white">
-            Best Value
-          </span>
+      {/* Top Icon - positioned relative to the card border */}
+      <div
+        className={`absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 h-14 w-14 rounded-full border ${currentAccent.border} bg-slate-900 flex items-center justify-center`}
+      >
+        <div
+          className={`h-12 w-12 rounded-full flex items-center justify-center ${currentAccent.text} shadow-inner bg-slate-950`}
+        >
+          {icon}
         </div>
-      )}
-      <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
-        {title}
-      </h3>
-      <p className="font-raleway text-gray-500 mb-6">{description}</p>
-
-      <div className="mb-6">
-        <span className="font-rubik text-5xl font-bold text-primary3">
-          {price}
-        </span>
-        <span className="font-raleway text-gray-500">/ academic year</span>
       </div>
 
-      <div className="border-t border-gray-200 my-4"></div>
+      {/* Plan Label */}
+      <div className="text-center mt-10 mb-6">
+        <span
+          className={`inline-block rounded-full border ${currentAccent.border} px-4 py-1 text-sm font-semibold ${currentAccent.text} font-raleway`}
+        >
+          {planLabel}
+        </span>
+      </div>
 
-      <ul className="space-y-3 font-raleway text-gray-700 flex-grow">
+      {/* Price */}
+      <div className="text-center mb-2">
+        <span className="font-rubik text-5xl font-bold text-slate-100">
+          {price}
+        </span>
+        <span className="font-raleway text-slate-400 text-lg">/ year</span>
+      </div>
+
+      {/* Description */}
+      <p className="font-raleway text-slate-400 text-center mb-8 h-10">
+        {description}
+      </p>
+
+      {/* Benefits List */}
+      <ul className="space-y-3 font-raleway text-slate-300 flex-grow mb-8">
         {benefits.map((benefit, index) => (
           <li key={index} className="flex items-start gap-3">
-            <Check
-              className={`h-6 w-6 flex-shrink-0 mt-0.5 ${
-                isHighlighted ? "text-primary1" : "text-green-500"
-              }`}
+            <CheckCircle2
+              className={`h-5 w-5 flex-shrink-0 mt-0.5 ${currentAccent.text}`}
             />
             <span>{benefit}</span>
           </li>
         ))}
       </ul>
 
-      <button className={buttonClasses}>Select Plan</button>
+      {/* Action Button */}
+      <button className={buttonClasses}>
+        {buttonIcon}
+        <span>Get Started</span>
+      </button>
+
+      {isHighlighted && (
+        <div className="text-center mt-4">
+          <span className="font-raleway text-xs text-slate-500">
+            The Ultimate Value Package
+          </span>
+        </div>
+      )}
     </div>
   );
 };

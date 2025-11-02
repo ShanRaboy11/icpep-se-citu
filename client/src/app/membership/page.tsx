@@ -1,62 +1,80 @@
 // app/membership/page.tsx
 "use client";
+
 import Header from "../components/header";
 import Footer from "../components/footer";
 import Grid from "../components/grid";
 import MembershipCard from "./components/membership-card";
-import type { FC } from "react";
+import { User, Globe, Zap, ArrowRight } from "lucide-react";
+import type { FC, ReactNode } from 'react';
 
-// Define the type for a single membership tier object
+// Define the type for a single membership tier
 interface MembershipTier {
+  planLabel: string;
   title: string;
   price: string;
   description: string;
   benefits: string[];
   isHighlighted: boolean;
+  accentColor: 'cyan' | 'green';
+  icon: ReactNode;
+  buttonIcon: ReactNode;
 }
 
 const MembershipPage: FC = () => {
-  // Type the array of membership tiers for type safety
   const membershipTiers: MembershipTier[] = [
     {
+      planLabel: "Student",
       title: "Student Chapter",
       price: "₱50",
-      description: "Ideal for students active within the CIT-U chapter.",
+      description: "For active students within the CIT-U chapter.",
       benefits: [
-        "Access to exclusive local workshops and seminars.",
-        "Discounts on all chapter-led events and merchandise.",
-        "Opportunity to hold leadership roles within the chapter.",
-        "Priority registration for local hackathons and competitions.",
+        "Access to exclusive local workshops & seminars.",
+        "Discounts on chapter-led events and merchandise.",
+        "Opportunity to hold leadership roles in the chapter.",
+        "Priority registration for local competitions.",
       ],
       isHighlighted: false,
+      accentColor: "cyan",
+      icon: <User size={24} />,
+      buttonIcon: <ArrowRight size={20} />,
     },
     {
-      title: "Combined National + Student",
+      planLabel: "All-Access",
+      title: "All-Access Pass",
       price: "₱300",
       description: "The complete package for the dedicated student.",
       benefits: [
-        "Includes ALL benefits from Student and National tiers.",
-        "Significant savings compared to separate memberships.",
-        "Highest priority for limited-slot events and workshops.",
-        "Exclusive access to 'members-only' networking channels.",
+        "Includes ALL Student and National benefits.",
+        "Significant savings over separate memberships.",
+        "Highest priority for limited-slot events.",
+        "Exclusive 'members-only' networking channels.",
       ],
       isHighlighted: true,
+      accentColor: "green",
+      icon: <Zap size={24} />,
+      buttonIcon: <Zap size={20} />,
     },
     {
+      planLabel: "National",
       title: "National Membership",
       price: "₱280",
       description: "Connect with the nationwide ICPEP.SE community.",
       benefits: [
-        "Official recognition and Certificate of Membership.",
+        "Official Certificate of Membership.",
         "Access to nationwide conventions and events.",
-        "Digital subscription to the national ICPEP.SE journal.",
-        "Networking opportunities with professionals and students nationwide.",
+        "Digital subscription to the national journal.",
+        "Broad networking opportunities.",
       ],
       isHighlighted: false,
+      accentColor: "cyan",
+      icon: <Globe size={24} />,
+      buttonIcon: <ArrowRight size={20} />,
     },
   ];
 
   return (
+    // Structure now mirrors DevelopersPage exactly for a full-page grid background
     <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
       <Grid />
 
@@ -66,46 +84,44 @@ const MembershipPage: FC = () => {
         <main className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 w-full flex-grow">
           {/* --- Page Title Section --- */}
           <div className="mb-20 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/20 px-3 py-1 mb-4">
               <div className="h-2 w-2 rounded-full bg-primary1"></div>
               <span className="font-raleway text-sm font-semibold text-primary1">
                 Join Our Community
               </span>
             </div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+            {/* Text colors changed to be light for readability on dark grid */}
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-slate-100 leading-tight mb-4">
               Unlock Your Potential
             </h1>
-            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
-              Become a member of ICPEP.SE CIT-U Chapter and gain access to
-              exclusive events, workshops, networking opportunities, and
-              resources designed to boost your career in computer engineering.
+            <p className="font-raleway text-slate-300 text-base sm:text-lg max-w-3xl mx-auto">
+              Become a member and gain access to exclusive events, workshops, and resources designed to boost your career in computer engineering.
             </p>
           </div>
 
-          {/* --- Membership Tiers Grid --- */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-y-12 gap-x-8 items-stretch max-w-6xl mx-auto mb-24">
-            {membershipTiers.map((tier, index) => (
-              <MembershipCard key={index} {...tier} />
-            ))}
+          {/* --- Membership Tiers Section --- */}
+          <div className="w-full">
+            <div className="group flex flex-col lg:flex-row justify-center items-center gap-8 lg:pt-12">
+              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-8 group-hover:lg:-translate-x-8">
+                <MembershipCard {...membershipTiers[0]} />
+              </div>
+              <div className="w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
+                 <MembershipCard {...membershipTiers[1]} />
+              </div>
+              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
+                 <MembershipCard {...membershipTiers[2]} />
+              </div>
+            </div>
           </div>
-
+          
           {/* --- Final CTA Section --- */}
-          <div className="text-center bg-gray-50 rounded-2xl p-10 max-w-4xl mx-auto">
-            <h2 className="font-rubik text-3xl font-bold text-primary3 mb-4">
-              Ready to Elevate Your Journey?
-            </h2>
-            <p className="font-raleway text-gray-600 mb-8 max-w-2xl mx-auto">
-              Choose your plan and start enjoying the benefits of being an
-              ICPEP.SE member today. The registration process is quick and easy.
+          <div className="text-center bg-slate-900/50 backdrop-blur-xl rounded-2xl p-10 max-w-4xl mx-auto mt-24">
+            <h2 className="font-rubik text-3xl font-bold text-slate-100 mb-4">Ready to Elevate Your Journey?</h2>
+            <p className="font-raleway text-slate-300 mb-8 max-w-2xl mx-auto">
+                Choose your plan and start enjoying the benefits today. The registration process is quick and easy.
             </p>
             <button
-              onClick={() => {
-                // You can replace this with your actual registration form link
-                window.open(
-                  "https://forms.gle/your-registration-form-link",
-                  "_blank"
-                );
-              }}
+              onClick={() => window.open("https://forms.gle/your-registration-form-link", "_blank")}
               className="inline-block bg-primary1 text-white font-rubik font-bold text-lg px-8 py-4 rounded-lg
                          transition-all duration-300 ease-in-out
                          hover:bg-primary1/90 hover:shadow-lg transform hover:-translate-y-1"
