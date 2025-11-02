@@ -1,82 +1,103 @@
 "use client";
 
-import { CheckCircle2, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import type { FC } from "react";
-import Image from "next/image";
+import Link from "next/link";
+
+type MerchStatus = "Available" | "Coming Soon" | "Sold Out";
 
 interface MerchCardProps {
   name: string;
-  imageSrc: string;
+  slug: string;
   price: string;
   description: string;
-  features: string[];
-  buyLink: string;
-  isAvailable: boolean;
+  status: MerchStatus;
 }
 
 const MerchCard: FC<MerchCardProps> = ({
   name,
-  imageSrc,
+  slug,
   price,
   description,
-  features,
-  buyLink,
-  isAvailable,
+  status,
 }) => {
+  const getStatusInfo = () => {
+    switch (status) {
+      case "Coming Soon":
+        return { overlayText: "Coming Soon", showOverlay: true };
+      case "Sold Out":
+        return { overlayText: "Sold Out", showOverlay: true };
+      default:
+        return { overlayText: "", showOverlay: false };
+    }
+  };
+
+  const { overlayText, showOverlay } = getStatusInfo();
+
   return (
-    <div className="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden h-full">
-      {/* Image */}
-      <div className="relative w-full aspect-square bg-slate-100">
-        <Image src={imageSrc} alt={name} fill className="object-cover" />
-        {!isAvailable && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+    <Link
+      href={status === "Available" ? `/merch/${slug}` : "#"}
+      onClick={(e) => status !== "Available" && e.preventDefault()}
+      className={`group flex flex-col rounded-2xl border border-slate-200 bg-white shadow-md transition-all duration-300 hover:shadow-primary1/40 hover:-translate-y-1 overflow-hidden h-full ${
+        status === "Coming Soon" ? "cursor-default" : ""
+      }`}
+    >
+      <div className="relative w-full aspect-square bg-slate-100 overflow-hidden rounded-t-2xl">
+        <img
+          src="/gle.png"
+          alt={name}
+          className="absolute inset-0 h-full w-full object-cover rounded-t-2xl transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
+        />
+
+        {showOverlay && (
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-t-2xl">
             <span className="bg-slate-900 text-white px-4 py-2 rounded-full font-semibold font-raleway">
-              Coming Soon
+              {overlayText}
             </span>
           </div>
         )}
       </div>
 
-      {/* Content */}
       <div className="p-6 flex flex-col flex-grow">
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-rubik font-bold text-xl text-primary3">{name}</h3>
-          <span className="font-rubik font-semibold text-lg text-primary1 whitespace-nowrap ml-4">
+          <span className="font-rubik font-semibold text-xl text-primary1 whitespace-nowrap ml-4">
             {price}
           </span>
         </div>
-        <p className="font-raleway text-gray-600 mb-4 text-sm">{description}</p>
 
-        {/* Features */}
-        <ul className="space-y-2 font-raleway text-gray-700 flex-grow mb-6 text-sm">
-          {features.map((feature, index) => (
-            <li key={index} className="flex items-start gap-3">
-              <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5 text-primary1" />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
+        <p className="font-raleway text-gray-600 mb-4 text-sm flex-grow">
+          {description}
+        </p>
 
-        {/* Buy Button */}
-        <a
-          href={isAvailable ? buyLink : undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`
-            mt-auto w-full rounded-lg py-3 font-rubik font-semibold text-base flex items-center justify-center gap-2
-            transform transition-all duration-300 cursor-pointer
-            ${
-              isAvailable
-                ? "bg-primary1 text-white hover:bg-primary2"
-                : "bg-slate-200 text-slate-500 cursor-not-allowed"
-            }
-          `}
-        >
-          <ShoppingBag size={18} />
-          <span>{isAvailable ? "Buy Now" : "Unavailable"}</span>
-        </a>
+        <div className="relative mt-auto w-full h-[48px] font-rubik font-semibold text-base overflow-hidden rounded-lg">
+          {status !== "Available" ? (
+            <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500 cursor-pointer">
+              <span>{status === "Sold Out" ? "Sold Out" : "Coming Soon"}</span>
+            </div>
+          ) : (
+            <div className="relative w-full h-full">
+              <div className="absolute top-0 left-0 h-full w-[calc(100%-56px)] rounded-lg bg-primary1 text-white flex items-center transform group-hover:translate-x-[56px] transition-transform duration-500 ease-out">
+                <span className="px-5 text-left w-full">View Item</span>
+              </div>
+
+              <div className="absolute top-0 right-0 h-full w-[48px] rounded-lg bg-primary1 text-white flex items-center justify-center transform group-hover:translate-x-[56px] transition-transform duration-500 ease-out overflow-hidden">
+                <div className="w-full h-full flex items-center justify-center bg-black/10">
+                  <ShoppingBag size={18} />
+                </div>
+              </div>
+
+              <div className="absolute top-0 left-0 h-full w-[48px] rounded-lg bg-primary1 text-white flex items-center justify-center transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out overflow-hidden">
+                <div className="w-full h-full flex items-center justify-center bg-black/10">
+                  <ShoppingBag size={18} />
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </Link>
   );
 };
 
