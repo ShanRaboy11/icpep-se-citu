@@ -1,9 +1,11 @@
+// app/membership/components/membership-card.tsx
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
 import type { FC, ReactNode } from "react";
 
-type AccentColor = "cyan" | "green";
+// THE FIX: Replaced 'cyanLight' with a more distinct 'indigo'
+type AccentColor = "indigo" | "cyanDark" | "green";
 
 interface MembershipCardProps {
   planLabel: string;
@@ -19,24 +21,32 @@ interface MembershipCardProps {
 
 const accentClasses: Record<
   AccentColor,
-  { text: string; shadow: string; border: string; glow: string }
+  { text: string; border: string; glow: string; bg: string }
 > = {
-  cyan: {
-    text: "text-cyan-400",
-    shadow: "shadow-cyan-500/30",
-    border: "border-cyan-500/50",
-    glow: "group-hover:shadow-[0_0_15px_3px] group-hover:shadow-cyan-400/40",
+  // New indigo theme
+  indigo: {
+    text: "text-indigo-400",
+    border: "border-indigo-500/60",
+    glow: "group-hover:shadow-[inset_0_0_15px_rgba(129,140,248,0.6)]",
+    bg: "bg-gradient-to-b from-indigo-950 to-slate-950",
+  },
+  cyanDark: {
+    text: "text-cyan-500",
+    border: "border-cyan-600/60",
+    glow: "group-hover:shadow-[inset_0_0_15px_rgba(6,182,212,0.6)]",
+    bg: "bg-gradient-to-b from-cyan-950 to-slate-950",
   },
   green: {
     text: "text-green-400",
-    shadow: "shadow-green-500/30",
-    border: "border-green-500/50",
-    glow: "group-hover:shadow-[0_0_15px_3px] group-hover:shadow-green-400/40",
+    border: "border-green-500/60",
+    glow: "group-hover:shadow-[inset_0_0_15px_rgba(34,197,94,0.6)]",
+    bg: "bg-gradient-to-b from-green-950 to-slate-950",
   },
 };
 
 const MembershipCard: FC<MembershipCardProps> = ({
   planLabel,
+  title,
   price,
   description,
   benefits,
@@ -45,16 +55,11 @@ const MembershipCard: FC<MembershipCardProps> = ({
   icon,
   buttonIcon,
 }) => {
-  const currentAccent = accentClasses[accentColor];
+  const currentAccent = accentClasses[accentColor] || accentClasses.cyanDark;
 
   const cardClasses = `
     flex flex-col rounded-3xl p-8 h-full border relative group
-    transition-all duration-300
-    ${
-      isHighlighted
-        ? `border-slate-700 shadow-2xl ${currentAccent.shadow} bg-gradient-to-b from-slate-900 to-slate-800`
-        : "border-slate-800 bg-gradient-to-b from-slate-950 to-slate-900"
-    }
+    transition-all duration-300 ${currentAccent.bg} ${currentAccent.border}
   `;
 
   const buttonClasses = `
@@ -67,10 +72,10 @@ const MembershipCard: FC<MembershipCardProps> = ({
   return (
     <div className={cardClasses}>
       <div
-        className={`absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 h-14 w-14 rounded-full border ${currentAccent.border} bg-slate-900 flex items-center justify-center transition-shadow duration-300 ${currentAccent.glow}`}
+        className={`absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 h-14 w-14 rounded-full border ${currentAccent.border} bg-slate-900 flex items-center justify-center`}
       >
         <div
-          className={`h-12 w-12 rounded-full flex items-center justify-center ${currentAccent.text} shadow-inner bg-slate-950`}
+          className={`h-12 w-12 rounded-full flex items-center justify-center ${currentAccent.text} bg-slate-950 transition-shadow duration-300 ${currentAccent.glow}`}
         >
           {icon}
         </div>

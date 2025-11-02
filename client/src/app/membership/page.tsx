@@ -1,13 +1,15 @@
+// app/membership/page.tsx
 "use client";
 
 import Header from "../components/header";
 import Footer from "../components/footer";
 import Grid from "../components/grid";
 import MembershipCard from "./components/membership-card";
-import InteractiveCta from "./components/cta";
+import InteractiveCta from "./components/cta"; // Corrected path
 import { User, Globe, Zap, ArrowRight } from "lucide-react";
 import { type FC, type ReactNode } from "react";
 
+// NOTE: accentColor type now uses 'indigo'
 interface MembershipTier {
   planLabel: string;
   title: string;
@@ -15,7 +17,7 @@ interface MembershipTier {
   description: string;
   benefits: string[];
   isHighlighted: boolean;
-  accentColor: "cyan" | "green";
+  accentColor: "indigo" | "cyanDark" | "green";
   icon: ReactNode;
   buttonIcon: ReactNode;
 }
@@ -34,7 +36,7 @@ const MembershipPage: FC = () => {
         "Priority registration for local competitions.",
       ],
       isHighlighted: false,
-      accentColor: "cyan",
+      accentColor: "indigo", // Changed from 'cyanLight'
       icon: <User size={24} />,
       buttonIcon: <ArrowRight size={20} />,
     },
@@ -66,7 +68,7 @@ const MembershipPage: FC = () => {
         "Broad networking opportunities.",
       ],
       isHighlighted: false,
-      accentColor: "cyan",
+      accentColor: "cyanDark",
       icon: <Globe size={24} />,
       buttonIcon: <ArrowRight size={20} />,
     },
@@ -103,7 +105,7 @@ const MembershipPage: FC = () => {
               <div className="w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
                 <MembershipCard {...membershipTiers[1]} />
               </div>
-              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
+              <div className="w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:-translate-x-8">
                 <MembershipCard {...membershipTiers[2]} />
               </div>
             </div>
