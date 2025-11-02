@@ -6,7 +6,7 @@ import Footer from "../components/footer";
 import Grid from "../components/grid";
 import MembershipCard from "./components/membership-card";
 import { User, Globe, Zap, ArrowRight } from "lucide-react";
-import { useRef, useEffect, type FC, type ReactNode } from "react"; // Added useRef and useEffect
+import { useRef, type FC, type ReactNode, type MouseEvent } from "react";
 
 // Define the type for a single membership tier
 interface MembershipTier {
@@ -21,64 +21,74 @@ interface MembershipTier {
   buttonIcon: ReactNode;
 }
 
-// NEW: Self-contained component for the 3D Call-to-Action card
-const CtaCard = () => {
-  const cardRef = useRef<HTMLDivElement | null>(null);
+// Interactive CTA where the effect only triggers on title hover
+const InteractiveCta = () => {
+  const textRef = useRef<HTMLHeadingElement | null>(null);
 
-  useEffect(() => {
-    const cardElement = cardRef.current;
-    if (!cardElement) return;
+  const handleMouseMove = (e: MouseEvent<HTMLHeadingElement>) => {
+    const textElement = textRef.current;
+    if (!textElement) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const { left, top, width, height } = cardElement.getBoundingClientRect();
-      const x = e.clientX - left - width / 2;
-      const y = e.clientY - top - height / 2;
-      const rotateY = (x / width) * 15;
-      const rotateX = -(y / height) * 15;
+    const { left, top } = textElement.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = e.clientY - top;
 
-      cardElement.style.setProperty("--card-rotate-x", `${rotateX}deg`);
-      cardElement.style.setProperty("--card-rotate-y", `${rotateY}deg`);
-    };
+    textElement.style.setProperty("--mouse-x", `${x}px`);
+    textElement.style.setProperty("--mouse-y", `${y}px`);
+    textElement.style.setProperty("--opacity", "1");
+  };
 
-    const handleMouseLeave = () => {
-      cardElement.style.setProperty("--card-rotate-x", "0deg");
-      cardElement.style.setProperty("--card-rotate-y", "0deg");
-    };
-
-    cardElement.addEventListener("mousemove", handleMouseMove);
-    cardElement.addEventListener("mouseleave", handleMouseLeave);
-
-    return () => {
-      cardElement.removeEventListener("mousemove", handleMouseMove);
-      cardElement.removeEventListener("mouseleave", handleMouseLeave);
-    };
-  }, []);
+  const handleMouseLeave = () => {
+    const textElement = textRef.current;
+    if (textElement) {
+      textElement.style.setProperty("--opacity", "0");
+    }
+  };
 
   return (
-    <div
-      ref={cardRef}
-      className="relative rounded-3xl bg-gradient-to-br from-primary3 to-secondary1 
-                 p-10 max-w-4xl mx-auto mt-24 shadow-2xl 
-                 transition-transform duration-300 ease-out transform-style-preserve-3d text-center"
-      style={{
-        transform:
-          "rotateX(var(--card-rotate-x, 0deg)) rotateY(var(--card-rotate-y, 0deg))",
-      }}
-    >
-      <h2 className="font-rubik text-3xl font-bold text-secondary2 mb-4">
-        Ready to Elevate Your Journey?
+    // Increased top margin to mt-40
+    <div className="relative text-center max-w-full mx-auto mt-40 py-16">
+      <h2
+        ref={textRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        className="font-rubik text-5xl md:text-7xl lg:text-8xl xl:text-9xl font-black text-primary3 relative cursor-default"
+        style={
+          {
+            "--mouse-x": "50%",
+            "--mouse-y": "50%",
+            "--opacity": "0",
+          } as React.CSSProperties
+        }
+      >
+        <span
+          className="absolute inset-0 transition-opacity duration-500"
+          style={{
+            opacity: "var(--opacity)",
+            background:
+              "radial-gradient(250px circle at var(--mouse-x) var(--mouse-y), #10b981 0%, #06b6d4 100%)",
+            WebkitBackgroundClip: "text",
+            backgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}
+        >
+          Engineer Your Future!
+        </span>
+        Engineer Your Future!
       </h2>
-      <p className="font-raleway text-gray-300 mb-8 max-w-2xl mx-auto">
-        Choose your plan and start enjoying the benefits today. The registration
-        process is quick and easy.
+
+      <p className="font-raleway text-gray-500 mt-8 mb-10 text-lg max-w-3xl mx-auto px-4">
+        Ready to elevate your journey? Choose your plan and start enjoying the
+        benefits today. The registration process is quick and easy.
       </p>
+
       <button
         onClick={() =>
           window.open("https://forms.gle/your-registration-form-link", "_blank")
         }
         className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 
                    rounded-full transition-all duration-300 transform hover:scale-105 
-                   shadow-lg cursor-pointer w-[220px] sm:w-auto"
+                   shadow-lg cursor-pointer"
       >
         Register Now
       </button>
@@ -175,8 +185,8 @@ const MembershipPage: FC = () => {
             </div>
           </div>
 
-          {/* --- Final CTA Section: Replaced with the new 3D Card --- */}
-          <CtaCard />
+          {/* --- Final CTA Section: Replaced with the new Interactive CTA --- */}
+          <InteractiveCta />
         </main>
         <Footer />
       </div>
