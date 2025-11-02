@@ -1,124 +1,80 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../models/user';
-import { AuthRequest } from '../controllers/user.controller';
 
-interface JwtPayload {
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+export interface JwtPayload {
   id: string;
   role: string;
+  userId?: string; // ✅ Add this to match controller
 }
 
-// Protect routes - verify JWT token
-export const protect = async (
-  req: AuthRequest,
+// Extend Express Request type to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
+}
+
+// Middleware to verify JWT token
+export const authenticateToken = (
+  req: Request,
   res: Response,
   next: NextFunction
-): Promise<void> => {
+) => {
   try {
-    let token: string | undefined;
+    // Get token from header
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-    // Check for token in Authorization header
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-    // Or check for token in cookies
-    else if (req.cookies?.token) {
-      token = req.cookies.token;
-    }
+    console.log('🔐 Token received:', token ? 'Yes' : 'No'); // ✅ DEBUG LOG
 
     if (!token) {
-      res.status(401).json({
+      return res.status(401).json({
         success: false,
-        message: 'Not authorized to access this route. Please login.',
+        message: 'Access denied. No token provided.',
       });
-      return;
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as JwtPayload;
-
-    // Check if user still exists
-    const user = await User.findById(decoded.id).select('+password');
-
-    if (!user) {
-      res.status(401).json({
-        success: false,
-        message: 'User no longer exists',
-      });
-      return;
-    }
-
-    // Check if user is active
-    if (!user.isActive) {
-      res.status(401).json({
-        success: false,
-        message: 'Your account has been deactivated',
-      });
-      return;
-    }
-
-    // Attach user to request
-    req.user = {
-      id: user._id.toString(),
-      role: user.role,
-    };
-
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    
+    console.log('👤 Decoded token:', decoded); // ✅ DEBUG LOG
+    console.log('🆔 User ID from token:', decoded.id); // ✅ DEBUG LOG
+    
+    req.user = decoded;
     next();
-  } catch (error: any) {
-    res.status(401).json({
+  } catch (error) {
+    console.error('❌ Token verification failed:', error); // ✅ DEBUG LOG
+    return res.status(403).json({
       success: false,
-      message: 'Not authorized to access this route',
-      error: error.message,
+      message: 'Invalid or expired token.',
     });
   }
 };
 
-// Restrict to specific roles
-export const restrictTo = (...roles: string[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction): void => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      res.status(403).json({
+// Alias for authenticateToken (to match protect naming convention)
+export const protect = authenticateToken;
+
+// Middleware to check if user has required role
+export const authorizeRole = (...roles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({
         success: false,
-        message: 'You do not have permission to perform this action',
+        message: 'Authentication required.',
       });
-      return;
     }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Insufficient permissions.',
+      });
+    }
+
     next();
   };
-};
-
-// Optional: Check if it's the user's first login
-export const checkFirstLogin = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    if (!req.user) {
-      res.status(401).json({
-        success: false,
-        message: 'Not authenticated',
-      });
-      return;
-    }
-
-    const user = await User.findById(req.user.id).select('+firstLogin');
-
-    if (user?.firstLogin) {
-      res.status(403).json({
-        success: false,
-        message: 'Please change your password before proceeding',
-        firstLogin: true,
-      });
-      return;
-    }
-
-    next();
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: 'Error checking first login status',
-      error: error.message,
-    });
-  }
 };

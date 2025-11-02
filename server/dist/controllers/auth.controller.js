@@ -54,45 +54,80 @@ const sendTokenResponse = (user, statusCode, res) => {
 const login = async (req, res) => {
     try {
         const { studentNumber, password } = req.body;
+
+        console.log('🔐 Login attempt received');
+        console.log('📋 Student Number:', studentNumber);
+        console.log('🔑 Password provided:', !!password);
+        console.log('🔑 Password length:', password?.length);
+
         // Validate input
         if (!studentNumber || !password) {
+            console.log('❌ Validation failed: Missing credentials');
             res.status(400).json({
                 success: false,
                 message: 'Please provide student number and password',
             });
             return;
         }
+
         // Find user by student number and include password
+        console.log('🔍 Searching for user:', studentNumber.toUpperCase());
         const user = await user_1.default.findOne({ studentNumber: studentNumber.toUpperCase() })
             .select('+password +firstLogin');
+
+        console.log('👤 User found:', !!user);
+        
+        if (user) {
+            console.log('📝 User details:');
+            console.log('  - Student Number:', user.studentNumber);
+            console.log('  - Has password field:', !!user.password);
+            console.log('  - Password starts with $2:', user.password?.startsWith('$2'));
+            console.log('  - Is Active:', user.isActive);
+            console.log('  - First Login:', user.firstLogin);
+        }
+
         if (!user) {
+            console.log('❌ User not found');
             res.status(401).json({
                 success: false,
                 message: 'Invalid credentials',
             });
             return;
         }
+
         // Check if user is active
         if (!user.isActive) {
+            console.log('❌ User is inactive');
             res.status(401).json({
                 success: false,
                 message: 'Your account has been deactivated. Please contact an administrator.',
             });
             return;
         }
+
         // Check password
+        console.log('🔐 Comparing passwords...');
+        console.log('  - Input password:', password);
+        console.log('  - Stored hash (first 20 chars):', user.password?.substring(0, 20));
+        
         const isPasswordMatch = await user.comparePassword(password);
+        console.log('✅ Password match result:', isPasswordMatch);
+
         if (!isPasswordMatch) {
+            console.log('❌ Password mismatch');
             res.status(401).json({
                 success: false,
                 message: 'Invalid credentials',
             });
             return;
         }
+
+        console.log('✅ Login successful! Sending token...');
         // Send token response
         sendTokenResponse(user, 200, res);
     }
     catch (error) {
+        console.error('❌ Login error:', error);
         res.status(500).json({
             success: false,
             message: 'Error logging in',
@@ -100,6 +135,7 @@ const login = async (req, res) => {
         });
     }
 };
+
 exports.login = login;
 // @desc    Get current logged in user
 // @route   GET /api/auth/me

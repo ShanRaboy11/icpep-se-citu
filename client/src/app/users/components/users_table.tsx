@@ -2,7 +2,6 @@
 
 import { User } from "../utils/user";
 import UserTableRow from "./user_table_row";
-import { useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 
 type SortField =
@@ -18,35 +17,45 @@ type SortDirection = "asc" | "desc";
 interface UsersTableProps {
   users: User[];
   totalUsers: number;
-  currentPage: number;        
-  usersPerPage: number; 
+  currentPage: number;
+  usersPerPage: number;
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
   onToggleActive: (user: User) => void;
   onView: (user: User) => void;
+  filterRole: string;
+  filterMembership: string;
+  onFilterChange: (type: 'role' | 'membership', value: string) => void;
+  sortField: SortField;
+  sortDirection: SortDirection;
+  onSortChange: (field: SortField, direction: SortDirection) => void;
 }
 
 export default function UsersTable({
   users,
   totalUsers,
-  currentPage,       
-  usersPerPage,   
+  currentPage,
+  usersPerPage,
   onEdit,
   onDelete,
   onToggleActive,
   onView,
+  filterRole,
+  filterMembership,
+  onFilterChange,
+  sortField,
+  sortDirection,
+  onSortChange,
 }: UsersTableProps) {
-  const [sortField, setSortField] = useState<SortField>("createdAt");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [filterRole, setFilterRole] = useState<string>("all");
-  const [filterMembership, setFilterMembership] = useState<string>("all");
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      // Toggle direction
+      const newDirection = sortDirection === "asc" ? "desc" : "asc";
+      onSortChange(field, newDirection);
     } else {
-      setSortField(field);
-      setSortDirection("asc");
+      // New field, start with asc
+      onSortChange(field, "asc");
     }
   };
 
@@ -59,74 +68,6 @@ export default function UsersTable({
     );
   };
 
-  // Filter users
-  const filteredUsers = users.filter((user) => {
-    const roleMatch = filterRole === "all" || user.role === filterRole;
-    const membershipMatch =
-      filterMembership === "all" ||
-      (filterMembership === "local" &&
-        user.membershipStatus.membershipType === "local") ||
-      (filterMembership === "regional" &&
-        user.membershipStatus.membershipType === "regional") ||
-      (filterMembership === "both" &&
-        user.membershipStatus.membershipType === "both") ||
-      (filterMembership === "non-member" && !user.membershipStatus.isMember);
-    return roleMatch && membershipMatch;
-  });
-
-  // Sort users
-  const sortedUsers = [...filteredUsers].sort((a, b) => {
-    // Define a union type for the possible values that aValue and bValue can hold
-    let aValue: string | number | Date | undefined;
-    let bValue: string | number | Date | undefined;
-
-    switch (sortField) {
-      case "studentNumber":
-        aValue = a.studentNumber;
-        bValue = b.studentNumber;
-        break;
-      case "fullName":
-        aValue = a.fullName.toLowerCase();
-        bValue = b.fullName.toLowerCase();
-        break;
-      case "role":
-        aValue = a.role;
-        bValue = b.role;
-        break;
-      case "yearLevel":
-        aValue = a.yearLevel || 0; // Provide a default number if yearLevel is undefined
-        bValue = b.yearLevel || 0; // Provide a default number if yearLevel is undefined
-        break;
-      case "createdAt":
-        aValue = new Date(a.createdAt);
-        bValue = new Date(b.createdAt);
-        break;
-      case "updatedAt":
-        aValue = new Date(a.updatedAt);
-        bValue = new Date(b.updatedAt);
-        break;
-      default:
-        return 0;
-    }
-
-    // Now perform the comparison based on the types
-    if (typeof aValue === "string" && typeof bValue === "string") {
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-    } else if (typeof aValue === "number" && typeof bValue === "number") {
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-    } else if (aValue instanceof Date && bValue instanceof Date) {
-      if (aValue.getTime() < bValue.getTime())
-        return sortDirection === "asc" ? -1 : 1;
-      if (aValue.getTime() > bValue.getTime())
-        return sortDirection === "asc" ? 1 : -1;
-    }
-    // Handle cases where values might be undefined or mismatched types if necessary
-    // For now, if types don't match or are undefined, they are considered equal
-    return 0;
-  });
-
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -137,8 +78,8 @@ export default function UsersTable({
           </label>
           <select
             value={filterRole}
-            onChange={(e) => setFilterRole(e.target.value)}
-            className="font-raleway text-sm text-gray-400 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
+            onChange={(e) => onFilterChange('role', e.target.value)}
+            className="font-raleway text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
           >
             <option value="all">All Roles</option>
             <option value="student">Student</option>
@@ -154,8 +95,8 @@ export default function UsersTable({
           </label>
           <select
             value={filterMembership}
-            onChange={(e) => setFilterMembership(e.target.value)}
-            className="font-raleway text-sm text-gray-400 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
+            onChange={(e) => onFilterChange('membership', e.target.value)}
+            className="font-raleway text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
           >
             <option value="all">All</option>
             <option value="local">Local</option>
@@ -166,21 +107,23 @@ export default function UsersTable({
         </div>
 
         <div className="ml-auto font-raleway text-sm text-gray-600 font-medium">
-  {sortedUsers.length > 0 ? (
-    <>
-      Showing {((currentPage - 1) * usersPerPage) + 1}-{Math.min(currentPage * usersPerPage, totalUsers)} of {totalUsers} users
-    </>
-  ) : (
-    'No users to display'
-  )}
-</div>
+          {users.length > 0 ? (
+            <>
+              Showing {(currentPage - 1) * usersPerPage + 1}-
+              {Math.min(currentPage * usersPerPage, totalUsers)} of {totalUsers}{" "}
+              users
+            </>
+          ) : (
+            "No users to display"
+          )}
+        </div>
       </div>
 
       {/* Table */}
       <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-max">
-            <thead className="bg-gradient-to-r from-primary1/5 to-secondary2/5">
+            <thead className="bg-blue-100">
               <tr>
                 <th
                   onClick={() => handleSort("studentNumber")}
@@ -200,7 +143,6 @@ export default function UsersTable({
                     <SortIcon field="fullName" />
                   </div>
                 </th>
-
                 <th
                   onClick={() => handleSort("yearLevel")}
                   className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
@@ -210,7 +152,6 @@ export default function UsersTable({
                     <SortIcon field="yearLevel" />
                   </div>
                 </th>
-
                 <th
                   onClick={() => handleSort("role")}
                   className="px-4 py-4 w-10 text-center items-center font-raleway text-sm font-semibold text-primary3 cursor-pointer hover:bg-primary1/10 transition-colors whitespace-nowrap"
@@ -220,7 +161,6 @@ export default function UsersTable({
                     <SortIcon field="role" />
                   </div>
                 </th>
-
                 <th className="px-4 py-4 text-center font-raleway text-sm font-semibold text-primary3 whitespace-nowrap">
                   Membership
                 </th>
@@ -254,7 +194,7 @@ export default function UsersTable({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {sortedUsers.map((user) => (
+              {users.map((user) => (
                 <UserTableRow
                   key={user.id}
                   user={user}
@@ -269,7 +209,7 @@ export default function UsersTable({
         </div>
       </div>
 
-      {sortedUsers.length === 0 && (
+      {users.length === 0 && (
         <div className="text-center py-12">
           <p className="font-raleway text-gray-500">
             No users found matching the filters.

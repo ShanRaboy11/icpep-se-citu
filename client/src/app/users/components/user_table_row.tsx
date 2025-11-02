@@ -44,16 +44,16 @@ export default function UserTableRow({
 
   const getMembershipBadgeColor = (isMember: boolean, type: string | null) => {
     if (!isMember) {
-  return "bg-gray-100 text-gray-600 border-gray-200";
-}
-if (type === "regional") {
-  return "bg-cyan-100 text-cyan-700 border-cyan-200";
-}
-if (type === "both") {
-  return "bg-purple-100 text-purple-700 border-purple-200";
-}
-// New color for "local" (the default return)
- return "bg-secondary2/10 text-secondary2 border-secondary2/30";
+      return "bg-gray-100 text-gray-600 border-gray-200";
+    }
+    if (type === "regional") {
+      return "bg-cyan-100 text-cyan-700 border-cyan-200";
+    }
+    if (type === "both") {
+      return "bg-purple-100 text-purple-700 border-purple-200";
+    }
+    // New color for "local" (the default return)
+    return "bg-secondary2/10 text-secondary2 border-secondary2/30";
   };
 
   const formatDate = (dateString: string) => {
@@ -93,11 +93,14 @@ if (type === "both") {
             {user.fullName}
           </span>
         </td>
+      
         <td className="px-4 py-4 whitespace-nowrap text-center">
           <span className="font-raleway text-sm text-gray-600">
             {user.yearLevel ? `${user.yearLevel}` : "N/A"}
           </span>
         </td>
+        
+
         <td className="px-4 py-4 whitespace-nowrap text-center">
           <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-raleway border ${getRoleBadgeColor(
@@ -111,6 +114,7 @@ if (type === "both") {
               : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
           </span>
         </td>
+        
         <td className="px-4 py-4 whitespace-nowrap text-center">
           <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-raleway border ${getMembershipBadgeColor(
@@ -127,6 +131,7 @@ if (type === "both") {
               : "Local"}
           </span>
         </td>
+        
         <td className="px-4 py-4 whitespace-nowrap">
           <span className="font-raleway text-sm text-gray-600">
             {user.registeredBy?.fullName || "Self-registered"}

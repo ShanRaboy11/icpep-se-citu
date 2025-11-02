@@ -5,11 +5,14 @@ import Button from "./button";
 import Menu from "./menu";
 import { useRouter } from "next/navigation";
 
-type UserRole = "guest" | "user";
+// UserRole types
+type UserRole = "guest" | "student" | "council-officer" | "committee-officer" | "faculty";
 
 const Header = () => {
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState<UserRole>("guest");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
 
@@ -18,6 +21,61 @@ const Header = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = () => {
+    const token = localStorage.getItem('authToken');
+    const userRole = localStorage.getItem('userRole');
+    const userId = localStorage.getItem('userId');
+
+    if (token && userRole) {
+      setIsLoggedIn(true);
+      setRole(userRole as UserRole);
+      
+      // Optionally fetch user details for display
+      const storedUserName = localStorage.getItem('userName');
+      if (storedUserName) {
+        setUserName(storedUserName);
+      }
+    } else {
+      setIsLoggedIn(false);
+      setRole("guest");
+    }
+  };
+
+  const handleLogout = () => {
+    // Clear all auth data
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    
+    // Update state
+    setIsLoggedIn(false);
+    setRole("guest");
+    setUserName("");
+    
+    // Redirect to home
+    router.push('/');
+  };
+
+  const handleLogin = () => {
+    router.push("/login");
+  };
+
+  const handleSignUp = () => {
+    // Navigate to sign up page or show sign up modal
+    router.push("/signup"); // You can change this to your signup route
+  };
+
+  const handleProfileClick = () => {
+    // Navigate to profile page
+    router.push("/profile"); // You can change this to your profile route
+  };
 
   return (
     <header
@@ -109,6 +167,7 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-4 sm:gap-5">
+          {/* Guest View */}
           {role === "guest" && (
             <>
               <Button
@@ -116,7 +175,7 @@ const Header = () => {
              hover:scale-105 hover:brightness-110 hover:shadow-[0_0_10px_rgba(0,167,238,0.5)] 
              active:scale-95"
                 variant="secondary"
-                onClick={() => setRole("user")}
+                onClick={handleSignUp}
               >
                 Sign Up
               </Button>
@@ -128,27 +187,39 @@ const Header = () => {
              before:from-transparent before:via-white/40 before:to-transparent 
              before:translate-x-[-100%] hover:before:translate-x-[100%] 
              before:transition-transform before:duration-700"
-                onClick={() => {
-                  setRole("user");
-                }}
+                onClick={handleLogin}
               >
                 Log In
               </Button>
             </>
           )}
 
-          {role === "user" && (
+          {/* Logged In View */}
+          {isLoggedIn && (
             <div className="flex items-center gap-3">
-              <Image
-                src="/user.svg"
-                alt="User Profile"
-                width={36}
-                height={36}
-                className="h-11.5 w-11.5 cursor-pointer transition-all duration-300 ease-in-out
-             hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_10px_rgba(0,167,238,0.5)]
-             active:scale-95"
-              />
+              {/* User Profile Picture */}
+              <div 
+                className="relative group cursor-pointer"
+                onClick={handleProfileClick}
+              >
+                <Image
+                  src="/user.svg"
+                  alt="User Profile"
+                  width={36}
+                  height={36}
+                  className="h-11.5 w-11.5 transition-all duration-300 ease-in-out
+               hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_10px_rgba(0,167,238,0.5)]
+               active:scale-95"
+                />
+                {/* Optional: Show user name on hover */}
+                {userName && (
+                  <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap font-raleway text-sm">
+                    {userName}
+                  </div>
+                )}
+              </div>
 
+              {/* Log Out Button */}
               <Button
                 className="sm:block border-2 relative overflow-hidden 
              transition-all duration-300 ease-in-out active:scale-95 
@@ -156,7 +227,7 @@ const Header = () => {
              before:from-transparent before:via-white/40 before:to-transparent 
              before:translate-x-[-100%] hover:before:translate-x-[100%] 
              before:transition-transform before:duration-700"
-                onClick={() => setRole("guest")}
+                onClick={handleLogout}
               >
                 Log Out
               </Button>
@@ -183,7 +254,10 @@ const Header = () => {
           open ? "translate-y-0" : "-translate-y-[120vh]"
         }`}
       >
-        <Menu userRole={role} onExit={() => setOpen(false)} />
+        <Menu
+          userRole={role}
+          onExit={() => setOpen(false)}
+        />
       </div>
     </header>
   );

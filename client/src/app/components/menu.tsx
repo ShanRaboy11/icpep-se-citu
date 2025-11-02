@@ -1,12 +1,11 @@
 "use client";
 
-import type { NextPage } from "next";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 
 interface MenuProps {
-  userRole: "guest" | "user";
+  userRole: "guest" | "student" | "council-officer" | "committee-officer" | "faculty";
   onExit: () => void;
 }
 
@@ -14,7 +13,10 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   const [hovered, setHovered] = useState<string | null>(null);
   const leaveTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const submenus: Record<string, string[]> = {
+  const router = useRouter();
+
+  // Define a base set of submenus
+  const baseSubmenus: Record<string, string[]> = {
     Home: [
       "Home",
       "About ICpEP",
@@ -38,25 +40,57 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
       "Members (officers & faculty only)",
       "Merch",
     ],
-    Connect: ["Lettucemeet", "Schedule"],
     Developers: ["About ExceptionHandlers", "Developers profiles"],
   };
 
-  const router = useRouter();
+  // Conditionally add 'Connect' and 'Users' based on role
+  const submenus: Record<string, string[]> = { ...baseSubmenus };
+
+  if (userRole === "council-officer") {
+    submenus.Commeet = ["Lettucemeet", "Schedule"];
+    submenus.Users = ["User Management"]; 
+  }
 
   // Handle navigation for menu items
   const handleMenuClick = (item: string) => {
+    onExit(); // Close the menu on any top-level item click
     if (item === "Developers") {
       router.push("/developers");
     } else if (item === "Home") {
       router.push("/home");
     } else if (item === "Events") {
       router.push("/events");
-    } else {
-      console.log(`Navigate to /${item.toLowerCase()}`);
-      // Add other navigation logic here
+    } else if (item === "About") {
+      router.push("/about"); 
+    } else if (item === "Membership") {
+      router.push("/membership"); 
+    } else if (item === "Commeet") {
+      router.push("/commeet"); 
+    } else if (item === "Users") {
+      router.push("/users"); 
+    }
+     else {
+      console.log(`Navigate to /${item.toLowerCase().replace(/\s/g, '-')}`); // Basic fallback
+      // Add other specific navigation logic here as needed
     }
   };
+
+  // Handle navigation for submenu items
+  const handleSubmenuClick = (parentItem: string, submenuItem: string) => {
+    onExit(); // Close the menu on any submenu item click
+    if (parentItem === "Developers" && submenuItem === "Developers profiles") {
+      router.push("/developers"); // Or a specific /developers/profiles page
+    } else if (parentItem === "Events" && submenuItem === "Upcoming events") {
+      router.push("/events"); // Or a specific /events/upcoming page
+    } else if (parentItem === "Users" && submenuItem === "User Management") {
+      router.push("/users/management"); // Example for a specific user management page
+    } else if (parentItem === "Connect" && submenuItem === "Lettucemeet") {
+        router.push("/connect/lettucemeet"); // Example
+    }
+    // Add more specific submenu navigation here
+    console.log(`Navigate to /${parentItem.toLowerCase().replace(/\s/g, '-')}/${submenuItem.toLowerCase().replace(/\s/g, '-')}`);
+  };
+
 
   // Cancel timeout when hovered changes (user re-enters)
   useEffect(() => {
@@ -71,10 +105,10 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   };
 
   const handleMouseLeave = () => {
-    // Delay hover removal by 5 seconds
+    // Delay hover removal by a short period to allow moving to submenu
     leaveTimeout.current = setTimeout(() => {
       setHovered(null);
-    }, 300);
+    }, 300); // 300ms is a common duration for hover delays
   };
 
   const currentMenu = hovered;
@@ -120,7 +154,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                   key={item}
                   onMouseEnter={() => handleMouseEnter(item)}
                   onMouseLeave={handleMouseLeave}
-                  onClick={() => handleMenuClick(item)}
+                  onClick={() => handleMenuClick(item)} // Changed to top-level click handler
                   className="relative inline-block cursor-pointer group w-fit"
                 >
                   <span
@@ -159,30 +193,16 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                 ? "opacity-100 translate-x-0"
                 : "opacity-0 -translate-x-8 pointer-events-none"
             }`}
-            onMouseEnter={() => handleMouseEnter(currentMenu!)}
+            // Ensure mouse leave for the entire submenu area still triggers the delay
             onMouseLeave={handleMouseLeave}
           >
             {currentMenu && submenus[currentMenu]?.length > 0 && (
-              <div className="flex flex-col space-y-4">
+              <div className="flex flex-col space-y-4" onMouseEnter={() => handleMouseEnter(currentMenu!)}>
                 {submenus[currentMenu].map((submenu) => (
                   <div
                     key={submenu}
                     className="relative inline-block cursor-pointer group w-fit"
-                    onClick={() => {
-                      // Handle submenu clicks
-                      if (
-                        currentMenu === "Developers" &&
-                        submenu === "Developers profiles"
-                      ) {
-                        router.push("/developers");
-                      }
-                      if (
-                        currentMenu === "Events" &&
-                        submenu === "Upcoming events"
-                      ) {
-                        router.push("/events");
-                      }
-                    }}
+                    onClick={() => handleSubmenuClick(currentMenu, submenu)} // New submenu click handler
                   >
                     <span className="text-md sm:text-2xl font-raleway transition-colors duration-300 group-hover:text-white/80">
                       {submenu}
@@ -231,7 +251,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                   {/* subtle circular tab indicator */}
                   <span
                     className="mt-1 h-1.5 w-1.5 rounded-full bg-buttonbg1 opacity-0 scale-0
-                   group-hover:opacity-100 group-hover:scale-100 
+                   group-hover:opacity-100 group-hover:scale-100
                    transition-all duration-300 ease-out"
                   />
                 </div>
