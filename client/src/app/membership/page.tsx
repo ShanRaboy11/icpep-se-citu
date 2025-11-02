@@ -1,3 +1,4 @@
+// app/membership/page.tsx
 "use client";
 
 import Header from "../components/header";
@@ -15,7 +16,7 @@ interface MembershipTier {
   description: string;
   benefits: string[];
   isHighlighted: boolean;
-  accentColor: "indigo" | "cyanDark" | "green";
+  accentColor: "primary" | "steel" | "sky";
   icon: ReactNode;
   buttonIcon: ReactNode;
 }
@@ -34,7 +35,7 @@ const MembershipPage: FC = () => {
         "Priority registration for local competitions.",
       ],
       isHighlighted: false,
-      accentColor: "indigo",
+      accentColor: "steel", // Assign the 'steel' theme
       icon: <User size={24} />,
       buttonIcon: <ArrowRight size={20} />,
     },
@@ -50,7 +51,7 @@ const MembershipPage: FC = () => {
         "Exclusive 'members-only' networking channels.",
       ],
       isHighlighted: true,
-      accentColor: "green",
+      accentColor: "primary", // Assign the 'primary' theme to the center card
       icon: <Zap size={24} />,
       buttonIcon: <Zap size={20} />,
     },
@@ -66,7 +67,7 @@ const MembershipPage: FC = () => {
         "Broad networking opportunities.",
       ],
       isHighlighted: false,
-      accentColor: "cyanDark",
+      accentColor: "sky", // Assign the 'sky' theme
       icon: <Globe size={24} />,
       buttonIcon: <ArrowRight size={20} />,
     },
@@ -78,19 +79,33 @@ const MembershipPage: FC = () => {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
-          {/* Section header */}
+          {/* Section header updated with your brand colors */}
           <div className="mb-20 text-center">
-            {/* THEME SWAP: Text and background colors updated for light mode */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-indigo-100 px-3 py-1 mb-4">
-              <div className="h-2 w-2 rounded-full bg-indigo-500"></div>
-              <span className="font-raleway text-sm font-semibold text-indigo-600">
+            <div
+              className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-4"
+              style={{ backgroundColor: "var(--buttonbg1)" }}
+            >
+              <div
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: "var(--primary1)" }}
+              ></div>
+              <span
+                className="font-raleway text-sm font-semibold"
+                style={{ color: "var(--primary3)" }}
+              >
                 Join Our Community
               </span>
             </div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-slate-900 leading-tight mb-4">
+            <h1
+              className="font-rubik text-4xl sm:text-5xl font-bold leading-tight mb-4"
+              style={{ color: "var(--primary3)" }}
+            >
               Unlock Your Potential
             </h1>
-            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
+            <p
+              className="font-raleway text-base sm:text-lg max-w-3xl mx-auto"
+              style={{ color: "var(--bodytext)" }}
+            >
               Become a member and gain access to exclusive events, workshops,
               and resources designed to boost your career in computer
               engineering.

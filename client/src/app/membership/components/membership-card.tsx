@@ -1,9 +1,10 @@
+// app/membership/components/membership-card.tsx
 "use client";
 
 import { CheckCircle2 } from "lucide-react";
 import type { FC, ReactNode } from "react";
 
-type AccentColor = "indigo" | "cyanDark" | "green";
+type AccentColor = "primary" | "steel" | "sky";
 
 interface MembershipCardProps {
   planLabel: string;
@@ -17,31 +18,35 @@ interface MembershipCardProps {
   buttonIcon: ReactNode;
 }
 
-// THEME SWAP: All colors updated for a light mode theme.
 const accentClasses: Record<
   AccentColor,
-  { text: string; border: string; glow: string; bg: string; buttonBg: string }
+  { text: string; border: string; glow: string; bg: string; button: string }
 > = {
-  indigo: {
-    text: "text-indigo-600",
-    border: "border-indigo-200",
-    glow: "group-hover:shadow-[inset_0_0_15px_rgba(99,102,241,0.4)]",
-    bg: "bg-gradient-to-b from-slate-50 to-indigo-100",
-    buttonBg: "bg-indigo-500 hover:bg-indigo-600 text-white",
+  primary: {
+    text: "text-[#003599]",
+    border: "border-blue-300",
+    glow: "group-hover:shadow-[inset_0_0_15px_rgba(147,197,253,0.5)]",
+    bg: "bg-gradient-to-b from-blue-50 to-blue-300",
+    button:
+      "bg-[#003599] text-white shadow-lg shadow-blue-500/30 hover:bg-[#004ab3] hover:-translate-y-1",
   },
-  cyanDark: {
-    text: "text-cyan-600",
-    border: "border-cyan-200",
-    glow: "group-hover:shadow-[inset_0_0_15px_rgba(8,145,178,0.4)]",
-    bg: "bg-gradient-to-b from-slate-50 to-cyan-100",
-    buttonBg: "bg-cyan-600 hover:bg-cyan-700 text-white",
+  steel: {
+    text: "text-[#006fa1]",
+    border: "border-cyan-300",
+    glow: "group-hover:shadow-[inset_0_0_15px_rgba(103,232,249,0.5)]",
+    bg: "bg-gradient-to-b from-cyan-50 to-cyan-300",
+    button:
+      "bg-transparent text-[#006fa1] border border-[#006fa1] hover:bg-[#006fa1]/15 hover:-translate-y-1",
   },
-  green: {
-    text: "text-green-600",
-    border: "border-green-200",
-    glow: "group-hover:shadow-[inset_0_0_15px_rgba(22,163,74,0.4)]",
-    bg: "bg-gradient-to-b from-slate-50 to-green-100",
-    buttonBg: "bg-green-500 hover:bg-green-600 text-white",
+  sky: {
+    // --- ADJUSTED --- Darkened the base color one more step for final balance.
+    text: "text-[#0073AD]",
+    border: "border-sky-300",
+    glow: "group-hover:shadow-[inset_0_0_15px_rgba(125,211,252,0.5)]",
+    bg: "bg-gradient-to-b from-sky-50 to-sky-300",
+    // --- ADJUSTED --- Button colors updated to match the new darker shade.
+    button:
+      "bg-transparent text-[#0073AD] border border-[#0073AD] hover:bg-[#0073AD]/15 hover:-translate-y-1",
   },
 };
 
@@ -56,7 +61,7 @@ const MembershipCard: FC<MembershipCardProps> = ({
   icon,
   buttonIcon,
 }) => {
-  const currentAccent = accentClasses[accentColor] || accentClasses.cyanDark;
+  const currentAccent = accentClasses[accentColor];
 
   const cardClasses = `
     flex flex-col rounded-3xl p-8 h-full border relative group
@@ -66,12 +71,12 @@ const MembershipCard: FC<MembershipCardProps> = ({
 
   const buttonClasses = `
     mt-auto w-full rounded-lg py-3 font-rubik font-semibold text-lg flex items-center justify-center gap-2
-    transition-all duration-300 cursor-pointer ${currentAccent.buttonBg}
+    transform transition-all duration-300 cursor-pointer ${currentAccent.button}
   `;
 
   return (
     <div className={cardClasses}>
-      {/* Icon container */}
+      {/* Icon */}
       <div
         className={`absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 h-14 w-14 rounded-full border ${currentAccent.border} bg-white flex items-center justify-center`}
       >
@@ -85,7 +90,7 @@ const MembershipCard: FC<MembershipCardProps> = ({
       {/* Plan label */}
       <div className="text-center mt-10 mb-6">
         <span
-          className={`inline-block rounded-full border ${currentAccent.border} px-4 py-1 text-sm font-semibold ${currentAccent.text} font-raleway bg-white/50`}
+          className={`inline-block rounded-full border ${currentAccent.border} px-4 py-1 text-sm font-semibold ${currentAccent.text} font-raleway bg-white/60`}
         >
           {planLabel}
         </span>
@@ -100,12 +105,12 @@ const MembershipCard: FC<MembershipCardProps> = ({
       </div>
 
       {/* Description */}
-      <p className="font-raleway text-slate-600 text-center mb-8 h-10">
+      <p className="font-raleway text-[#373d47] text-center mb-8 h-10">
         {description}
       </p>
 
       {/* Benefits */}
-      <ul className="space-y-3 font-raleway text-slate-700 flex-grow mb-8">
+      <ul className="space-y-3 font-raleway text-[#373d47] flex-grow mb-8">
         {benefits.map((benefit, index) => (
           <li key={index} className="flex items-start gap-3">
             <CheckCircle2
@@ -122,7 +127,6 @@ const MembershipCard: FC<MembershipCardProps> = ({
         <span>Get Started</span>
       </button>
 
-      {/* Highlight note */}
       {isHighlighted && (
         <div className="text-center mt-4">
           <span className="font-raleway text-xs text-slate-500">
