@@ -25,16 +25,13 @@ export default function EventDetailPage({
 }) {
   const router = useRouter();
 
-  // Find the raw event data first
   const rawEvent = events.find((e) => e.id === params.id);
 
-  // --- MODIFICATION 1: Calculate the status dynamically ---
   let event: ProcessedEvent | undefined;
 
   if (rawEvent) {
     const now = new Date();
     const startDate = new Date(rawEvent.date);
-    // For single-day events, they effectively 'end' at midnight of that day
     const endDate = rawEvent.endDate
       ? new Date(rawEvent.endDate)
       : new Date(startDate.getTime() + 24 * 60 * 60 * 1000 - 1);
@@ -48,7 +45,6 @@ export default function EventDetailPage({
       status = "Ended";
     }
 
-    // Create the final event object with the dynamic status
     event = { ...rawEvent, status };
   }
 
@@ -58,25 +54,36 @@ export default function EventDetailPage({
 
   if (!event) {
     return (
-      <div>
+      <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="text-center pt-38">Event not found.</main>
+        <main className="flex flex-grow flex-col items-center justify-center text-center px-4 pt-[9.5rem] pb-12">
+          <h1 className="font-rubik text-4xl font-bold text-primary3 mb-4">
+            Event Not Found
+          </h1>
+          <p className="font-raleway max-w-md text-gray-600 mb-8">
+            Sorry, the event you are looking for does not exist.
+          </p>
+          <button
+            onClick={() => router.push("/events")}
+            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2 hover:shadow-primary1/40 hover:-translate-y-0.5"
+          >
+            <ArrowLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
+            <span>Back to Events</span>
+          </button>
+        </main>
         <Footer />
       </div>
     );
   }
 
   return (
-    // The original layout with the blush background
     <div className="min-h-screen flex flex-col bg-white relative overflow-hidden font-sans">
       <div className="absolute top-[-10rem] left-[-15rem] w-[35rem] h-[35rem] bg-primary1/20 rounded-full filter blur-3xl opacity-90"></div>
       <div className="absolute top-1/4 right-[-18rem] w-[35rem] h-[35rem] bg-secondary2/20 rounded-full filter blur-3xl opacity-90"></div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        {/* Adjusted padding to be consistent */}
-        <main className="flex-grow w-full max-w-6xl mx-auto px-6 pt-[9.5rem] pb-12">
-          {/* --> MODIFICATION 4: Added the animated back button --- */}
+        <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-12">
           <div className="mb-8 flex justify-start">
             <button
               onClick={handleBackToEvents}
@@ -105,7 +112,6 @@ export default function EventDetailPage({
             </div>
 
             <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
-              {/* --- MODIFICATION 2: Pass the dynamic status to child components --- */}
               <EventHeader status={event.status} title={event.title} />
               <EventInfo
                 date={event.date}

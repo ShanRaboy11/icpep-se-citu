@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Event } from "../utils/event"; // Assuming your types are here
+import { Event } from "../utils/event";
 
 interface Props {
   event: Event;
@@ -20,7 +20,7 @@ export default function EventCard({ event }: Props) {
       case "Ongoing":
         return "bg-blue-100 text-blue-800 ring-blue-600/20";
       case "Ended":
-        return "bg-red-100 text-red-800 ring-red-600/20"; // Changed from gray to red
+        return "bg-red-100 text-red-800 ring-red-600/20";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -46,9 +46,7 @@ export default function EventCard({ event }: Props) {
         </span>
       </div>
 
-      {/* --- MODIFICATION: Removed `justify-between` --- */}
       <div className="flex flex-1 flex-col p-6 bg-white">
-        {/* All content is now in a single flow */}
         <div>
           <p className="font-raleway text-sm font-medium text-primary1">
             {formattedDate}
@@ -61,7 +59,6 @@ export default function EventCard({ event }: Props) {
           </p>
         </div>
 
-        {/* The tags will now appear directly after the content above */}
         <div className="mt-4 flex flex-wrap gap-2">
           {event.tags.slice(0, 3).map((tag) => (
             <span

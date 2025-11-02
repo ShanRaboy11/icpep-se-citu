@@ -20,14 +20,37 @@ export default function AnnouncementDetailPage({
   const [showFullAttendance, setShowFullAttendance] = useState(false);
   const router = useRouter();
 
-  // Find the announcement by ID - later this will be a database fetch
+  // find the announcement by id - later this will be a database fetch
   const announcement = announcements.find((a) => a.id === params.id);
 
-  // Optional chaining and default fallback to avoid undefined errors
   const title = announcement?.title || "No title available";
-  const imageUrl = announcement?.imageUrl || "/default-image.jpg"; // Default fallback image
-  const galleryImageUrls = announcement?.galleryImageUrls || []; // Fallback to empty array
-  const isMeeting = announcement?.type.toLowerCase() === "meeting"; // Use optional chaining
+  const imageUrl = announcement?.imageUrl || "/default-image.jpg"; // default fallback image
+  const galleryImageUrls = announcement?.galleryImageUrls || []; // fallback to empty array
+  const isMeeting = announcement?.type.toLowerCase() === "meeting"; // use optional chaining
+
+  if (!announcement) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="flex flex-grow flex-col items-center justify-center text-center px-4 pt-[9.5rem] pb-12">
+          <h1 className="font-rubik text-4xl font-bold text-primary3 mb-4">
+            Announcement Not Found
+          </h1>
+          <p className="font-raleway max-w-md text-gray-600 mb-8">
+            Sorry, the announcement you are looking for does not exist.
+          </p>
+          <button
+            onClick={() => router.push("/announcements")}
+            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2"
+          >
+            <ArrowLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
+            <span>Back to Announcements</span>
+          </button>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   const handleBack = () => {
     router.push("/announcements");
@@ -40,7 +63,7 @@ export default function AnnouncementDetailPage({
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow w-full max-w-6xl mx-auto px-6 pt-[9.5rem] pb-12">
+        <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-12">
           <div className="mb-8 flex justify-start">
             <button
               onClick={handleBack}
@@ -83,6 +106,7 @@ export default function AnnouncementDetailPage({
         <AttendanceModal
           isOpen={showFullAttendance}
           onClose={() => setShowFullAttendance(false)}
+          announcement={announcement}
         />
         <Footer />
       </div>

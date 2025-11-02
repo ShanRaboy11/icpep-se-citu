@@ -23,7 +23,7 @@ export default function EventHeader({ status, title }: Props) {
         />
         {isEventOver ? "Registration Closed" : "Registration Open"}
       </div>
-      <h1 className="font-rubik text-4xl font-bold text-primary3 leading-tight">
+      <h1 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 leading-tight">
         {title}
       </h1>
     </div>

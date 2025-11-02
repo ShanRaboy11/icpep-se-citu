@@ -1,7 +1,7 @@
 "use client";
 import Header from "../components/header";
 import Footer from "../components/footer";
-import DeveloperCard from "../components/cards/developercard";
+import DeveloperCard from "./components/developer-card";
 import Grid from "../components/grid";
 
 export default function DevelopersPage() {
@@ -18,7 +18,7 @@ export default function DevelopersPage() {
         "UI/UX Designer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
       githubLink: "https://github.com/Cayla07",
-      portfolioLink: "#", // <-- Add actual portfolio link here
+      portfolioLink: "#", // actual portfolio link here
     },
     {
       name: "Gio Christian D. Macatual",
@@ -32,7 +32,7 @@ export default function DevelopersPage() {
         "Frontend Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
       githubLink: "https://github.com/WATRM3LON",
-      portfolioLink: "#", // <-- Add actual portfolio link here
+      portfolioLink: "#", // actual portfolio link here
     },
     {
       name: "Shan Michael V. Raboy",
@@ -47,7 +47,7 @@ export default function DevelopersPage() {
         "Backend Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
       githubLink: "https://github.com/ShanRaboy11",
-      portfolioLink: "#", // <-- Add actual portfolio link here
+      portfolioLink: "#", // actual portfolio link here
     },
     {
       name: "Trixie T. Dolera",
@@ -62,22 +62,18 @@ export default function DevelopersPage() {
         "Fullstack Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
       githubLink: "https://github.com/nsfw-syntaxia",
-      portfolioLink: "#", // <-- Add actual portfolio link here
+      portfolioLink: "#", // actual portfolio link here
     },
   ];
 
   return (
-    // --> set up the main container for positioning
-    <div className="min-h-screen bg-white flex flex-col relative">
-      {/* Add the interactive grid background. It will sit at z-0. */}
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
       <Grid />
 
-      {/* --> wrap all content in a div to place it on top */}
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
 
         <main className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12 w-full flex-grow">
-          {/* This title section is already perfectly styled for light mode */}
           <div className="mb-16 text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
               <div className="h-2 w-2 rounded-full bg-primary1"></div>

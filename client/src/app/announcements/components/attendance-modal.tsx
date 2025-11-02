@@ -1,6 +1,10 @@
 import Image from "next/image";
 import { X } from "lucide-react";
-import { councilOfficers, committees } from "../utils/announcements";
+import {
+  Announcement,
+  councilOfficers,
+  committees,
+} from "../utils/announcements";
 
 const lightenColor = (hex: string, percent: number) => {
   const num = parseInt(hex.replace("#", ""), 16);
@@ -21,13 +25,32 @@ const lightenColor = (hex: string, percent: number) => {
 interface AttendanceModalProps {
   isOpen: boolean;
   onClose: () => void;
+  announcement: Announcement | null;
 }
 
 export default function AttendanceModal({
   isOpen,
   onClose,
+  announcement,
 }: AttendanceModalProps) {
-  if (!isOpen) return null;
+  if (!isOpen || !announcement) return null;
+
+  const formattedDate = new Date(announcement.date).toLocaleDateString(
+    "en-US",
+    {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }
+  );
+
+  const subtitleParts = [formattedDate];
+  if (announcement.time) {
+    subtitleParts.push(announcement.time);
+  }
+  if (announcement.location) {
+    subtitleParts.push(announcement.location);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -36,9 +59,8 @@ export default function AttendanceModal({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-white text-gray-800 shadow-2xl">
-        {/* --- inverted Light Header --- */}
-        <div className="relative flex flex-col items-center justify-center p-8 text-center border-b border-gray-200">
+      <div className="relative flex flex-col w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-white text-gray-800 shadow-2xl">
+        <div className="relative flex flex-col items-center justify-center p-5 sm:p-8 text-center border-b border-gray-200">
           <Image
             src="/icpep logo.png"
             alt="ICpEP Logo"
@@ -46,11 +68,11 @@ export default function AttendanceModal({
             height={64}
             className="mb-4 rounded-full"
           />
-          <h2 className="font-rubik text-3xl font-bold text-primary3">
-            Complete Meeting Attendance
+          <h2 className="font-rubik text-[1.6rem] sm:text-3xl font-bold text-primary3">
+            {`${announcement.title}`}
           </h2>
-          <p className="font-raleway text-gray-500 text-lg">
-            ICpEP.SE CIT-U Chapter - Quarterly Board Meeting
+          <p className="font-raleway text-gray-500 text-sm sm:text-lg">
+            {subtitleParts.join(" • ")}
           </p>
 
           <button
@@ -61,9 +83,7 @@ export default function AttendanceModal({
           </button>
         </div>
 
-        {/* Modal Content */}
-        <div className="themed-scrollbar h-full max-h-[calc(90vh-190px)] space-y-6 overflow-y-auto bg-gray-50 p-8">
-          {/* Council Officers */}
+        <div className="themed-scrollbar flex-1 space-y-6 overflow-y-auto bg-gray-50 p-5 sm:p-8">
           <div
             className="rounded-xl p-4 text-white"
             style={{
@@ -73,7 +93,7 @@ export default function AttendanceModal({
               )}, #003599)`,
             }}
           >
-            <h3 className="font-rubik mb-3 flex items-center text-base font-semibold">
+            <h3 className="font-rubik mb-3 flex items-center text-sm sm:text-base font-semibold">
               <span className="w-2.5 h-2.5 rounded-full bg-white/70 mr-2"></span>
               Council Officers
             </h3>
@@ -81,18 +101,19 @@ export default function AttendanceModal({
               {councilOfficers.map((officer, index) => (
                 <div
                   key={index}
-                  className="font-raleway flex items-center justify-between rounded-lg bg-black/20 p-2.5"
+                  className="font-raleway flex items-center justify-between rounded-lg bg-black/20 p-2 sm:p-2.5"
                 >
-                  <span className="text-sm font-medium text-white min-w-[90px]">
+                  <span className="text-xs sm:text-sm font-medium text-white min-w-[90px]">
                     {officer.title}
                   </span>
-                  <span className="text-right text-sm">{officer.name}</span>
+                  <span className="text-right text-xs sm:text-sm">
+                    {officer.name}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Committees */}
           {committees.map((committee, idx) => (
             <div
               key={idx}
@@ -104,7 +125,7 @@ export default function AttendanceModal({
                 )}, ${committee.color})`,
               }}
             >
-              <h3 className="font-rubik mb-3 flex items-center text-base font-semibold">
+              <h3 className="font-rubik mb-3 flex items-center text-sm sm:text-base font-semibold">
                 <span className="w-2.5 h-2.5 rounded-full bg-white/70 mr-2"></span>
                 {committee.name}
               </h3>
@@ -112,18 +133,19 @@ export default function AttendanceModal({
                 {committee.members.map((member, index) => (
                   <div
                     key={index}
-                    className="font-raleway flex items-center justify-between rounded-lg bg-black/20 p-2.5"
+                    className="font-raleway flex items-center justify-between rounded-lg bg-black/20 p-2 sm:p-2.5"
                   >
-                    <span className="text-sm font-medium text-white min-w-[90px]">
+                    <span className="text-xs sm:text-sm font-medium text-white min-w-[90px]">
                       {member.title}
                     </span>
-                    <span className="text-right text-sm">{member.name}</span>
+                    <span className="text-right text-xs sm:text-sm">
+                      {member.name}
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
           ))}
-          <div className="h-0" />
         </div>
       </div>
     </div>

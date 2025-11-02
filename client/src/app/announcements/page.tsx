@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnnouncementCard } from "./components/announcement-card";
 import Header from "../components/header";
 import Footer from "../components/footer";
-import { ArrowLeft } from "lucide-react";
+import { Home } from "lucide-react";
 import Grid from "../components/grid";
 import { Announcement, announcements } from "./utils/announcements";
 
@@ -16,7 +16,7 @@ export default function AnnouncementsPage() {
   const filteredAnnouncements = announcements
     .filter((announcement) => {
       if (activeTab === "All") {
-        return true; // show all announcements
+        return true;
       }
       return announcement.type.toLowerCase() === activeTab.toLowerCase();
     })
@@ -34,11 +34,11 @@ export default function AnnouncementsPage() {
   const tabs = ["All", "News", "Meeting", "Achievement"];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        {/* --- MODIFICATION: Updated max-width and padding to match EventsListPage --- */}
+
         <main className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12 w-full flex-grow">
           {/* Back to Home Navigation */}
           <div className="mb-8 flex justify-start">
@@ -54,7 +54,7 @@ export default function AnnouncementsPage() {
                          before:translate-x-[-100%] hover:before:translate-x-[100%] 
                          before:transition-transform before:duration-700"
             >
-              <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
+              <Home className="h-6 w-6" />
             </button>
           </div>
 
@@ -75,9 +75,8 @@ export default function AnnouncementsPage() {
             </p>
           </div>
 
-          {/* --- MODIFICATION: Themed "Inset" Tab Bar --- */}
+          {/* Tabs */}
           <div className="mb-16 flex justify-center">
-            {/* The "track" now uses your theme's light blue background */}
             <div className="flex space-x-1 rounded-xl bg-primary1/10 p-1">
               {tabs.map((tab) => (
                 <button
@@ -86,13 +85,12 @@ export default function AnnouncementsPage() {
                   className={`relative w-full rounded-lg px-4 py-2 sm:px-6 sm:py-2.5 text-sm sm:text-base font-rubik font-semibold transition-colors duration-300 ease-in-out cursor-pointer
                     ${
                       activeTab === tab
-                        ? "bg-white text-primary1 shadow" // Active tab is white on the blue track
-                        : "text-primary1/60 hover:bg-white/60" // Inactive tabs are faded blue
+                        ? "bg-white text-primary1 shadow"
+                        : "text-primary1/60 hover:bg-white/60"
                     }
                   `}
                 >
                   {tab}
-                  {/* The underline remains the same */}
                   {activeTab === tab && (
                     <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-0.5 w-1/3 bg-primary1"></span>
                   )}
@@ -102,18 +100,27 @@ export default function AnnouncementsPage() {
           </div>
 
           {/* Announcements List */}
-          <div className="px-6 lg:px-12 xl:px-16 pb-14">
-            <div className="space-y-12">
-              {/* --- MODIFICATION 5: Map over the new `filteredAnnouncements` array --- */}
-              {filteredAnnouncements.map((announcement) => (
-                <AnnouncementCard
-                  key={announcement.id}
-                  {...announcement}
-                  imageUrl={announcement.imageUrl}
-                  onClick={() => handleAnnouncementClick(announcement)}
-                />
-              ))}
-            </div>
+          <div className="pb-14">
+            {filteredAnnouncements.length > 0 ? (
+              <div className="space-y-12">
+                {filteredAnnouncements.map((announcement) => (
+                  <AnnouncementCard
+                    key={announcement.id}
+                    {...announcement}
+                    imageUrl={announcement.imageUrl}
+                    onClick={() => handleAnnouncementClick(announcement)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <p className="font-raleway text-lg text-gray-500">
+                  {activeTab === "All"
+                    ? "No announcements yet."
+                    : `No ${activeTab.toLowerCase()} announcements yet.`}
+                </p>
+              </div>
+            )}
           </div>
         </main>
         <Footer />

@@ -106,6 +106,30 @@ export const announcements: Announcement[] = [
       "Strategic Initiatives Planning",
     ],
   },
+  {
+    id: "4",
+    title: "Student Leadership Conference",
+    description:
+      "A conference to develop leadership skills among CPE students. Includes guest speakers, breakout sessions, and team-building activities.",
+    date: "2024-12-10",
+    time: "9:00 AM",
+    location: "Conference Hall B",
+    type: "Achievement",
+    imageUrl: "/gle.png",
+    galleryImageUrls: [
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=500&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop",
+    ],
+    organizer: "ICpEP.SE CIT-U Chapter",
+    awardees: [
+      { name: "Leah Santos", year: "3rd Year", award: "Best Team Leader" },
+      {
+        name: "Carlos Dela Cruz",
+        year: "4th Year",
+        award: "Innovative Leader",
+      },
+    ],
+  },
 ];
 
 export const councilOfficers: Officer[] = [

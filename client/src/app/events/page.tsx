@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { events, Event } from "./utils/event"; // Import the base Event type
+import { events, Event } from "./utils/event";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import EventCard from "./components/event-card";
 import Grid from "../components/grid";
-import { ArrowLeft } from "lucide-react";
+import { Home } from "lucide-react";
 
 // Define a new type for our processed event
 type ProcessedEvent = Event & {
@@ -20,10 +20,8 @@ export default function EventsListPage() {
     router.push("/");
   };
 
-  // --- MODIFICATION: Dynamic status calculation and sorting ---
   const now = new Date();
 
-  // 1. Map over raw events to add the dynamic status
   const processedEvents: ProcessedEvent[] = events.map((event) => {
     const startDate = new Date(event.date);
     const endDate = event.endDate ? new Date(event.endDate) : startDate;
@@ -40,7 +38,6 @@ export default function EventsListPage() {
     return { ...event, status };
   });
 
-  // 2. Sort the processed events
   const sortedEvents = processedEvents.sort((a, b) => {
     const statusOrder = { Upcoming: 1, Ongoing: 2, Ended: 3 };
     if (statusOrder[a.status] !== statusOrder[b.status]) {
@@ -54,7 +51,7 @@ export default function EventsListPage() {
   });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
@@ -72,7 +69,7 @@ export default function EventsListPage() {
                          before:translate-x-[-100%] hover:before:translate-x-[100%] 
                          before:transition-transform before:duration-700"
             >
-              <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
+              <Home className="h-6 w-6" />
             </button>
           </div>
 
@@ -92,13 +89,19 @@ export default function EventsListPage() {
             </p>
           </div>
 
-          {/* --- MODIFICATION: Map over the new `sortedEvents` array --- */}
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
-            {/* Map over the new `sortedEvents` array */}
-            {sortedEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          {sortedEvents.length > 0 ? (
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
+              {sortedEvents.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <p className="font-raleway text-lg text-gray-500">
+                No events yet.
+              </p>
+            </div>
+          )}
         </main>
         <Footer />
       </div>
