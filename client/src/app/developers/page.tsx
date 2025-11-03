@@ -85,7 +85,7 @@ export default function DevelopersPage() {
               Meet the Developers
             </h1>
             <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-              The student developers who created the official ICPEP.SE CIT-U
+              The student developers who created the official ICPEP SE CIT-U
               Chapter website as part of the Software Design course.
             </p>
           </div>
