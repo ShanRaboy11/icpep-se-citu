@@ -8,26 +8,25 @@ import { type FC } from "react";
 
 interface MerchItem {
   name: string;
-  slug: string;
   imageSrc: string;
   price: string;
   description: string;
   status: "Available" | "Coming Soon" | "Sold Out";
+  buyLink?: string;
 }
 
 const MerchPage: FC = () => {
   const merchandise: MerchItem[] = [
     {
       name: "Varsity Jacket",
-      slug: "varsity-jacket",
       price: "₱1200",
       description: "Classic collegiate style with premium embroidery.",
       status: "Available",
       imageSrc: "https://source.unsplash.com/400x400/?varsity-jacket",
+      buyLink: "https://forms.gle/your-order-form-link",
     },
     {
       name: "Chapter T-Shirt",
-      slug: "chapter-t-shirt",
       price: "₱350",
       description: "Comfortable and stylish, perfect for daily wear.",
       status: "Sold Out",
@@ -35,15 +34,14 @@ const MerchPage: FC = () => {
     },
     {
       name: "ICPEP.SE Lanyard",
-      slug: "icpep-se-lanyard",
       price: "₱150",
       description: "Keep your essentials close with our official lanyard.",
       status: "Available",
       imageSrc: "https://source.unsplash.com/400x400/?lanyard",
+      buyLink: "https://forms.gle/your-order-form-link",
     },
     {
       name: "Tote Bag",
-      slug: "tote-bag",
       price: "₱250",
       description: "A versatile and eco-friendly bag for your daily needs.",
       status: "Coming Soon",
@@ -51,7 +49,6 @@ const MerchPage: FC = () => {
     },
     {
       name: "Enamel Pin Set",
-      slug: "enamel-pin-set",
       price: "₱300",
       description: "A set of three custom-designed pins for your collection.",
       status: "Coming Soon",
@@ -59,11 +56,11 @@ const MerchPage: FC = () => {
     },
     {
       name: "Sticker Pack",
-      slug: "sticker-pack",
       price: "₱100",
       description: "Decorate your gear with our waterproof vinyl stickers.",
       status: "Available",
       imageSrc: "https://source.unsplash.com/400x400/?stickers",
+      buyLink: "https://forms.gle/your-order-form-link",
     },
   ];
 
@@ -93,7 +90,7 @@ const MerchPage: FC = () => {
           {/* Merchandise Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {merchandise.map((item) => (
-              <MerchCard key={item.slug} {...item} />
+              <MerchCard key={item.name} {...item} />
             ))}
           </div>
         </main>
