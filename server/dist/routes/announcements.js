@@ -1,3 +1,4 @@
+"use strict";
 /* server/routes/announcementRoutes.ts
 import express, { Request, Response } from 'express';
 import Announcement from '../models/announcement';
@@ -252,4 +253,4 @@ router.delete('/:id', auth, async (req: AuthRequest, res: Response) => {
   }
 });
 
-export default router; */
+export default router; */ 

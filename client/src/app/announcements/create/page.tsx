@@ -6,6 +6,7 @@ import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import { Eye, ChevronDown } from "lucide-react";
+import announcementService from "@/services/announcementService";
 
 type FormErrors = {
   date: boolean;
@@ -16,9 +17,20 @@ type FormErrors = {
   visibility: boolean;
   attendanceLink?: boolean;
 };
-type Attachment =
-  | { name: string; type: "file"; file: File }
-  | { url: string; type: "link" };
+
+type FileAttachment = {
+  name: string;
+  type: "file";
+  file: File;
+};
+
+type LinkAttachment = {
+  name: string;
+  url: string;
+  type: "link";
+};
+
+type Attachment = FileAttachment | LinkAttachment;
 
 export default function AnnouncementsPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -35,15 +47,10 @@ export default function AnnouncementsPage() {
     { name: "", program: "", year: "", award: "" },
   ]);
   const [showGlobalError, setShowGlobalError] = useState(false);
-  const [attendanceLink, setAttendanceLink] = useState("");
-  const [attendanceFile, setAttendanceFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [title, setTitle] = useState("");
-  const [summary, setSummary] = useState("");
-  const [body, setBody] = useState("");
-  const [visibility, setVisibility] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     summary: "",
@@ -51,6 +58,7 @@ export default function AnnouncementsPage() {
     visibility: "",
     date: "",
     time: "",
+    location: "",
     attendanceLink: "",
   });
 
@@ -64,7 +72,7 @@ export default function AnnouncementsPage() {
     attendanceLink: false,
   });
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     const newErrors: FormErrors = {
       date: !formData.date.trim(),
       time: !formData.time.trim(),
@@ -85,7 +93,150 @@ export default function AnnouncementsPage() {
       return;
     }
 
-    console.log("✅ Submitted successfully");
+    setIsSubmitting(true);
+    setShowGlobalError(false);
+
+    try {
+      // Map activeTab to backend type
+      const typeMap: Record<string, string> = {
+        General: "General",
+        News: "General",
+        Meeting: "Meeting",
+        Achievement: "Achievement",
+      };
+
+      // Map visibility to targetAudience
+      const audienceMap: Record<string, string[]> = {
+        public: ["all"],
+        members: ["members"],
+        officers: ["officers"],
+      };
+
+      // Prepare attachments data
+      const attachmentsData = attachments
+        .filter((att): att is LinkAttachment => att.type === "link")
+        .map((att) => ({
+          name: att.name,
+          url: att.url,
+          fileType: att.type,
+        }));
+
+      const announcementData = {
+        title: formData.title,
+        description: formData.summary,
+        content: formData.body,
+        type: typeMap[activeTab] as any,
+        targetAudience: audienceMap[formData.visibility] || ["all"],
+        isPublished: true,
+        publishDate: showSchedule && scheduleDate ? 
+          new Date(`${scheduleDate}T${scheduleTime || "00:00"}`).toISOString() : 
+          new Date().toISOString(),
+        time: formData.time,
+        location: formData.location,
+        organizer: organizer || undefined,
+        attendees: activeTab === "Meeting" ? formData.attendanceLink : undefined,
+        awardees: activeTab === "Achievement" ? awardees.filter(a => a.name.trim()) : undefined,
+        attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
+      };
+
+      const response = await announcementService.createAnnouncement(
+        announcementData,
+        imageFile || undefined
+      );
+
+      console.log("✅ Announcement created successfully:", response);
+      setSubmitSuccess(true);
+
+      // Reset form after 2 seconds
+      setTimeout(() => {
+        resetForm();
+        setSubmitSuccess(false);
+      }, 2000);
+    } catch (error) {
+      console.error("❌ Error creating announcement:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to create announcement. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    setIsSubmitting(true);
+
+    try {
+      const typeMap: Record<string, string> = {
+        General: "General",
+        News: "General",
+        Meeting: "Meeting",
+        Achievement: "Achievement",
+      };
+
+      const audienceMap: Record<string, string[]> = {
+        public: ["all"],
+        members: ["members"],
+        officers: ["officers"],
+      };
+
+      const attachmentsData = attachments
+        .filter((att): att is LinkAttachment => att.type === "link")
+        .map((att) => ({
+          name: att.name,
+          url: att.url,
+          fileType: att.type,
+        }));
+
+      const announcementData = {
+        title: formData.title || "Untitled Draft",
+        description: formData.summary || "No description",
+        content: formData.body || "No content",
+        type: typeMap[activeTab] as any,
+        targetAudience: formData.visibility ? 
+          audienceMap[formData.visibility] : ["all"],
+        isPublished: false,
+        time: formData.time || undefined,
+        location: formData.location || undefined,
+        organizer: organizer || undefined,
+        awardees: activeTab === "Achievement" ? 
+          awardees.filter(a => a.name.trim()) : undefined,
+        attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
+      };
+
+      const response = await announcementService.createAnnouncement(
+        announcementData,
+        imageFile || undefined
+      );
+
+      console.log("✅ Draft saved successfully:", response);
+      alert("Draft saved successfully!");
+    } catch (error) {
+      console.error("❌ Error saving draft:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save draft. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      summary: "",
+      body: "",
+      visibility: "",
+      date: "",
+      time: "",
+      location: "",
+      attendanceLink: "",
+    });
+    setAttachments([]);
+    setOrganizer("");
+    setAwardees([{ name: "", program: "", year: "", award: "" }]);
+    setImageFile(null);
+    setShowSchedule(false);
+    setScheduleDate("");
+    setScheduleTime("");
+    setShowOrganizerInput(false);
   };
 
   const handleInputChange = (
@@ -94,10 +245,8 @@ export default function AnnouncementsPage() {
     >
   ) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error as soon as user types
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: false }));
     }
@@ -133,6 +282,13 @@ export default function AnnouncementsPage() {
     setAttachments((prev) => [...prev, ...newFiles]);
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+    }
+  };
+
   const removeAttachment = (index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
@@ -140,7 +296,6 @@ export default function AnnouncementsPage() {
   const tabs = ["General", "News", "Meeting", "Achievement"];
 
   useEffect(() => {
-    // If all errors are cleared, hide global message
     if (Object.values(errors).every((err) => err === false)) {
       setShowGlobalError(false);
     }
@@ -148,11 +303,9 @@ export default function AnnouncementsPage() {
 
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
-      {/* Global Header */}
       <Header />
 
       <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
-        {/* Page Title */}
         <div className="text-center sm:text-left mb-10">
           <h1 className="text-2xl sm:text-5xl font-bold font-rubik text-primary3">
             Announcements / Events
@@ -160,32 +313,45 @@ export default function AnnouncementsPage() {
           <div className="h-[3px] bg-primary1 w-24 sm:w-full mt-3 mx-auto rounded-full" />
         </div>
 
-        {/* Sidebar + Main Form */}
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
           <aside className="w-full lg:w-64 flex-shrink-0">
             <Sidebar />
           </aside>
 
-          {/* Main Content */}
           <div className="flex-1">
+            {submitSuccess && (
+              <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                ✅ Announcement published successfully!
+              </div>
+            )}
+
             <form className="border border-primary1 rounded-2xl p-6 space-y-4 bg-white mb-10">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl sm:text-3xl font-semibold text-primary1 font-rubik">
                   Content
                 </h2>
-                {/*<Button
-                  variant="primary2"
-                  onClick={() => setPreviewOpen(true)}
-                  className="flex items-center gap-1"
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Preview
-                </Button>*/}
               </div>
               <p className="text-sm text-gray-500 font-raleway -mt-5">
                 Provide key information
               </p>
+
+              {/* Image Upload */}
+              <div>
+                <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
+                  Featured Image (optional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary2 font-rubik"
+                />
+                {imageFile && (
+                  <p className="text-sm text-gray-500 mt-1">
+                    Selected: {imageFile.name}
+                  </p>
+                )}
+              </div>
 
               <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
                 Tag
@@ -195,7 +361,7 @@ export default function AnnouncementsPage() {
                   {tabs.map((tab) => (
                     <button
                       key={tab}
-                      type="button" // ← Add this
+                      type="button"
                       onClick={() => setActiveTab(tab)}
                       className={`relative w-full rounded-lg px-4 py-2 sm:px-6 sm:py-2.5 text-sm font-rubik font-semibold transition-colors duration-300 ease-in-out cursor-pointer
     ${
@@ -214,7 +380,6 @@ export default function AnnouncementsPage() {
                 </div>
               </div>
 
-              {/* Date / Time / Location Row */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
                   <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
@@ -266,6 +431,9 @@ export default function AnnouncementsPage() {
                   </label>
                   <input
                     type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
                     placeholder="Where is it happening?"
                     className="w-full border border-gray-300 text-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik"
                   />
@@ -344,6 +512,7 @@ export default function AnnouncementsPage() {
                 name="body"
                 value={formData.body}
                 onChange={handleInputChange}
+                rows={6}
                 placeholder="Add full details, links, and attachments"
                 className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
   border transition-all
@@ -454,7 +623,6 @@ export default function AnnouncementsPage() {
                   <option value="officers">Officers Only</option>
                 </select>
                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-primary3">
-                  {" "}
                   <ChevronDown className="w-4 h-4" />
                 </span>
               </div>
@@ -483,13 +651,10 @@ export default function AnnouncementsPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    // If it's already open and no text → close
                     if (showLinkInput && newLink.trim() === "") {
                       setShowLinkInput(false);
                       return;
                     }
-
-                    // Otherwise → open
                     setShowLinkInput(true);
                   }}
                   className="px-4 py-2 border border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white font-rubik"
@@ -498,7 +663,6 @@ export default function AnnouncementsPage() {
                 </button>
               </div>
 
-              {/* Link Input Appears Only When Button is Clicked */}
               {showLinkInput && (
                 <div className="flex gap-2 mb-4 animate-fade-in">
                   <input
@@ -516,11 +680,11 @@ export default function AnnouncementsPage() {
 
                       setAttachments((prev) => [
                         ...prev,
-                        { url: newLink.trim(), type: "link" },
+                        { name: newLink.trim(), url: newLink.trim(), type: "link" },
                       ]);
 
-                      setNewLink(""); // clear field
-                      setShowLinkInput(false); // hide box after adding
+                      setNewLink("");
+                      setShowLinkInput(false);
                     }}
                     className="px-4 py-2 bg-primary2 text-white rounded-lg hover:bg-primary3 font-rubik"
                   >
@@ -528,18 +692,18 @@ export default function AnnouncementsPage() {
                   </button>
                 </div>
               )}
-              {/* Tags */}
               <div className="flex flex-wrap gap-2">
                 {attachments.map((att, index) => (
                   <span
                     key={index}
                     className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1 rounded-full border border-gray-300 text-sm"
                   >
-                    {att.type === "file" ? att.name : att.url}
+                    {att.name}
 
                     <button
                       onClick={() => removeAttachment(index)}
                       className="text-gray-500 hover:text-red-500 font-bold"
+                      type="button"
                     >
                       ×
                     </button>
@@ -554,8 +718,8 @@ export default function AnnouncementsPage() {
 
                   <input
                     type="url"
-                    id="url"
-                    name="url"
+                    id="attendanceLink"
+                    name="attendanceLink"
                     value={formData.attendanceLink}
                     onChange={handleInputChange}
                     placeholder="Link to attendance Google Sheet / Drive folder"
@@ -588,7 +752,6 @@ export default function AnnouncementsPage() {
                   <p className="text-sm text-gray-500 mb-4">Publish timing</p>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Date */}
                     <div>
                       <label className="text-md font-normal text-primary3 font-raleway block mb-1">
                         Date
@@ -603,7 +766,6 @@ export default function AnnouncementsPage() {
                       </div>
                     </div>
 
-                    {/* Time */}
                     <div>
                       <label className="text-md font-normal text-primary3 font-raleway block mb-1">
                         Time
@@ -621,23 +783,29 @@ export default function AnnouncementsPage() {
                 </div>
               )}
               <div className="flex flex-wrap items-center justify-between gap-3 mt-6">
-                {/* Error Message */}
                 {showGlobalError && (
                   <p className="text-red-500 text-sm font-raleway">
                     Please fill all required fields before publishing.
                   </p>
                 )}
 
-                {/* Buttons */}
                 <div className="flex gap-3 ml-auto">
-                  <Button variant="outline">Save Draft</Button>
+                  <Button 
+                    variant="outline" 
+                    type="button"
+                    onClick={handleSaveDraft}
+                    disabled={isSubmitting}
+                  >
+                    Save Draft
+                  </Button>
                   <Button
                     variant="primary2"
                     type="button"
                     onClick={handlePublish}
+                    disabled={isSubmitting}
                     className="disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Publish
+                    {isSubmitting ? "Publishing..." : "Publish"}
                   </Button>
                 </div>
               </div>
@@ -646,7 +814,6 @@ export default function AnnouncementsPage() {
         </div>
       </main>
 
-      {/* Global Footer */}
       <Footer />
     </section>
   );

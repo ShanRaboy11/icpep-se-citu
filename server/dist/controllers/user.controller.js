@@ -99,6 +99,8 @@ exports.getUserById = getUserById;
 const createUser = async (req, res) => {
     try {
         const { studentNumber, lastName, firstName, middleName, password = '123456', role = 'student', yearLevel, membershipStatus, } = req.body;
+        console.log('📝 CREATE USER - req.user:', req.user);
+        console.log('📝 CREATE USER - membershipStatus received:', membershipStatus);
         // Validation
         if (!studentNumber || !lastName || !firstName) {
             res.status(400).json({
@@ -116,37 +118,48 @@ const createUser = async (req, res) => {
             });
             return;
         }
-        // Prepare membership status
+        // ✅ NEW: Handle membership status - supports both string and object formats
         let membershipStatusObj = {
             isMember: false,
             membershipType: null,
         };
-        if (membershipStatus) {
-            if (membershipStatus === 'local') {
+        // Check if membershipStatus is already an object (from Excel upload)
+        if (membershipStatus && typeof membershipStatus === 'object') {
+            membershipStatusObj = {
+                isMember: membershipStatus.isMember || false,
+                membershipType: membershipStatus.membershipType || null,
+            };
+        }
+        // Handle string format (from manual add form)
+        else if (membershipStatus && typeof membershipStatus === 'string') {
+            const statusLower = membershipStatus.toLowerCase();
+            if (statusLower === 'local') {
                 membershipStatusObj = {
                     isMember: true,
                     membershipType: 'local',
                 };
             }
-            else if (membershipStatus === 'regional') {
+            else if (statusLower === 'regional') {
                 membershipStatusObj = {
                     isMember: true,
                     membershipType: 'regional',
                 };
             }
-            else if (membershipStatus === 'both') {
+            else if (statusLower === 'both') {
                 membershipStatusObj = {
                     isMember: true,
                     membershipType: 'both',
                 };
             }
-            else if (membershipStatus === 'member') {
+            else if (statusLower === 'member') {
                 membershipStatusObj = {
                     isMember: true,
-                    membershipType: 'local', // Default to local if just "member"
+                    membershipType: null, // Generic member without specific type
                 };
             }
+            // 'non-member' or any other value defaults to the initial values
         }
+        console.log('✅ Processed membershipStatus:', membershipStatusObj);
         // Create user
         const newUser = await user_1.default.create({
             studentNumber,
@@ -189,6 +202,7 @@ const bulkUploadUsers = async (req, res) => {
             return;
         }
         console.log(`📦 Processing bulk upload of ${users.length} users...`);
+        console.log('📦 BULK UPLOAD - req.user:', req.user);
         const results = {
             success: [],
             failed: [],
@@ -216,35 +230,46 @@ const bulkUploadUsers = async (req, res) => {
                     });
                     continue;
                 }
-                // Prepare membership status
+                // ✅ NEW: Handle membership status - supports both string and object formats
                 let membershipStatusObj = {
                     isMember: false,
                     membershipType: null,
                 };
-                const membershipStatus = userData.membershipStatus?.toLowerCase();
-                if (membershipStatus === 'local') {
+                // Check if membershipStatus is already an object (from frontend processing)
+                if (userData.membershipStatus && typeof userData.membershipStatus === 'object') {
                     membershipStatusObj = {
-                        isMember: true,
-                        membershipType: 'local',
+                        isMember: userData.membershipStatus.isMember || false,
+                        membershipType: userData.membershipStatus.membershipType || null,
                     };
                 }
-                else if (membershipStatus === 'regional') {
-                    membershipStatusObj = {
-                        isMember: true,
-                        membershipType: 'regional',
-                    };
-                }
-                else if (membershipStatus === 'both') {
-                    membershipStatusObj = {
-                        isMember: true,
-                        membershipType: 'both',
-                    };
-                }
-                else if (membershipStatus === 'member') {
-                    membershipStatusObj = {
-                        isMember: true,
-                        membershipType: 'local', // Default to local if just "member"
-                    };
+                // Handle string format (from Excel file)
+                else if (userData.membershipStatus && typeof userData.membershipStatus === 'string') {
+                    const statusLower = userData.membershipStatus.toLowerCase().trim();
+                    if (statusLower === 'local') {
+                        membershipStatusObj = {
+                            isMember: true,
+                            membershipType: 'local',
+                        };
+                    }
+                    else if (statusLower === 'regional') {
+                        membershipStatusObj = {
+                            isMember: true,
+                            membershipType: 'regional',
+                        };
+                    }
+                    else if (statusLower === 'both') {
+                        membershipStatusObj = {
+                            isMember: true,
+                            membershipType: 'both',
+                        };
+                    }
+                    else if (statusLower === 'member') {
+                        membershipStatusObj = {
+                            isMember: true,
+                            membershipType: null, // Generic member
+                        };
+                    }
+                    // 'non-member' or any other value defaults to initial values
                 }
                 // Create new user
                 const newUser = await user_1.default.create({
@@ -263,7 +288,7 @@ const bulkUploadUsers = async (req, res) => {
                     fullName: newUser.fullName,
                     id: newUser._id.toString(),
                 });
-                console.log(`✅ Created user: ${newUser.fullName} (${newUser.studentNumber})`);
+                console.log(`✅ Created user: ${newUser.fullName} (${newUser.studentNumber}) - Member: ${membershipStatusObj.isMember}, Type: ${membershipStatusObj.membershipType}`);
             }
             catch (error) {
                 console.error(`❌ Failed to create user ${userData.studentNumber}:`, error.message);

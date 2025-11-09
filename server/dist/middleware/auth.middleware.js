@@ -12,6 +12,7 @@ const authenticateToken = (req, res, next) => {
         // Get token from header
         const authHeader = req.headers['authorization'];
         const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+        console.log('🔐 Token received:', token ? 'Yes' : 'No'); // ✅ DEBUG LOG
         if (!token) {
             return res.status(401).json({
                 success: false,
@@ -20,10 +21,13 @@ const authenticateToken = (req, res, next) => {
         }
         // Verify token
         const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
+        console.log('👤 Decoded token:', decoded); // ✅ DEBUG LOG
+        console.log('🆔 User ID from token:', decoded.id); // ✅ DEBUG LOG
         req.user = decoded;
         next();
     }
     catch (error) {
+        console.error('❌ Token verification failed:', error); // ✅ DEBUG LOG
         return res.status(403).json({
             success: false,
             message: 'Invalid or expired token.',
