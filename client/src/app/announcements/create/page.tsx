@@ -6,7 +6,7 @@ import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import { Eye, ChevronDown } from "lucide-react";
-import announcementService from "@/services/announcementService";
+import announcementService from "../../services/announcement";
 
 type FormErrors = {
   date: boolean;
