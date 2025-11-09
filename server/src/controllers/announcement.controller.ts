@@ -3,22 +3,9 @@ import Announcement, { IAnnouncement } from '../models/announcement';
 import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinary';
 import mongoose from 'mongoose';
 
-// Extend Request type to include file from multer
-// Local minimal Multer file type (we only need 'buffer' here)
-interface MulterFile {
-    fieldname: string;
-    originalname: string;
-    encoding: string;
-    mimetype: string;
-    size: number;
-    buffer: Buffer;
-    destination?: string;
-    filename?: string;
-    path?: string;
-}
-
+// Properly extend Request to include Multer file
 interface MulterRequest extends Request {
-    file?: MulterFile;
+    file?: Express.Multer.File;
 }
 
 // Define query type for better type safety
@@ -73,8 +60,10 @@ export const createAnnouncement = async (
         // Handle image upload if present
         let imageUrl: string | null = null;
         if (req.file) {
+            console.log('📷 Uploading image to Cloudinary...');
             const result = await uploadToCloudinary(req.file.buffer, 'announcements');
             imageUrl = result.secure_url;
+            console.log('✅ Image uploaded:', imageUrl);
         }
 
         // Parse arrays if sent as strings
@@ -82,6 +71,14 @@ export const createAnnouncement = async (
         const parsedAwardees = awardees ? JSON.parse(awardees) : undefined;
         const parsedAttachments = attachments ? JSON.parse(attachments) : undefined;
         const parsedTargetAudience = targetAudience ? JSON.parse(targetAudience) : ['all'];
+
+        console.log('📝 Creating announcement with data:', {
+            title,
+            type,
+            author,
+            isPublished: isPublished === 'true' || isPublished === true,
+            targetAudience: parsedTargetAudience,
+        });
 
         const announcement = await Announcement.create({
             title,
@@ -107,12 +104,15 @@ export const createAnnouncement = async (
 
         await announcement.populate('author', 'firstName lastName studentNumber');
 
+        console.log('✅ Announcement created successfully:', announcement._id);
+
         res.status(201).json({
             success: true,
             message: 'Announcement created successfully',
             data: announcement,
         });
     } catch (error) {
+        console.error('❌ Error creating announcement:', error);
         next(error);
     }
 };
@@ -233,6 +233,12 @@ export const updateAnnouncement = async (
             return;
         }
 
+        // Optional: Check if user is the author
+        // if (announcement.author.toString() !== userId) {
+        //     res.status(403).json({ message: 'Not authorized to update this announcement' });
+        //     return;
+        // }
+
         // Handle new image upload
         if (req.file) {
             // Delete old image if exists
@@ -295,6 +301,11 @@ export const deleteAnnouncement = async (
             return;
         }
 
+        // Optional: Check if user is the author
+        // if (announcement.author.toString() !== userId) {
+        //     res.status(403).json({ message: 'Not authorized to delete this announcement' });
+        //     return;
+        // }
 
         // Delete image from cloudinary if exists
         if (announcement.imageUrl) {
@@ -334,6 +345,11 @@ export const togglePublishStatus = async (
             return;
         }
 
+        // Optional: Check if user is the author
+        // if (announcement.author.toString() !== userId) {
+        //     res.status(403).json({ message: 'Not authorized to modify this announcement' });
+        //     return;
+        // }
 
         announcement.isPublished = !announcement.isPublished;
         
@@ -412,7 +428,12 @@ export const getMyAnnouncements = async (
         const userId = req.user?.id;
         const { page = 1, limit = 10, status } = req.query;
 
-        const query: UserAnnouncementQuery = { author: userId as string };
+        if (!userId) {
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
+
+        const query: UserAnnouncementQuery = { author: userId };
         
         if (status === 'published') {
             query.isPublished = true;
@@ -425,6 +446,7 @@ export const getMyAnnouncements = async (
         const skip = (pageNum - 1) * limitNum;
 
         const announcements = await Announcement.find(query)
+            .populate('author', 'firstName lastName studentNumber')
             .sort('-createdAt')
             .skip(skip)
             .limit(limitNum);

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -16,8 +16,46 @@ api.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Log the request for debugging
+    console.log('🔵 API Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        baseURL: config.baseURL,
+        fullURL: `${config.baseURL}${config.url}`,
+        hasAuth: !!token,
+    });
+    
     return config;
 });
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+    (response) => {
+        console.log('✅ API Response:', {
+            status: response.status,
+            url: response.config.url,
+            data: response.data,
+        });
+        return response;
+    },
+    (error: AxiosError) => {
+        console.error('❌ API Error:', {
+            status: error.response?.status,
+            url: error.config?.url,
+            baseURL: error.config?.baseURL,
+            fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown',
+            message: error.message,
+            data: error.response?.data,
+        });
+        return Promise.reject(error);
+    }
+);
+
+export interface ApiError {
+    message: string;
+    errors?: string[];
+}
 
 export interface AnnouncementResponse {
     success: boolean;
@@ -62,10 +100,36 @@ export interface AnnouncementData {
 
 class AnnouncementService {
     /**
+     * Handle API errors
+     */
+    private handleError(error: unknown): never {
+        if (axios.isAxiosError(error)) {
+            const axiosError = error as AxiosError<ApiError>;
+            const errorMessage = axiosError.response?.data?.message || error.message;
+            const statusCode = axiosError.response?.status;
+            
+            console.error('Service Error Details:', {
+                status: statusCode,
+                message: errorMessage,
+                url: axiosError.config?.url,
+                method: axiosError.config?.method,
+            });
+            
+            throw new Error(`${statusCode ? `[${statusCode}] ` : ''}${errorMessage}`);
+        }
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('An unknown error occurred');
+    }
+
+    /**
      * Create a new announcement
      */
     async createAnnouncement(data: AnnouncementData, imageFile?: File): Promise<AnnouncementResponse> {
         try {
+            console.log('📤 Creating announcement with data:', data);
+            
             const formData = new FormData();
 
             // Append all fields
@@ -81,8 +145,15 @@ class AnnouncementService {
 
             // Append image if provided
             if (imageFile) {
+                console.log('📷 Appending image file:', imageFile.name);
                 formData.append('image', imageFile);
             }
+
+            // Log FormData contents
+            console.log('📋 FormData contents:');
+            formData.forEach((value, key) => {
+                console.log(`  ${key}:`, typeof value === 'string' ? value.substring(0, 50) + '...' : value);
+            });
 
             const response = await api.post('/announcements', formData, {
                 headers: {
@@ -92,10 +163,7 @@ class AnnouncementService {
 
             return response.data;
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('An unknown error occurred');
+            this.handleError(error);
         }
     }
 
@@ -115,10 +183,7 @@ class AnnouncementService {
             const response = await api.get('/announcements', { params });
             return response.data;
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('An unknown error occurred');
+            this.handleError(error);
         }
     }
 
@@ -130,10 +195,7 @@ class AnnouncementService {
             const response = await api.get(`/announcements/${id}`);
             return response.data;
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('An unknown error occurred');
+            this.handleError(error);
         }
     }
 
@@ -170,10 +232,7 @@ class AnnouncementService {
 
             return response.data;
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('An unknown error occurred');
+            this.handleError(error);
         }
     }
 
@@ -185,10 +244,7 @@ class AnnouncementService {
             const response = await api.delete(`/announcements/${id}`);
             return response.data;
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('An unknown error occurred');
+            this.handleError(error);
         }
     }
 
@@ -200,10 +256,7 @@ class AnnouncementService {
             const response = await api.patch(`/announcements/${id}/publish`);
             return response.data;
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('An unknown error occurred');
+            this.handleError(error);
         }
     }
 
@@ -218,10 +271,7 @@ class AnnouncementService {
             const response = await api.get(`/announcements/type/${type}`, { params });
             return response.data;
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('An unknown error occurred');
+            this.handleError(error);
         }
     }
 
@@ -237,10 +287,7 @@ class AnnouncementService {
             const response = await api.get('/announcements/my/announcements', { params });
             return response.data;
         } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('An unknown error occurred');
+            this.handleError(error);
         }
     }
 }
