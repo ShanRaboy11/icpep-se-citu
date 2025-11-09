@@ -8,7 +8,7 @@ import InfoSection from "./components/info";
 import Timeline from "./components/timeline";
 import OfficerTermCard from "./components/term-card";
 import ProfileCard from "./components/profile-card";
-import { FC, useRef, type MouseEvent } from "react"; // <-- Import useRef and MouseEvent
+import { FC } from "react";
 
 // --- MOCK DATA (Replace with your actual data) ---
 
@@ -71,7 +71,6 @@ const officerHistory = [
       },
     ],
   },
-  // You can add another object here for A.Y. 2022-2023, etc.
 ];
 
 const departmentFaculty = [
@@ -98,32 +97,11 @@ const departmentFaculty = [
 ];
 
 const AboutPage: FC = () => {
-  // --- START: Integrated Page Header Logic ---
-  const textRef = useRef<HTMLHeadingElement | null>(null);
-
-  const handleMouseMove = (e: MouseEvent<HTMLHeadingElement>) => {
-    const textElement = textRef.current;
-    if (!textElement) return;
-    const { left, top } = textElement.getBoundingClientRect();
-    const x = e.clientX - left;
-    const y = e.clientY - top;
-    textElement.style.setProperty("--mouse-x", `${x}px`);
-    textElement.style.setProperty("--mouse-y", `${y}px`);
-    textElement.style.setProperty("--opacity", "1");
-  };
-
-  const handleMouseLeave = () => {
-    const textElement = textRef.current;
-    if (textElement) {
-      textElement.style.setProperty("--opacity", "0");
-    }
-  };
-
+  // --- MODIFICATION: Removed useRef and mouse event handlers ---
   const pillText = "About Our Chapter";
-  const title = "Forging the Future of Engineering";
+  const title = "The ICpEP SE CIT-U Story";
   const subtitle =
-    "Discover the mission, vision, and the dedicated individuals who drive the Institute of Computer Engineers of the Philippines, Student Edition at CIT-U.";
-  // --- END: Integrated Page Header Logic ---
+    "Get to know our mission, values, and the dedicated individuals who bring ICPEP SE CIT-U Chapter to life and carry its legacy forward.";
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
@@ -131,7 +109,7 @@ const AboutPage: FC = () => {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
-          {/* --- START: Integrated Page Header JSX --- */}
+          {/* --- MODIFICATION START: Header now matches the 'Developers' page style --- */}
           <div className="mb-20 text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
               <div className="h-2 w-2 rounded-full bg-primary1"></div>
@@ -139,39 +117,14 @@ const AboutPage: FC = () => {
                 {pillText}
               </span>
             </div>
-            <h1
-              ref={textRef}
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
-              className="font-rubik text-5xl md:text-7xl font-extrabold text-primary3 relative cursor-default"
-              style={
-                {
-                  "--mouse-x": "50%",
-                  "--mouse-y": "50%",
-                  "--opacity": "0",
-                } as React.CSSProperties
-              }
-            >
-              <span
-                className="absolute inset-0 transition-opacity duration-500"
-                style={{
-                  opacity: "var(--opacity)",
-                  background:
-                    "radial-gradient(250px circle at var(--mouse-x) var(--mouse-y), #003599 0%, #04a6ef 100%)",
-                  WebkitBackgroundClip: "text",
-                  backgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                {title}
-              </span>
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
               {title}
             </h1>
-            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto mt-6">
+            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
               {subtitle}
             </p>
           </div>
-          {/* --- END: Integrated Page Header JSX --- */}
+          {/* --- MODIFICATION END --- */}
 
           {/* Section 1: Org Info */}
           <InfoSection />
