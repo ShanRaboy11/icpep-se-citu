@@ -17,19 +17,19 @@ const facultyHistory = [
     year: "2022 - Present",
     name: "Dr. Jane Doe",
     position: "CPE Department Head",
-    imageUrl: "/placeholders/profile1.jpg",
+    imageUrl: "/gle.png",
   },
   {
     year: "2020 - 2022",
     name: "Engr. John Smith",
     position: "CPE Department Head",
-    imageUrl: "/placeholders/profile2.jpg",
+    imageUrl: "/gle.png",
   },
   {
     year: "2021 - Present",
     name: "Prof. Emily White",
     position: "ICPEP.SE Adviser",
-    imageUrl: "/placeholders/profile3.jpg",
+    imageUrl: "/gle.png",
   },
 ];
 
@@ -40,34 +40,34 @@ const officerHistory = [
       {
         name: "Juan Dela Cruz",
         position: "President",
-        imageUrl: "/placeholders/profile4.jpg",
+        imageUrl: "/gle.png",
       },
       {
         name: "Maria Clara",
         position: "Vice President",
-        imageUrl: "/placeholders/profile5.jpg",
+        imageUrl: "/gle.png",
       },
       {
         name: "Crisostomo Ibarra",
         position: "Secretary",
-        imageUrl: "/placeholders/profile6.jpg",
+        imageUrl: "/gle.png",
       },
     ],
     committees: [
       {
         name: "Pedro Penduko",
         position: "Creatives Committee Head",
-        imageUrl: "/placeholders/profile7.jpg",
+        imageUrl: "/gle.png",
       },
       {
         name: "Darna",
         position: "Events Committee Head",
-        imageUrl: "/placeholders/profile8.jpg",
+        imageUrl: "/gle.png",
       },
       {
         name: "Captain Barbell",
         position: "Logistics Committee Head",
-        imageUrl: "/placeholders/profile9.jpg",
+        imageUrl: "/gle.png",
       },
     ],
   },
@@ -77,22 +77,22 @@ const departmentFaculty = [
   {
     name: "Dr. Richard Roe",
     position: "Professor, AI & Machine Learning",
-    imageUrl: "/placeholders/profile10.jpg",
+    imageUrl: "/gle.png",
   },
   {
     name: "Engr. Susan Bones",
     position: "Instructor, Digital Logic Design",
-    imageUrl: "/placeholders/profile11.jpg",
+    imageUrl: "/gle.png",
   },
   {
     name: "Prof. Peter Pan",
     position: "Lecturer, Embedded Systems",
-    imageUrl: "/placeholders/profile12.jpg",
+    imageUrl: "/gle.png",
   },
   {
     name: "Dr. Wendy Darling",
     position: "Associate Professor, Networking",
-    imageUrl: "/placeholders/profile1.jpg",
+    imageUrl: "/gle.png",
   },
 ];
 

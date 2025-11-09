@@ -408,17 +408,17 @@ html {
   animation: progress-bar-animation 7s linear forwards;
 }
 
+.content-fade {
+  animation: fade-in 0.6s ease-out;
+}
+
 @keyframes fade-in {
-  from {
+  0% {
     opacity: 0;
     transform: translateY(10px);
   }
-  to {
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.6s ease-out forwards;
 }
