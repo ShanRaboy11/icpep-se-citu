@@ -21,6 +21,9 @@ interface MembershipTier {
 }
 
 const MembershipPage: FC = () => {
+  // control state here heh
+  const isMembershipOpen = false;
+
   const membershipTiers: MembershipTier[] = [
     {
       planLabel: "Student",
@@ -82,7 +85,7 @@ const MembershipPage: FC = () => {
             <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
               <div className="h-2 w-2 rounded-full bg-primary1"></div>
               <span className="font-raleway text-sm font-semibold text-primary1">
-                Join Our Community
+                {isMembershipOpen ? "Join Our Community" : "Membership Closed"}
               </span>
             </div>
             <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
@@ -97,24 +100,28 @@ const MembershipPage: FC = () => {
 
           <div className="w-full">
             <div className="group flex flex-col lg:flex-row justify-center items-center gap-16 lg:gap-8 lg:pt-12">
-              {/* Student Card */}
               <div className="order-2 lg:order-1 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-8 group-hover:lg:-translate-x-8">
-                <MembershipCard {...membershipTiers[0]} />
+                <MembershipCard
+                  {...membershipTiers[0]}
+                  isOpen={isMembershipOpen}
+                />
               </div>
-
-              {/* All-Access Card */}
               <div className="order-1 lg:order-2 w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
-                <MembershipCard {...membershipTiers[1]} />
+                <MembershipCard
+                  {...membershipTiers[1]}
+                  isOpen={isMembershipOpen}
+                />
               </div>
-
-              {/* National Card */}
               <div className="order-3 lg:order-3 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
-                <MembershipCard {...membershipTiers[2]} />
+                <MembershipCard
+                  {...membershipTiers[2]}
+                  isOpen={isMembershipOpen}
+                />
               </div>
             </div>
           </div>
 
-          <InteractiveCta />
+          <InteractiveCta isOpen={isMembershipOpen} />
         </main>
         <Footer />
       </div>
