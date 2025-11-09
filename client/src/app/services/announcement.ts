@@ -8,22 +8,24 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    timeout: 30000, // 30 second timeout
 });
 
 // Add auth token to requests
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
+    // The app stores auth token under 'authToken' (see login page)
+    const token = localStorage.getItem('authToken');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     
-    // Log the request for debugging
     console.log('🔵 API Request:', {
         method: config.method?.toUpperCase(),
         url: config.url,
         baseURL: config.baseURL,
         fullURL: `${config.baseURL}${config.url}`,
         hasAuth: !!token,
+        contentType: config.headers['Content-Type'],
     });
     
     return config;
@@ -47,6 +49,7 @@ api.interceptors.response.use(
             fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown',
             message: error.message,
             data: error.response?.data,
+            code: error.code,
         });
         return Promise.reject(error);
     }
@@ -113,6 +116,7 @@ class AnnouncementService {
                 message: errorMessage,
                 url: axiosError.config?.url,
                 method: axiosError.config?.method,
+                code: axiosError.code,
             });
             
             throw new Error(`${statusCode ? `[${statusCode}] ` : ''}${errorMessage}`);
@@ -132,16 +136,36 @@ class AnnouncementService {
             
             const formData = new FormData();
 
-            // Append all fields
-            Object.entries(data).forEach(([key, value]) => {
-                if (value !== undefined && value !== null) {
-                    if (Array.isArray(value) || typeof value === 'object') {
-                        formData.append(key, JSON.stringify(value));
-                    } else {
-                        formData.append(key, String(value));
-                    }
-                }
-            });
+            // Append simple fields directly (don't stringify)
+            formData.append('title', data.title);
+            formData.append('description', data.description);
+            formData.append('content', data.content);
+            formData.append('type', data.type);
+            formData.append('isPublished', String(data.isPublished));
+            
+            // Optional simple fields
+            if (data.priority) formData.append('priority', data.priority);
+            if (data.publishDate) formData.append('publishDate', data.publishDate);
+            if (data.expiryDate) formData.append('expiryDate', data.expiryDate);
+            if (data.time) formData.append('time', data.time);
+            if (data.location) formData.append('location', data.location);
+            if (data.organizer) formData.append('organizer', data.organizer);
+            if (data.contact) formData.append('contact', data.contact);
+            if (data.attendees) formData.append('attendees', data.attendees);
+
+            // Complex fields - stringify arrays/objects
+            if (data.targetAudience) {
+                formData.append('targetAudience', JSON.stringify(data.targetAudience));
+            }
+            if (data.agenda) {
+                formData.append('agenda', JSON.stringify(data.agenda));
+            }
+            if (data.awardees) {
+                formData.append('awardees', JSON.stringify(data.awardees));
+            }
+            if (data.attachments) {
+                formData.append('attachments', JSON.stringify(data.attachments));
+            }
 
             // Append image if provided
             if (imageFile) {
@@ -149,10 +173,15 @@ class AnnouncementService {
                 formData.append('image', imageFile);
             }
 
-            // Log FormData contents
+            // Log FormData contents for debugging
             console.log('📋 FormData contents:');
             formData.forEach((value, key) => {
-                console.log(`  ${key}:`, typeof value === 'string' ? value.substring(0, 50) + '...' : value);
+                if (value instanceof File) {
+                    console.log(`  ${key}:`, `File(${value.name}, ${value.size} bytes)`);
+                } else {
+                    const displayValue = String(value).substring(0, 50);
+                    console.log(`  ${key}:`, displayValue + (String(value).length > 50 ? '...' : ''));
+                }
             });
 
             const response = await api.post('/announcements', formData, {
@@ -210,6 +239,7 @@ class AnnouncementService {
         try {
             const formData = new FormData();
 
+            // Append only provided fields
             Object.entries(data).forEach(([key, value]) => {
                 if (value !== undefined && value !== null) {
                     if (Array.isArray(value) || typeof value === 'object') {

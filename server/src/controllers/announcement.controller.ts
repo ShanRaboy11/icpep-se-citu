@@ -29,6 +29,11 @@ export const createAnnouncement = async (
     next: NextFunction
 ): Promise<void> => {
     try {
+        console.log('🔵 CREATE ANNOUNCEMENT - START');
+        console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
+        console.log('📷 File present:', !!req.file);
+        console.log('👤 User:', req.user);
+
         const {
             title,
             description,
@@ -53,24 +58,53 @@ export const createAnnouncement = async (
         const author = req.user?.id;
 
         if (!author) {
-            res.status(401).json({ message: 'User not authenticated' });
+            console.error('❌ No author ID found');
+            res.status(401).json({ 
+                success: false,
+                message: 'User not authenticated' 
+            });
             return;
         }
 
         // Handle image upload if present
         let imageUrl: string | null = null;
         if (req.file) {
-            console.log('📷 Uploading image to Cloudinary...');
-            const result = await uploadToCloudinary(req.file.buffer, 'announcements');
-            imageUrl = result.secure_url;
-            console.log('✅ Image uploaded:', imageUrl);
+            try {
+                console.log('📷 Uploading image to Cloudinary...');
+                console.log('📷 File size:', req.file.size, 'bytes');
+                console.log('📷 File type:', req.file.mimetype);
+                
+                const result = await uploadToCloudinary(req.file.buffer, 'announcements');
+                imageUrl = result.secure_url;
+                console.log('✅ Image uploaded:', imageUrl);
+            } catch (uploadError) {
+                console.error('❌ Cloudinary upload failed:', uploadError);
+                res.status(500).json({
+                    success: false,
+                    message: 'Failed to upload image',
+                    error: uploadError instanceof Error ? uploadError.message : 'Unknown error'
+                });
+                return;
+            }
         }
 
-        // Parse arrays if sent as strings
-        const parsedAgenda = agenda ? JSON.parse(agenda) : undefined;
-        const parsedAwardees = awardees ? JSON.parse(awardees) : undefined;
-        const parsedAttachments = attachments ? JSON.parse(attachments) : undefined;
-        const parsedTargetAudience = targetAudience ? JSON.parse(targetAudience) : ['all'];
+        // Parse arrays if sent as strings with error handling
+        let parsedAgenda, parsedAwardees, parsedAttachments, parsedTargetAudience;
+        
+        try {
+            parsedAgenda = agenda ? JSON.parse(agenda) : undefined;
+            parsedAwardees = awardees ? JSON.parse(awardees) : undefined;
+            parsedAttachments = attachments ? JSON.parse(attachments) : undefined;
+            parsedTargetAudience = targetAudience ? JSON.parse(targetAudience) : ['all'];
+        } catch (parseError) {
+            console.error('❌ JSON parsing failed:', parseError);
+            res.status(400).json({
+                success: false,
+                message: 'Invalid JSON data in request',
+                error: parseError instanceof Error ? parseError.message : 'Unknown error'
+            });
+            return;
+        }
 
         console.log('📝 Creating announcement with data:', {
             title,
@@ -78,9 +112,20 @@ export const createAnnouncement = async (
             author,
             isPublished: isPublished === 'true' || isPublished === true,
             targetAudience: parsedTargetAudience,
+            hasImage: !!imageUrl,
         });
 
-        const announcement = await Announcement.create({
+        // Validate required fields
+        if (!title || !description || !content) {
+            console.error('❌ Missing required fields');
+            res.status(400).json({
+                success: false,
+                message: 'Missing required fields: title, description, or content'
+            });
+            return;
+        }
+
+        const announcementData = {
             title,
             description,
             content,
@@ -100,8 +145,12 @@ export const createAnnouncement = async (
             awardees: parsedAwardees,
             imageUrl,
             attachments: parsedAttachments,
-        });
+        };
 
+        console.log('💾 Saving to database...');
+        const announcement = await Announcement.create(announcementData);
+
+        console.log('👥 Populating author...');
         await announcement.populate('author', 'firstName lastName studentNumber');
 
         console.log('✅ Announcement created successfully:', announcement._id);
@@ -112,8 +161,18 @@ export const createAnnouncement = async (
             data: announcement,
         });
     } catch (error) {
-        console.error('❌ Error creating announcement:', error);
-        next(error);
+        console.error('❌ FATAL ERROR in createAnnouncement:', error);
+        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+        
+        // Send error response
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create announcement',
+            error: error instanceof Error ? error.message : 'Unknown error',
+            ...(process.env.NODE_ENV === 'development' && {
+                stack: error instanceof Error ? error.stack : undefined
+            })
+        });
     }
 };
 
