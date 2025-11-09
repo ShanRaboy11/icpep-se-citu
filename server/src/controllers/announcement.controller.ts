@@ -2,11 +2,23 @@ import { Request, Response, NextFunction } from 'express';
 import Announcement, { IAnnouncement } from '../models/announcement';
 import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinary';
 import mongoose from 'mongoose';
-import { File } from 'multer';
 
 // Extend Request type to include file from multer
+// Local minimal Multer file type (we only need 'buffer' here)
+interface MulterFile {
+    fieldname: string;
+    originalname: string;
+    encoding: string;
+    mimetype: string;
+    size: number;
+    buffer: Buffer;
+    destination?: string;
+    filename?: string;
+    path?: string;
+}
+
 interface MulterRequest extends Request {
-    file?: File;
+    file?: MulterFile;
 }
 
 // Define query type for better type safety
@@ -25,7 +37,7 @@ interface UserAnnouncementQuery {
 
 // Create a new announcement
 export const createAnnouncement = async (
-    req: Request,
+    req: MulterRequest,
     res: Response,
     next: NextFunction
 ): Promise<void> => {

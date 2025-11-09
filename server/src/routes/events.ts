@@ -82,7 +82,7 @@ router.post(
             }
 
             // Handle file uploads
-            const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+            const files = req.files as Record<string, Array<{ filename?: string; path?: string; buffer?: Buffer }>>;
             let bannerImageUrl = '';
             let galleryImageUrls: string[] = [];
 

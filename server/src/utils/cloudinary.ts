@@ -68,12 +68,10 @@ export const deleteFromCloudinary = async (url: string): Promise<void> => {
  * @returns Array of upload results
  */
 export const uploadMultipleToCloudinary = async (
-    files: Express.Multer.File[],
+    files: { buffer: Buffer }[],
     folder: string
 ): Promise<UploadApiResponse[]> => {
-    const uploadPromises = files.map((file) =>
-        uploadToCloudinary(file.buffer, folder)
-    );
+    const uploadPromises = files.map((file) => uploadToCloudinary(file.buffer, folder));
     return Promise.all(uploadPromises);
 };
 
