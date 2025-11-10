@@ -1,12 +1,13 @@
+//membership.tsx
 interface MembershipBadgeProps {
   type: "both" | "local" | "regional";
 }
 
 export function MembershipBadge({ type }: MembershipBadgeProps) {
   const styles = {
-    both: "bg-yellow-400 text-black",
-    local: "bg-green-500 text-white",
-    regional: "bg-orange-500 text-white",
+    both: "bg-purple-100 text-purple-700 border-purple-200",
+    local: "bg-secondary2/10 text-secondary2 border-secondary2/30",
+    regional: "bg-cyan-100 text-cyan-700 border-cyan-200",
   };
 
   const label = {
