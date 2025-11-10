@@ -1,7 +1,5 @@
 import { getTypeColor, formatDate } from "../utils/announcements";
 
-// Flexible announcement shape used by the details component. The backend
-// uses `_id` and `publishDate` while some static data uses `id` and `date`.
 type AnnouncementLike = {
   _id?: string;
   id?: string;
@@ -25,6 +23,13 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
 
   // Normalize the date field. Prefer `date` (static samples), then `publishDate`.
   const dateStr = (announcement.date ?? announcement.publishDate) as string | undefined;
+  const announcementType = announcement.type?.toLowerCase() || "";
+
+  // Determine if we should show agenda (only for meetings)
+  const showAgenda = announcementType === "meeting" && announcement.agenda;
+  
+  // Determine if we should show awardees (only for awards)
+  const showAwardees = announcementType === "award" && announcement.awardees;
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg">
@@ -54,13 +59,13 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
         </p>
       </div>
 
-      {announcement.agenda && (
+      {showAgenda && (
         <div>
           <h3 className="font-rubik text-lg sm:text-xl font-bold text-primary3 mb-4">
             Agenda
           </h3>
           <ul className="space-y-2 font-raleway">
-            {announcement.agenda.map((item, index) => (
+            {announcement.agenda!.map((item, index) => (
               <li key={index} className="flex items-start text-gray-700">
                 <span className="text-primary1 mr-3 mt-1 font-bold">•</span>
                 <span>{item}</span>
@@ -70,13 +75,13 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
         </div>
       )}
 
-      {announcement.awardees && (
+      {showAwardees && (
         <div>
           <h3 className="font-rubik text-lg sm:text-xl font-bold text-primary3 mb-4">
             Award Recipients
           </h3>
           <div className="space-y-3">
-            {announcement.awardees.map((awardee, index) => (
+            {announcement.awardees!.map((awardee, index) => (
               <div
                 key={index}
                 className="border-l-4 border-primary1 bg-blue-50 rounded-lg p-4"
@@ -85,9 +90,11 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
                   <h4 className="font-rubik font-bold text-primary3 text-base sm:text-lg">
                     {awardee.name}
                   </h4>
-                  <span className="font-raleway text-xs bg-primary1 text-white px-3 py-1 rounded-full font-semibold">
-                    {awardee.year}
-                  </span>
+                  {awardee.year && (
+                    <span className="font-raleway text-xs bg-primary1 text-white px-3 py-1 rounded-full font-semibold">
+                      {awardee.year}
+                    </span>
+                  )}
                 </div>
                 <p className="font-raleway text-sm text-primary2 font-medium mt-2">
                   {awardee.award}

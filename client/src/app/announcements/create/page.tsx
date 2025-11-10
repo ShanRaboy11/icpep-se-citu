@@ -34,7 +34,6 @@ type LinkAttachment = {
 type Attachment = FileAttachment | LinkAttachment;
 
 export default function AnnouncementsPage() {
-  
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [newLink, setNewLink] = useState("");
@@ -132,14 +131,21 @@ export default function AnnouncementsPage() {
         type: typeMap[activeTab] as any,
         targetAudience: audienceMap[formData.visibility] || ["all"],
         isPublished: true,
-        publishDate: showSchedule && scheduleDate ? 
-          new Date(`${scheduleDate}T${scheduleTime || "00:00"}`).toISOString() : 
-          new Date().toISOString(),
+        publishDate:
+          showSchedule && scheduleDate
+            ? new Date(
+                `${scheduleDate}T${scheduleTime || "00:00"}`
+              ).toISOString()
+            : new Date().toISOString(),
         time: formData.time,
         location: formData.location,
         organizer: organizer || undefined,
-        attendees: activeTab === "Meeting" ? formData.attendanceLink : undefined,
-        awardees: activeTab === "Achievement" ? awardees.filter(a => a.name.trim()) : undefined,
+        attendees:
+          activeTab === "Meeting" ? formData.attendanceLink : undefined,
+        awardees:
+          activeTab === "Achievement"
+            ? awardees.filter((a) => a.name.trim())
+            : undefined,
         attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
       };
 
@@ -156,7 +162,10 @@ export default function AnnouncementsPage() {
       resetForm();
     } catch (error) {
       console.error("❌ Error creating announcement:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to create announcement. Please try again.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create announcement. Please try again.";
       alert(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -193,14 +202,17 @@ export default function AnnouncementsPage() {
         description: formData.summary || "No description",
         content: formData.body || "No content",
         type: typeMap[activeTab] as any,
-        targetAudience: formData.visibility ? 
-          audienceMap[formData.visibility] : ["all"],
+        targetAudience: formData.visibility
+          ? audienceMap[formData.visibility]
+          : ["all"],
         isPublished: false,
         time: formData.time || undefined,
         location: formData.location || undefined,
         organizer: organizer || undefined,
-        awardees: activeTab === "Achievement" ? 
-          awardees.filter(a => a.name.trim()) : undefined,
+        awardees:
+          activeTab === "Achievement"
+            ? awardees.filter((a) => a.name.trim())
+            : undefined,
         attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
       };
 
@@ -213,7 +225,10 @@ export default function AnnouncementsPage() {
       alert("Draft saved successfully!");
     } catch (error) {
       console.error("❌ Error saving draft:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to save draft. Please try again.";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to save draft. Please try again.";
       alert(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -353,7 +368,13 @@ export default function AnnouncementsPage() {
                   Featured Image (optional)
                 </label>
 
-                <div className={`w-full rounded-lg px-3 py-3 transition-colors border ${imageFile ? "border-green-400 bg-green-50" : "border-gray-300 bg-white"}`}>
+                <div
+                  className={`w-full rounded-lg px-3 py-3 transition-colors border ${
+                    imageFile
+                      ? "border-green-400 bg-green-50"
+                      : "border-gray-300 bg-white"
+                  }`}
+                >
                   <input
                     type="file"
                     accept="image/*"
@@ -365,11 +386,19 @@ export default function AnnouncementsPage() {
                     <div className="mt-3 flex items-center gap-3">
                       {imagePreview && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={imagePreview} alt="preview" className="w-28 h-20 object-cover rounded-md border" />
+                        <img
+                          src={imagePreview}
+                          alt="preview"
+                          className="w-28 h-20 object-cover rounded-md border"
+                        />
                       )}
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium text-primary3">{imageFile.name}</span>
-                        <span className="inline-block mt-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Image attached</span>
+                        <span className="text-sm font-medium text-primary3">
+                          {imageFile.name}
+                        </span>
+                        <span className="inline-block mt-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                          Image attached
+                        </span>
                       </div>
                     </div>
                   )}
@@ -703,7 +732,11 @@ export default function AnnouncementsPage() {
 
                       setAttachments((prev) => [
                         ...prev,
-                        { name: newLink.trim(), url: newLink.trim(), type: "link" },
+                        {
+                          name: newLink.trim(),
+                          url: newLink.trim(),
+                          type: "link",
+                        },
                       ]);
 
                       setNewLink("");
@@ -813,8 +846,8 @@ export default function AnnouncementsPage() {
                 )}
 
                 <div className="flex gap-3 ml-auto">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     type="button"
                     onClick={handleSaveDraft}
                     disabled={isSubmitting}
@@ -849,12 +882,16 @@ export default function AnnouncementsPage() {
 
           <div className="relative bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
             <div className="flex flex-col items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+              <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center">
                 <span className="text-3xl text-white">✔</span>
               </div>
 
-              <h3 className="text-xl text-blue-700 font-semibold">Announcement published</h3>
-              <p className="text-sm text-blue-400 text-center">Your announcement was published successfully.</p>
+              <h3 className="text-xl text-blue-700 font-semibold">
+                Announcement Published
+              </h3>
+              <p className="text-sm text-blue-400 text-center">
+                Your announcement was published successfully.
+              </p>
 
               <div className="flex gap-3 mt-2">
                 <Button
@@ -868,11 +905,11 @@ export default function AnnouncementsPage() {
                 </Button>
 
                 <Button
-                  variant="primary2"
+                  variant="primary3"
                   onClick={() => {
                     setShowSuccessModal(false);
                     setSubmitSuccess(false);
-                    router.push('/announcements');
+                    router.push("/announcements");
                   }}
                 >
                   View announcements

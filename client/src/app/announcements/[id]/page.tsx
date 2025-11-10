@@ -1,19 +1,38 @@
 "use client";
 
-import React from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import AnnouncementDetails from "../components/details";
+import DetailsSidebar from "../components/info";
+import MeetingAttendanceCard from "../components/attendance-card";
+import AttendanceModal from "../components/attendance-modal";
+import Header from "../../components/header";
+import Footer from "../../components/footer";
+import { ArrowLeft } from "lucide-react";
+import AnnouncementMedia from "../components/media";
+import announcementService from "../../services/announcement";
 
+// Interface matching the database model
 interface Announcement {
   _id: string;
   title: string;
   description: string;
   content: string;
   type: string;
+  imageUrl?: string | null;
   publishDate: string;
   author?: {
     firstName: string;
     lastName: string;
     studentNumber: string;
   };
+  views?: number;
+  isPublished: boolean;
+  time?: string;
+  location?: string;
+  organizer?: string;
+  contact?: string;
+  attendees?: string;
   agenda?: string[];
   awardees?: Array<{
     name: string;
@@ -26,222 +45,192 @@ interface Announcement {
     url: string;
     fileType?: string;
   }>;
+  priority?: string;
+  expiryDate?: string;
 }
 
-interface AnnouncementDetailsProps {
-  announcement: Announcement;
-}
+// Helper function to format date
+const formatDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Date not available";
+    
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  } catch {
+    return "Date not available";
+  }
+};
 
-export default function AnnouncementDetails({ announcement }: AnnouncementDetailsProps) {
-  // Add null/undefined checks
-  if (!announcement) {
+// Helper function to format time from 24h to 12h format
+const formatTime = (timeString: string | undefined): string => {
+  if (!timeString) return "Time not specified";
+  
+  try {
+    // Handle time formats like "14:30" or "14:30:00"
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours, 10);
+    const min = minutes || '00';
+    
+    if (isNaN(hour)) return timeString;
+    
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    
+    return `${displayHour}:${min} ${period}`;
+  } catch {
+    return timeString;
+  }
+};
+
+export default function AnnouncementDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const [showFullAttendance, setShowFullAttendance] = useState(false);
+  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Fetch announcement from database
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const response = await announcementService.getAnnouncementById(params.id);
+
+        if (response.success && response.data) {
+          setAnnouncement(response.data as Announcement);
+        } else {
+          setError("Announcement not found");
+        }
+      } catch (err) {
+        console.error("Failed to fetch announcement:", err);
+        setError("Failed to load announcement. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (params.id) {
+      fetchAnnouncement();
+    }
+  }, [params.id]);
+
+  const handleBack = () => {
+    router.push("/announcements");
+  };
+
+  // Loading state
+  if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-        <p className="font-raleway text-gray-600">Loading announcement details...</p>
+      <div className="min-h-screen bg-white flex flex-col">
+        <Header />
+        <main className="flex-grow flex flex-col items-center justify-center px-4 pt-[9.5rem] pb-12">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary1 border-r-transparent"></div>
+          <p className="font-raleway text-lg text-gray-500 mt-4">
+            Loading announcement...
+          </p>
+        </main>
+        <Footer />
       </div>
     );
   }
 
-  const isMeeting = announcement.type?.toLowerCase() === "meeting";
-  const isAward = announcement.type?.toLowerCase() === "award" || announcement.type?.toLowerCase() === "achievement";
-  
-  // Format date properly
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        return "Date not available";
-      }
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch (error) {
-      return "Date not available";
-    }
-  };
+  // Error or not found state
+  if (error || !announcement) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="flex flex-grow flex-col items-center justify-center text-center px-4 pt-[9.5rem] pb-12">
+          <h1 className="font-rubik text-4xl font-bold text-primary3 mb-4">
+            {error || "Announcement Not Found"}
+          </h1>
+          <p className="font-raleway max-w-md text-gray-600 mb-8">
+            {error
+              ? "There was an error loading this announcement."
+              : "Sorry, the announcement you are looking for does not exist."}
+          </p>
+          <button
+            onClick={() => router.push("/announcements")}
+            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2"
+          >
+            <ArrowLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
+            <span>Back to Announcements</span>
+          </button>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const title = announcement.title;
+  const imageUrl = announcement.imageUrl || "/default-image.jpg";
+  const galleryImageUrls: string[] = [];
+  const isMeeting = announcement.type.toLowerCase() === "meeting";
+  const isAchievement = announcement.type.toLowerCase() === "achievement";
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
-      {/* Meta Information */}
-      <div className="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-gray-100">
-        <div className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-primary1"></div>
-          <span className="font-raleway text-sm text-gray-600">
-            {announcement.type}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <svg
-            className="h-4 w-4 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
-          <span className="font-raleway text-sm text-gray-600">
-            {formatDate(announcement.publishDate)}
-          </span>
-        </div>
-        {announcement.author && (
-          <div className="flex items-center gap-2">
-            <svg
-              className="h-4 w-4 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+    <div className="min-h-screen flex flex-col bg-white relative overflow-hidden font-sans">
+      <div className="absolute top-[-10rem] left-[-15rem] w-[35rem] h-[35rem] bg-primary1/20 rounded-full filter blur-3xl opacity-90"></div>
+      <div className="absolute top-1/4 right-[-18rem] w-[35rem] h-[35rem] bg-secondary2/20 rounded-full filter blur-3xl opacity-90"></div>
+
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-12">
+          <div className="mb-8 flex justify-start">
+            <button
+              onClick={handleBack}
+              title="Back to Announcements"
+              className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
+                         rounded-full border-2 border-primary1 text-primary1 
+                         overflow-hidden transition-all duration-300 ease-in-out 
+                         active:scale-95 before:absolute before:inset-0 
+                         before:bg-gradient-to-r before:from-transparent 
+                         before:via-white/40 before:to-transparent 
+                         before:translate-x-[-100%] hover:before:translate-x-[100%] 
+                         before:transition-transform before:duration-700"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+            <div className="lg:col-span-2 space-y-6">
+              <AnnouncementMedia
+                title={title}
+                imageUrl={imageUrl}
+                galleryImageUrls={galleryImageUrls}
               />
-            </svg>
-            <span className="font-raleway text-sm text-gray-600">
-              {announcement.author.firstName} {announcement.author.lastName}
-            </span>
+              <AnnouncementDetails announcement={announcement} />
+            </div>
+
+            <div className="lg:col-span-1 space-y-6">
+              <DetailsSidebar announcement={announcement} />
+
+              {isMeeting && announcement.attendees && (
+                <MeetingAttendanceCard
+                  onViewFull={() => setShowFullAttendance(true)}
+                />
+              )}
+            </div>
           </div>
-        )}
+        </main>
+
+        <AttendanceModal
+          isOpen={showFullAttendance}
+          onClose={() => setShowFullAttendance(false)}
+          announcement={announcement}
+        />
+        <Footer />
       </div>
-
-      {/* Description */}
-      <div className="mb-6">
-        <h2 className="font-rubik text-2xl font-bold text-primary3 mb-4">
-          About this {announcement.type}
-        </h2>
-        <p className="font-raleway text-gray-600 leading-relaxed">
-          {announcement.description}
-        </p>
-      </div>
-
-      {/* Content */}
-      <div className="mb-8">
-        <h3 className="font-rubik text-xl font-semibold text-primary3 mb-3">
-          Details
-        </h3>
-        <div className="font-raleway text-gray-600 leading-relaxed whitespace-pre-wrap">
-          {announcement.content}
-        </div>
-      </div>
-
-      {/* Agenda - Only show for Meetings */}
-      {isMeeting && announcement.agenda && announcement.agenda.length > 0 && (
-        <div className="mb-8">
-          <h3 className="font-rubik text-xl font-semibold text-primary3 mb-4">
-            Agenda
-          </h3>
-          <ol className="space-y-3">
-            {announcement.agenda.map((item, index) => (
-              <li key={index} className="flex gap-3">
-                <span className="font-rubik font-semibold text-primary1 min-w-[2rem]">
-                  {index + 1}.
-                </span>
-                <span className="font-raleway text-gray-600">{item}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
-
-      {/* Awardees - Only show for Awards/Achievement */}
-      {isAward && announcement.awardees && announcement.awardees.length > 0 && (
-        <div className="mb-8">
-          <h3 className="font-rubik text-xl font-semibold text-primary3 mb-4">
-            Award Recipients
-          </h3>
-          <div className="space-y-4">
-            {announcement.awardees.map((awardee, index) => (
-              <div
-                key={index}
-                className="bg-gray-50 rounded-lg p-4 border border-gray-100"
-              >
-                <h4 className="font-rubik font-semibold text-primary3 mb-2">
-                  {awardee.name}
-                </h4>
-                <div className="space-y-1">
-                  {awardee.program && (
-                    <p className="font-raleway text-sm text-gray-600">
-                      <span className="font-semibold">Program:</span>{" "}
-                      {awardee.program}
-                    </p>
-                  )}
-                  <p className="font-raleway text-sm text-gray-600">
-                    <span className="font-semibold">Year:</span> {awardee.year}
-                  </p>
-                  <p className="font-raleway text-sm text-primary1 font-semibold">
-                    {awardee.award}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Attachments - Show for all types if available */}
-      {announcement.attachments && announcement.attachments.length > 0 && (
-        <div>
-          <h3 className="font-rubik text-xl font-semibold text-primary3 mb-4">
-            Attachments
-          </h3>
-          <div className="space-y-2">
-            {announcement.attachments.map((attachment, index) => (
-              <a
-                key={index}
-                href={attachment.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-primary1 hover:bg-primary1/5 transition-all duration-200"
-              >
-                <svg
-                  className="h-5 w-5 text-primary1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <div className="flex-1 min-w-0">
-                  <p className="font-raleway text-sm font-medium text-gray-900 truncate">
-                    {attachment.name}
-                  </p>
-                  {attachment.fileType && (
-                    <p className="font-raleway text-xs text-gray-500">
-                      {attachment.fileType}
-                    </p>
-                  )}
-                </div>
-                <svg
-                  className="h-4 w-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
