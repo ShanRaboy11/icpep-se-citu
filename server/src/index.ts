@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import announcementRoutes from '../src/routes/announcements.route';
+import eventRoutes from './routes/event.routes';
 
 // Load environment variables
 dotenv.config();
@@ -158,6 +159,7 @@ app.get('/api', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/events', eventRoutes);
 
 
 app.get('/api/debug/env', (req: Request, res: Response) => {
