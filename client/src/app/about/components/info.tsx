@@ -2,7 +2,16 @@
 
 import { useState, useEffect, FC, ReactElement } from "react";
 import Image from "next/image";
-import { Box, Lightbulb, Rocket, Ribbon } from "lucide-react";
+import {
+  Box,
+  Lightbulb,
+  Rocket,
+  Ribbon,
+  BookOpen,
+  Wrench,
+  Users,
+  Globe,
+} from "lucide-react";
 
 interface SectionType {
   id: string;
@@ -98,6 +107,90 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
     </div>
   );
 };
+
+// --- MODIFIED COMPONENT START ---
+
+const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
+  const missionPoints = [
+    {
+      imageUrl: "/trophy.png",
+      title: "Academic Support",
+      description:
+        "Excel in your studies with targeted resources and mentorship.",
+    },
+    {
+      imageUrl: "/computer.png",
+      title: "Skills Training",
+      description:
+        "Master in-demand tech with hands-on workshops and projects.",
+    },
+    {
+      imageUrl: "/shield.png",
+      title: "Global Competence",
+      description:
+        "Prepare for an international career solving complex problems.",
+    },
+    {
+      imageUrl: "/notify.png",
+      title: "Community Engagement",
+      description: "Connect and collaborate with a vibrant network of peers.",
+    },
+  ];
+
+  return (
+    <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start justify-center">
+      {/* Left Column: Text Content */}
+      <div className="text-left max-w-xs flex-shrink-0">
+        <h3 className="font-rubik text-3xl sm:text-4xl font-bold mb-3 text-secondary2">
+          {section.title}
+        </h3>
+        <p className="font-raleway text-base sm:text-lg leading-relaxed text-gray-300">
+          {section.content}
+        </p>
+      </div>
+
+      {/* Right Column: 2x2 Grid of cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl">
+        {missionPoints.map((point, index) => (
+          <div
+            key={index}
+            // REVISED: Slightly reduced vertical padding from py-8 to py-6
+            className="flex items-center gap-6 px-5 py-6 rounded-2xl border border-white/10
+                       bg-white/5 transition-all duration-300 group hover:bg-white/10"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
+              backgroundSize: "1rem 1rem",
+            }}
+          >
+            {/* Left: Bigger Icon */}
+            {/* REVISED: Increased icon size from w-20 h-20 to w-24 h-24 */}
+            <div className="relative flex-shrink-0 w-24 h-24">
+              <Image
+                src={point.imageUrl}
+                alt={point.title}
+                fill
+                className="object-contain"
+              />
+            </div>
+
+            {/* Right: Text */}
+            <div className="flex flex-col justify-center text-left">
+              <h4 className="font-rubik text-xl font-bold text-white leading-snug">
+                {point.title}
+              </h4>
+              <p className="font-raleway text-base text-gray-300 mt-1 leading-relaxed">
+                {point.description}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// --- MODIFIED COMPONENT END ---
 
 const sections: SectionType[] = [
   {
@@ -207,6 +300,8 @@ const InfoSection: FC = () => {
         <div key={activeIndex} className="animate-fade-in">
           {activeSection.id === "vision" ? (
             <VisionLayout section={activeSection} />
+          ) : activeSection.id === "mission" ? (
+            <MissionLayout section={activeSection} />
           ) : (
             <DefaultLayout section={activeSection} />
           )}
