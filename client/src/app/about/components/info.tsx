@@ -2,17 +2,7 @@
 
 import { useState, useEffect, FC, ReactElement } from "react";
 import Image from "next/image";
-import {
-  Box,
-  Lightbulb,
-  Rocket,
-  Ribbon,
-  Gem, // New Icon
-  Flame, // New Icon
-  Award, // New Icon
-  Users,
-  Wrench,
-} from "lucide-react";
+import { Box, Lightbulb, Rocket, Ribbon } from "lucide-react";
 
 interface SectionType {
   id: string;
@@ -184,48 +174,127 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
 };
 
 const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
-  const iconSize = 28;
   const coreValues = [
     {
       name: "Integrity",
-      icon: <Gem size={iconSize} />,
+      iconUrl: "/integrity.png",
       position: "top-0 left-[-15%]",
-      animationClass: "animate-float-1",
+      animationClass: "animate-pulse-subtle",
     },
     {
-      // REVISED: Position moved slightly to the left
       name: "Passion",
-      icon: <Flame size={iconSize} />,
+      iconUrl: "/passion.png",
       position: "top-[-10%] right-[-5%]",
-      animationClass: "animate-float-2",
+      animationClass: "animate-pulse-subtle",
     },
     {
       name: "Excellence",
-      icon: <Award size={iconSize} />,
+      iconUrl: "/excellence.png",
       position: "top-1/2 -translate-y-1/2 right-[-25%]",
-      animationClass: "animate-float-3",
+      animationClass: "animate-pulse-subtle",
     },
     {
       name: "Collaboration",
-      icon: <Users size={iconSize} />,
+      iconUrl: "/collaboration.png",
       position: "bottom-[-15%] right-[10%]",
-      animationClass: "animate-float-1",
+      animationClass: "animate-pulse-subtle",
     },
     {
       name: "Service",
-      icon: <Wrench size={iconSize} />,
+      iconUrl: "/service.png",
       position: "bottom-[10%] left-[-20%]",
-      animationClass: "animate-float-2",
+      animationClass: "animate-pulse-subtle",
     },
   ];
 
   return (
-    <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-start">
+    <div className="grid md:grid-cols-2 gap-12 md:gap-24 items-start">
       {/* Left Column: Visuals */}
       <div className="relative w-full max-w-sm mx-auto h-80 sm:h-96 group">
+        <svg
+          viewBox="0 0 400 400"
+          className="absolute inset-0 z-0 opacity-70"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Path to Integrity (Top-Left) */}
+          <path
+            d="M200 200 H 170 V 70 H 60"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-secondary2"
+          />
+          <circle
+            cx="60"
+            cy="70"
+            r="4"
+            fill="currentColor"
+            className="text-secondary2"
+          />
+
+          {/* Path to Passion (Top-Right) */}
+          <path
+            d="M200 200 H 250 V 30 H 320"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-secondary2"
+          />
+          <circle
+            cx="320"
+            cy="30"
+            r="4"
+            fill="currentColor"
+            className="text-secondary2"
+          />
+
+          {/* Path to Excellence (Mid-Right) */}
+          <path
+            d="M200 200 H 380"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-secondary2"
+          />
+          <circle
+            cx="380"
+            cy="200"
+            r="4"
+            fill="currentColor"
+            className="text-secondary2"
+          />
+
+          {/* Path to Collaboration (Bottom-Right) - REVISED: Middle line moved down */}
+          <path
+            d="M200 200 H 230 V 320 H 330 V 360"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-secondary2"
+          />
+          <circle
+            cx="330"
+            cy="360"
+            r="4"
+            fill="currentColor"
+            className="text-secondary2"
+          />
+
+          {/* Path to Service (Bottom-Left) */}
+          <path
+            d="M200 200 H 150 V 300 H 40"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-secondary2"
+          />
+          <circle
+            cx="40"
+            cy="300"
+            r="4"
+            fill="currentColor"
+            className="text-secondary2"
+          />
+        </svg>
+
         {/* Central Logo with Shadow */}
-        {/* REVISED: Replaced hover class with continuous animation class */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 sm:w-48 sm:h-48 z-10 duration-300 animate-pulse-beat">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 sm:w-48 sm:h-48 z-10 duration-300 animate-pulse-subtle">
           <Image
             src="/icpep logo.png"
             alt="ICpEP Logo"
@@ -233,7 +302,8 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
             className="object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.4)]"
           />
         </div>
-        {/* Floating Value Cards */}
+
+        {/* Pulsing Value Cards */}
         {coreValues.map((value) => (
           <div
             key={value.name}
@@ -247,7 +317,14 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
               backgroundSize: "1rem 1rem",
             }}
           >
-            <div className="text-secondary2">{value.icon}</div>
+            <div className="relative w-12 h-12">
+              <Image
+                src={value.iconUrl}
+                alt={value.name}
+                fill
+                className="object-contain"
+              />
+            </div>
             <span className="font-rubik font-semibold text-white text-center text-sm">
               {value.name}
             </span>
@@ -302,7 +379,7 @@ const sections: SectionType[] = [
     icon: <Ribbon size={22} />,
     title: "Values That Inspire",
     content:
-      "We uphold Integrity, Passion, Excellence, Collaboration, and Service in all our endeavors. These values shape engineers with strong character, a drive for innovation, and a commitment to competence.",
+      "We uphold a steadfast commitment and a passion for technology, collaborating to achieve excellence and serve our community, turning innovative ideas into impactful realities.",
     imageUrl: "/gle.png",
   },
 ];

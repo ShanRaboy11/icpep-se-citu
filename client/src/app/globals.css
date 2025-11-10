@@ -423,16 +423,16 @@ html {
   }
 }
 
-@keyframes pulse-beat {
+@keyframes pulse-subtle {
   0%,
   100% {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.05);
+    transform: scale(1.03);
   }
 }
 
-.animate-pulse-beat {
-  animation: pulse-beat 2s ease-in-out infinite;
+.animate-pulse-subtle {
+  animation: pulse-subtle 2.5s ease-in-out infinite;
 }
