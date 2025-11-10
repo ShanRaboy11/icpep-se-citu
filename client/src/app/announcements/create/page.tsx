@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
-import { Eye, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import announcementService from "../../services/announcement";
 
 type FormErrors = {
@@ -33,7 +34,7 @@ type LinkAttachment = {
 type Attachment = FileAttachment | LinkAttachment;
 
 export default function AnnouncementsPage() {
-  const [previewOpen, setPreviewOpen] = useState(false);
+  
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [newLink, setNewLink] = useState("");
@@ -50,6 +51,9 @@ export default function AnnouncementsPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -146,12 +150,10 @@ export default function AnnouncementsPage() {
 
       console.log("✅ Announcement created successfully:", response);
       setSubmitSuccess(true);
+      setShowSuccessModal(true);
 
-      // Reset form after 2 seconds
-      setTimeout(() => {
-        resetForm();
-        setSubmitSuccess(false);
-      }, 2000);
+      // reset form so user can create another immediately
+      resetForm();
     } catch (error) {
       console.error("❌ Error creating announcement:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to create announcement. Please try again.";
@@ -289,6 +291,16 @@ export default function AnnouncementsPage() {
     }
   };
 
+  // create a preview URL for the selected image
+  useEffect(() => {
+    if (imageFile) {
+      const url = URL.createObjectURL(imageFile);
+      setImagePreview(url);
+      return () => URL.revokeObjectURL(url);
+    }
+    setImagePreview(null);
+  }, [imageFile]);
+
   const removeAttachment = (index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
@@ -340,17 +352,28 @@ export default function AnnouncementsPage() {
                 <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
                   Featured Image (optional)
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary2 font-rubik"
-                />
-                {imageFile && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    Selected: {imageFile.name}
-                  </p>
-                )}
+
+                <div className={`w-full rounded-lg px-3 py-3 transition-colors border ${imageFile ? "border-green-400 bg-green-50" : "border-gray-300 bg-white"}`}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="w-full bg-transparent focus:outline-none font-rubik"
+                  />
+
+                  {imageFile && (
+                    <div className="mt-3 flex items-center gap-3">
+                      {imagePreview && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={imagePreview} alt="preview" className="w-28 h-20 object-cover rounded-md border" />
+                      )}
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-primary3">{imageFile.name}</span>
+                        <span className="inline-block mt-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Image attached</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
@@ -813,6 +836,52 @@ export default function AnnouncementsPage() {
           </div>
         </div>
       </main>
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => {
+              setShowSuccessModal(false);
+              setSubmitSuccess(false);
+            }}
+          />
+
+          <div className="relative bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
+                <span className="text-3xl text-white">✔</span>
+              </div>
+
+              <h3 className="text-xl text-blue-700 font-semibold">Announcement published</h3>
+              <p className="text-sm text-blue-400 text-center">Your announcement was published successfully.</p>
+
+              <div className="flex gap-3 mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSubmitSuccess(false);
+                  }}
+                >
+                  Close
+                </Button>
+
+                <Button
+                  variant="primary2"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSubmitSuccess(false);
+                    router.push('/announcements');
+                  }}
+                >
+                  View announcements
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </section>

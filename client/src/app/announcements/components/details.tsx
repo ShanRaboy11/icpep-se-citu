@@ -1,14 +1,30 @@
-import { Announcement } from "../utils/announcements";
 import { getTypeColor, formatDate } from "../utils/announcements";
 
+// Flexible announcement shape used by the details component. The backend
+// uses `_id` and `publishDate` while some static data uses `id` and `date`.
+type AnnouncementLike = {
+  _id?: string;
+  id?: string;
+  title: string;
+  description?: string;
+  content?: string;
+  type?: string;
+  imageUrl?: string | null;
+  publishDate?: string;
+  date?: string;
+  agenda?: string[];
+  awardees?: Array<{ name: string; year?: string; award: string }>;
+};
+
 interface AnnouncementDetailsProps {
-  announcement?: Announcement;
+  announcement?: AnnouncementLike | null;
 }
 
-export default function AnnouncementDetails({
-  announcement,
-}: AnnouncementDetailsProps) {
+export default function AnnouncementDetails({ announcement }: AnnouncementDetailsProps) {
   if (!announcement) return null;
+
+  // Normalize the date field. Prefer `date` (static samples), then `publishDate`.
+  const dateStr = (announcement.date ?? announcement.publishDate) as string | undefined;
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg">
@@ -16,7 +32,7 @@ export default function AnnouncementDetails({
         <div className="mb-4">
           <span
             className={`inline-block px-4 py-1.5 rounded-lg text-sm font-rubik font-semibold text-white ${getTypeColor(
-              announcement.type
+              announcement.type ?? ""
             )}`}
           >
             {announcement.type}
@@ -25,9 +41,11 @@ export default function AnnouncementDetails({
         <h1 className="font-rubik text-2xl sm:text-4xl font-bold text-primary3 mb-3">
           {announcement.title}
         </h1>
-        <p className="font-raleway text-primary1 font-medium text-base sm:text-lg">
-          {formatDate(announcement.date)}
-        </p>
+        {dateStr && (
+          <p className="font-raleway text-primary1 font-medium text-base sm:text-lg">
+            {formatDate(dateStr)}
+          </p>
+        )}
       </div>
 
       <div>

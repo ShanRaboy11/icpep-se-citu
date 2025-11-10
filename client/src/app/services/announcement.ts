@@ -72,6 +72,57 @@ export interface AnnouncementResponse {
     };
 }
 
+// Normalize backend announcement objects to a stable client-facing shape
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export interface ClientAnnouncement {
+    id: string;
+    title: string;
+    description?: string;
+    content?: string;
+    type: "News" | "Meeting" | "Achievement" | string;
+    imageUrl?: string | null;
+    date?: string;
+    publishDate?: string;
+    author?: any;
+    [key: string]: any;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+function normalizeType(rawType: string | undefined): "News" | "Meeting" | "Achievement" | string {
+    if (!rawType) return "News";
+    const t = rawType.toLowerCase();
+    if (t === "general" || t === "news") return "News";
+    if (t === "meeting") return "Meeting";
+    if (t === "achievement" || t === "award") return "Achievement";
+    // preserve unknown types
+    return rawType;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeAnnouncement(raw: any): ClientAnnouncement {
+    const id = raw._id ?? raw.id ?? String((raw.id ?? raw._id) ?? "");
+    const title = raw.title ?? raw.name ?? "Untitled";
+    const description = raw.description ?? raw.summary ?? raw.excerpt ?? "";
+    const content = raw.content ?? raw.body ?? "";
+    const type = normalizeType(raw.type ?? raw.category ?? raw.tag);
+    const imageUrl = raw.imageUrl ?? raw.image ?? raw.image_url ?? null;
+    const publishDate = raw.publishDate ?? raw.publish_date ?? raw.date ?? raw.createdAt ?? raw.created_at ?? undefined;
+    const date = publishDate;
+
+    return {
+        id,
+        title,
+        description,
+        content,
+        type,
+        imageUrl,
+        publishDate,
+        date,
+        author: raw.author,
+        ...raw,
+    } as ClientAnnouncement;
+}
+
 export interface AnnouncementData {
     title: string;
     description: string;
@@ -210,7 +261,18 @@ class AnnouncementService {
     }): Promise<AnnouncementResponse> {
         try {
             const response = await api.get('/announcements', { params });
-            return response.data;
+            const payload: AnnouncementResponse = response.data;
+
+            // Normalize data shape if present
+            if (payload && payload.data) {
+                if (Array.isArray(payload.data)) {
+                    payload.data = payload.data.map((item) => normalizeAnnouncement(item));
+                } else if (typeof payload.data === 'object' && payload.data !== null) {
+                    payload.data = normalizeAnnouncement(payload.data as Record<string, unknown>);
+                }
+            }
+
+            return payload;
         } catch (error) {
             this.handleError(error);
         }
@@ -222,7 +284,11 @@ class AnnouncementService {
     async getAnnouncementById(id: string): Promise<AnnouncementResponse> {
         try {
             const response = await api.get(`/announcements/${id}`);
-            return response.data;
+            const payload: AnnouncementResponse = response.data;
+            if (payload && payload.data && typeof payload.data === 'object') {
+                payload.data = normalizeAnnouncement(payload.data as Record<string, unknown>);
+            }
+            return payload;
         } catch (error) {
             this.handleError(error);
         }
@@ -322,4 +388,5 @@ class AnnouncementService {
     }
 }
 
-export default new AnnouncementService();
+const announcementServiceInstance = new AnnouncementService();
+export default announcementServiceInstance;

@@ -1,30 +1,87 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AnnouncementCard } from "./components/announcement-card";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import { Home } from "lucide-react";
 import Grid from "../components/grid";
-import { Announcement, announcements } from "./utils/announcements";
+import announcementService from "../services/announcement";
+
+// Interface matching the database model
+interface Announcement {
+  _id: string;
+  title: string;
+  description: string;
+  content: string;
+  type: "News" | "Meeting" | "Achievement" | string;
+  imageUrl?: string | null;
+  publishDate: string;
+  author?: {
+    firstName: string;
+    lastName: string;
+    studentNumber: string;
+  };
+  views?: number;
+  isPublished: boolean;
+}
 
 export default function AnnouncementsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>("All");
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // Fetch announcements from the database
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Fetch only published announcements
+        const response = await announcementService.getAnnouncements({
+          isPublished: true,
+          limit: 100, // Fetch more announcements
+          sort: "-publishDate",
+        });
+
+        if (response.success && response.data) {
+          setAnnouncements(response.data as Announcement[]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch announcements:", err);
+        setError("Failed to load announcements. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnnouncements();
+  }, []);
+
+  // Filter announcements by type
   const filteredAnnouncements = announcements
     .filter((announcement) => {
       if (activeTab === "All") {
         return true;
       }
-      return announcement.type.toLowerCase() === activeTab.toLowerCase();
+      // Map tab names to database types
+      const typeMap: Record<string, string> = {
+        News: "General",
+        Meeting: "Meeting",
+        Achievement: "Achievement",
+      };
+      const dbType = typeMap[activeTab] || activeTab;
+      return announcement.type.toLowerCase() === dbType.toLowerCase();
     })
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
 
   const handleAnnouncementClick = (announcement: Announcement) => {
-    const encodedData = encodeURIComponent(JSON.stringify(announcement));
-    router.push(`/announcements/${announcement.id}?data=${encodedData}`);
+    // Navigate to the detail page using the database ID
+    router.push(`/announcements/${announcement._id}`);
   };
 
   const handleBackToHome = () => {
@@ -99,29 +156,53 @@ export default function AnnouncementsPage() {
             </div>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-16">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary1 border-r-transparent"></div>
+              <p className="font-raleway text-lg text-gray-500 mt-4">
+                Loading announcements...
+              </p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="text-center py-16">
+              <p className="font-raleway text-lg text-red-500">{error}</p>
+            </div>
+          )}
+
           {/* Announcements List */}
-          <div className="pb-14">
-            {filteredAnnouncements.length > 0 ? (
-              <div className="space-y-12">
-                {filteredAnnouncements.map((announcement) => (
-                  <AnnouncementCard
-                    key={announcement.id}
-                    {...announcement}
-                    imageUrl={announcement.imageUrl}
-                    onClick={() => handleAnnouncementClick(announcement)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-16">
-                <p className="font-raleway text-lg text-gray-500">
-                  {activeTab === "All"
-                    ? "No announcements yet."
-                    : `No ${activeTab.toLowerCase()} announcements yet.`}
-                </p>
-              </div>
-            )}
-          </div>
+          {!loading && !error && (
+            <div className="pb-14">
+              {filteredAnnouncements.length > 0 ? (
+                <div className="space-y-12">
+                  {filteredAnnouncements.map((announcement) => (
+                    <AnnouncementCard
+                      key={announcement._id}
+                      id={announcement._id}
+                      title={announcement.title}
+                      description={announcement.description}
+                      content={announcement.content}
+                      type={announcement.type as "News" | "Meeting" | "Achievement"}
+                      imageUrl={announcement.imageUrl || undefined}
+                      date={announcement.publishDate}
+                      onClick={() => handleAnnouncementClick(announcement)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-16">
+                  <p className="font-raleway text-lg text-gray-500">
+                    {activeTab === "All"
+                      ? "No announcements yet."
+                      : `No ${activeTab.toLowerCase()} announcements yet.`}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </main>
         <Footer />
       </div>
