@@ -7,10 +7,11 @@ import {
   Lightbulb,
   Rocket,
   Ribbon,
-  BookOpen,
-  Wrench,
+  Gem, // New Icon
+  Flame, // New Icon
+  Award, // New Icon
   Users,
-  Globe,
+  Wrench,
 } from "lucide-react";
 
 interface SectionType {
@@ -108,8 +109,6 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
   );
 };
 
-// --- MODIFIED COMPONENT START ---
-
 const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
   const missionPoints = [
     {
@@ -139,7 +138,6 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
 
   return (
     <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-start justify-center">
-      {/* Left Column: Text Content */}
       <div className="text-left max-w-xs flex-shrink-0">
         <h3 className="font-rubik text-3xl sm:text-4xl font-bold mb-3 text-secondary2">
           {section.title}
@@ -149,12 +147,10 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
         </p>
       </div>
 
-      {/* Right Column: 2x2 Grid of cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl">
         {missionPoints.map((point, index) => (
           <div
             key={index}
-            // REVISED: Slightly reduced vertical padding from py-8 to py-6
             className="flex items-center gap-6 px-5 py-6 rounded-2xl border border-white/10
                        bg-white/5 transition-all duration-300 group hover:bg-white/10"
             style={{
@@ -163,8 +159,6 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
               backgroundSize: "1rem 1rem",
             }}
           >
-            {/* Left: Bigger Icon */}
-            {/* REVISED: Increased icon size from w-20 h-20 to w-24 h-24 */}
             <div className="relative flex-shrink-0 w-24 h-24">
               <Image
                 src={point.imageUrl}
@@ -174,7 +168,6 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
               />
             </div>
 
-            {/* Right: Text */}
             <div className="flex flex-col justify-center text-left">
               <h4 className="font-rubik text-xl font-bold text-white leading-snug">
                 {point.title}
@@ -190,7 +183,90 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
   );
 };
 
-// --- MODIFIED COMPONENT END ---
+const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
+  const iconSize = 28;
+  const coreValues = [
+    {
+      name: "Integrity",
+      icon: <Gem size={iconSize} />,
+      position: "top-0 left-[-15%]",
+      animationClass: "animate-float-1",
+    },
+    {
+      // REVISED: Position moved slightly to the left
+      name: "Passion",
+      icon: <Flame size={iconSize} />,
+      position: "top-[-10%] right-[-5%]",
+      animationClass: "animate-float-2",
+    },
+    {
+      name: "Excellence",
+      icon: <Award size={iconSize} />,
+      position: "top-1/2 -translate-y-1/2 right-[-25%]",
+      animationClass: "animate-float-3",
+    },
+    {
+      name: "Collaboration",
+      icon: <Users size={iconSize} />,
+      position: "bottom-[-15%] right-[10%]",
+      animationClass: "animate-float-1",
+    },
+    {
+      name: "Service",
+      icon: <Wrench size={iconSize} />,
+      position: "bottom-[10%] left-[-20%]",
+      animationClass: "animate-float-2",
+    },
+  ];
+
+  return (
+    <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-start">
+      {/* Left Column: Visuals */}
+      <div className="relative w-full max-w-sm mx-auto h-80 sm:h-96 group">
+        {/* Central Logo with Shadow */}
+        {/* REVISED: Replaced hover class with continuous animation class */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 sm:w-48 sm:h-48 z-10 duration-300 animate-pulse-beat">
+          <Image
+            src="/icpep logo.png"
+            alt="ICpEP Logo"
+            fill
+            className="object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.4)]"
+          />
+        </div>
+        {/* Floating Value Cards */}
+        {coreValues.map((value) => (
+          <div
+            key={value.name}
+            className={`absolute ${value.position} ${value.animationClass} z-20
+              w-32 h-32 rounded-2xl border border-white/10 bg-white/5
+              flex flex-col items-center justify-center gap-2 p-4
+              transition-colors duration-300 hover:bg-white/10`}
+            style={{
+              backgroundImage:
+                "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
+              backgroundSize: "1rem 1rem",
+            }}
+          >
+            <div className="text-secondary2">{value.icon}</div>
+            <span className="font-rubik font-semibold text-white text-center text-sm">
+              {value.name}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Right Column: Text Content */}
+      <div className="text-center md:text-left md:pt-8">
+        <h3 className="font-rubik text-3xl sm:text-4xl font-bold mb-4 text-secondary2">
+          {section.title}
+        </h3>
+        <p className="font-raleway text-lg sm:text-xl leading-relaxed text-gray-300">
+          {section.content}
+        </p>
+      </div>
+    </div>
+  );
+};
 
 const sections: SectionType[] = [
   {
@@ -298,10 +374,13 @@ const InfoSection: FC = () => {
     px-10 sm:px-16 py-16 sm:py-20 shadow-2xl text-white flex flex-col justify-center min-h-[40rem]"
       >
         <div key={activeIndex} className="animate-fade-in">
+          {/* --- RENDER LOGIC UPDATED --- */}
           {activeSection.id === "vision" ? (
             <VisionLayout section={activeSection} />
           ) : activeSection.id === "mission" ? (
             <MissionLayout section={activeSection} />
+          ) : activeSection.id === "values" ? (
+            <ValuesLayout section={activeSection} />
           ) : (
             <DefaultLayout section={activeSection} />
           )}

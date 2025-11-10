@@ -422,3 +422,17 @@ html {
     transform: translateY(0);
   }
 }
+
+@keyframes pulse-beat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-beat {
+  animation: pulse-beat 2s ease-in-out infinite;
+}
