@@ -59,16 +59,18 @@ export default function EventCard({ event }: Props) {
           </p>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {event.tags.slice(0, 3).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-buttonbg1 px-2 py-1 text-xs font-raleway font-semibold text-primary3"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        {event.tags && event.tags.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {event.tags.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-buttonbg1 px-2 py-1 text-xs font-raleway font-semibold text-primary3"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </Link>
   );

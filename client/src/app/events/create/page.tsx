@@ -52,9 +52,10 @@ export default function EventsPage() {
   const [showTagInput, setShowTagInput] = useState(false);
   const [newTag, setNewTag] = useState("");
   const [showAdmissionInput, setShowAdmissionInput] = useState(false);
-  const [admissions, setAdmissions] = useState
-    { category: string; price: string }[]
-  >([]);
+  const [admissions, setAdmissions] = useState<{
+    category: string;
+    price: string;
+  }[]>([]);
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const [showOrganizerInput, setShowOrganizerInput] = useState(false);
@@ -204,15 +205,20 @@ export default function EventsPage() {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent
+    e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target as HTMLInputElement & {
+      name: string;
+      value: string;
+    };
+
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    if (errors[name as keyof typeof errors]) {
-      setErrors((prev) => ({ ...prev, [name]: false }));
+    // Only clear field-level errors for keys that exist on the errors object
+    if (Object.prototype.hasOwnProperty.call(errors, name)) {
+      setErrors((prev) => ({ ...prev, [name as keyof FormErrors]: false }));
     }
   };
 

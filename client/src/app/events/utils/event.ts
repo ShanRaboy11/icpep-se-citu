@@ -10,7 +10,7 @@ export interface Event {
     name: string;
     avatarImageUrl: string;
   };
-  tags: string[];
+  tags?: string[];
   bannerImageUrl: string;
   description: string;
   details: {

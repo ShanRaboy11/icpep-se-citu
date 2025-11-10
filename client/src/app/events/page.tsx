@@ -1,12 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { events, Event } from "./utils/event";
+import { useState, useEffect } from "react";
+import { Event } from "./utils/event";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import EventCard from "./components/event-card";
 import Grid from "../components/grid";
 import { Home } from "lucide-react";
+import eventService from "../services/event";
 
 // Define a new type for our processed event
 type ProcessedEvent = Event & {
@@ -15,6 +17,55 @@ type ProcessedEvent = Event & {
 
 export default function EventsListPage() {
   const router = useRouter();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setIsLoading(true);
+        const response = await eventService.getEvents({
+          isPublished: true,
+          sort: '-eventDate',
+          limit: 100,
+        });
+
+        if (response.success && response.data) {
+          // Transform backend data to match Event type
+          const transformedEvents = (Array.isArray(response.data) ? response.data : []).map((event: any) => ({
+            id: event._id || event.id,
+            title: event.title || "",
+            date: event.eventDate || event.date,
+            endDate: event.expiryDate || undefined,
+            time: event.time || undefined,
+            location: event.location || "TBA",
+            category: event.tags && event.tags.length > 0 ? event.tags[0] : "Event",
+            image: event.coverImage || event.image || "/placeholder.svg",
+            description: event.description || "",
+            slug: event.slug || event._id || event.id || (event.title || "").toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+            organizer: event.organizer || undefined,
+            rsvpLink: event.rsvpLink || undefined,
+            admissions: event.admissions || undefined,
+            tags: event.tags || [],
+            // Add missing required properties from Event type
+            mode: event.mode || "in-person",
+            bannerImageUrl: event.bannerImageUrl || event.coverImage || event.image || "/placeholder.svg",
+            details: event.details || event.description || "",
+          }));
+
+          setEvents(transformedEvents);
+        }
+      } catch (err) {
+        console.error("Failed to fetch events:", err);
+        setError("Failed to load events. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   const handleBackToHome = () => {
     router.push("/");
@@ -89,7 +140,18 @@ export default function EventsListPage() {
             </p>
           </div>
 
-          {sortedEvents.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-16">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary1 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+              <p className="font-raleway text-lg text-gray-500 mt-4">
+                Loading events...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-16">
+              <p className="font-raleway text-lg text-red-500">{error}</p>
+            </div>
+          ) : sortedEvents.length > 0 ? (
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
               {sortedEvents.map((event) => (
                 <EventCard key={event.id} event={event} />
