@@ -1,16 +1,13 @@
-// app/about/page.tsx
 "use client";
 
 import Header from "../components/header";
 import Footer from "../components/footer";
 import Grid from "../components/grid";
-import InfoSection from "./components/info";
+import InfoSection from "./sections/info";
 import Timeline from "./components/timeline";
 import OfficerTermCard from "./components/term-card";
 import ProfileCard from "./components/profile-card";
 import { FC } from "react";
-
-// --- MOCK DATA (Replace with your actual data) ---
 
 const facultyHistory = [
   {
@@ -97,7 +94,6 @@ const departmentFaculty = [
 ];
 
 const AboutPage: FC = () => {
-  // --- MODIFICATION: Removed useRef and mouse event handlers ---
   const pillText = "About Our Chapter";
   const title = "The ICpEP SE CIT-U Story";
   const subtitle =
@@ -109,7 +105,6 @@ const AboutPage: FC = () => {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
-          {/* --- MODIFICATION START: Header now matches the 'Developers' page style --- */}
           <div className="mb-20 text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
               <div className="h-2 w-2 rounded-full bg-primary1"></div>
@@ -124,12 +119,9 @@ const AboutPage: FC = () => {
               {subtitle}
             </p>
           </div>
-          {/* --- MODIFICATION END --- */}
 
-          {/* Section 1: Org Info */}
           <InfoSection />
 
-          {/* Section 2: Org Faculty Profiles */}
           <section className="mt-24">
             <h2 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 text-center mb-12">
               Guiding Leadership
@@ -137,7 +129,6 @@ const AboutPage: FC = () => {
             <Timeline items={facultyHistory} />
           </section>
 
-          {/* Section 3: Org Officers Profiles */}
           <section className="mt-24">
             <h2 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 text-center mb-4">
               Our Student Leaders
@@ -153,7 +144,6 @@ const AboutPage: FC = () => {
             </div>
           </section>
 
-          {/* Section 4: CPE Dept Faculty Profiles */}
           <section className="mt-24">
             <h2 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 text-center mb-4">
               CPE Department Faculty
