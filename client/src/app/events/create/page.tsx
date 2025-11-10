@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
+import { ChevronDown } from "lucide-react";
+import eventService from "../../services/event";
 
 type FormErrors = {
   date: boolean;
@@ -12,7 +15,6 @@ type FormErrors = {
   title: boolean;
   description: boolean;
   body: boolean;
-  rsvp: boolean;
 };
 
 export default function EventsPage() {
@@ -20,13 +22,11 @@ export default function EventsPage() {
   const [registrationRequired, setRegistrationRequired] = useState(false);
   const [registrationStart, setRegistrationStart] = useState("");
   const [registrationEnd, setRegistrationEnd] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const router = useRouter();
 
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [body, setBody] = useState("");
-  const [rsvp, setRsvp] = useState("");
   const [formData, setFormData] = useState({
     date: "",
     time: "",
@@ -34,6 +34,8 @@ export default function EventsPage() {
     description: "",
     body: "",
     rsvp: "",
+    location: "",
+    visibility: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({
@@ -42,17 +44,31 @@ export default function EventsPage() {
     title: false,
     description: false,
     body: false,
-    rsvp: false,
   });
 
-  const handlePublish = () => {
+  const [cover, setCover] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
+  const [showTagInput, setShowTagInput] = useState(false);
+  const [newTag, setNewTag] = useState("");
+  const [showAdmissionInput, setShowAdmissionInput] = useState(false);
+  const [admissions, setAdmissions] = useState
+    { category: string; price: string }[]
+  >([]);
+  const [category, setCategory] = useState("");
+  const [price, setPrice] = useState("");
+  const [showOrganizerInput, setShowOrganizerInput] = useState(false);
+  const [organizer, setOrganizer] = useState("");
+
+  const predefinedTags = ["Workshop", "Seminar", "Training", "Webinar"];
+
+  const handlePublish = async () => {
     const newErrors = {
       date: !formData.date.trim(),
       time: !formData.time.trim(),
       title: !formData.title.trim(),
       description: !formData.description.trim(),
       body: !formData.body.trim(),
-      rsvp: false, // Optional, so default no error
     };
 
     setErrors(newErrors);
@@ -62,32 +78,143 @@ export default function EventsPage() {
       return;
     }
 
-    console.log("✅ Submitted:", formData, {
-      tags,
-      admissions,
-      organizer,
-      cover,
+    setIsSubmitting(true);
+    setShowGlobalError(false);
+
+    try {
+      const audienceMap: Record<string, string[]> = {
+        public: ["all"],
+        members: ["members"],
+        officers: ["officers"],
+      };
+
+      const eventData = {
+        title: formData.title,
+        description: formData.description,
+        content: formData.body,
+        eventDate: formData.date,
+        time: formData.time,
+        location: formData.location || undefined,
+        organizer: organizer || undefined,
+        rsvpLink: formData.rsvp || undefined,
+        tags: tags.length > 0 ? tags : undefined,
+        admissions: admissions.length > 0 ? admissions : undefined,
+        registrationRequired,
+        registrationStart: registrationStart || undefined,
+        registrationEnd: registrationEnd || undefined,
+        targetAudience: formData.visibility
+          ? audienceMap[formData.visibility]
+          : ["all"],
+        isPublished: true,
+        publishDate: new Date().toISOString(),
+      };
+
+      const response = await eventService.createEvent(
+        eventData,
+        cover || undefined
+      );
+
+      console.log("✅ Event created successfully:", response);
+      setSubmitSuccess(true);
+      setShowSuccessModal(true);
+
+      // Reset form
+      resetForm();
+    } catch (error) {
+      console.error("❌ Error creating event:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create event. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    setIsSubmitting(true);
+
+    try {
+      const audienceMap: Record<string, string[]> = {
+        public: ["all"],
+        members: ["members"],
+        officers: ["officers"],
+      };
+
+      const eventData = {
+        title: formData.title || "Untitled Draft",
+        description: formData.description || "No description",
+        content: formData.body || "No content",
+        eventDate: formData.date || new Date().toISOString().split("T")[0],
+        time: formData.time || undefined,
+        location: formData.location || undefined,
+        organizer: organizer || undefined,
+        rsvpLink: formData.rsvp || undefined,
+        tags: tags.length > 0 ? tags : undefined,
+        admissions: admissions.length > 0 ? admissions : undefined,
+        registrationRequired,
+        registrationStart: registrationStart || undefined,
+        registrationEnd: registrationEnd || undefined,
+        targetAudience: formData.visibility
+          ? audienceMap[formData.visibility]
+          : ["all"],
+        isPublished: false,
+      };
+
+      const response = await eventService.createEvent(
+        eventData,
+        cover || undefined
+      );
+
+      console.log("✅ Draft saved successfully:", response);
+      alert("Draft saved successfully!");
+    } catch (error) {
+      console.error("❌ Error saving draft:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to save draft. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      date: "",
+      time: "",
+      title: "",
+      description: "",
+      body: "",
+      rsvp: "",
+      location: "",
+      visibility: "",
     });
+    setCover(null);
+    setPreview(null);
+    setTags([]);
+    setAdmissions([]);
+    setOrganizer("");
+    setRegistrationRequired(false);
+    setRegistrationStart("");
+    setRegistrationEnd("");
+    setShowOrganizerInput(false);
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<
+    e: React.ChangeEvent
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error as soon as user types
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: false }));
     }
   };
-
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [cover, setCover] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
 
   const resizeImage = (file: File, maxWidth = 1200): Promise<File> => {
     return new Promise((resolve) => {
@@ -118,7 +245,7 @@ export default function EventsPage() {
             resolve(resizedFile);
           },
           file.type,
-          0.8 // compression level (0-1)
+          0.8
         );
       };
 
@@ -134,20 +261,12 @@ export default function EventsPage() {
     setCover(resized);
     setPreview(URL.createObjectURL(resized));
   };
-  const predefinedTags = ["Workshop", "Seminar", "Training", "Webinar"];
 
-  const [tags, setTags] = useState<string[]>([]);
-  const [showTagInput, setShowTagInput] = useState(false);
-  const [newTag, setNewTag] = useState("");
-
-  const [showAdmissionInput, setShowAdmissionInput] = useState(false);
-  const [admissions, setAdmissions] = useState<
-    { category: string; price: string }[]
-  >([]);
-  const [category, setCategory] = useState("");
-  const [price, setPrice] = useState("");
-  const [showOrganizerInput, setShowOrganizerInput] = useState(false);
-  const [organizer, setOrganizer] = useState("");
+  useEffect(() => {
+    if (Object.values(errors).every((err) => err === false)) {
+      setShowGlobalError(false);
+    }
+  }, [errors]);
 
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
@@ -161,29 +280,28 @@ export default function EventsPage() {
           <div className="h-[3px] bg-primary1 w-24 sm:w-full mt-3 mx-auto rounded-full" />
         </div>
 
-        {/* Sidebar + Main Form */}
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
           <aside className="w-full lg:w-64 flex-shrink-0">
             <Sidebar />
           </aside>
 
-          {/* Main Content */}
           <div className="flex-1">
+            {submitSuccess && (
+              <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                ✅ Event published successfully!
+              </div>
+            )}
+
             <form className="border border-primary1 rounded-2xl p-6 space-y-4 bg-white mb-10">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl sm:text-3xl font-semibold text-primary1 font-rubik">
                   Content
                 </h2>
-                {/*<Button
-                  variant="primary2"
-                  onClick={() => setPreviewOpen(true)}
-                  className="flex items-center gap-1"
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Preview
-                </Button>*/}
               </div>
+              <p className="text-sm text-gray-500 font-raleway -mt-5">
+                Provide key information
+              </p>
+
               {/* Upload image */}
               <div>
                 <label className="block cursor-pointer">
@@ -195,6 +313,7 @@ export default function EventsPage() {
                   />
 
                   {preview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={preview}
                       alt="cover preview"
@@ -209,6 +328,7 @@ export default function EventsPage() {
 
                 {cover && (
                   <button
+                    type="button"
                     onClick={() => {
                       setPreview(null);
                       setCover(null);
@@ -222,7 +342,6 @@ export default function EventsPage() {
 
               {/* Tags */}
               <div className="flex flex-wrap gap-2 items-center">
-                {/* Add Tag Button */}
                 {!showTagInput && (
                   <button
                     type="button"
@@ -233,7 +352,6 @@ export default function EventsPage() {
                   </button>
                 )}
 
-                {/* Input that appears when Add Tag is clicked */}
                 {showTagInput && (
                   <div className="flex items-center gap-2">
                     <input
@@ -242,6 +360,7 @@ export default function EventsPage() {
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
+                          e.preventDefault();
                           if (newTag.trim() !== "")
                             setTags((prev) => [...prev, newTag.trim()]);
                           setNewTag("");
@@ -266,7 +385,6 @@ export default function EventsPage() {
                   </div>
                 )}
 
-                {/* Predefined Tags */}
                 {predefinedTags.map((tag) => (
                   <button
                     key={tag}
@@ -287,8 +405,6 @@ export default function EventsPage() {
                     {tag}
                   </button>
                 ))}
-
-                {/* Render Selected Tags Below */}
               </div>
 
               {/* Selected Tags Display */}
@@ -311,6 +427,8 @@ export default function EventsPage() {
                   </span>
                 ))}
               </div>
+
+              <div className="h-[1px] bg-primary2 w-full mt-8 mx-auto rounded-full" />
 
               <h2 className="text-2xl font-semibold text-primary3 mt-6">
                 Details
@@ -370,6 +488,9 @@ export default function EventsPage() {
                   </label>
                   <input
                     type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
                     placeholder="Where is it happening?"
                     className="w-full border border-gray-300 text-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik"
                   />
@@ -384,6 +505,7 @@ export default function EventsPage() {
                   </button>
                 </div>
               </div>
+
               {showAdmissionInput && (
                 <div className="flex flex-col sm:flex-row gap-3 mt-3">
                   <input
@@ -400,13 +522,11 @@ export default function EventsPage() {
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                     className="w-32 border border-gray-300 rounded-lg px-3 py-2 font-rubik text-gray-400 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black"
-                    disabled={price === "Free"}
                   />
 
                   <button
                     type="button"
                     onClick={() => {
-                      // if free, store price as "Free"
                       if (!category.trim()) return;
 
                       setAdmissions((prev) => [
@@ -437,7 +557,6 @@ export default function EventsPage() {
                 </div>
               )}
 
-              {/* Display Added Admissions */}
               {admissions.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {admissions.map((ad, index) => (
@@ -461,6 +580,7 @@ export default function EventsPage() {
                   ))}
                 </div>
               )}
+
               <div className="h-[1px] bg-primary2 w-full mt-8 mx-auto rounded-full" />
 
               {/* Registration Required Toggle */}
@@ -485,7 +605,6 @@ export default function EventsPage() {
                   </label>
                 </div>
 
-                {/* These fields only appear if toggle is ON */}
                 {registrationRequired && (
                   <div className="grid sm:grid-cols-2 gap-4 animate-fade-in">
                     <div>
@@ -592,6 +711,7 @@ export default function EventsPage() {
                 name="body"
                 value={formData.body}
                 onChange={handleInputChange}
+                rows={6}
                 placeholder="Agenda/program highlights"
                 className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
   border transition-all
@@ -603,6 +723,7 @@ export default function EventsPage() {
   focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
 `}
               />
+
               <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
                 RSVP Link (optional)
               </label>
@@ -613,35 +734,56 @@ export default function EventsPage() {
                 value={formData.rsvp}
                 onChange={handleInputChange}
                 placeholder="https://example.com/rsvp"
-                className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.rsvp
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
+                className="w-full text-gray-400 font-raleway rounded-lg px-3 py-2 border border-gray-300 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white"
               />
 
+              <label className="text-md font-normal text-primary3 font-raleway mt-5 mb-1 block">
+                Visibility
+              </label>
+              <div className="relative w-full">
+                <select
+                  id="visibility"
+                  name="visibility"
+                  value={formData.visibility}
+                  onChange={handleInputChange}
+                  className="w-full text-gray-400 font-raleway rounded-lg px-3 py-2 border border-gray-300 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white appearance-none pr-10"
+                >
+                  <option value="" className="text-gray-400">
+                    Select visibility
+                  </option>
+                  <option value="public">Public</option>
+                  <option value="members">Members Only</option>
+                  <option value="officers">Officers Only</option>
+                </select>
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-primary3">
+                  <ChevronDown className="w-4 h-4" />
+                </span>
+              </div>
+
               <div className="flex flex-wrap items-center justify-between gap-3 mt-6">
-                {/* Error Message */}
                 {showGlobalError && (
                   <p className="text-red-500 text-sm font-raleway">
                     Please fill all required fields before publishing.
                   </p>
                 )}
 
-                {/* Buttons */}
                 <div className="flex gap-3 ml-auto">
-                  <Button variant="outline">Save Draft</Button>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={handleSaveDraft}
+                    disabled={isSubmitting}
+                  >
+                    Save Draft
+                  </Button>
                   <Button
                     variant="primary2"
                     type="button"
                     onClick={handlePublish}
+                    disabled={isSubmitting}
                     className="disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Publish
+                    {isSubmitting ? "Publishing..." : "Publish"}
                   </Button>
                 </div>
               </div>
@@ -649,6 +791,57 @@ export default function EventsPage() {
           </div>
         </div>
       </main>
+
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => {
+              setShowSuccessModal(false);
+              setSubmitSuccess(false);
+            }}
+          />
+
+          <div className="relative bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center">
+                <span className="text-3xl text-white">✔</span>
+              </div>
+
+              <h3 className="text-xl text-blue-700 font-semibold">
+                Event Published
+              </h3>
+              <p className="text-sm text-blue-400 text-center">
+                Your event was published successfully.
+              </p>
+
+              <div className="flex gap-3 mt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSubmitSuccess(false);
+                  }}
+                >
+                  Close
+                </Button>
+
+                <Button
+                  variant="primary3"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSubmitSuccess(false);
+                    router.push("/events");
+                  }}
+                >
+                  View events
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </section>
   );
