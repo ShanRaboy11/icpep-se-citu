@@ -436,3 +436,7 @@ html {
 .animate-pulse-subtle {
   animation: pulse-subtle 2.5s ease-in-out infinite;
 }
+
+.static-glow {
+  filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 12px currentColor);
+}

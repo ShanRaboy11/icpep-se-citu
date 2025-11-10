@@ -196,7 +196,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
     {
       name: "Collaboration",
       iconUrl: "/collaboration.png",
-      position: "bottom-[-15%] right-[10%]",
+      position: "bottom-[-20%] right-[10%]",
       animationClass: "animate-pulse-subtle",
     },
     {
@@ -209,7 +209,6 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
 
   return (
     <div className="grid md:grid-cols-2 gap-12 md:gap-24 items-start">
-      {/* Left Column: Visuals */}
       <div className="relative w-full max-w-sm mx-auto h-80 sm:h-96 group">
         <svg
           viewBox="0 0 400 400"
@@ -217,7 +216,6 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Path to Integrity (Top-Left) */}
           <path
             d="M200 200 H 170 V 70 H 60"
             stroke="currentColor"
@@ -229,25 +227,23 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
             cy="70"
             r="4"
             fill="currentColor"
-            className="text-secondary2"
+            className="text-secondary2 static-glow"
           />
 
-          {/* Path to Passion (Top-Right) */}
           <path
-            d="M200 200 H 250 V 30 H 320"
+            d="M200 200 H 250 V 30 H 300"
             stroke="currentColor"
             strokeWidth="2"
             className="text-secondary2"
           />
           <circle
-            cx="320"
+            cx="300"
             cy="30"
             r="4"
             fill="currentColor"
-            className="text-secondary2"
+            className="text-secondary2 static-glow"
           />
 
-          {/* Path to Excellence (Mid-Right) */}
           <path
             d="M200 200 H 380"
             stroke="currentColor"
@@ -259,10 +255,9 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
             cy="200"
             r="4"
             fill="currentColor"
-            className="text-secondary2"
+            className="text-secondary2 static-glow"
           />
 
-          {/* Path to Collaboration (Bottom-Right) - REVISED: Middle line moved down */}
           <path
             d="M200 200 H 230 V 320 H 330 V 360"
             stroke="currentColor"
@@ -274,10 +269,9 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
             cy="360"
             r="4"
             fill="currentColor"
-            className="text-secondary2"
+            className="text-secondary2 static-glow"
           />
 
-          {/* Path to Service (Bottom-Left) */}
           <path
             d="M200 200 H 150 V 300 H 40"
             stroke="currentColor"
@@ -289,12 +283,11 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
             cy="300"
             r="4"
             fill="currentColor"
-            className="text-secondary2"
+            className="text-secondary2 static-glow"
           />
         </svg>
 
-        {/* Central Logo with Shadow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 sm:w-48 sm:h-48 z-10 duration-300 animate-pulse-subtle">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 sm:w-48 sm:h-48 z-10">
           <Image
             src="/icpep logo.png"
             alt="ICpEP Logo"
@@ -303,7 +296,6 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           />
         </div>
 
-        {/* Pulsing Value Cards */}
         {coreValues.map((value) => (
           <div
             key={value.name}
@@ -317,7 +309,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
               backgroundSize: "1rem 1rem",
             }}
           >
-            <div className="relative w-12 h-12">
+            <div className="relative w-14 h-14">
               <Image
                 src={value.iconUrl}
                 alt={value.name}
@@ -325,14 +317,13 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
                 className="object-contain"
               />
             </div>
-            <span className="font-rubik font-semibold text-white text-center text-sm">
+            <span className="font-rubik font-semibold text-white text-center text-base">
               {value.name}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Right Column: Text Content */}
       <div className="text-center md:text-left md:pt-8">
         <h3 className="font-rubik text-3xl sm:text-4xl font-bold mb-4 text-secondary2">
           {section.title}
@@ -451,7 +442,6 @@ const InfoSection: FC = () => {
     px-10 sm:px-16 py-16 sm:py-20 shadow-2xl text-white flex flex-col justify-center min-h-[40rem]"
       >
         <div key={activeIndex} className="animate-fade-in">
-          {/* --- RENDER LOGIC UPDATED --- */}
           {activeSection.id === "vision" ? (
             <VisionLayout section={activeSection} />
           ) : activeSection.id === "mission" ? (
