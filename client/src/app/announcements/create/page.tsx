@@ -17,6 +17,7 @@ type FormErrors = {
   body: boolean;
   visibility: boolean;
   attendanceLink?: boolean;
+  agenda?: boolean;
 };
 
 type FileAttachment = {
@@ -46,6 +47,7 @@ export default function AnnouncementsPage() {
   const [awardees, setAwardees] = useState([
     { name: "", program: "", year: "", award: "" },
   ]);
+  const [agenda, setAgenda] = useState<string[]>([""]);
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -73,6 +75,7 @@ export default function AnnouncementsPage() {
     body: false,
     visibility: false,
     attendanceLink: false,
+    agenda: false,
   });
 
   const handlePublish = async () => {
@@ -87,6 +90,9 @@ export default function AnnouncementsPage() {
 
     if (activeTab === "Meeting" && !formData.attendanceLink.trim()) {
       newErrors.attendanceLink = true;
+    }
+    if (activeTab === "Meeting" && !agenda.some((a) => a.trim())) {
+      newErrors.agenda = true;
     }
 
     setErrors(newErrors);
@@ -147,6 +153,7 @@ export default function AnnouncementsPage() {
             ? awardees.filter((a) => a.name.trim())
             : undefined,
         attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
+        agenda: activeTab === "Meeting" ? agenda.filter(a => a.trim()) : undefined,
       };
 
       const response = await announcementService.createAnnouncement(
@@ -214,6 +221,7 @@ export default function AnnouncementsPage() {
             ? awardees.filter((a) => a.name.trim())
             : undefined,
         attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
+        agenda: activeTab === "Meeting" ? agenda.filter(a => a.trim()) : undefined,
       };
 
       const response = await announcementService.createAnnouncement(
@@ -249,6 +257,7 @@ export default function AnnouncementsPage() {
     setAttachments([]);
     setOrganizer("");
     setAwardees([{ name: "", program: "", year: "", award: "" }]);
+  setAgenda([""]);
     setImageFile(null);
     setShowSchedule(false);
     setScheduleDate("");
@@ -287,6 +296,22 @@ export default function AnnouncementsPage() {
 
   const removeAwardee = (index: number) => {
     setAwardees((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addAgendaItem = () => {
+    setAgenda((prev) => [...prev, ""]);
+  };
+
+  const updateAgendaItem = (index: number, value: string) => {
+    setAgenda((prev) => {
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
+    });
+  };
+
+  const removeAgendaItem = (index: number) => {
+    setAgenda((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -789,6 +814,44 @@ export default function AnnouncementsPage() {
   focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
 `}
                   />
+
+                  <div className="mt-4">
+                    <label className="text-md font-normal text-primary3 font-raleway block mb-2">
+                      Agenda (list the meeting agenda items)
+                    </label>
+
+                    <div className="space-y-2">
+                      {agenda.map((item, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={item}
+                            onChange={(e) => updateAgendaItem(index, e.target.value)}
+                            placeholder={`Agenda item ${index + 1}`}
+                            className="flex-1 text-gray-700 placeholder-gray-400 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary2 font-rubik"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeAgendaItem(index)}
+                            className="text-red-500 font-bold"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={addAgendaItem}
+                        className="px-3 py-1 bg-primary2 text-white rounded-lg text-sm"
+                      >
+                        + Add Agenda Item
+                      </button>
+                    </div>
+                    {errors.agenda && (
+                      <p className="text-red-500 text-sm mt-2">Please add at least one agenda item for meetings.</p>
+                    )}
+                  </div>
                 </div>
               )}
 
