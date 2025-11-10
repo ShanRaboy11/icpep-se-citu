@@ -1,20 +1,14 @@
 "use client";
 
-import { useState, useEffect, FC, ReactElement } from "react";
+import { useState, useEffect, FC, ReactElement, Suspense } from "react";
 import Image from "next/image";
-import {
-  Box,
-  Lightbulb,
-  Rocket,
-  Ribbon,
-  // Lucide icons are no longer used in VisionLayout
-} from "lucide-react";
-// --- NEW HEROICONS IMPORT ---
-import {
-  Cog6ToothIcon,
-  ScaleIcon,
-  GlobeAltIcon,
-} from "@heroicons/react/24/outline";
+import { Box, Lightbulb, Rocket, Ribbon } from "lucide-react";
+
+// --- NEW 3D IMPORTS ---
+import { Canvas } from "@react-three/fiber";
+import { useGLTF, OrbitControls } from "@react-three/drei";
+
+// --- SECTION & LAYOUT COMPONENTS (NO CHANGES) ---
 
 interface SectionType {
   id: string;
@@ -39,88 +33,108 @@ const DefaultLayout: FC<{ section: SectionType }> = ({ section }) => (
       <Image
         src={section.imageUrl}
         alt={section.title}
-        layout="fill"
+        fill
         className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
       />
     </div>
   </div>
 );
 
+// --- UPDATED 3D MODEL VIEWER COMPONENT ---
+
+// The Model component now accepts a 'scale' prop
+function Model({ modelPath, scale }: { modelPath: string; scale: number }) {
+  const { scene } = useGLTF(modelPath);
+
+  // Use the passed 'scale' prop instead of a hardcoded value
+  return <primitive object={scene} scale={scale} />;
+}
+
+// The ModelViewer now accepts a 'scale' prop to pass down to the Model
+const ModelViewer: FC<{ modelPath: string; scale: number }> = ({
+  modelPath,
+  scale,
+}) => {
+  return (
+    <Canvas camera={{ position: [0, 0, 5], fov: 35 }}>
+      {/* Lights are essential to see the model */}
+      <ambientLight intensity={1.5} />
+      <directionalLight position={[3, 3, 5]} intensity={2.5} />
+
+      <Suspense fallback={null}>
+        {/* Pass the scale prop down to the Model component */}
+        <Model modelPath={modelPath} scale={scale} />
+      </Suspense>
+
+      {/* This adds the 360-degree mouse controls! */}
+      <OrbitControls
+        enableZoom={false} // Disable zooming with scroll
+        enablePan={false} // Disable moving the model
+        autoRotate // Make it slowly rotate by itself
+        autoRotateSpeed={0.15}
+      />
+    </Canvas>
+  );
+};
+
 // --- MODIFIED VisionLayout STARTS HERE ---
-const VisionLayout: FC<{ section: SectionType }> = ({ section }) => (
-  <div className="text-center">
-    <div className="max-w-3xl mx-auto">
-      <h3 className="font-rubik text-3xl sm:text-4xl font-bold mb-4 text-secondary2">
-        {section.title}
-      </h3>
-      <p className="font-raleway text-lg sm:text-xl leading-relaxed text-gray-300">
-        {section.content}
-      </p>
-    </div>
+const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
+  const visionPoints = [
+    {
+      iconUrl: "/target.glb",
+      title: "Fostering Innovators",
+      description: "Leading and inspiring technological advancement.",
+      scale: 1.2, // Custom scale for this model
+    },
+    {
+      iconUrl: "/megaphone.glb",
+      title: "Ethical Leadership",
+      description: "Impacting society with technical prowess and integrity.",
+      scale: 1.0, // Custom scale for this model
+    },
+    {
+      iconUrl: "/headphone.glb",
+      title: "Community Driven",
+      description: "Building a collaborative and supportive student network.",
+      scale: 1.1, // A smaller scale for the Minecraft model
+    },
+  ];
 
-    <div className="grid md:grid-cols-3 gap-8 mt-12">
-      {/* Card 1: Fostering Innovators */}
-      <div className="text-center group">
-        <div
-          className="relative w-full h-40 rounded-2xl overflow-hidden bg-white/5 p-4 mb-4 border border-white/10 flex items-center justify-center transition-colors duration-300 group-hover:bg-white/10"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
-            backgroundSize: "1rem 1rem",
-          }}
-        >
-          <Cog6ToothIcon className="h-16 w-16 text-secondary2 opacity-80 transition-transform duration-300 group-hover:scale-110" />
-        </div>
-        <h4 className="font-rubik text-xl font-bold text-white">
-          Fostering Innovators
-        </h4>
-        <p className="font-raleway text-gray-300">
-          Leading and inspiring technological advancement.
+  return (
+    <div className="text-center">
+      <div className="max-w-3xl mx-auto">
+        <h3 className="font-rubik text-3xl sm:text-4xl font-bold mb-4 text-secondary2">
+          {section.title}
+        </h3>
+        <p className="font-raleway text-lg sm:text-xl leading-relaxed text-gray-300">
+          {section.content}
         </p>
       </div>
 
-      {/* Card 2: Ethical Leadership */}
-      <div className="text-center group">
-        <div
-          className="relative w-full h-40 rounded-2xl overflow-hidden bg-white/5 p-4 mb-4 border border-white/10 flex items-center justify-center transition-colors duration-300 group-hover:bg-white/10"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
-            backgroundSize: "1rem 1rem",
-          }}
-        >
-          <ScaleIcon className="h-16 w-16 text-secondary2 opacity-80 transition-transform duration-300 group-hover:scale-110" />
-        </div>
-        <h4 className="font-rubik text-xl font-bold text-white">
-          Ethical Leadership
-        </h4>
-        <p className="font-raleway text-gray-300">
-          Impacting society with technical prowess and integrity.
-        </p>
-      </div>
-
-      {/* Card 3: Community Driven */}
-      <div className="text-center group">
-        <div
-          className="relative w-full h-40 rounded-2xl overflow-hidden bg-white/5 p-4 mb-4 border border-white/10 flex items-center justify-center transition-colors duration-300 group-hover:bg-white/10"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
-            backgroundSize: "1rem 1rem",
-          }}
-        >
-          <GlobeAltIcon className="h-16 w-16 text-secondary2 opacity-80 transition-transform duration-300 group-hover:scale-110" />
-        </div>
-        <h4 className="font-rubik text-xl font-bold text-white">
-          Community Driven
-        </h4>
-        <p className="font-raleway text-gray-300">
-          Building a collaborative and supportive student network.
-        </p>
+      <div className="grid md:grid-cols-3 gap-8 mt-12">
+        {visionPoints.map((point, index) => (
+          <div key={index} className="text-center group">
+            <div
+              className="relative w-full h-40 rounded-2xl overflow-hidden bg-white/5 p-2 mb-4 border border-white/10 transition-colors duration-300 group-hover:bg-white/10"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
+                backgroundSize: "1rem 1rem",
+              }}
+            >
+              {/* Pass the custom scale from our data to the ModelViewer */}
+              <ModelViewer modelPath={point.iconUrl} scale={point.scale} />
+            </div>
+            <h4 className="font-rubik text-xl font-bold text-white">
+              {point.title}
+            </h4>
+            <p className="font-raleway text-gray-300">{point.description}</p>
+          </div>
+        ))}
       </div>
     </div>
-  </div>
-);
+  );
+};
 // --- MODIFIED VisionLayout ENDS HERE ---
 
 // --- NO CHANGES BELOW THIS LINE ---
