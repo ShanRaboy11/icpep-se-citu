@@ -1,14 +1,8 @@
 "use client";
 
-import { useState, useEffect, FC, ReactElement, Suspense } from "react";
+import { useState, useEffect, FC, ReactElement } from "react";
 import Image from "next/image";
 import { Box, Lightbulb, Rocket, Ribbon } from "lucide-react";
-
-// --- NEW 3D IMPORTS ---
-import { Canvas } from "@react-three/fiber";
-import { useGLTF, OrbitControls } from "@react-three/drei";
-
-// --- SECTION & LAYOUT COMPONENTS (NO CHANGES) ---
 
 interface SectionType {
   id: string;
@@ -40,63 +34,25 @@ const DefaultLayout: FC<{ section: SectionType }> = ({ section }) => (
   </div>
 );
 
-// --- UPDATED 3D MODEL VIEWER COMPONENT ---
-
-// The Model component now accepts a 'scale' prop
-function Model({ modelPath, scale }: { modelPath: string; scale: number }) {
-  const { scene } = useGLTF(modelPath);
-
-  // Use the passed 'scale' prop instead of a hardcoded value
-  return <primitive object={scene} scale={scale} />;
-}
-
-// The ModelViewer now accepts a 'scale' prop to pass down to the Model
-const ModelViewer: FC<{ modelPath: string; scale: number }> = ({
-  modelPath,
-  scale,
-}) => {
-  return (
-    <Canvas camera={{ position: [0, 0, 5], fov: 35 }}>
-      {/* Lights are essential to see the model */}
-      <ambientLight intensity={1.5} />
-      <directionalLight position={[3, 3, 5]} intensity={2.5} />
-
-      <Suspense fallback={null}>
-        {/* Pass the scale prop down to the Model component */}
-        <Model modelPath={modelPath} scale={scale} />
-      </Suspense>
-
-      {/* This adds the 360-degree mouse controls! */}
-      <OrbitControls
-        enableZoom={false} // Disable zooming with scroll
-        enablePan={false} // Disable moving the model
-        autoRotate // Make it slowly rotate by itself
-        autoRotateSpeed={0.15}
-      />
-    </Canvas>
-  );
-};
-
-// --- MODIFIED VisionLayout STARTS HERE ---
 const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
   const visionPoints = [
     {
-      iconUrl: "/target.glb",
+      iconUrl: "/rocket.png",
       title: "Fostering Innovators",
       description: "Leading and inspiring technological advancement.",
-      scale: 1.2, // Custom scale for this model
+      sizeClass: "w-3/4 h-3/4",
     },
     {
-      iconUrl: "/megaphone.glb",
+      iconUrl: "/target.png",
       title: "Ethical Leadership",
       description: "Impacting society with technical prowess and integrity.",
-      scale: 1.0, // Custom scale for this model
+      sizeClass: "w-3/4 h-3/4",
     },
     {
-      iconUrl: "/headphone.glb",
+      iconUrl: "/megaphone.png",
       title: "Community Driven",
       description: "Building a collaborative and supportive student network.",
-      scale: 1.1, // A smaller scale for the Minecraft model
+      sizeClass: "w-2/3 h-2/3",
     },
   ];
 
@@ -115,15 +71,22 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
         {visionPoints.map((point, index) => (
           <div key={index} className="text-center group">
             <div
-              className="relative w-full h-40 rounded-2xl overflow-hidden bg-white/5 p-2 mb-4 border border-white/10 transition-colors duration-300 group-hover:bg-white/10"
+              className="w-full h-40 rounded-2xl overflow-hidden bg-white/5 mb-4 border border-white/10 transition-colors duration-300 group-hover:bg-white/10
+                         flex items-center justify-center"
               style={{
                 backgroundImage:
                   "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
                 backgroundSize: "1rem 1rem",
               }}
             >
-              {/* Pass the custom scale from our data to the ModelViewer */}
-              <ModelViewer modelPath={point.iconUrl} scale={point.scale} />
+              <div className={`relative ${point.sizeClass}`}>
+                <Image
+                  src={point.iconUrl}
+                  alt={point.title}
+                  fill
+                  className="object-contain"
+                />
+              </div>
             </div>
             <h4 className="font-rubik text-xl font-bold text-white">
               {point.title}
@@ -135,9 +98,6 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
     </div>
   );
 };
-// --- MODIFIED VisionLayout ENDS HERE ---
-
-// --- NO CHANGES BELOW THIS LINE ---
 
 const sections: SectionType[] = [
   {
