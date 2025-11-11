@@ -10,7 +10,15 @@ interface Props {
 }
 
 export default function EventCard({ event }: Props) {
-  const [imgSrc, setImgSrc] = useState(event.bannerImageUrl || event.image || "/placeholder.svg");
+  const defaultImg = event.bannerImageUrl ?? (event as unknown as { image?: string }).image ?? "/placeholder.svg";
+  const [imgSrc, setImgSrc] = useState<string>(defaultImg);
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  // Reset loaded state if image source changes
+  if (imgSrc !== defaultImg && imgLoaded) {
+    setImgLoaded(false);
+    setImgSrc(defaultImg);
+  }
   
   const eventDate = new Date(event.date);
   const formattedDate = eventDate.toLocaleDateString("en-US", {
@@ -38,11 +46,24 @@ export default function EventCard({ event }: Props) {
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1"
     >
       <div className="relative h-48 flex-shrink-0 overflow-hidden bg-gray-100">
+        {/* Image skeleton */}
+        {!imgLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <div className="h-full w-full animate-pulse bg-gray-200" />
+          </div>
+        )}
+
         <img
           src={imgSrc}
           alt={event.title}
-          onError={() => setImgSrc("/placeholder.svg")}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          onLoad={() => setImgLoaded(true)}
+          onError={() => {
+            setImgSrc("/placeholder.svg");
+            setImgLoaded(true);
+          }}
+          className={`h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+            imgLoaded ? "opacity-100" : "opacity-0"
+          }`}
         />
         {event.status && (
           <span

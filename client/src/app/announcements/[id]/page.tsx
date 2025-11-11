@@ -133,11 +133,23 @@ export default function AnnouncementDetailPage({
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="flex-grow flex flex-col items-center justify-center px-4 pt-[9.5rem] pb-12">
-          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-primary1 border-r-transparent"></div>
-          <p className="font-raleway text-lg text-gray-500 mt-4">
-            Loading announcement...
-          </p>
+        <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="w-full h-64 rounded-lg bg-gray-100 animate-pulse" />
+              <div className="h-6 w-3/4 bg-gray-100 rounded animate-pulse" />
+              <div className="space-y-3 mt-4">
+                <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                <div className="h-4 bg-gray-100 rounded animate-pulse w-5/6" />
+                <div className="h-4 bg-gray-100 rounded animate-pulse w-4/6" />
+              </div>
+            </div>
+
+            <div className="lg:col-span-1 space-y-6">
+              <div className="h-12 w-full bg-gray-100 rounded animate-pulse" />
+              <div className="h-48 bg-gray-100 rounded animate-pulse" />
+            </div>
+          </div>
         </main>
         <Footer />
       </div>
@@ -175,7 +187,6 @@ export default function AnnouncementDetailPage({
   const imageUrl = announcement.imageUrl || "/default-image.jpg";
   const galleryImageUrls: string[] = [];
   const isMeeting = announcement.type.toLowerCase() === "meeting";
-  const isAchievement = announcement.type.toLowerCase() === "achievement";
 
   return (
     <div className="min-h-screen flex flex-col bg-white relative overflow-hidden font-sans">
@@ -213,7 +224,7 @@ export default function AnnouncementDetailPage({
             </div>
 
             <div className="lg:col-span-1 space-y-6">
-              <DetailsSidebar announcement={announcement} />
+              <DetailsSidebar announcement={announcement as any} />
 
               {isMeeting && announcement.attendees && (
                 <MeetingAttendanceCard
@@ -227,7 +238,7 @@ export default function AnnouncementDetailPage({
         <AttendanceModal
           isOpen={showFullAttendance}
           onClose={() => setShowFullAttendance(false)}
-          announcement={announcement}
+          announcement={announcement as any}
         />
         <Footer />
       </div>

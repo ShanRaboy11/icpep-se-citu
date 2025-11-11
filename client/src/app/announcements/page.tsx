@@ -156,13 +156,41 @@ export default function AnnouncementsPage() {
             </div>
           </div>
 
-          {/* Loading State */}
+          {/* Loading State - skeletons that match AnnouncementCard layout */}
           {loading && (
-            <div className="text-center py-16">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary1 border-r-transparent"></div>
-              <p className="font-raleway text-lg text-gray-500 mt-4">
-                Loading announcements...
-              </p>
+            <div className="space-y-12">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white rounded-[25px] shadow-lg shadow-gray-300 overflow-hidden mb-10 max-w-4xl mx-auto h-auto md:h-80 transition-all duration-300 ease-in-out"
+                >
+                  <div className="md:flex h-full">
+                    <div className="md:w-1/3 h-48 md:h-full bg-gray-100">
+                      <div className="w-full h-full object-cover animate-pulse" />
+                    </div>
+
+                    <div className="md:w-2/3 p-4 sm:p-6 flex flex-col justify-between">
+                      <div>
+                        <div className="mb-3 sm:mb-4">
+                          <div className="inline-block px-3 py-1 sm:px-4 sm:py-2 rounded-[10px] text-xs sm:text-sm bg-gray-200 w-28 h-6 animate-pulse" />
+                        </div>
+
+                        <div className="mb-2 sm:mb-3 h-6 bg-gray-200 rounded w-3/4 animate-pulse" />
+
+                        <div className="font-raleway text-gray-700 text-sm sm:text-base mb-2 sm:mb-4 leading-relaxed">
+                          <div className="h-4 bg-gray-100 rounded mb-2 w-full animate-pulse" />
+                          <div className="h-4 bg-gray-100 rounded mb-2 w-5/6 animate-pulse" />
+                          <div className="h-4 bg-gray-100 rounded mb-2 w-4/6 animate-pulse" />
+                        </div>
+                      </div>
+
+                      <div className="mt-2">
+                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
