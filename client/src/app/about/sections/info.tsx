@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, FC } from "react";
-import { sections } from "../utils/about";
+import { sections } from "../utils/info";
 import OrgLayout from "../components/org-layout";
 import VisionLayout from "../components/vision-layout";
 import MissionLayout from "../components/mission-layout";
