@@ -1,11 +1,17 @@
+// components/event-card.tsx
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { Event } from "../utils/event";
 
 interface Props {
-  event: Event;
+  event: Event & { status?: "Upcoming" | "Ongoing" | "Ended" };
 }
 
 export default function EventCard({ event }: Props) {
+  const [imgSrc, setImgSrc] = useState(event.bannerImageUrl || event.image || "/placeholder.svg");
+  
   const eventDate = new Date(event.date);
   const formattedDate = eventDate.toLocaleDateString("en-US", {
     month: "long",
@@ -13,7 +19,7 @@ export default function EventCard({ event }: Props) {
     year: "numeric",
   });
 
-  const getStatusStyles = (status: Event["status"]) => {
+  const getStatusStyles = (status?: "Upcoming" | "Ongoing" | "Ended") => {
     switch (status) {
       case "Upcoming":
         return "bg-green-100 text-green-800 ring-green-600/20";
@@ -31,19 +37,22 @@ export default function EventCard({ event }: Props) {
       href={`/events/${event.id}`}
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1"
     >
-      <div className="relative h-48 flex-shrink-0 overflow-hidden">
+      <div className="relative h-48 flex-shrink-0 overflow-hidden bg-gray-100">
         <img
-          src={event.bannerImageUrl}
+          src={imgSrc}
           alt={event.title}
+          onError={() => setImgSrc("/placeholder.svg")}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
-        <span
-          className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-rubik font-semibold ring-1 ring-inset ${getStatusStyles(
-            event.status
-          )}`}
-        >
-          {event.status}
-        </span>
+        {event.status && (
+          <span
+            className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-rubik font-semibold ring-1 ring-inset ${getStatusStyles(
+              event.status
+            )}`}
+          >
+            {event.status}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col p-6 bg-white">
