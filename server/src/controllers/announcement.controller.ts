@@ -172,6 +172,14 @@ export const createAnnouncement = async (
             attachments: parsedAttachments,
         };
 
+        // Enforce that published announcements must have at least one featured image
+        const willBePublished = announcementData.isPublished === true;
+        if (willBePublished && (!announcementData.imageUrl && (!announcementData.galleryImages || announcementData.galleryImages.length === 0))) {
+            console.error('❌ Attempted to publish announcement without a featured image');
+            res.status(400).json({ success: false, message: 'A featured image is required when publishing an announcement.' });
+            return;
+        }
+
         console.log('💾 Saving to database...');
         const announcement = await Announcement.create(announcementData);
 
@@ -356,6 +364,16 @@ export const updateAnnouncement = async (
                 req.body.galleryImages = JSON.stringify(urls);
                 req.body.imageUrl = urls[0];
             }
+        }
+
+        // If the request is attempting to publish the announcement, ensure at least one image exists
+        const requestWantsPublish = req.body.isPublished === 'true' || req.body.isPublished === true;
+        const existingHasImage = (announcement.imageUrl && announcement.imageUrl.length > 0) || (announcement.galleryImages && announcement.galleryImages.length > 0);
+        const incomingHasImage = (req.body.imageUrl && String(req.body.imageUrl).length > 0) || (req.body.galleryImages && String(req.body.galleryImages).length > 0);
+
+        if (requestWantsPublish && !existingHasImage && !incomingHasImage) {
+            res.status(400).json({ success: false, message: 'A featured image is required to publish an announcement.' });
+            return;
         }
 
         // Parse arrays if they are strings

@@ -55,6 +55,7 @@ export default function OrganizerCard({ organizer }: Props) {
       </div>
       <div className="space-y-3">
         <button
+          onClick={() => window.location.href = "mailto:icpep.seofficial2526@gmail.com"}
           className="w-full bg-transparent border border-primary1 text-primary1 
                      hover:bg-primary1 hover:text-white font-raleway font-semibold text-sm sm:text-base 
                      py-2 px-4 rounded-lg cursor-pointer relative overflow-hidden 

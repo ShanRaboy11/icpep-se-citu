@@ -18,6 +18,7 @@ type FormErrors = {
   visibility: boolean;
   attendanceLink?: boolean;
   agenda?: boolean;
+  image?: boolean;
 };
 
 type FileAttachment = {
@@ -77,6 +78,7 @@ export default function AnnouncementsPage() {
     visibility: false,
     attendanceLink: false,
     agenda: false,
+    image: false,
   });
 
   const handlePublish = async () => {
@@ -100,6 +102,15 @@ export default function AnnouncementsPage() {
 
     if (Object.values(newErrors).some((err) => err)) {
       setShowGlobalError(true);
+      return;
+    }
+
+    // Require at least one featured image before publishing
+    if (!images || images.length === 0) {
+      setErrors((prev) => ({ ...prev, image: true }));
+      setShowGlobalError(true);
+      // scroll to top of form or focus the image input
+      fileInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -412,7 +423,7 @@ export default function AnnouncementsPage() {
       <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
         <div className="text-center sm:text-left mb-10">
           <h1 className="text-2xl sm:text-5xl font-bold font-rubik text-primary3">
-            Announcements / Events
+            Compose
           </h1>
           <div className="h-[3px] bg-primary1 w-24 sm:w-full mt-3 mx-auto rounded-full" />
         </div>
@@ -423,11 +434,6 @@ export default function AnnouncementsPage() {
           </aside>
 
           <div className="flex-1">
-            {submitSuccess && (
-              <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-                ✅ Announcement published successfully!
-              </div>
-            )}
 
             <form className="border border-primary1 rounded-2xl p-6 space-y-4 bg-white mb-10">
               <div className="flex items-center justify-between mb-4">
@@ -442,15 +448,19 @@ export default function AnnouncementsPage() {
               {/* Image Upload */}
               <div>
                 <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
-                  Featured Image (optional)
+                  Featured Image
+                  <span className="ml-2 text-xs text-gray-500">(required to publish)</span>
                 </label>
 
                 <div
                   className={`w-full rounded-lg px-3 py-3 transition-colors border ${
-                    previews.length > 0
-                      ? "border-green-400 bg-green-50"
-                      : "border-gray-300 bg-white"
+                    errors.image
+                      ? "border-red-500 bg-red-50"
+                      : previews.length > 0
+                        ? "border-green-400 bg-green-50"
+                        : "border-gray-300 bg-white"
                   }`}
+                  aria-invalid={errors.image ? 'true' : 'false'}
                 >
                   <input
                     type="file"
@@ -503,9 +513,9 @@ export default function AnnouncementsPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition">
-                        <p className="text-gray-500">📷 Upload image(s)</p>
-                      </div>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition">
+                              <p className="text-gray-500">Upload image(s)</p>
+                            </div>
                     )}
                   </div>
 
@@ -518,7 +528,11 @@ export default function AnnouncementsPage() {
                       Remove all images
                     </button>
                   )}
-                </div>
+                      </div>
+
+                      {errors.image && (
+                        <p className="text-sm text-red-600 mt-2">A featured image is required to publish.</p>
+                      )}
               </div>
 
               <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
@@ -1010,11 +1024,11 @@ export default function AnnouncementsPage() {
                   </Button>
                   <Button
                     variant="primary2"
-                    type="button"
-                    onClick={handlePublish}
-                    disabled={isSubmitting}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
+                      type="button"
+                      onClick={handlePublish}
+                      disabled={isSubmitting}
+                      className="disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                     {isSubmitting ? "Publishing..." : "Publish"}
                   </Button>
                 </div>

@@ -291,7 +291,7 @@ export default function EventsPage() {
       <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
         <div className="text-center sm:text-left mb-10">
           <h1 className="text-2xl sm:text-5xl font-bold font-rubik text-primary3">
-            Announcements / Events
+            Compose
           </h1>
           <div className="h-[3px] bg-primary1 w-24 sm:w-full mt-3 mx-auto rounded-full" />
         </div>
@@ -304,7 +304,7 @@ export default function EventsPage() {
           <div className="flex-1">
             {submitSuccess && (
               <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-                ✅ Event published successfully!
+                Event published successfully!
               </div>
             )}
 
@@ -361,7 +361,7 @@ export default function EventsPage() {
                     </div>
                   ) : (
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition">
-                      <p className="text-gray-500">📷 Upload cover image</p>
+                      <p className="text-gray-500">Upload cover image</p>
                     </div>
                   )}
                 </div>
@@ -372,7 +372,7 @@ export default function EventsPage() {
                     onClick={(e) => { e.stopPropagation(); setPreviews([]); setImages([]); }}
                     className="mt-2 text-red-500 text-sm hover:underline"
                   >
-                    Remove all images
+                    Remove image
                   </button>
                 )}
               </div>
@@ -457,7 +457,7 @@ export default function EventsPage() {
                       onClick={() =>
                         setTags(tags.filter((_, i) => i !== index))
                       }
-                      className="text-gray-500 hover:text-red-500 font-bold"
+                      className="text-gray-300 hover:text-red-500 font-bold"
                     >
                       ×
                     </button>

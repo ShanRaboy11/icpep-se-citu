@@ -12,7 +12,7 @@ interface CarouselProps {
 export default function CarouselGallery({ imageUrls }: CarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
     Autoplay({
-      delay: 4000,
+      delay: 5000,
       stopOnInteraction: false,
       stopOnFocusIn: true,
     }),
@@ -62,15 +62,19 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
       {/* Navigation Buttons */}
       <button
         onClick={scrollPrev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/50 hover:bg-white/90 text-primary3 rounded-full p-2 
-                   opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+        aria-label="Previous image"
+        disabled={!emblaApi}
+        className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/60 hover:bg-white/90 text-primary3 rounded-full p-2 
+                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary2 cursor-pointer"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
       <button
         onClick={scrollNext}
-        className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/50 hover:bg-white/90 text-primary3 rounded-full p-2 
-                   opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+        aria-label="Next image"
+        disabled={!emblaApi}
+        className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/60 hover:bg-white/90 text-primary3 rounded-full p-2 
+                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary2 cursor-pointer"
       >
         <ChevronRight className="h-6 w-6" />
       </button>

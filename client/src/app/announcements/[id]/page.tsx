@@ -20,6 +20,7 @@ interface Announcement {
   content: string;
   type: string;
   imageUrl?: string | null;
+  galleryImages?: string[];
   publishDate: string;
   author?: {
     firstName: string;
@@ -185,7 +186,7 @@ export default function AnnouncementDetailPage({
 
   const title = announcement.title;
   const imageUrl = announcement.imageUrl || "/default-image.jpg";
-  const galleryImageUrls: string[] = [];
+  const galleryImageUrls: string[] = announcement.galleryImages ?? [];
   const isMeeting = announcement.type.toLowerCase() === "meeting";
 
   return (
