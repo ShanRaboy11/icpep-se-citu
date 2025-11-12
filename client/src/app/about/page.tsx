@@ -13,8 +13,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 
 // --- START: New Carousel Components for Guiding Leadership ---
 
-// MODIFIED: Re-engineered card using layering to fix the border gap on scaled cards. No other visual changes.
-// --- FIXED LeadershipCard --- //
+// Leadership Card
 const LeadershipCard: FC<{
   name: string;
   position: string;
@@ -22,8 +21,7 @@ const LeadershipCard: FC<{
   imageUrl: string;
 }> = ({ name, position, year, imageUrl }) => {
   return (
-    // Outer wrapper for full shadow visibility (no cropping)
-    <div className="relative w-full h-full rounded-[1.25rem] shadow-2xl">
+    <div className="relative w-full h-full rounded-[1.25rem] shadow-lg">
       {/* Gradient border layer */}
       <div className="absolute inset-0 rounded-[1.25rem] bg-gradient-to-b from-primary1/60 to-primary2/60 p-[2px]">
         {/* Content layer */}
@@ -34,11 +32,9 @@ const LeadershipCard: FC<{
             fill
             className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
           />
-
           <div className="absolute top-6 left-6 font-raleway text-sm font-semibold uppercase tracking-wider text-white/80">
             {year}
           </div>
-
           <div className="absolute bottom-0 left-0 right-0 p-8 h-2/5 bg-gradient-to-t from-[#002231] via-[#002231e6] to-transparent flex flex-col justify-end">
             <h3 className="font-rubik text-2xl font-bold leading-tight break-words">
               {name}
@@ -53,7 +49,7 @@ const LeadershipCard: FC<{
   );
 };
 
-// Main Carousel component - UPDATED SIZES AND ANIMATION
+// Carousel
 interface LeadershipItem {
   name: string;
   position: string;
@@ -61,8 +57,6 @@ interface LeadershipItem {
   imageUrl: string;
 }
 
-// --- FIXED Carousel Container --- //
-// --- FIXED Carousel Container --- //
 const LeadershipCarousel: FC<{ items: LeadershipItem[] }> = ({ items }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -70,8 +64,6 @@ const LeadershipCarousel: FC<{ items: LeadershipItem[] }> = ({ items }) => {
   const baseWidthRem = 20;
   const [xOffset, setXOffset] = useState(0);
 
-  // This effect calculates the necessary translation to center the active card.
-  // It replaces the previous `scrollTo` logic with a Framer Motion-compatible approach.
   useEffect(() => {
     const viewport = viewportRef.current;
     const activeItem = itemRefs.current[currentIndex];
@@ -86,20 +78,18 @@ const LeadershipCarousel: FC<{ items: LeadershipItem[] }> = ({ items }) => {
 
   const handleNext = () =>
     setCurrentIndex((prev) => Math.min(prev + 1, items.length - 1));
+  // THIS IS THE ONLY LINE THAT WAS CHANGED
   const handlePrev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
 
   return (
     <div className="flex flex-col items-center w-full overflow-visible">
-      {/* Viewport: This div establishes the visible frame and hides overflow */}
       <div
         ref={viewportRef}
-        className="w-full py-16 overflow-hidden cursor-grab active:cursor-grabbing"
+        className="w-full pt-12 pb-8 overflow-x-hidden overflow-y-visible"
       >
-        {/* Track: This is the moving element, animated smoothly with Framer Motion */}
         <motion.div
-          className="flex items-center gap-x-4"
+          className="flex items-end gap-x-4"
           style={{
-            // This padding allows the first and last items to be centered
             paddingLeft: `calc(50% - ${baseWidthRem / 2}rem)`,
             paddingRight: `calc(50% - ${baseWidthRem / 2}rem)`,
           }}
@@ -117,8 +107,7 @@ const LeadershipCarousel: FC<{ items: LeadershipItem[] }> = ({ items }) => {
                 ref={(el) => {
                   itemRefs.current[index] = el;
                 }}
-                // shrink-0 prevents flex items from shrinking
-                className="w-80 h-[28rem] min-w-[20rem] origin-center overflow-visible shrink-0"
+                className="w-80 h-[28rem] min-w-[20rem] origin-bottom overflow-visible shrink-0"
                 animate={{ scale }}
                 style={{
                   marginLeft: `-${marginOffset}rem`,
@@ -134,8 +123,8 @@ const LeadershipCarousel: FC<{ items: LeadershipItem[] }> = ({ items }) => {
         </motion.div>
       </div>
 
-      {/* Navigation Controls */}
-      <div className="relative z-10 mt-8 flex gap-4">
+      {/* Navigation Buttons */}
+      <div className="relative z-10 mt-4 flex gap-4">
         <button
           onClick={handlePrev}
           disabled={currentIndex === 0}
@@ -155,7 +144,7 @@ const LeadershipCarousel: FC<{ items: LeadershipItem[] }> = ({ items }) => {
   );
 };
 
-// --- END: New Carousel Components ---
+// --- END: Carousel Components ---
 
 const leadershipHistory: LeadershipItem[] = [
   {
@@ -262,7 +251,6 @@ const AboutPage: FC = () => {
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-
         <div className="flex-grow">
           <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem]">
             <div className="mb-20 text-center">
@@ -282,12 +270,11 @@ const AboutPage: FC = () => {
             <InfoSection />
           </div>
 
-          <section className="mt-32">
+          <section className="mt-40">
             <div className="w-full max-w-7xl mx-auto px-6">
               <h2 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 text-center mb-4">
                 Pillars of Guidance
               </h2>
-              {/* THIS IS THE ONLY LINE THAT WAS CHANGED */}
               <p className="font-raleway text-gray-600 text-center text-base sm:text-lg max-w-3xl mx-auto mb-8">
                 A look back at the dedicated faculty whose steadfast support has
                 strengthened our organization through the years.
