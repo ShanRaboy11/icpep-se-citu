@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
@@ -806,6 +807,7 @@ export default function EventsPage() {
                 )}
 
                 <div className="flex gap-3 ml-auto">
+                  <Link href="/drafts" className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-100 self-center">View drafts</Link>
                   <Button
                     variant="outline"
                     type="button"
