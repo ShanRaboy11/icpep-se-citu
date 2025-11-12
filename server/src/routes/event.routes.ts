@@ -28,7 +28,8 @@ router.post(
     '/',
     authenticate,
     authorizeRoles('council-officer', 'committee-officer', 'faculty'),
-    upload.single('coverImage'),
+    // Accept multiple images (field name: 'images'). Limit to 6 files.
+    upload.array('images', 6),
     createEvent
 );
 
@@ -37,7 +38,8 @@ router.patch(
     '/:id',
     authenticate,
     authorizeRoles('council-officer', 'committee-officer', 'faculty'),
-    upload.single('coverImage'),
+    // Accept multiple images for update as well
+    upload.array('images', 6),
     updateEvent
 );
 

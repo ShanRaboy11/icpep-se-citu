@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import Event, { IEvent } from '../models/event';
-import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary, deleteFromCloudinary, uploadMultipleToCloudinary } from '../utils/cloudinary';
 import mongoose from 'mongoose';
 
 // Properly extend Request to include Multer file
@@ -69,17 +69,36 @@ export const createEvent = async (
             return;
         }
 
-        // Handle cover image upload if present
+        // Handle image uploads (support multiple files under field 'images')
         let coverImage: string | null = null;
-        if (req.file) {
+        let galleryImages: string[] = [];
+
+        const multerFiles = (req as any).files as Express.Multer.File[] | undefined;
+        const singleFile = (req as any).file as Express.Multer.File | undefined;
+
+        if (Array.isArray(multerFiles) && multerFiles.length > 0) {
             try {
-                console.log('📷 Uploading cover image to Cloudinary...');
-                console.log('📷 File size:', req.file.size, 'bytes');
-                console.log('📷 File type:', req.file.mimetype);
-                
-                const result = await uploadToCloudinary(req.file.buffer, 'events');
-                coverImage = result.secure_url;
-                console.log('✅ Image uploaded:', coverImage);
+                console.log(`📷 Uploading ${multerFiles.length} images to Cloudinary...`);
+                const buffers = multerFiles.map((f) => ({ buffer: f.buffer }));
+                const results = await uploadMultipleToCloudinary(buffers, 'events');
+                galleryImages = results.map((r) => (r as any).secure_url).filter(Boolean);
+                console.log('✅ Images uploaded:', galleryImages);
+            } catch (uploadError) {
+                console.error('❌ Cloudinary multiple upload failed:', uploadError);
+                res.status(500).json({
+                    success: false,
+                    message: 'Failed to upload images',
+                    error: uploadError instanceof Error ? uploadError.message : 'Unknown error'
+                });
+                return;
+            }
+        } else if (singleFile) {
+            // Backwards compatible: if a single file was uploaded under req.file
+            try {
+                console.log('📷 Uploading single cover image to Cloudinary...');
+                const result = await uploadToCloudinary(singleFile.buffer, 'events');
+                galleryImages = [result.secure_url];
+                console.log('✅ Image uploaded:', result.secure_url);
             } catch (uploadError) {
                 console.error('❌ Cloudinary upload failed:', uploadError);
                 res.status(500).json({
@@ -148,7 +167,8 @@ export const createEvent = async (
             registrationRequired: registrationRequired === 'true' || registrationRequired === true,
             registrationStart: registrationStart ? new Date(registrationStart) : undefined,
             registrationEnd: registrationEnd ? new Date(registrationEnd) : undefined,
-            coverImage,
+            coverImage: coverImage || (galleryImages.length > 0 ? galleryImages[0] : null),
+            galleryImages,
         };
 
         console.log('💾 Saving to database...');
@@ -304,12 +324,31 @@ export const updateEvent = async (
         }
 
         // Handle new cover image upload
-        if (req.file) {
-            // Delete old image if exists
+        // Handle uploaded files (multiple) during update
+        const reqFiles = (req as any).files as Express.Multer.File[] | undefined;
+        const reqSingle = (req as any).file as Express.Multer.File | undefined;
+        if (Array.isArray(reqFiles) && reqFiles.length > 0) {
+            try {
+                console.log(`📷 Uploading ${reqFiles.length} images for update...`);
+                const buffers = reqFiles.map((f) => ({ buffer: f.buffer }));
+                const results = await uploadMultipleToCloudinary(buffers, 'events');
+                const newUrls = results.map((r) => (r as any).secure_url).filter(Boolean);
+                // Preserve existing galleryImages and append new ones
+                const existing = Array.isArray(event.galleryImages) ? event.galleryImages : [];
+                req.body.galleryImages = JSON.stringify([...existing, ...newUrls]);
+                if (!event.coverImage && newUrls.length > 0) req.body.coverImage = newUrls[0];
+                console.log('✅ Uploaded and appended images:', newUrls);
+            } catch (err) {
+                console.error('❌ Failed uploading images on update:', err);
+                res.status(500).json({ success: false, message: 'Failed to upload images', error: err instanceof Error ? err.message : undefined });
+                return;
+            }
+        } else if (reqSingle) {
+            // Backwards-compatibility for single-file uploads
             if (event.coverImage) {
                 await deleteFromCloudinary(event.coverImage);
             }
-            const result = await uploadToCloudinary(req.file.buffer, 'events');
+            const result = await uploadToCloudinary(reqSingle.buffer, 'events');
             req.body.coverImage = result.secure_url;
         }
 

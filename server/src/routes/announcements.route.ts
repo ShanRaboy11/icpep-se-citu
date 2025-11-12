@@ -28,7 +28,8 @@ router.post(
     '/',
     authenticate,
     authorizeRoles('council-officer', 'committee-officer', 'faculty'),
-    upload.single('image'),
+    // Accept multiple images for announcements (field name: 'images')
+    upload.array('images', 6),
     createAnnouncement
 );
 
@@ -37,7 +38,7 @@ router.patch(
     '/:id',
     authenticate,
     authorizeRoles('council-officer', 'committee-officer', 'faculty'),
-    upload.single('image'),
+    upload.array('images', 6),
     updateAnnouncement
 );
 

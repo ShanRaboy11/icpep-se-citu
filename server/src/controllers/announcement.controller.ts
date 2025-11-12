@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import Announcement, { IAnnouncement } from '../models/announcement';
-import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary, uploadMultipleToCloudinary, deleteFromCloudinary } from '../utils/cloudinary';
 import mongoose from 'mongoose';
 
 // Properly extend Request to include Multer file
 interface MulterRequest extends Request {
     file?: Express.Multer.File;
+    files?: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] };
 }
 
 // Define query type for better type safety
@@ -30,8 +31,9 @@ export const createAnnouncement = async (
 ): Promise<void> => {
     try {
         console.log('🔵 CREATE ANNOUNCEMENT - START');
-        console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
-        console.log('📷 File present:', !!req.file);
+    console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
+    console.log('📷 File present:', !!req.file);
+    console.log('📷 Files present:', !!req.files && req.files.length);
         console.log('👤 User:', req.user);
 
         const {
@@ -66,24 +68,46 @@ export const createAnnouncement = async (
             return;
         }
 
-        // Handle image upload if present
+        // Handle image upload(s) if present
         let imageUrl: string | null = null;
-        if (req.file) {
+        let galleryImages: string[] | undefined = undefined;
+
+        // Normalize multer files (can be array or object of arrays)
+        const filesArray: Express.Multer.File[] = Array.isArray(req.files)
+            ? (req.files as Express.Multer.File[])
+            : req.files && typeof req.files === 'object'
+                ? Object.values(req.files as { [key: string]: Express.Multer.File[] }).flat()
+                : [];
+
+        if (filesArray.length > 0) {
             try {
-                console.log('📷 Uploading image to Cloudinary...');
-                console.log('📷 File size:', req.file.size, 'bytes');
-                console.log('📷 File type:', req.file.mimetype);
-                
-                const result = await uploadToCloudinary(req.file.buffer, 'announcements');
-                imageUrl = result.secure_url;
-                console.log('✅ Image uploaded:', imageUrl);
+                console.log(`📷 Uploading ${filesArray.length} image(s) to Cloudinary...`);
+                const results = await uploadMultipleToCloudinary(filesArray as { buffer: Buffer }[], 'announcements');
+                const urls = results.map((r) => r.secure_url).filter(Boolean) as string[];
+                if (urls.length > 0) {
+                    imageUrl = urls[0];
+                    galleryImages = urls;
+                }
+                console.log('✅ Images uploaded:', urls);
             } catch (uploadError) {
                 console.error('❌ Cloudinary upload failed:', uploadError);
                 res.status(500).json({
                     success: false,
-                    message: 'Failed to upload image',
+                    message: 'Failed to upload image(s)',
                     error: uploadError instanceof Error ? uploadError.message : 'Unknown error'
                 });
+                return;
+            }
+        } else if (req.file) {
+            // Backwards compatibility for single-file uploads
+            try {
+                const result = await uploadToCloudinary(req.file.buffer, 'announcements');
+                imageUrl = result.secure_url;
+                galleryImages = imageUrl ? [imageUrl] : undefined;
+                console.log('✅ Image uploaded (single):', imageUrl);
+            } catch (uploadError) {
+                console.error('❌ Cloudinary upload failed:', uploadError);
+                res.status(500).json({ success: false, message: 'Failed to upload image', error: uploadError instanceof Error ? uploadError.message : 'Unknown error' });
                 return;
             }
         }
@@ -144,6 +168,7 @@ export const createAnnouncement = async (
             agenda: parsedAgenda,
             awardees: parsedAwardees,
             imageUrl,
+            galleryImages,
             attachments: parsedAttachments,
         };
 
@@ -298,14 +323,39 @@ export const updateAnnouncement = async (
         //     return;
         // }
 
-        // Handle new image upload
-        if (req.file) {
-            // Delete old image if exists
-            if (announcement.imageUrl) {
-                await deleteFromCloudinary(announcement.imageUrl);
+        // Handle new image upload(s)
+        // Normalize multer files (array or object)
+        const incomingFiles: Express.Multer.File[] = Array.isArray(req.files)
+            ? (req.files as Express.Multer.File[])
+            : req.files && typeof req.files === 'object'
+                ? Object.values(req.files as { [key: string]: Express.Multer.File[] }).flat()
+                : [];
+
+        if (incomingFiles.length > 0) {
+            // Delete old images if they exist
+            if (announcement.galleryImages && announcement.galleryImages.length > 0) {
+                for (const url of announcement.galleryImages) {
+                    try {
+                        await deleteFromCloudinary(url);
+                    } catch (err) {
+                        console.warn('Failed to delete old announcement gallery image:', err);
+                    }
+                }
+            } else if (announcement.imageUrl) {
+                try {
+                    await deleteFromCloudinary(announcement.imageUrl);
+                } catch (err) {
+                    console.warn('Failed to delete old announcement image:', err);
+                }
             }
-            const result = await uploadToCloudinary(req.file.buffer, 'announcements');
-            req.body.imageUrl = result.secure_url;
+
+            // Upload new files
+            const results = await uploadMultipleToCloudinary(incomingFiles as { buffer: Buffer }[], 'announcements');
+            const urls = results.map((r) => r.secure_url).filter(Boolean) as string[];
+            if (urls.length > 0) {
+                req.body.galleryImages = JSON.stringify(urls);
+                req.body.imageUrl = urls[0];
+            }
         }
 
         // Parse arrays if they are strings
@@ -366,8 +416,16 @@ export const deleteAnnouncement = async (
         //     return;
         // }
 
-        // Delete image from cloudinary if exists
-        if (announcement.imageUrl) {
+        // Delete image(s) from cloudinary if exist
+        if (announcement.galleryImages && announcement.galleryImages.length > 0) {
+            for (const url of announcement.galleryImages) {
+                try {
+                    await deleteFromCloudinary(url);
+                } catch (err) {
+                    console.warn('Failed to delete announcement gallery image:', err);
+                }
+            }
+        } else if (announcement.imageUrl) {
             await deleteFromCloudinary(announcement.imageUrl);
         }
 

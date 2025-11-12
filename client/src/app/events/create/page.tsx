@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
@@ -34,6 +34,7 @@ export default function EventsPage() {
     description: "",
     body: "",
     rsvp: "",
+    contact: "",
     location: "",
     visibility: "",
   });
@@ -46,8 +47,9 @@ export default function EventsPage() {
     body: false,
   });
 
-  const [cover, setCover] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [showTagInput, setShowTagInput] = useState(false);
   const [newTag, setNewTag] = useState("");
@@ -58,7 +60,6 @@ export default function EventsPage() {
   }[]>([]);
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
-  const [showOrganizerInput, setShowOrganizerInput] = useState(false);
   const [organizer, setOrganizer] = useState("");
 
   const predefinedTags = ["Workshop", "Seminar", "Training", "Webinar"];
@@ -97,6 +98,7 @@ export default function EventsPage() {
         time: formData.time,
         location: formData.location || undefined,
         organizer: organizer || undefined,
+  contact: formData.contact || undefined,
         rsvpLink: formData.rsvp || undefined,
         tags: tags.length > 0 ? tags : undefined,
         admissions: admissions.length > 0 ? admissions : undefined,
@@ -112,7 +114,7 @@ export default function EventsPage() {
 
       const response = await eventService.createEvent(
         eventData,
-        cover || undefined
+        images.length > 0 ? images : undefined
       );
 
       console.log("✅ Event created successfully:", response);
@@ -151,6 +153,7 @@ export default function EventsPage() {
         time: formData.time || undefined,
         location: formData.location || undefined,
         organizer: organizer || undefined,
+  contact: formData.contact || undefined,
         rsvpLink: formData.rsvp || undefined,
         tags: tags.length > 0 ? tags : undefined,
         admissions: admissions.length > 0 ? admissions : undefined,
@@ -165,7 +168,7 @@ export default function EventsPage() {
 
       const response = await eventService.createEvent(
         eventData,
-        cover || undefined
+        images.length > 0 ? images : undefined
       );
 
       console.log("✅ Draft saved successfully:", response);
@@ -190,18 +193,18 @@ export default function EventsPage() {
       description: "",
       body: "",
       rsvp: "",
+      contact: "",
       location: "",
       visibility: "",
     });
-    setCover(null);
-    setPreview(null);
+  setImages([]);
+  setPreviews([]);
     setTags([]);
     setAdmissions([]);
     setOrganizer("");
     setRegistrationRequired(false);
     setRegistrationStart("");
     setRegistrationEnd("");
-    setShowOrganizerInput(false);
   };
 
   const handleInputChange = (
@@ -259,13 +262,20 @@ export default function EventsPage() {
     });
   };
 
-  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const resized = await resizeImage(file);
-    setCover(resized);
-    setPreview(URL.createObjectURL(resized));
+    try {
+      const resized = await resizeImage(file);
+      // Replace with single image selection
+      setImages([resized]);
+      setPreviews([URL.createObjectURL(resized)]);
+      // Clear the native input value so selecting the same file again will trigger change
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (err) {
+      console.error('Error resizing image', err);
+    }
   };
 
   useEffect(() => {
@@ -308,40 +318,61 @@ export default function EventsPage() {
                 Provide key information
               </p>
 
-              {/* Upload image */}
+              {/* Upload image(s) */}
               <div>
-                <label className="block cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleCoverChange}
-                  />
+                {/* hidden file input - kept outside interactive preview area to avoid label / click conflicts */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImagesChange}
+                  ref={fileInputRef}
+                />
 
-                  {preview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={preview}
-                      alt="cover preview"
-                      className="w-full h-48 object-cover rounded-lg border"
-                    />
+                {/* Preview area / upload trigger */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+                  className="block"
+                >
+                  {previews.length > 0 ? (
+                    <div className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={previews[0]}
+                        alt={`preview`}
+                        className="w-full h-40 object-cover rounded-lg border"
+                      />
+                      <button
+                        type="button"
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          try { URL.revokeObjectURL(previews[0]); } catch {}
+                          setImages([]);
+                          setPreviews([]);
+                        }}
+                        aria-label={`Remove image`}
+                        className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 border shadow-sm"
+                      >
+                        ×
+                      </button>
+                    </div>
                   ) : (
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition">
                       <p className="text-gray-500">📷 Upload cover image</p>
                     </div>
                   )}
-                </label>
+                </div>
 
-                {cover && (
+                {images.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setPreview(null);
-                      setCover(null);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); setPreviews([]); setImages([]); }}
                     className="mt-2 text-red-500 text-sm hover:underline"
                   >
-                    Remove image
+                    Remove all images
                   </button>
                 )}
               </div>
@@ -644,28 +675,29 @@ export default function EventsPage() {
 
               <div className="h-[1px] bg-primary2 w-full mt-8 mx-auto rounded-full" />
 
-              <div className="mt-5 mb-5 flex flex-col justify-end">
-                <button
-                  type="button"
-                  onClick={() =>
-                    organizer.trim() === ""
-                      ? setShowOrganizerInput((prev) => !prev)
-                      : setOrganizer("")
-                  }
-                  className="px-4 py-2 border border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white font-rubik"
-                >
-                  + Add Event Organizer
-                </button>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-raleway text-primary3 block mb-1">Organizer</label>
+                  <input
+                    type="text"
+                    placeholder="Organizer name or group"
+                    value={organizer}
+                    onChange={(e) => setOrganizer(e.target.value)}
+                    className="w-full border border-gray-300 text-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-raleway text-primary3 block mb-1">Organizer contact (email)</label>
+                  <input
+                    type="email"
+                    name="contact"
+                    placeholder="organizer@example.com"
+                    value={formData.contact}
+                    onChange={handleInputChange}
+                    className="w-full border border-gray-300 text-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik"
+                  />
+                </div>
               </div>
-              {showOrganizerInput && (
-                <input
-                  type="text"
-                  placeholder="Organizer name or group"
-                  value={organizer}
-                  onChange={(e) => setOrganizer(e.target.value)}
-                  className="w-full border border-gray-300 text-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik animate-fade-in"
-                />
-              )}
 
               <label className="text-md font-normal text-primary3 font-raleway mt-5 mb-2 block">
                 Event Title

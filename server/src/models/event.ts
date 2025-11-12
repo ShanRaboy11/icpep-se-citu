@@ -36,6 +36,7 @@ export interface IEvent extends Document {
     registrationEnd?: Date;
     // Media
     coverImage?: string | null;
+    galleryImages?: string[];
     views?: number;
     // Virtuals
     isExpired: boolean;
@@ -126,6 +127,10 @@ const eventSchema = new Schema<IEvent>({
     views: {
         type: Number,
         default: 0,
+    },
+    galleryImages: {
+        type: [String],
+        default: [],
     },
 }, { timestamps: true });
 

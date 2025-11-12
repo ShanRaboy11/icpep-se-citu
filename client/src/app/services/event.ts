@@ -17,6 +17,15 @@ api.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+    // If sending FormData, let the browser set the Content-Type (including boundary)
+    if (config.data instanceof FormData) {
+        if (config.headers && 'Content-Type' in config.headers) {
+            const headers = config.headers as Record<string, unknown> | undefined;
+            if (headers && Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
+                delete headers['Content-Type'];
+            }
+        }
+    }
     
     console.log('🔵 API Request:', {
         method: config.method?.toUpperCase(),
@@ -122,7 +131,7 @@ class EventService {
     /**
      * Create a new event
      */
-    async createEvent(data: EventData, coverImage?: File): Promise<EventResponse> {
+    async createEvent(data: EventData, images?: File[]): Promise<EventResponse> {
         try {
             console.log('📤 Creating event with data:', data);
             
@@ -161,17 +170,14 @@ class EventService {
                 formData.append('admissions', JSON.stringify(data.admissions));
             }
 
-            // Append cover image if provided
-            if (coverImage) {
-                console.log('📷 Appending cover image:', coverImage.name);
-                formData.append('coverImage', coverImage);
+            // Append images if provided (multiple)
+            if (Array.isArray(images) && images.length > 0) {
+                console.log(`📷 Appending ${images.length} images`);
+                images.forEach((file) => formData.append('images', file));
             }
 
-            const response = await api.post('/events', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            // Let the browser set the Content-Type (including the boundary) for multipart/form-data
+            const response = await api.post('/events', formData);
 
             return response.data;
         } catch (error) {
@@ -219,7 +225,7 @@ class EventService {
     async updateEvent(
         id: string,
         data: Partial<EventData>,
-        coverImage?: File
+        images?: File[]
     ): Promise<EventResponse> {
         try {
             const formData = new FormData();
@@ -235,15 +241,12 @@ class EventService {
                 }
             });
 
-            if (coverImage) {
-                formData.append('coverImage', coverImage);
+            if (Array.isArray(images) && images.length > 0) {
+                images.forEach((file) => formData.append('images', file));
             }
 
-            const response = await api.patch(`/events/${id}`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            // Let the browser set the Content-Type (including the boundary) for multipart/form-data
+            const response = await api.patch(`/events/${id}`, formData);
 
             return response.data;
         } catch (error) {

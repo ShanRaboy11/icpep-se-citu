@@ -1,15 +1,17 @@
+import dotenv from 'dotenv';
+
+// Load environment variables as early as possible so modules that read process.env
+// (e.g., the Cloudinary utility) get the values during module initialization.
+dotenv.config();
+
 import express, { Application, Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import announcementRoutes from '../src/routes/announcements.route';
 import eventRoutes from './routes/event.routes';
-
-// Load environment variables
-dotenv.config();
 
 // Global unhandled rejection handler to avoid process crash during development
 process.on('unhandledRejection', (reason, promise) => {

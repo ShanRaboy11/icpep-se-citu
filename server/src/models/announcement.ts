@@ -51,6 +51,7 @@ export interface IAnnouncement extends Document {
     awardees?: IAwardee[];
     // Media
     imageUrl?: string | null;
+    galleryImages?: string[];
     attachments?: IAttachment[];
     views?: number;
     // Virtuals
@@ -135,6 +136,10 @@ const announcementSchema = new Schema<IAnnouncement>({
     imageUrl: {
         type: String,
         default: null,
+    },
+    galleryImages: {
+        type: [String],
+        default: []
     },
     attachments: [attachmentSchema],
     views: {

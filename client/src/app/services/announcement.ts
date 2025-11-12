@@ -28,6 +28,16 @@ api.interceptors.request.use((config) => {
         contentType: config.headers['Content-Type'],
     });
     
+    // If sending FormData, allow browser/axios to set the Content-Type (including boundary)
+    if (config.data instanceof FormData) {
+        if (config.headers && 'Content-Type' in config.headers) {
+            const headers = config.headers as Record<string, unknown> | undefined;
+            if (headers && Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
+                delete headers['Content-Type'];
+            }
+        }
+    }
+
     return config;
 });
 
@@ -181,7 +191,7 @@ class AnnouncementService {
     /**
      * Create a new announcement
      */
-    async createAnnouncement(data: AnnouncementData, imageFile?: File): Promise<AnnouncementResponse> {
+    async createAnnouncement(data: AnnouncementData, images?: File[] | File): Promise<AnnouncementResponse> {
         try {
             console.log('📤 Creating announcement with data:', data);
             
@@ -218,10 +228,11 @@ class AnnouncementService {
                 formData.append('attachments', JSON.stringify(data.attachments));
             }
 
-            // Append image if provided
-            if (imageFile) {
-                console.log('📷 Appending image file:', imageFile.name);
-                formData.append('image', imageFile);
+            // Append image(s) if provided
+            if (images) {
+                const imgs = Array.isArray(images) ? images : [images];
+                console.log(`📷 Appending ${imgs.length} image(s)`);
+                imgs.forEach((file) => formData.append('images', file));
             }
 
             // Log FormData contents for debugging
@@ -235,11 +246,7 @@ class AnnouncementService {
                 }
             });
 
-            const response = await api.post('/announcements', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.post('/announcements', formData);
 
             return response.data;
         } catch (error) {
@@ -300,7 +307,7 @@ class AnnouncementService {
     async updateAnnouncement(
         id: string,
         data: Partial<AnnouncementData>,
-        imageFile?: File
+        images?: File[] | File
     ): Promise<AnnouncementResponse> {
         try {
             const formData = new FormData();
@@ -316,15 +323,12 @@ class AnnouncementService {
                 }
             });
 
-            if (imageFile) {
-                formData.append('image', imageFile);
+            if (images) {
+                const imgs = Array.isArray(images) ? images : [images];
+                imgs.forEach((file) => formData.append('images', file));
             }
 
-            const response = await api.patch(`/announcements/${id}`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            const response = await api.patch(`/announcements/${id}`, formData);
 
             return response.data;
         } catch (error) {

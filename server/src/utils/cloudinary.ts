@@ -22,6 +22,11 @@ if (CLOUDINARY_ENABLED) {
 } else {
     console.warn('⚠️ Cloudinary credentials missing or incomplete. Uploads will use a placeholder URL in development.');
 }
+if (CLOUDINARY_ENABLED) {
+    // Log masked info to help debugging without leaking secrets
+    const masked = `${String(CLOUDINARY_CLOUD_NAME).slice(0, 3)}***`;
+    console.log(`✅ Cloudinary configured. cloud_name=${masked}`);
+}
 
 /**
  * Upload buffer to Cloudinary
@@ -116,7 +121,13 @@ export const uploadMultipleToCloudinary = async (
     folder: string
 ): Promise<UploadApiResponse[]> => {
     const uploadPromises = files.map((file) => uploadToCloudinary(file.buffer, folder));
-    return Promise.all(uploadPromises);
+    try {
+        const results = await Promise.all(uploadPromises);
+        return results;
+    } catch (error) {
+        console.error('❌ Error uploading multiple files to Cloudinary:', error);
+        throw error;
+    }
 };
 
 export default cloudinary;

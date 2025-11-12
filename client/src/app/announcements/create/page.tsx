@@ -49,11 +49,12 @@ export default function AnnouncementsPage() {
   ]);
   const [agenda, setAgenda] = useState<string[]>([""]);
   const [showGlobalError, setShowGlobalError] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [images, setImages] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -158,7 +159,7 @@ export default function AnnouncementsPage() {
 
       const response = await announcementService.createAnnouncement(
         announcementData,
-        imageFile || undefined
+        images.length > 0 ? images : undefined
       );
 
       console.log("✅ Announcement created successfully:", response);
@@ -226,7 +227,7 @@ export default function AnnouncementsPage() {
 
       const response = await announcementService.createAnnouncement(
         announcementData,
-        imageFile || undefined
+        images.length > 0 ? images : undefined
       );
 
       console.log("✅ Draft saved successfully:", response);
@@ -258,7 +259,8 @@ export default function AnnouncementsPage() {
     setOrganizer("");
     setAwardees([{ name: "", program: "", year: "", award: "" }]);
   setAgenda([""]);
-    setImageFile(null);
+  setImages([]);
+  setPreviews([]);
     setShowSchedule(false);
     setScheduleDate("");
     setScheduleTime("");
@@ -324,22 +326,72 @@ export default function AnnouncementsPage() {
     setAttachments((prev) => [...prev, ...newFiles]);
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
+  const resizeImage = (file: File, maxWidth = 1200): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        img.src = e.target?.result as string;
+      };
+
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scaleSize = maxWidth / img.width;
+        canvas.width = maxWidth;
+        canvas.height = img.height * scaleSize;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(file);
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return resolve(file);
+            const resizedFile = new File([blob], file.name, {
+              type: file.type,
+            });
+            resolve(resizedFile);
+          },
+          file.type,
+          0.8
+        );
+      };
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+
+    const files = Array.from(fileList);
+    try {
+      const resized = await Promise.all(files.map((f) => resizeImage(f)));
+      // Append new images to existing selection
+      setImages((prev) => [...prev, ...resized]);
+      setPreviews((prev) => [...prev, ...resized.map((f) => URL.createObjectURL(f))]);
+      // Clear the native input value so selecting the same file again will trigger change
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (err) {
+      console.error('Error resizing images', err);
     }
   };
 
-  // create a preview URL for the selected image
+  // cleanup object URLs when previews change/unmount
   useEffect(() => {
-    if (imageFile) {
-      const url = URL.createObjectURL(imageFile);
-      setImagePreview(url);
-      return () => URL.revokeObjectURL(url);
-    }
-    setImagePreview(null);
-  }, [imageFile]);
+    return () => {
+      previews.forEach((p) => {
+        try {
+          URL.revokeObjectURL(p);
+        } catch (err) {
+          /* ignore */
+        }
+      });
+    };
+  }, [previews]);
 
   const removeAttachment = (index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
@@ -395,7 +447,7 @@ export default function AnnouncementsPage() {
 
                 <div
                   className={`w-full rounded-lg px-3 py-3 transition-colors border ${
-                    imageFile
+                    previews.length > 0
                       ? "border-green-400 bg-green-50"
                       : "border-gray-300 bg-white"
                   }`}
@@ -403,29 +455,68 @@ export default function AnnouncementsPage() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleImageUpload}
-                    className="w-full bg-transparent focus:outline-none font-rubik"
+                    multiple
+                    className="hidden"
+                    onChange={handleImagesChange}
+                    ref={fileInputRef}
                   />
 
-                  {imageFile && (
-                    <div className="mt-3 flex items-center gap-3">
-                      {imagePreview && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={imagePreview}
-                          alt="preview"
-                          className="w-28 h-20 object-cover rounded-md border"
-                        />
-                      )}
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium text-primary3">
-                          {imageFile.name}
-                        </span>
-                        <span className="inline-block mt-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                          Image attached
-                        </span>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+                    className="block"
+                  >
+                    {previews.length > 0 ? (
+                      <div className="grid grid-cols-3 gap-2">
+                        {previews.map((p, i) => (
+                          <div key={i} className="relative">
+                            {/* small preview using native img for local object URLs */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={p}
+                              alt={`preview-${i}`}
+                              className="w-full h-32 object-cover rounded-lg border"
+                            />
+                            <button
+                              type="button"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                // revoke object URL to avoid memory leaks
+                                try { URL.revokeObjectURL(p); } catch { }
+                                setImages((prev) => prev.filter((_, idx) => idx !== i));
+                                setPreviews((prev) => prev.filter((_, idx) => idx !== i));
+                              }}
+                              aria-label={`Remove image ${i + 1}`}
+                              className="absolute top-1 right-1 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 border shadow-sm"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                        {/* Plus tile to allow adding more images */}
+                        <div
+                          className="flex items-center justify-center border-2 border-dashed border-primary1 text-primary1 rounded-lg h-32 cursor-pointer"
+                        >
+                          <span className="text-3xl font-bold">+</span>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition">
+                        <p className="text-gray-500">📷 Upload image(s)</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {images.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setPreviews([]); setImages([]); }}
+                      className="mt-2 text-red-500 text-sm hover:underline"
+                    >
+                      Remove all images
+                    </button>
                   )}
                 </div>
               </div>
