@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import announcementRoutes from '../src/routes/announcements.route';
 import eventRoutes from './routes/event.routes';
+import startAnnouncementScheduler from './utils/scheduler';
 
 // Global unhandled rejection handler to avoid process crash during development
 process.on('unhandledRejection', (reason, promise) => {
@@ -209,6 +210,15 @@ const server = app.listen(PORT, () => {
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
   console.log(`📍 API: http://localhost:${PORT}/api`);
   console.log(`📍 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Connected' : '⏳ Connecting...'}`);
+});
+
+// Start scheduler after successful DB connection
+mongoose.connection.once('open', () => {
+  try {
+    startAnnouncementScheduler();
+  } catch (err) {
+    console.error('❌ Failed to start announcement scheduler:', err);
+  }
 });
 
 // Graceful shutdown

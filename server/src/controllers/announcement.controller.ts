@@ -157,8 +157,9 @@ export const createAnnouncement = async (
             type,
             priority,
             targetAudience: parsedTargetAudience,
-            isPublished: isPublished === 'true' || isPublished === true,
+            // If publishDate is provided and is in the future, treat as draft (scheduled)
             publishDate: publishDate || Date.now(),
+            isPublished: (isPublished === 'true' || isPublished === true),
             expiryDate,
             time,
             location,
@@ -171,6 +172,12 @@ export const createAnnouncement = async (
             galleryImages,
             attachments: parsedAttachments,
         };
+
+        // If a publishDate exists and it's in the future, ensure announcement remains unpublished until scheduler runs
+        const now = new Date();
+        if (announcementData.publishDate && new Date(announcementData.publishDate) > now) {
+            announcementData.isPublished = false;
+        }
 
         // Enforce that published announcements must have at least one featured image
         const willBePublished = announcementData.isPublished === true;
@@ -367,6 +374,12 @@ export const updateAnnouncement = async (
         }
 
         // If the request is attempting to publish the announcement, ensure at least one image exists
+        // But if the incoming publishDate is in the future, treat as scheduling (do not publish now)
+        const incomingPublishDate = req.body.publishDate ? new Date(req.body.publishDate) : null;
+        if (incomingPublishDate && incomingPublishDate > new Date()) {
+            // ensure we don't publish immediately
+            req.body.isPublished = false;
+        }
         const requestWantsPublish = req.body.isPublished === 'true' || req.body.isPublished === true;
         const existingHasImage = (announcement.imageUrl && announcement.imageUrl.length > 0) || (announcement.galleryImages && announcement.galleryImages.length > 0);
         const incomingHasImage = (req.body.imageUrl && String(req.body.imageUrl).length > 0) || (req.body.galleryImages && String(req.body.galleryImages).length > 0);

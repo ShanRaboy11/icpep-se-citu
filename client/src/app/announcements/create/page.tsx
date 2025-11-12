@@ -148,7 +148,8 @@ export default function AnnouncementsPage() {
         content: formData.body,
         type: typeMap[activeTab] as any,
         targetAudience: audienceMap[formData.visibility] || ["all"],
-        isPublished: true,
+        // If scheduling for future, keep as draft (isPublished: false) and set publishDate
+        isPublished: showSchedule && scheduleDate ? false : true,
         publishDate:
           showSchedule && scheduleDate
             ? new Date(
