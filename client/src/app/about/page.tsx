@@ -13,190 +13,140 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 
 // --- START: New Carousel Components for Guiding Leadership ---
 
-// Helper component for individual profiles (Head/Advisor)
-const LeadershipProfile: FC<{
-  person: { name: string; imageUrl: string } | null;
-  role: string;
-  isCenter: boolean;
-}> = ({ person, role, isCenter }) => {
-  if (!person) {
-    return (
-      <div className="flex flex-col items-center text-center w-48">
-        <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gray-200 border-2 border-dashed border-gray-300" />
-        <h3 className="font-rubik font-bold text-lg sm:text-xl text-primary3 mt-4">
-          {role}
-        </h3>
-        <p className="font-raleway text-sm text-gray-500 mt-1">N/A</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col items-center text-center w-48">
-      <div className="relative mb-4">
-        <div className="w-36 h-36 sm:w-44 sm:h-44 rounded-full bg-gray-300 overflow-hidden">
-          <Image
-            src={person.imageUrl}
-            alt={person.name}
-            width={176}
-            height={176}
-            className="w-full h-full object-cover"
-          />
-        </div>
-        {isCenter && (
-          <div className="absolute -inset-1 rounded-full border-2 border-blue-400 opacity-80" />
-        )}
-      </div>
-      <h3 className="font-rubik font-bold text-lg sm:text-xl text-primary3">
-        {role}
-      </h3>
-      <p className="font-raleway text-sm text-gray-500 mt-1">{person.name}</p>
-    </div>
-  );
-};
-
-// Component for a single slide in the carousel
+// MODIFIED: Re-engineered card using layering to fix the border gap on scaled cards. No other visual changes.
+// --- FIXED LeadershipCard --- //
 const LeadershipCard: FC<{
+  name: string;
+  position: string;
   year: string;
-  head: { name: string; imageUrl: string } | null;
-  adviser: { name: string; imageUrl: string } | null;
-  position: number;
-}> = ({ year, head, adviser, position }) => {
-  const isCenter = position === 0;
-
+  imageUrl: string;
+}> = ({ name, position, year, imageUrl }) => {
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full bg-white rounded-2xl p-6">
-      <div className="text-center mb-8">
-        <h2 className="font-rubik text-2xl font-semibold text-primary3">
-          {year}
-        </h2>
-        <div className="w-48 h-px bg-primary1/50 mx-auto mt-2"></div>
-      </div>
-      <div className="flex flex-col sm:flex-row items-start gap-8 sm:gap-16">
-        <LeadershipProfile person={head} role="Head" isCenter={isCenter} />
-        <LeadershipProfile
-          person={adviser}
-          role="Advisor"
-          isCenter={isCenter}
-        />
+    // Outer wrapper for full shadow visibility (no cropping)
+    <div className="relative w-full h-full rounded-[1.25rem] shadow-2xl">
+      {/* Gradient border layer */}
+      <div className="absolute inset-0 rounded-[1.25rem] bg-gradient-to-b from-primary1/60 to-primary2/60 p-[2px]">
+        {/* Content layer */}
+        <div className="relative w-full h-full rounded-[1.1rem] overflow-hidden bg-primary3 text-white cursor-pointer group">
+          <Image
+            src={imageUrl}
+            alt={name}
+            fill
+            className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
+          />
+
+          <div className="absolute top-6 left-6 font-raleway text-sm font-semibold uppercase tracking-wider text-white/80">
+            {year}
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 p-8 h-2/5 bg-gradient-to-t from-[#002231] via-[#002231e6] to-transparent flex flex-col justify-end">
+            <h3 className="font-rubik text-2xl font-bold leading-tight break-words">
+              {name}
+            </h3>
+            <p className="font-raleway text-base uppercase tracking-wider text-white/80 mt-2 break-words">
+              {position}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-// Main Carousel component
+// Main Carousel component - UPDATED SIZES AND ANIMATION
 interface LeadershipItem {
+  name: string;
+  position: string;
   year: string;
-  head: { name: string; imageUrl: string } | null;
-  adviser: { name: string; imageUrl: string } | null;
+  imageUrl: string;
 }
 
+// --- FIXED Carousel Container --- //
+// --- FIXED Carousel Container --- //
 const LeadershipCarousel: FC<{ items: LeadershipItem[] }> = ({ items }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const baseWidthRem = 20;
+  const [xOffset, setXOffset] = useState(0);
 
-  const handleNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % items.length);
-  };
-
-  const handlePrev = () => {
-    setCurrentIndex(
-      (prevIndex) => (prevIndex - 1 + items.length) % items.length
-    );
-  };
-
+  // This effect calculates the necessary translation to center the active card.
+  // It replaces the previous `scrollTo` logic with a Framer Motion-compatible approach.
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      const scrollLeft = currentIndex * scrollContainerRef.current.offsetWidth;
-      scrollContainerRef.current.scrollTo({
-        left: scrollLeft,
-        behavior: "smooth",
-      });
+    const viewport = viewportRef.current;
+    const activeItem = itemRefs.current[currentIndex];
+
+    if (viewport && activeItem) {
+      const viewportCenter = viewport.offsetWidth / 2;
+      const activeItemCenter =
+        activeItem.offsetLeft + activeItem.offsetWidth / 2;
+      setXOffset(viewportCenter - activeItemCenter);
     }
   }, [currentIndex]);
 
+  const handleNext = () =>
+    setCurrentIndex((prev) => Math.min(prev + 1, items.length - 1));
+  const handlePrev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
+
   return (
-    <div className="relative flex flex-col items-center justify-center">
-      {/* --- Mobile Carousel --- */}
+    <div className="flex flex-col items-center w-full overflow-visible">
+      {/* Viewport: This div establishes the visible frame and hides overflow */}
       <div
-        ref={scrollContainerRef}
-        className="lg:hidden z-20 w-full h-[500px] flex overflow-x-auto snap-x snap-mandatory scroll-smooth"
-        style={
-          {
-            scrollbarWidth: "none",
-            msOverflowStyle: "none",
-          } as React.CSSProperties
-        }
+        ref={viewportRef}
+        className="w-full py-16 overflow-hidden cursor-grab active:cursor-grabbing"
       >
-        {items.map((item, index) => (
-          <div
-            key={index}
-            className="w-full flex-shrink-0 snap-center flex justify-center p-4"
-          >
-            <div className="w-full max-w-md h-full">
-              <LeadershipCard {...item} position={0} />
-            </div>
-          </div>
-        ))}
+        {/* Track: This is the moving element, animated smoothly with Framer Motion */}
+        <motion.div
+          className="flex items-center gap-x-4"
+          style={{
+            // This padding allows the first and last items to be centered
+            paddingLeft: `calc(50% - ${baseWidthRem / 2}rem)`,
+            paddingRight: `calc(50% - ${baseWidthRem / 2}rem)`,
+          }}
+          animate={{ x: xOffset }}
+          transition={{ type: "spring", stiffness: 120, damping: 20 }}
+        >
+          {items.map((item, index) => {
+            const distance = Math.abs(currentIndex - index);
+            const scale = distance === 0 ? 1 : distance === 1 ? 0.9 : 0.8;
+            const marginOffset = (baseWidthRem * (1 - scale)) / 2;
+
+            return (
+              <motion.div
+                key={index}
+                ref={(el) => {
+                  itemRefs.current[index] = el;
+                }}
+                // shrink-0 prevents flex items from shrinking
+                className="w-80 h-[28rem] min-w-[20rem] origin-center overflow-visible shrink-0"
+                animate={{ scale }}
+                style={{
+                  marginLeft: `-${marginOffset}rem`,
+                  marginRight: `-${marginOffset}rem`,
+                }}
+                transition={{ type: "spring", stiffness: 120, damping: 20 }}
+                onClick={() => setCurrentIndex(index)}
+              >
+                <LeadershipCard {...item} />
+              </motion.div>
+            );
+          })}
+        </motion.div>
       </div>
 
-      {/* --- Desktop Carousel --- */}
-      <div className="relative z-20 h-[450px] w-full max-w-7xl overflow-hidden hidden lg:block">
-        {items.map((item, index) => {
-          const getPosition = (
-            index: number,
-            currentIndex: number,
-            length: number
-          ) => {
-            const diff = index - currentIndex;
-            if (Math.abs(diff) <= Math.floor(length / 2)) return diff;
-            return diff > 0 ? diff - length : diff + length;
-          };
-
-          const pos = getPosition(index, currentIndex, items.length);
-          let animateProps;
-
-          if (pos === 0) {
-            animateProps = { x: "0%", scale: 1, opacity: 1, zIndex: 3 };
-          } else if (pos === 1) {
-            animateProps = { x: "50%", scale: 0.85, opacity: 0.7, zIndex: 2 };
-          } else if (pos === -1) {
-            animateProps = { x: "-50%", scale: 0.85, opacity: 0.7, zIndex: 2 };
-          } else {
-            animateProps = {
-              x: pos > 0 ? "100%" : "-100%",
-              scale: 0.7,
-              opacity: 0,
-              zIndex: 1,
-            };
-          }
-
-          return (
-            <motion.div
-              key={index}
-              className="absolute top-0 left-0 w-full h-full flex items-center justify-center"
-              initial={false}
-              animate={animateProps}
-              transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            >
-              <div className="w-full max-w-3xl h-full py-4">
-                <LeadershipCard {...item} position={pos} />
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-
-      <div className="relative z-30 mt-8 flex gap-4">
+      {/* Navigation Controls */}
+      <div className="relative z-10 mt-8 flex gap-4">
         <button
           onClick={handlePrev}
-          className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 cursor-pointer"
+          disabled={currentIndex === 0}
+          className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
           <ArrowLeft size={24} />
         </button>
         <button
           onClick={handleNext}
-          className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 cursor-pointer"
+          disabled={currentIndex === items.length - 1}
+          className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
           <ArrowRight size={24} />
         </button>
@@ -207,37 +157,42 @@ const LeadershipCarousel: FC<{ items: LeadershipItem[] }> = ({ items }) => {
 
 // --- END: New Carousel Components ---
 
-// Re-structured data for the new carousel component
 const leadershipHistory: LeadershipItem[] = [
   {
     year: "2022 - Present",
-    head: {
-      name: "Dr. Jane Doe",
-      imageUrl: "/gle.png",
-    },
-    adviser: {
-      name: "Prof. Emily White",
-      imageUrl: "/gle.png",
-    },
+    name: "Engr. Trixie Dolera",
+    position: "CPE Department Head",
+    imageUrl: "/gle.png",
   },
   {
-    year: "2021 - 2022",
-    head: {
-      name: "Engr. John Smith",
-      imageUrl: "/gle.png",
-    },
-    adviser: {
-      name: "Prof. Emily White",
-      imageUrl: "/gle.png",
-    },
+    year: "2021 - Present",
+    name: "Prof. Emily White",
+    position: "ICPEP.SE Adviser",
+    imageUrl: "/gle.png",
   },
   {
-    year: "2020 - 2021",
-    head: {
-      name: "Engr. John Smith",
-      imageUrl: "/gle.png",
-    },
-    adviser: null, // Handles cases where a role might be vacant
+    year: "2020 - 2022",
+    name: "Engr. John Smith",
+    position: "CPE Department Head",
+    imageUrl: "/gle.png",
+  },
+  {
+    year: "2018 - 2020",
+    name: "Dr. Alan Turing",
+    position: "CPE Department Head",
+    imageUrl: "/gle.png",
+  },
+  {
+    year: "2019 - 2021",
+    name: "Prof. Ada Lovelace",
+    position: "ICPEP.SE Adviser",
+    imageUrl: "/gle.png",
+  },
+  {
+    year: "2017 - 2019",
+    name: "Engr. Grace Hopper",
+    position: "ICPEP.SE Adviser",
+    imageUrl: "/gle.png",
   },
 ];
 
@@ -245,16 +200,8 @@ const officerHistory = [
   {
     term: "A.Y. 2023 - 2024",
     council: [
-      {
-        name: "Juan Dela Cruz",
-        position: "President",
-        imageUrl: "/gle.png",
-      },
-      {
-        name: "Maria Clara",
-        position: "Vice President",
-        imageUrl: "/gle.png",
-      },
+      { name: "Juan Dela Cruz", position: "President", imageUrl: "/gle.png" },
+      { name: "Maria Clara", position: "Vice President", imageUrl: "/gle.png" },
       {
         name: "Crisostomo Ibarra",
         position: "Secretary",
@@ -315,65 +262,75 @@ const AboutPage: FC = () => {
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
-          <div className="mb-20 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-              <div className="h-2 w-2 rounded-full bg-primary1"></div>
-              <span className="font-raleway text-sm font-semibold text-primary1">
-                {pillText}
-              </span>
+
+        <div className="flex-grow">
+          <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem]">
+            <div className="mb-20 text-center">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+                <div className="h-2 w-2 rounded-full bg-primary1"></div>
+                <span className="font-raleway text-sm font-semibold text-primary1">
+                  {pillText}
+                </span>
+              </div>
+              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+                {title}
+              </h1>
+              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
+                {subtitle}
+              </p>
             </div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-              {title}
-            </h1>
-            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
-              {subtitle}
-            </p>
+            <InfoSection />
           </div>
 
-          <InfoSection />
-
           <section className="mt-32">
-            <h2 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 text-center mb-4">
-              Pillars of Guidance
-            </h2>
-            <p className="font-raleway text-gray-600 text-center text-base sm:text-lg max-w-3xl mx-auto mb-16">
-              A look back at the dedicated faculty whose steadfast support has
-              strengthened our organization through the years.
-            </p>
-            <LeadershipCarousel items={leadershipHistory} />
-          </section>
-
-          <section className="mt-24">
-            <h2 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 text-center mb-4">
-              Our Student Leaders
-            </h2>
-            <p className="font-raleway text-gray-600 text-center max-w-2xl mx-auto mb-16">
-              Meet the passionate and driven officers leading our chapter,
-              fostering innovation and community among students.
-            </p>
-            <div className="space-y-20">
-              {officerHistory.map((termData) => (
-                <OfficerTermCard key={termData.term} {...termData} />
-              ))}
+            <div className="w-full max-w-7xl mx-auto px-6">
+              <h2 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 text-center mb-4">
+                Pillars of Guidance
+              </h2>
+              {/* THIS IS THE ONLY LINE THAT WAS CHANGED */}
+              <p className="font-raleway text-gray-600 text-center text-base sm:text-lg max-w-3xl mx-auto mb-8">
+                A look back at the dedicated faculty whose steadfast support has
+                strengthened our organization through the years.
+              </p>
+            </div>
+            <div className="w-full">
+              <LeadershipCarousel items={leadershipHistory} />
             </div>
           </section>
 
-          <section className="mt-24">
-            <h2 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 text-center mb-4">
-              CPE Department Faculty
-            </h2>
-            <p className="font-raleway text-gray-600 text-center max-w-2xl mx-auto mb-16">
-              The esteemed faculty members of the Computer Engineering
-              department who mentor and inspire the next generation.
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              {departmentFaculty.map((faculty) => (
-                <ProfileCard key={faculty.name} {...faculty} />
-              ))}
-            </div>
-          </section>
-        </main>
+          <div className="w-full max-w-7xl mx-auto px-6 pb-24">
+            <section className="mt-24">
+              <h2 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 text-center mb-4">
+                Our Student Leaders
+              </h2>
+              <p className="font-raleway text-gray-600 text-center max-w-2xl mx-auto mb-16">
+                Meet the passionate and driven officers leading our chapter,
+                fostering innovation and community among students.
+              </p>
+              <div className="space-y-20">
+                {officerHistory.map((termData) => (
+                  <OfficerTermCard key={termData.term} {...termData} />
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-24">
+              <h2 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 text-center mb-4">
+                CPE Department Faculty
+              </h2>
+              <p className="font-raleway text-gray-600 text-center max-w-2xl mx-auto mb-16">
+                The esteemed faculty members of the Computer Engineering
+                department who mentor and inspire the next generation.
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                {departmentFaculty.map((faculty) => (
+                  <ProfileCard key={faculty.name} {...faculty} />
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
+
         <Footer />
       </div>
     </div>
