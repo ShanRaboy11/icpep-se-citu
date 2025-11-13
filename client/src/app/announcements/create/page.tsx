@@ -8,7 +8,7 @@ import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import { ChevronDown } from "lucide-react";
-import announcementService from "../../services/announcement";
+import announcementService, { AnnouncementData } from "../../services/announcement";
 
 type FormErrors = {
   date: boolean;
@@ -40,7 +40,8 @@ export default function AnnouncementsPage() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [newLink, setNewLink] = useState("");
-  const [activeTab, setActiveTab] = useState<string>("General");
+  type ActiveTab = "General" | "News" | "Meeting" | "Achievement";
+  const [activeTab, setActiveTab] = useState<ActiveTab>("General");
   const [showOrganizerInput, setShowOrganizerInput] = useState(false);
   const [organizer, setOrganizer] = useState("");
   const [showSchedule, setShowSchedule] = useState(false);
@@ -123,9 +124,9 @@ export default function AnnouncementsPage() {
 
     try {
       // Map activeTab to backend type
-      const typeMap: Record<string, string> = {
+      const typeMap: Record<ActiveTab, AnnouncementData['type']> = {
         General: "General",
-        News: "News",
+        News: "General",
         Meeting: "Meeting",
         Achievement: "Achievement",
       };
@@ -150,7 +151,7 @@ export default function AnnouncementsPage() {
         title: formData.title,
         description: formData.summary,
         content: formData.body,
-        type: typeMap[activeTab] as any,
+  type: typeMap[activeTab],
         targetAudience: audienceMap[formData.visibility] || ["all"],
         // If scheduling for future, keep as draft (isPublished: false) and set publishDate
         isPublished: showSchedule && scheduleDate ? false : true,
@@ -202,9 +203,9 @@ export default function AnnouncementsPage() {
     setIsSubmitting(true);
 
     try {
-      const typeMap: Record<string, string> = {
+      const typeMap: Record<ActiveTab, AnnouncementData['type']> = {
         General: "General",
-        News: "News",
+        News: "General",
         Meeting: "Meeting",
         Achievement: "Achievement",
       };
@@ -227,7 +228,7 @@ export default function AnnouncementsPage() {
         title: formData.title || "Untitled Draft",
         description: formData.summary || "No description",
         content: formData.body || "No content",
-        type: typeMap[activeTab] as any,
+  type: typeMap[activeTab],
         targetAudience: formData.visibility
           ? audienceMap[formData.visibility]
           : ["all"],
@@ -420,7 +421,7 @@ export default function AnnouncementsPage() {
     setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const tabs = ["General", "News", "Meeting", "Achievement"];
+  const tabs: ActiveTab[] = ["General", "News", "Meeting", "Achievement"];
 
   useEffect(() => {
     if (Object.values(errors).every((err) => err === false)) {

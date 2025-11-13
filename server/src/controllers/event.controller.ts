@@ -55,6 +55,7 @@ export const createEvent = async (
             registrationRequired,
             registrationStart,
             registrationEnd,
+            mode,
         } = req.body;
 
         // Get author from authenticated user
@@ -194,6 +195,7 @@ export const createEvent = async (
             expiryDate,
             eventDate: new Date(eventDate),
             time,
+            mode: mode || 'Onsite',
             location,
             organizer,
             contact,

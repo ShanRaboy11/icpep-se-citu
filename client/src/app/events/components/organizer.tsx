@@ -7,7 +7,7 @@ interface Props {
   organizer?: {
     name?: string;
     avatarImageUrl?: string;
-    [key: string]: any; // Allow for additional properties
+    [key: string]: unknown; // Allow for additional properties
   } | string; // organizer can be a string or object
 }
 

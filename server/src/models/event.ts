@@ -39,6 +39,8 @@ export interface IEvent extends Document {
     coverImage?: string | null;
     galleryImages?: string[];
     views?: number;
+    // Mode: Online or Onsite
+    mode?: 'Online' | 'Onsite';
     // Virtuals
     isExpired: boolean;
     formattedDate: string;
@@ -96,6 +98,12 @@ const eventSchema = new Schema<IEvent>({
     time: {
         type: String,
         trim: true,
+    },
+    // Online / Onsite mode
+    mode: {
+        type: String,
+        enum: ['Online', 'Onsite'],
+        default: 'Onsite',
     },
     location: {
         type: String,

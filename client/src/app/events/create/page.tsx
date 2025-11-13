@@ -52,6 +52,7 @@ export default function EventsPage() {
   const [previews, setPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const [mode, setMode] = useState<'Online' | 'Onsite'>('Onsite');
   const [showTagInput, setShowTagInput] = useState(false);
   const [newTag, setNewTag] = useState("");
   const [showAdmissionInput, setShowAdmissionInput] = useState(false);
@@ -106,6 +107,7 @@ export default function EventsPage() {
         organizer: organizer || undefined,
         contact: formData.contact || undefined,
         rsvpLink: formData.rsvp || undefined,
+        mode: mode,
         tags: tags.length > 0 ? tags : undefined,
         admissions: admissions.length > 0 ? admissions : undefined,
         registrationRequired,
@@ -169,6 +171,7 @@ export default function EventsPage() {
         organizer: organizer || undefined,
         contact: formData.contact || undefined,
         rsvpLink: formData.rsvp || undefined,
+        mode: mode,
         tags: tags.length > 0 ? tags : undefined,
         admissions: admissions.length > 0 ? admissions : undefined,
         registrationRequired,
@@ -230,6 +233,7 @@ export default function EventsPage() {
     setRegistrationEnd("");
     setDetails([{ title: "", body: "" }]);
     setShowAdditionalInfo(false);
+    setMode('Onsite');
   };
 
   const handleInputChange = (
@@ -649,6 +653,29 @@ export default function EventsPage() {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Mode */}
+              <div>
+                <label className="text-md font-medium text-primary3 font-raleway mb-2 block">
+                  Mode
+                </label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setMode('Onsite')}
+                    className={`px-4 py-2 rounded-full border font-rubik ${mode === 'Onsite' ? 'bg-primary2 text-white border-primary2' : 'border-gray-300 text-gray-600'}`}
+                  >
+                    Onsite
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode('Online')}
+                    className={`px-4 py-2 rounded-full border font-rubik ${mode === 'Online' ? 'bg-primary2 text-white border-primary2' : 'border-gray-300 text-gray-600'}`}
+                  >
+                    Online
+                  </button>
                 </div>
               </div>
 

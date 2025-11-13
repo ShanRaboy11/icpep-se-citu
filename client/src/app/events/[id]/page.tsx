@@ -20,6 +20,27 @@ type ProcessedEvent = Event & {
   status: "Upcoming" | "Ongoing" | "Ended";
 };
 
+// Raw server event shape (partial) — narrow fields we access from API
+interface RawEvent {
+  _id?: string;
+  id?: string;
+  title?: string;
+  eventDate?: string;
+  date?: string;
+  expiryDate?: string;
+  endDate?: string;
+  mode?: string;
+  location?: string;
+  organizer?: string | { name?: string; avatarImageUrl?: string };
+  tags?: string[];
+  bannerImageUrl?: string;
+  coverImage?: string;
+  image?: string;
+  description?: string;
+  details?: unknown[];
+  galleryImageUrls?: string[];
+}
+
 export default function EventDetailPage({
   params,
 }: {
@@ -37,48 +58,57 @@ export default function EventDetailPage({
       try {
         const res = await eventService.getEventById(params.id);
         if (res && res.success && res.data) {
-          const e = res.data as any;
+          const e = res.data as RawEvent;
 
-          const toImageUrl = (url: any) => {
-            if (!url) return "/placeholder.svg";
-            if (typeof url !== "string") return "/placeholder.svg";
+          const toImageUrl = (url: unknown) => {
+            if (!url || typeof url !== "string") return "/placeholder.svg";
             if (url.startsWith("http")) return url;
             const backendHost = (process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
             if (url.startsWith("/")) return `${backendHost}${url}`;
             return url;
           };
 
-          const details = Array.isArray(e.details)
-            ? e.details
-            : e.description
-            ? [
-                {
-                  title: "Overview",
-                  items: [String(e.description)],
-                },
-              ]
-            : [];
+          // Normalize details into the expected shape: { title: string; items: string[] }[]
+          const detailsArr: { title: string; items: string[] }[] = [];
+          if (Array.isArray(e.details)) {
+            for (const d of e.details) {
+              if (d && typeof d === 'object') {
+                const obj = d as Record<string, unknown>;
+                const title = typeof obj.title === 'string' ? obj.title : String(obj.title ?? '');
+                const itemsRaw = obj.items;
+                const items: string[] = Array.isArray(itemsRaw) ? itemsRaw.map((it) => String(it)) : [];
+                if (title || items.length > 0) detailsArr.push({ title, items });
+              }
+            }
+          } else if (e.description) {
+            detailsArr.push({ title: 'Overview', items: [String(e.description)] });
+          }
 
-          const organizer =
-            typeof e.organizer === "string"
-              ? { name: e.organizer, avatarImageUrl: "/icpep logo.png" }
-              : e.organizer || { name: "", avatarImageUrl: "/icpep logo.png" };
+          // Normalize organizer to have name and avatarImageUrl
+          const organizer = typeof e.organizer === 'string'
+            ? { name: e.organizer, avatarImageUrl: '/icpep logo.png' }
+            : (e.organizer && typeof e.organizer === 'object')
+              ? {
+                  name: (e.organizer as Record<string, unknown>).name ? String((e.organizer as Record<string, unknown>).name) : '',
+                  avatarImageUrl: (e.organizer as Record<string, unknown>).avatarImageUrl ? String((e.organizer as Record<string, unknown>).avatarImageUrl) : '/icpep logo.png',
+                }
+              : { name: '', avatarImageUrl: '/icpep logo.png' };
 
-          const mode = e.mode === "Online" || e.mode === "online" ? "Online" : "Onsite";
+          const mode = typeof e.mode === 'string' && e.mode.toLowerCase() === 'online' ? 'Online' : 'Onsite';
 
           const transformed: Event = {
-            id: e._id || e.id,
-            title: e.title || "",
+            id: e._id || e.id || '',
+            title: e.title || '',
             date: e.eventDate || e.date || new Date().toISOString(),
             endDate: e.expiryDate || e.endDate || undefined,
             mode,
-            location: e.location || "TBA",
-            organizer,
-            tags: e.tags || [],
+            location: e.location || 'TBA',
+            organizer: { name: organizer.name || '', avatarImageUrl: organizer.avatarImageUrl || '/icpep logo.png' },
+            tags: Array.isArray(e.tags) ? e.tags : [],
             bannerImageUrl: toImageUrl(e.bannerImageUrl || e.coverImage || e.image),
-            description: e.description || "",
-            details,
-            galleryImageUrls: e.galleryImageUrls || [],
+            description: e.description || '',
+            details: detailsArr,
+            galleryImageUrls: Array.isArray(e.galleryImageUrls) ? e.galleryImageUrls : [],
           };
 
           setRawEvent(transformed);

@@ -11,24 +11,28 @@ import Footer from "../../components/footer";
 import { ArrowLeft } from "lucide-react";
 import AnnouncementMedia from "../components/media";
 import announcementService from "../../services/announcement";
+import { Announcement as UtilAnnouncement } from "../utils/announcements";
 
-// Interface matching the database model
-interface Announcement {
+// Local/raw announcement type coming from the API
+interface RawAnnouncement {
   _id: string;
+  id?: string;
   title: string;
   description: string;
-  content: string;
+  content?: string;
   type: string;
   imageUrl?: string | null;
   galleryImages?: string[];
-  publishDate: string;
+  galleryImageUrls?: string[];
+  publishDate?: string;
+  date?: string;
   author?: {
     firstName: string;
     lastName: string;
     studentNumber: string;
   };
   views?: number;
-  isPublished: boolean;
+  isPublished?: boolean;
   time?: string;
   location?: string;
   organizer?: string;
@@ -93,7 +97,7 @@ export default function AnnouncementDetailPage({
   params: { id: string };
 }) {
   const [showFullAttendance, setShowFullAttendance] = useState(false);
-  const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+  const [announcement, setAnnouncement] = useState<RawAnnouncement | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -108,7 +112,7 @@ export default function AnnouncementDetailPage({
         const response = await announcementService.getAnnouncementById(params.id);
 
         if (response.success && response.data) {
-          setAnnouncement(response.data as Announcement);
+          setAnnouncement(response.data as RawAnnouncement);
         } else {
           setError("Announcement not found");
         }
@@ -189,6 +193,36 @@ export default function AnnouncementDetailPage({
   const galleryImageUrls: string[] = announcement.galleryImages ?? [];
   const isMeeting = announcement.type.toLowerCase() === "meeting";
 
+  // Map RawAnnouncement to the UI Announcement shape expected by shared components
+  let utilAnnouncement: UtilAnnouncement | undefined = undefined;
+  if (announcement) {
+    const typeKey = (announcement.type || '').toLowerCase();
+    const mappedType: UtilAnnouncement['type'] =
+      typeKey === 'meeting' ? 'Meeting' : typeKey === 'achievement' ? 'Achievement' : 'News';
+
+    const organizerStr = typeof announcement.organizer === 'string'
+      ? announcement.organizer
+      : (announcement.organizer && typeof announcement.organizer === 'object')
+        ? String((announcement.organizer as Record<string, unknown>).name ?? '')
+        : '';
+
+    utilAnnouncement = {
+      id: announcement._id || announcement.id || '',
+      title: announcement.title,
+      description: announcement.description,
+      date: announcement.publishDate || announcement.date || new Date().toISOString(),
+      type: mappedType,
+      imageUrl: imageUrl,
+      galleryImageUrls: Array.isArray(announcement.galleryImages) ? announcement.galleryImages : [],
+      time: announcement.time,
+      location: announcement.location,
+  organizer: organizerStr,
+      attendees: announcement.attendees,
+      agenda: announcement.agenda,
+      awardees: announcement.awardees,
+    };
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-white relative overflow-hidden font-sans">
       <div className="absolute top-[-10rem] left-[-15rem] w-[35rem] h-[35rem] bg-primary1/20 rounded-full filter blur-3xl opacity-90"></div>
@@ -225,7 +259,7 @@ export default function AnnouncementDetailPage({
             </div>
 
             <div className="lg:col-span-1 space-y-6">
-              <DetailsSidebar announcement={announcement as any} />
+              <DetailsSidebar announcement={utilAnnouncement} />
 
               {isMeeting && announcement.attendees && (
                 <MeetingAttendanceCard
@@ -239,7 +273,7 @@ export default function AnnouncementDetailPage({
         <AttendanceModal
           isOpen={showFullAttendance}
           onClose={() => setShowFullAttendance(false)}
-          announcement={announcement as any}
+          announcement={utilAnnouncement ?? null}
         />
         <Footer />
       </div>

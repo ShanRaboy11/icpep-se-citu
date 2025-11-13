@@ -93,6 +93,7 @@ export interface EventData {
     location?: string;
     organizer?: string;
     contact?: string;
+    mode?: 'Online' | 'Onsite';
     rsvpLink?: string;
     admissions?: Array<{
         category: string;
@@ -157,6 +158,7 @@ class EventService {
             if (data.location) formData.append('location', data.location);
             if (data.organizer) formData.append('organizer', data.organizer);
             if (data.contact) formData.append('contact', data.contact);
+            if (data.mode) formData.append('mode', data.mode);
             if (data.rsvpLink) formData.append('rsvpLink', data.rsvpLink);
             if (data.registrationRequired !== undefined) {
                 formData.append('registrationRequired', String(data.registrationRequired));
