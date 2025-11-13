@@ -50,7 +50,7 @@ export default function EventCard({ event }: Props) {
           </p>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {event.tags.slice(0, 3).map((tag) => (
+            {(event.tags ?? []).slice(0, 3).map((tag) => (
               <span
                 key={tag}
                 className="rounded-full bg-buttonbg1 px-2 py-1 text-xs font-raleway font-semibold text-primary3"
