@@ -111,7 +111,10 @@ export default function AnnouncementsPage() {
       setErrors((prev) => ({ ...prev, image: true }));
       setShowGlobalError(true);
       // scroll to top of form or focus the image input
-      fileInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      fileInputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
       return;
     }
 
@@ -122,7 +125,7 @@ export default function AnnouncementsPage() {
       // Map activeTab to backend type
       const typeMap: Record<string, string> = {
         General: "General",
-        News: "General",
+        News: "News",
         Meeting: "Meeting",
         Achievement: "Achievement",
       };
@@ -167,7 +170,9 @@ export default function AnnouncementsPage() {
             ? awardees.filter((a) => a.name.trim())
             : undefined,
         attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
-        agenda: activeTab === "Meeting" ? agenda.filter(a => a.trim()) : undefined,
+        agenda:
+          activeTab === "Meeting" ? agenda.filter((a) => a.trim()) : undefined,
+        date: formData.date || undefined,
       };
 
       const response = await announcementService.createAnnouncement(
@@ -199,7 +204,7 @@ export default function AnnouncementsPage() {
     try {
       const typeMap: Record<string, string> = {
         General: "General",
-        News: "General",
+        News: "News",
         Meeting: "Meeting",
         Achievement: "Achievement",
       };
@@ -235,7 +240,9 @@ export default function AnnouncementsPage() {
             ? awardees.filter((a) => a.name.trim())
             : undefined,
         attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
-        agenda: activeTab === "Meeting" ? agenda.filter(a => a.trim()) : undefined,
+        agenda:
+          activeTab === "Meeting" ? agenda.filter((a) => a.trim()) : undefined,
+        date: formData.date || undefined,
       };
 
       const response = await announcementService.createAnnouncement(
@@ -271,9 +278,9 @@ export default function AnnouncementsPage() {
     setAttachments([]);
     setOrganizer("");
     setAwardees([{ name: "", program: "", year: "", award: "" }]);
-  setAgenda([""]);
-  setImages([]);
-  setPreviews([]);
+    setAgenda([""]);
+    setImages([]);
+    setPreviews([]);
     setShowSchedule(false);
     setScheduleDate("");
     setScheduleTime("");
@@ -349,12 +356,12 @@ export default function AnnouncementsPage() {
       };
 
       img.onload = () => {
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         const scaleSize = maxWidth / img.width;
         canvas.width = maxWidth;
         canvas.height = img.height * scaleSize;
 
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
         if (!ctx) return resolve(file);
 
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -385,11 +392,14 @@ export default function AnnouncementsPage() {
       const resized = await Promise.all(files.map((f) => resizeImage(f)));
       // Append new images to existing selection
       setImages((prev) => [...prev, ...resized]);
-      setPreviews((prev) => [...prev, ...resized.map((f) => URL.createObjectURL(f))]);
+      setPreviews((prev) => [
+        ...prev,
+        ...resized.map((f) => URL.createObjectURL(f)),
+      ]);
       // Clear the native input value so selecting the same file again will trigger change
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
-      console.error('Error resizing images', err);
+      console.error("Error resizing images", err);
     }
   };
 
@@ -436,7 +446,6 @@ export default function AnnouncementsPage() {
           </aside>
 
           <div className="flex-1">
-
             <form className="border border-primary1 rounded-2xl p-6 space-y-4 bg-white mb-10">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl sm:text-3xl font-semibold text-primary1 font-rubik">
@@ -451,7 +460,6 @@ export default function AnnouncementsPage() {
               <div>
                 <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
                   Featured Image
-                  <span className="ml-2 text-xs text-gray-500">(required to publish)</span>
                 </label>
 
                 <div
@@ -459,10 +467,10 @@ export default function AnnouncementsPage() {
                     errors.image
                       ? "border-red-500 bg-red-50"
                       : previews.length > 0
-                        ? "border-green-400 bg-green-50"
-                        : "border-gray-300 bg-white"
+                      ? "border-green-400 bg-green-50"
+                      : "border-gray-300 bg-white"
                   }`}
-                  aria-invalid={errors.image ? 'true' : 'false'}
+                  aria-invalid={errors.image ? "true" : "false"}
                 >
                   <input
                     type="file"
@@ -477,7 +485,10 @@ export default function AnnouncementsPage() {
                     role="button"
                     tabIndex={0}
                     onClick={() => fileInputRef.current?.click()}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ")
+                        fileInputRef.current?.click();
+                    }}
                     className="block"
                   >
                     {previews.length > 0 ? (
@@ -496,9 +507,15 @@ export default function AnnouncementsPage() {
                               onClick={(ev) => {
                                 ev.stopPropagation();
                                 // revoke object URL to avoid memory leaks
-                                try { URL.revokeObjectURL(p); } catch { }
-                                setImages((prev) => prev.filter((_, idx) => idx !== i));
-                                setPreviews((prev) => prev.filter((_, idx) => idx !== i));
+                                try {
+                                  URL.revokeObjectURL(p);
+                                } catch {}
+                                setImages((prev) =>
+                                  prev.filter((_, idx) => idx !== i)
+                                );
+                                setPreviews((prev) =>
+                                  prev.filter((_, idx) => idx !== i)
+                                );
                               }}
                               aria-label={`Remove image ${i + 1}`}
                               className="absolute top-1 right-1 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 border shadow-sm"
@@ -508,33 +525,37 @@ export default function AnnouncementsPage() {
                           </div>
                         ))}
                         {/* Plus tile to allow adding more images */}
-                        <div
-                          className="flex items-center justify-center border-2 border-dashed border-primary1 text-primary1 rounded-lg h-32 cursor-pointer"
-                        >
+                        <div className="flex items-center justify-center border-2 border-dashed border-primary1 text-primary1 rounded-lg h-32 cursor-pointer">
                           <span className="text-3xl font-bold">+</span>
                         </div>
                       </div>
                     ) : (
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition">
-                              <p className="text-gray-500">Upload image(s)</p>
-                            </div>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition">
+                        <p className="text-gray-500">Upload image(s)</p>
+                      </div>
                     )}
                   </div>
 
                   {images.length > 0 && (
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); setPreviews([]); setImages([]); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviews([]);
+                        setImages([]);
+                      }}
                       className="mt-2 text-red-500 text-sm hover:underline"
                     >
                       Remove all images
                     </button>
                   )}
-                      </div>
+                </div>
 
-                      {errors.image && (
-                        <p className="text-sm text-red-600 mt-2">A featured image is required to publish.</p>
-                      )}
+                {errors.image && (
+                  <p className="text-sm text-red-600 mt-2">
+                    A featured image is required to publish.
+                  </p>
+                )}
               </div>
 
               <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
@@ -575,7 +596,7 @@ export default function AnnouncementsPage() {
                     name="date"
                     value={formData.date}
                     onChange={handleInputChange}
-                    className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
+                    className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
   border transition-all
   ${
     errors.date
@@ -597,7 +618,7 @@ export default function AnnouncementsPage() {
                     name="time"
                     value={formData.time}
                     onChange={handleInputChange}
-                    className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
+                    className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
   border transition-all
   ${
     errors.time
@@ -619,7 +640,7 @@ export default function AnnouncementsPage() {
                     value={formData.location}
                     onChange={handleInputChange}
                     placeholder="Where is it happening?"
-                    className="w-full border border-gray-300 text-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik"
+                    className="w-full border border-gray-300 text-gray-500 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik"
                   />
                 </div>
                 <div className="flex flex-col justify-end">
@@ -642,7 +663,7 @@ export default function AnnouncementsPage() {
                   placeholder="Organizer name or group"
                   value={organizer}
                   onChange={(e) => setOrganizer(e.target.value)}
-                  className="w-full border border-gray-300 text-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik animate-fade-in"
+                  className="w-full border border-gray-300 text-gray-500 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik animate-fade-in"
                 />
               )}
               <div className="h-[1px] bg-primary2 w-full mt-8 mx-auto rounded-full" />
@@ -656,7 +677,7 @@ export default function AnnouncementsPage() {
                 value={formData.title}
                 onChange={handleInputChange}
                 placeholder="Add a clear and descriptive title"
-                className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
+                className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
   border transition-all
   ${
     errors.title
@@ -677,7 +698,7 @@ export default function AnnouncementsPage() {
                 value={formData.summary}
                 onChange={handleInputChange}
                 placeholder="Short description for notification"
-                className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
+                className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
   border transition-all
   ${
     errors.summary
@@ -698,7 +719,7 @@ export default function AnnouncementsPage() {
                 onChange={handleInputChange}
                 rows={6}
                 placeholder="Add full details, links, and attachments"
-                className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
+                className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
   border transition-all
   ${
     errors.body
@@ -789,7 +810,7 @@ export default function AnnouncementsPage() {
                   name="visibility"
                   value={formData.visibility}
                   onChange={handleInputChange}
-                  className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
+                  className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
   border transition-all
   ${
     errors.visibility
@@ -799,7 +820,7 @@ export default function AnnouncementsPage() {
   focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white appearance-none pr-10
 `}
                 >
-                  <option value="" className="text-gray-400">
+                  <option value="" className="text-gray-500">
                     Select visibility
                   </option>
                   <option value="public">Public</option>
@@ -814,6 +835,7 @@ export default function AnnouncementsPage() {
               <label className="text-md font-normal text-primary3 font-raleway block mb-1 mt-1">
                 Attachments
               </label>
+              <p className="text-sm text-gray-500 mb-3">Optional — attach supporting files or links (e.g. PDFs, images, or external resources).</p>
 
               <div className="flex items-center gap-3 mb-3">
                 <input
@@ -911,7 +933,7 @@ export default function AnnouncementsPage() {
                     value={formData.attendanceLink}
                     onChange={handleInputChange}
                     placeholder="Link to attendance Google Sheet / Drive folder"
-                    className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
+                    className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
   border transition-all
   ${
     errors.attendanceLink
@@ -933,9 +955,11 @@ export default function AnnouncementsPage() {
                           <input
                             type="text"
                             value={item}
-                            onChange={(e) => updateAgendaItem(index, e.target.value)}
+                            onChange={(e) =>
+                              updateAgendaItem(index, e.target.value)
+                            }
                             placeholder={`Agenda item ${index + 1}`}
-                            className="flex-1 text-gray-700 placeholder-gray-400 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary2 font-rubik"
+                            className="flex-1 text-gray-500 placeholder-gray-400 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary2 font-rubik"
                           />
                           <button
                             type="button"
@@ -956,7 +980,9 @@ export default function AnnouncementsPage() {
                       </button>
                     </div>
                     {errors.agenda && (
-                      <p className="text-red-500 text-sm mt-2">Please add at least one agenda item for meetings.</p>
+                      <p className="text-red-500 text-sm mt-2">
+                        Please add at least one agenda item for meetings.
+                      </p>
                     )}
                   </div>
                 </div>
@@ -987,7 +1013,7 @@ export default function AnnouncementsPage() {
                           type="date"
                           value={scheduleDate}
                           onChange={(e) => setScheduleDate(e.target.value)}
-                          className="w-full border border-primary2 rounded-xl px-3 py-2 focus:outline-none focus:border-primary3 font-rubik"
+                          className="w-full border border-primary2 text-gray-500 rounded-xl px-3 py-2 focus:outline-none focus:border-primary3 font-rubik"
                         />
                       </div>
                     </div>
@@ -1001,7 +1027,7 @@ export default function AnnouncementsPage() {
                           type="time"
                           value={scheduleTime}
                           onChange={(e) => setScheduleTime(e.target.value)}
-                          className="w-full border border-primary2 rounded-xl px-3 py-2 focus:outline-none focus:border-primary3 font-rubik"
+                          className="w-full border border-primary2 text-gray-500 rounded-xl px-3 py-2 focus:outline-none focus:border-primary3 font-rubik"
                         />
                       </div>
                     </div>
@@ -1016,7 +1042,12 @@ export default function AnnouncementsPage() {
                 )}
 
                 <div className="flex gap-3 ml-auto">
-                  <Link href="/drafts" className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-100 self-center">View drafts</Link>
+                  <Link
+                    href="/drafts"
+                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-100 self-center"
+                  >
+                    View drafts
+                  </Link>
                   <Button
                     variant="outline"
                     type="button"
@@ -1026,12 +1057,12 @@ export default function AnnouncementsPage() {
                     Save Draft
                   </Button>
                   <Button
-                    variant="primary2"
-                      type="button"
-                      onClick={handlePublish}
-                      disabled={isSubmitting}
-                      className="disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+                    variant="primary3"
+                    type="button"
+                    onClick={handlePublish}
+                    disabled={isSubmitting}
+                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     {isSubmitting ? "Publishing..." : "Publish"}
                   </Button>
                 </div>

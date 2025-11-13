@@ -45,6 +45,7 @@ export const createAnnouncement = async (
             targetAudience,
             isPublished,
             publishDate,
+            date,
             expiryDate,
             time,
             location,
@@ -149,7 +150,12 @@ export const createAnnouncement = async (
             return;
         }
 
-        const announcementData = {
+    // Parse and normalize publishDate and date into Dates (if provided)
+    const now = new Date();
+    const parsedPublishDate = publishDate ? new Date(publishDate) : undefined;
+    const parsedDate = date ? new Date(date) : undefined;
+
+        const announcementData: any = {
             title,
             description,
             content,
@@ -157,8 +163,10 @@ export const createAnnouncement = async (
             type,
             priority,
             targetAudience: parsedTargetAudience,
-            // If publishDate is provided and is in the future, treat as draft (scheduled)
-            publishDate: publishDate || Date.now(),
+            // store a Date if provided, otherwise default to now
+            publishDate: parsedPublishDate ?? new Date(),
+            date: parsedDate ?? undefined,
+            // initial isPublished flag based on incoming value; may be overridden below if scheduling
             isPublished: (isPublished === 'true' || isPublished === true),
             expiryDate,
             time,
@@ -174,10 +182,14 @@ export const createAnnouncement = async (
         };
 
         // If a publishDate exists and it's in the future, ensure announcement remains unpublished until scheduler runs
-        const now = new Date();
-        if (announcementData.publishDate && new Date(announcementData.publishDate) > now) {
+        if (parsedPublishDate && parsedPublishDate > now) {
             announcementData.isPublished = false;
         }
+
+        console.log('📝 Final announcement data (publishDate/isPublished):', {
+            publishDate: announcementData.publishDate,
+            isPublished: announcementData.isPublished,
+        });
 
         // Enforce that published announcements must have at least one featured image
         const willBePublished = announcementData.isPublished === true;
@@ -401,6 +413,14 @@ export const updateAnnouncement = async (
         }
         if (req.body.targetAudience && typeof req.body.targetAudience === 'string') {
             req.body.targetAudience = JSON.parse(req.body.targetAudience);
+        }
+        // Parse date string into Date for updates
+        if (req.body.date && typeof req.body.date === 'string') {
+            try {
+                req.body.date = new Date(req.body.date);
+            } catch (e) {
+                // leave as-is if parsing fails; validation will catch it
+            }
         }
 
         const updatedAnnouncement = await Announcement.findByIdAndUpdate(

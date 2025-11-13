@@ -116,8 +116,9 @@ function normalizeAnnouncement(raw: any): ClientAnnouncement {
     const content = raw.content ?? raw.body ?? "";
     const type = normalizeType(raw.type ?? raw.category ?? raw.tag);
     const imageUrl = raw.imageUrl ?? raw.image ?? raw.image_url ?? null;
-    const publishDate = raw.publishDate ?? raw.publish_date ?? raw.date ?? raw.createdAt ?? raw.created_at ?? undefined;
-    const date = publishDate;
+    // Prefer explicit publishDate for when it was posted; keep user's provided `date` separate.
+    const publishDate = raw.publishDate ?? raw.publish_date ?? raw.createdAt ?? raw.created_at ?? undefined;
+    const date = raw.date ?? raw.dateString ?? publishDate;
 
     return {
         id,
@@ -160,6 +161,7 @@ export interface AnnouncementData {
         url: string;
         fileType?: string;
     }>;
+    date?: string;
 }
 
 class AnnouncementService {
@@ -206,6 +208,7 @@ class AnnouncementService {
             
             // Optional simple fields
             if (data.priority) formData.append('priority', data.priority);
+            if (data.date) formData.append('date', data.date);
             if (data.publishDate) formData.append('publishDate', data.publishDate);
             if (data.expiryDate) formData.append('expiryDate', data.expiryDate);
             if (data.time) formData.append('time', data.time);

@@ -70,7 +70,7 @@ export default function AnnouncementsPage() {
       }
       // Map tab names to database types
       const typeMap: Record<string, string> = {
-        News: "General",
+        News: "News",
         Meeting: "Meeting",
         Achievement: "Achievement",
       };

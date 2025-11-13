@@ -65,7 +65,7 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
         aria-label="Previous image"
         disabled={!emblaApi}
         className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/60 hover:bg-white/90 text-primary3 rounded-full p-2 
-                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary2 cursor-pointer"
+                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary2 cursor-pointer opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
@@ -74,7 +74,7 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
         aria-label="Next image"
         disabled={!emblaApi}
         className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/60 hover:bg-white/90 text-primary3 rounded-full p-2 
-                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary2 cursor-pointer"
+                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary2 cursor-pointer opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
       >
         <ChevronRight className="h-6 w-6" />
       </button>

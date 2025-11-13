@@ -22,7 +22,6 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
   if (!announcement) return null;
 
   // Normalize the date field. Prefer `date` (static samples), then `publishDate`.
-  const dateStr = (announcement.date ?? announcement.publishDate) as string | undefined;
   const announcementType = announcement.type?.toLowerCase() || "";
 
   // Determine if we should show agenda (only for meetings)
@@ -46,16 +45,16 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
         <h1 className="font-rubik text-2xl sm:text-4xl font-bold text-primary3 mb-3">
           {announcement.title}
         </h1>
-        {dateStr && (
-          <p className="font-raleway text-primary1 font-medium text-base sm:text-lg">
-            {formatDate(dateStr)}
-          </p>
-        )}
+        <div className="flex flex-col gap-1">
+          {announcement.publishDate && (
+            <p className="text-sm text-gray-500">Posted on {formatDate(announcement.publishDate as string)}</p>
+          )}
+        </div>
       </div>
 
       <div>
         <p className="font-raleway text-gray-700 leading-relaxed text-base mb-8">
-          {announcement.description}
+          {announcement.content ?? announcement.description}
         </p>
       </div>
 

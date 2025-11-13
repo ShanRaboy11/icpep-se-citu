@@ -34,7 +34,7 @@ export interface IAnnouncement extends Document {
     description: string;
     content: string;
     author: mongoose.Types.ObjectId;
-    type: 'Event' | 'Award' | 'Workshop' | 'Meeting' | 'Seminar' | 'Achievement' | 'General';
+    type: 'Event' | 'Award' | 'Workshop' | 'Meeting' | 'Seminar' | 'Achievement' | 'General' | 'News';
     priority?: 'normal' | 'important' | 'urgent';
     targetAudience?: ('all' | 'members' | 'officers' | 'faculty')[];
     isPublished?: boolean;
@@ -42,6 +42,7 @@ export interface IAnnouncement extends Document {
     expiryDate?: Date;
     // Event/Meeting specific fields
     time?: string;
+    date?: Date;
     location?: string;
     organizer?: string;
     contact?: string;
@@ -83,7 +84,7 @@ const announcementSchema = new Schema<IAnnouncement>({
     },
     type: {
         type: String,
-        enum: ['Event', 'Award', 'Workshop', 'Meeting', 'Seminar', 'Achievement', 'General'],
+        enum: ['Event', 'Award', 'Workshop', 'Meeting', 'Seminar', 'Achievement', 'General', 'News'],
         default: 'General',
         required: true,
     },
@@ -116,6 +117,10 @@ const announcementSchema = new Schema<IAnnouncement>({
     location: {
         type: String,
         trim: true,
+    },
+    date: {
+        type: Date,
+        required: false,
     },
     organizer: {
         type: String,
