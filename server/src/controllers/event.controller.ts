@@ -83,22 +83,56 @@ export const createEvent = async (
                 const results = await uploadMultipleToCloudinary(buffers, 'events');
                 galleryImages = results.map((r) => (r as any).secure_url).filter(Boolean);
                 console.log('✅ Images uploaded:', galleryImages);
+                // Ensure coverImage is set to first uploaded image if not already
+                if (!coverImage && galleryImages.length > 0) {
+                    coverImage = galleryImages[0];
+                }
             } catch (uploadError) {
                 console.error('❌ Cloudinary multiple upload failed:', uploadError);
-                res.status(500).json({
-                    success: false,
-                    message: 'Failed to upload images',
-                    error: uploadError instanceof Error ? uploadError.message : 'Unknown error'
-                });
-                return;
+                console.error('Attempting individual uploads as fallback...');
+                // Try uploading individually to get partial results
+                try {
+                    for (const f of multerFiles) {
+                        try {
+                            const singleResult = await uploadToCloudinary(f.buffer, 'events');
+                            const url = (singleResult as any).secure_url;
+                            if (url) galleryImages.push(url);
+                            if (!coverImage && url) coverImage = url;
+                        } catch (singleErr) {
+                            console.error('Failed uploading one file in fallback:', singleErr);
+                            // continue with others
+                        }
+                    }
+
+                    if (galleryImages.length === 0) {
+                        // nothing uploaded successfully
+                        res.status(500).json({
+                            success: false,
+                            message: 'Failed to upload images',
+                            error: uploadError instanceof Error ? uploadError.message : 'Unknown error'
+                        });
+                        return;
+                    }
+                    console.log('✅ Fallback uploaded images:', galleryImages);
+                } catch (fallbackErr) {
+                    console.error('❌ Fallback upload also failed:', fallbackErr);
+                    res.status(500).json({
+                        success: false,
+                        message: 'Failed to upload images',
+                        error: fallbackErr instanceof Error ? fallbackErr.message : 'Unknown error'
+                    });
+                    return;
+                }
             }
         } else if (singleFile) {
             // Backwards compatible: if a single file was uploaded under req.file
             try {
                 console.log('📷 Uploading single cover image to Cloudinary...');
                 const result = await uploadToCloudinary(singleFile.buffer, 'events');
-                galleryImages = [result.secure_url];
-                console.log('✅ Image uploaded:', result.secure_url);
+                const url = (result as any).secure_url;
+                galleryImages = url ? [url] : [];
+                coverImage = url || coverImage;
+                console.log('✅ Image uploaded:', url);
             } catch (uploadError) {
                 console.error('❌ Cloudinary upload failed:', uploadError);
                 res.status(500).json({
@@ -111,12 +145,13 @@ export const createEvent = async (
         }
 
         // Parse arrays/objects if sent as strings
-        let parsedTags, parsedAdmissions, parsedTargetAudience;
+        let parsedTags, parsedAdmissions, parsedTargetAudience, parsedDetails;
         
         try {
             parsedTags = tags ? JSON.parse(tags) : [];
             parsedAdmissions = admissions ? JSON.parse(admissions) : [];
             parsedTargetAudience = targetAudience ? JSON.parse(targetAudience) : ['all'];
+            parsedDetails = (req.body.details && typeof req.body.details === 'string') ? JSON.parse(req.body.details) : req.body.details;
         } catch (parseError) {
             console.error('❌ JSON parsing failed:', parseError);
             res.status(400).json({
@@ -169,6 +204,7 @@ export const createEvent = async (
             registrationEnd: registrationEnd ? new Date(registrationEnd) : undefined,
             coverImage: coverImage || (galleryImages.length > 0 ? galleryImages[0] : null),
             galleryImages,
+            details: parsedDetails,
         };
 
         console.log('💾 Saving to database...');
@@ -361,6 +397,13 @@ export const updateEvent = async (
         }
         if (req.body.targetAudience && typeof req.body.targetAudience === 'string') {
             req.body.targetAudience = JSON.parse(req.body.targetAudience);
+        }
+        if (req.body.details && typeof req.body.details === 'string') {
+            try {
+                req.body.details = JSON.parse(req.body.details);
+            } catch (e) {
+                console.error('❌ Failed to parse details on update:', e);
+            }
         }
 
         // Convert date strings to Date objects

@@ -62,6 +62,11 @@ export default function EventsPage() {
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const [organizer, setOrganizer] = useState("");
+  const [details, setDetails] = useState<{
+    title: string;
+    body: string;
+  }[]>([{ title: "", body: "" }]);
+  const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
 
   const predefinedTags = ["Workshop", "Seminar", "Training", "Webinar"];
 
@@ -95,11 +100,11 @@ export default function EventsPage() {
         title: formData.title,
         description: formData.description,
         content: formData.body,
-        eventDate: formData.date,
+        eventDate: new Date(formData.date).toISOString(),
         time: formData.time,
         location: formData.location || undefined,
         organizer: organizer || undefined,
-  contact: formData.contact || undefined,
+        contact: formData.contact || undefined,
         rsvpLink: formData.rsvp || undefined,
         tags: tags.length > 0 ? tags : undefined,
         admissions: admissions.length > 0 ? admissions : undefined,
@@ -111,6 +116,15 @@ export default function EventsPage() {
           : ["all"],
         isPublished: true,
         publishDate: new Date().toISOString(),
+        details: details
+          .map((d) => ({
+            title: d.title || "",
+            items: d.body
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean),
+          }))
+          .filter((d) => d.title || d.items.length > 0),
       };
 
       const response = await eventService.createEvent(
@@ -122,7 +136,6 @@ export default function EventsPage() {
       setSubmitSuccess(true);
       setShowSuccessModal(true);
 
-      // Reset form
       resetForm();
     } catch (error) {
       console.error("❌ Error creating event:", error);
@@ -150,11 +163,11 @@ export default function EventsPage() {
         title: formData.title || "Untitled Draft",
         description: formData.description || "No description",
         content: formData.body || "No content",
-        eventDate: formData.date || new Date().toISOString().split("T")[0],
+        eventDate: formData.date ? new Date(formData.date).toISOString() : new Date().toISOString(),
         time: formData.time || undefined,
         location: formData.location || undefined,
         organizer: organizer || undefined,
-  contact: formData.contact || undefined,
+        contact: formData.contact || undefined,
         rsvpLink: formData.rsvp || undefined,
         tags: tags.length > 0 ? tags : undefined,
         admissions: admissions.length > 0 ? admissions : undefined,
@@ -165,6 +178,15 @@ export default function EventsPage() {
           ? audienceMap[formData.visibility]
           : ["all"],
         isPublished: false,
+        details: details
+          .map((d) => ({
+            title: d.title || "",
+            items: d.body
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean),
+          }))
+          .filter((d) => d.title || d.items.length > 0),
       };
 
       const response = await eventService.createEvent(
@@ -198,14 +220,16 @@ export default function EventsPage() {
       location: "",
       visibility: "",
     });
-  setImages([]);
-  setPreviews([]);
+    setImages([]);
+    setPreviews([]);
     setTags([]);
     setAdmissions([]);
     setOrganizer("");
     setRegistrationRequired(false);
     setRegistrationStart("");
     setRegistrationEnd("");
+    setDetails([{ title: "", body: "" }]);
+    setShowAdditionalInfo(false);
   };
 
   const handleInputChange = (
@@ -220,7 +244,6 @@ export default function EventsPage() {
 
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Only clear field-level errors for keys that exist on the errors object
     if (Object.prototype.hasOwnProperty.call(errors, name)) {
       setErrors((prev) => ({ ...prev, [name as keyof FormErrors]: false }));
     }
@@ -269,10 +292,8 @@ export default function EventsPage() {
 
     try {
       const resized = await resizeImage(file);
-      // Replace with single image selection
       setImages([resized]);
       setPreviews([URL.createObjectURL(resized)]);
-      // Clear the native input value so selecting the same file again will trigger change
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
       console.error('Error resizing image', err);
@@ -309,19 +330,22 @@ export default function EventsPage() {
               </div>
             )}
 
-            <form className="border border-primary1 rounded-2xl p-6 space-y-4 bg-white mb-10">
-              <div className="flex items-center justify-between mb-4">
+            <form className="border border-primary1 rounded-2xl p-6 space-y-6 bg-white mb-10">
+              {/* Header */}
+              <div>
                 <h2 className="text-2xl sm:text-3xl font-semibold text-primary1 font-rubik">
                   Content
                 </h2>
+                <p className="text-sm text-gray-500 font-raleway mt-1">
+                  Provide key information
+                </p>
               </div>
-              <p className="text-sm text-gray-500 font-raleway -mt-5">
-                Provide key information
-              </p>
 
-              {/* Upload image(s) */}
+              {/* Upload Image */}
               <div>
-                {/* hidden file input - kept outside interactive preview area to avoid label / click conflicts */}
+                <label className="text-md font-medium text-primary3 font-raleway mb-2 block">
+                  Cover Image
+                </label>
                 <input
                   type="file"
                   accept="image/*"
@@ -330,21 +354,19 @@ export default function EventsPage() {
                   ref={fileInputRef}
                 />
 
-                {/* Preview area / upload trigger */}
                 <div
                   role="button"
                   tabIndex={0}
                   onClick={() => fileInputRef.current?.click()}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
-                  className="block"
+                  className="block cursor-pointer"
                 >
                   {previews.length > 0 ? (
                     <div className="relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={previews[0]}
-                        alt={`preview`}
-                        className="w-full h-40 object-cover rounded-lg border"
+                        alt="preview"
+                        className="w-full h-48 object-cover rounded-lg border border-gray-300"
                       />
                       <button
                         type="button"
@@ -354,280 +376,291 @@ export default function EventsPage() {
                           setImages([]);
                           setPreviews([]);
                         }}
-                        aria-label={`Remove image`}
-                        className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 border shadow-sm"
+                        aria-label="Remove image"
+                        className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 border shadow-sm hover:bg-red-50"
                       >
                         ×
                       </button>
                     </div>
                   ) : (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition">
-                      <p className="text-gray-500">Upload cover image</p>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-gray-50 transition">
+                      <p className="text-gray-500 font-raleway">Click to upload cover image</p>
                     </div>
                   )}
                 </div>
-
-                {images.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setPreviews([]); setImages([]); }}
-                    className="mt-2 text-red-500 text-sm hover:underline"
-                  >
-                    Remove image
-                  </button>
-                )}
               </div>
 
               {/* Tags */}
-              <div className="flex flex-wrap gap-2 items-center">
-                {!showTagInput && (
-                  <button
-                    type="button"
-                    onClick={() => setShowTagInput(true)}
-                    className="px-3 py-1 border border-primary2 text-primary2 rounded-full hover:bg-primary2 hover:text-white transition font-rubik text-sm"
-                  >
-                    + Add Tag
-                  </button>
-                )}
+              <div>
+                <label className="text-md font-medium text-primary3 font-raleway mb-2 block">
+                  Tags
+                </label>
+                <div className="flex flex-wrap gap-2 items-center">
+                  {predefinedTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() =>
+                        setTags((prev) =>
+                          prev.includes(tag)
+                            ? prev.filter((t) => t !== tag)
+                            : [...prev, tag]
+                        )
+                      }
+                      className={`px-3 py-1 text-sm rounded-full border transition font-rubik ${
+                        tags.includes(tag)
+                          ? "bg-primary2 text-white border-primary2"
+                          : "border-gray-300 text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
 
-                {showTagInput && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
+                  {!showTagInput && (
+                    <button
+                      type="button"
+                      onClick={() => setShowTagInput(true)}
+                      className="px-3 py-1 border border-primary2 text-primary2 rounded-full hover:bg-primary2 hover:text-white transition font-rubik text-sm"
+                    >
+                      + Add Custom Tag
+                    </button>
+                  )}
+
+                  {showTagInput && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            if (newTag.trim() !== "")
+                              setTags((prev) => [...prev, newTag.trim()]);
+                            setNewTag("");
+                            setShowTagInput(false);
+                          }
+                        }}
+                        className="border border-gray-300 rounded-lg px-3 py-1 font-rubik text-sm focus:outline-none focus:border-primary2"
+                        placeholder="Enter custom tag..."
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
                           if (newTag.trim() !== "")
                             setTags((prev) => [...prev, newTag.trim()]);
                           setNewTag("");
                           setShowTagInput(false);
-                        }
-                      }}
-                      className="border border-gray-300 rounded-lg px-2 py-1 font-rubik text-black text-sm"
-                      placeholder="Enter new tag..."
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (newTag.trim() !== "")
-                          setTags((prev) => [...prev, newTag.trim()]);
-                        setNewTag("");
-                        setShowTagInput(false);
-                      }}
-                      className="px-2 py-1 bg-primary2 text-white rounded-lg text-sm"
-                    >
-                      Add
-                    </button>
-                  </div>
-                )}
-
-                {predefinedTags.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() =>
-                      setTags((prev) =>
-                        prev.includes(tag)
-                          ? prev.filter((t) => t !== tag)
-                          : [...prev, tag]
-                      )
-                    }
-                    className={`px-3 py-1 text-sm rounded-full border transition font-rubik ${
-                      tags.includes(tag)
-                        ? "bg-gray-300 text-white border-gray-300"
-                        : "border-gray-300 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-
-              {/* Selected Tags Display */}
-              <div className="flex flex-wrap gap-2 mt-3">
-                {tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="flex items-center gap-2 bg-primary2 text-white font-rubik px-4 py-1 rounded-full border border-white text-sm"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setTags(tags.filter((_, i) => i !== index))
-                      }
-                      className="text-gray-300 hover:text-red-500 font-bold"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-
-              <div className="h-[1px] bg-primary2 w-full mt-8 mx-auto rounded-full" />
-
-              <h2 className="text-2xl font-semibold text-primary3 mt-6">
-                Details
-              </h2>
-              <p className="text-sm text-gray-500 -mt-3">
-                Provide key information
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
-                    Date
-                  </label>
-                  <input
-                    id="date"
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.date
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
-                    Time
-                  </label>
-                  <input
-                    id="time"
-                    type="time"
-                    name="time"
-                    value={formData.time}
-                    onChange={handleInputChange}
-                    className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.time
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
-                    Location
-                  </label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    placeholder="Where is it happening?"
-                    className="w-full border border-gray-300 text-gray-400 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik"
-                  />
-                </div>
-                <div className="flex flex-col justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setShowAdmissionInput(true)}
-                    className="px-4 py-2 border border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white font-rubik"
-                  >
-                    + Add Admission
-                  </button>
-                </div>
-              </div>
-
-              {showAdmissionInput && (
-                <div className="flex flex-col sm:flex-row gap-3 mt-3">
-                  <input
-                    type="text"
-                    placeholder="Category (e.g., General, VIP, Student)"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 font-rubik text-gray-400 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black"
-                  />
-
-                  <input
-                    type="text"
-                    placeholder="Price"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    className="w-32 border border-gray-300 rounded-lg px-3 py-2 font-rubik text-gray-400 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black"
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!category.trim()) return;
-
-                      setAdmissions((prev) => [
-                        ...prev,
-                        { category, price: price.trim() || "Free" },
-                      ]);
-
-                      setCategory("");
-                      setPrice("");
-                      setShowAdmissionInput(false);
-                    }}
-                    className="px-4 py-2 bg-primary2 text-white rounded-lg hover:bg-primary3 font-rubik"
-                  >
-                    Add
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCategory("");
-                      setPrice("");
-                      setShowAdmissionInput(false);
-                    }}
-                    className="px-4 py-2 border border-gray-400 rounded-lg text-gray-600 hover:bg-gray-200 font-rubik"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-
-              {admissions.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {admissions.map((ad, index) => (
-                    <span
-                      key={index}
-                      className="flex items-center gap-2 bg-primary2 text-white font-rubik px-5 py-1 rounded-full border font-raleway border-primary1 text-md"
-                    >
-                      {ad.category} — {ad.price}
+                        }}
+                        className="px-3 py-1 bg-primary2 text-white rounded-lg text-sm hover:bg-primary3"
+                      >
+                        Add
+                      </button>
                       <button
                         type="button"
-                        onClick={() =>
-                          setAdmissions(
-                            admissions.filter((_, i) => i !== index)
-                          )
-                        }
-                        className="text-gray-500 hover:text-red-500 font-bold"
+                        onClick={() => {
+                          setNewTag("");
+                          setShowTagInput(false);
+                        }}
+                        className="px-3 py-1 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-100"
                       >
-                        ×
+                        Cancel
                       </button>
-                    </span>
-                  ))}
+                    </div>
+                  )}
                 </div>
-              )}
 
-              <div className="h-[1px] bg-primary2 w-full mt-8 mx-auto rounded-full" />
+                {/* Selected Tags Display */}
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="flex items-center gap-2 bg-primary2 text-white font-rubik px-4 py-1 rounded-full text-sm"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setTags(tags.filter((_, i) => i !== index))
+                          }
+                          className="text-white hover:text-red-200 font-bold"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-              {/* Registration Required Toggle */}
-              <div className="mt-5">
-                <label className="text-md font-normal text-primary3 font-raleway block mb-1">
+              <div className="h-[1px] bg-gray-200 w-full" />
+
+              {/* Details Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-primary3 font-rubik mb-1">
+                  Details
+                </h3>
+                <p className="text-sm text-gray-500 font-raleway mb-4">
+                  Specify event date, time, and location
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                      Date *
+                    </label>
+                    <input
+                      id="date"
+                      type="date"
+                      name="date"
+                      value={formData.date}
+                      onChange={handleInputChange}
+                      className={`w-full font-raleway rounded-lg px-3 py-2 border transition-all ${
+                        errors.date
+                          ? "border-2 border-red-500 bg-red-50"
+                          : "border-gray-300 bg-white text-gray-600"
+                      } focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                      Time *
+                    </label>
+                    <input
+                      id="time"
+                      type="time"
+                      name="time"
+                      value={formData.time}
+                      onChange={handleInputChange}
+                      className={`w-full font-raleway rounded-lg px-3 py-2 border transition-all ${
+                        errors.time
+                          ? "border-2 border-red-500 bg-red-50"
+                          : "border-gray-300 bg-white text-gray-600"
+                      } focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      placeholder="Where is it happening?"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 font-raleway"
+                    />
+                  </div>
+                </div>
+
+                {/* Admission Section */}
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm font-medium text-primary3 font-raleway">
+                      Admission Prices
+                    </label>
+                    {!showAdmissionInput && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAdmissionInput(true)}
+                        className="px-3 py-1 text-sm border border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white font-rubik transition"
+                      >
+                        + Add Admission
+                      </button>
+                    )}
+                  </div>
+
+                  {showAdmissionInput && (
+                    <div className="flex flex-col sm:flex-row gap-3 mb-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                      <input
+                        type="text"
+                        placeholder="Category (e.g., General, VIP)"
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 font-raleway focus:outline-none focus:border-primary2"
+                      />
+
+                      <input
+                        type="text"
+                        placeholder="Price"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                        className="w-full sm:w-32 border border-gray-300 rounded-lg px-3 py-2 font-raleway focus:outline-none focus:border-primary2"
+                      />
+
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!category.trim()) return;
+                            setAdmissions((prev) => [
+                              ...prev,
+                              { category, price: price.trim() || "Free" },
+                            ]);
+                            setCategory("");
+                            setPrice("");
+                            setShowAdmissionInput(false);
+                          }}
+                          className="px-4 py-2 bg-primary2 text-white rounded-lg hover:bg-primary3 font-rubik"
+                        >
+                          Add
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCategory("");
+                            setPrice("");
+                            setShowAdmissionInput(false);
+                          }}
+                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 font-rubik"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {admissions.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {admissions.map((ad, index) => (
+                        <span
+                          key={index}
+                          className="flex items-center gap-2 bg-primary2 text-white font-raleway px-4 py-1 rounded-full text-sm"
+                        >
+                          {ad.category} — {ad.price}
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setAdmissions(
+                                admissions.filter((_, i) => i !== index)
+                              )
+                            }
+                            className="text-white hover:text-red-200 font-bold"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="h-[1px] bg-gray-200 w-full" />
+
+              {/* Registration Section */}
+              <div>
+                <label className="text-sm font-medium text-primary3 font-raleway mb-3 block">
                   Registration
                 </label>
 
-                <div className="flex items-center gap-3 mb-5">
+                <div className="flex items-center gap-3 mb-4">
                   <input
                     type="checkbox"
                     id="registrationToggle"
@@ -637,177 +670,250 @@ export default function EventsPage() {
                   />
                   <label
                     htmlFor="registrationToggle"
-                    className="text-md font-rubik text-gray-600"
+                    className="text-sm font-raleway text-gray-600"
                   >
                     Registration Required
                   </label>
                 </div>
 
                 {registrationRequired && (
-                  <div className="grid sm:grid-cols-2 gap-4 animate-fade-in">
+                  <div className="grid sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
                     <div>
-                      <label className="text-sm font-raleway text-primary3 block mb-1">
+                      <label className="text-sm font-raleway text-primary3 block mb-2">
                         Registration Opens
                       </label>
                       <input
                         type="datetime-local"
                         value={registrationStart}
                         onChange={(e) => setRegistrationStart(e.target.value)}
-                        className="w-full border border-gray-300 text-gray-500 rounded-lg px-3 py-2 
-          focus:outline-none focus:border-2 focus:border-primary2 focus:text-black"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary2"
                       />
                     </div>
 
                     <div>
-                      <label className="text-sm font-raleway text-primary3 block mb-1">
+                      <label className="text-sm font-raleway text-primary3 block mb-2">
                         Registration Closes
                       </label>
                       <input
                         type="datetime-local"
                         value={registrationEnd}
                         onChange={(e) => setRegistrationEnd(e.target.value)}
-                        className="w-full border border-gray-300 text-gray-500 rounded-lg px-3 py-2 
-          focus:outline-none focus:border-2 focus:border-primary2 focus:text-black"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary2"
                       />
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="h-[1px] bg-primary2 w-full mt-8 mx-auto rounded-full" />
+              <div className="h-[1px] bg-gray-200 w-full" />
 
+              {/* Organizer Section */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-raleway text-primary3 block mb-1">Organizer</label>
+                  <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                    Organizer
+                  </label>
                   <input
                     type="text"
                     placeholder="Organizer name or group"
                     value={organizer}
                     onChange={(e) => setOrganizer(e.target.value)}
-                    className="w-full border border-gray-300 text-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 font-raleway"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-raleway text-primary3 block mb-1">Organizer contact (email)</label>
+                  <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                    Contact Email
+                  </label>
                   <input
                     type="email"
                     name="contact"
                     placeholder="organizer@example.com"
                     value={formData.contact}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 text-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 font-raleway"
                   />
                 </div>
               </div>
 
-              <label className="text-md font-normal text-primary3 font-raleway mt-5 mb-2 block">
-                Event Title
-              </label>
-              <input
-                id="title"
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="Add a clear and descriptive title"
-                className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.title
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
-              />
+              <div className="h-[1px] bg-gray-200 w-full" />
 
-              <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
-                Description
-              </label>
-              <input
-                id="description"
-                type="text"
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Short description for notification"
-                className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.description
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
-              />
-
-              <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
-                Topics Covered
-              </label>
-              <textarea
-                id="body"
-                name="body"
-                value={formData.body}
-                onChange={handleInputChange}
-                rows={6}
-                placeholder="Agenda/program highlights"
-                className={`w-full text-gray-400 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.body
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
-              />
-
-              <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
-                RSVP Link (optional)
-              </label>
-              <input
-                type="url"
-                id="rsvp"
-                name="rsvp"
-                value={formData.rsvp}
-                onChange={handleInputChange}
-                placeholder="https://example.com/rsvp"
-                className="w-full text-gray-400 font-raleway rounded-lg px-3 py-2 border border-gray-300 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white"
-              />
-
-              <label className="text-md font-normal text-primary3 font-raleway mt-5 mb-1 block">
-                Visibility
-              </label>
-              <div className="relative w-full">
-                <select
-                  id="visibility"
-                  name="visibility"
-                  value={formData.visibility}
+              {/* Event Content */}
+              <div>
+                <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                  Event Title *
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  name="title"
+                  value={formData.title}
                   onChange={handleInputChange}
-                  className="w-full text-gray-400 font-raleway rounded-lg px-3 py-2 border border-gray-300 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white appearance-none pr-10"
-                >
-                  <option value="" className="text-gray-400">
-                    Select visibility
-                  </option>
-                  <option value="public">Public</option>
-                  <option value="members">Members Only</option>
-                  <option value="officers">Officers Only</option>
-                </select>
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-primary3">
-                  <ChevronDown className="w-4 h-4" />
-                </span>
+                  placeholder="Add a clear and descriptive title"
+                  className={`w-full font-raleway rounded-lg px-3 py-2 border transition-all ${
+                    errors.title
+                      ? "border-2 border-red-500 bg-red-50"
+                      : "border-gray-300 bg-white"
+                  } focus:outline-none focus:border-2 focus:border-primary2 focus:bg-white`}
+                />
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 mt-6">
+              <div>
+                <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                  Description *
+                </label>
+                <input
+                  id="description"
+                  type="text"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Short description for notification"
+                  className={`w-full font-raleway rounded-lg px-3 py-2 border transition-all ${
+                    errors.description
+                      ? "border-2 border-red-500 bg-red-50"
+                      : "border-gray-300 bg-white"
+                  } focus:outline-none focus:border-2 focus:border-primary2 focus:bg-white`}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                  Topics Covered *
+                </label>
+                <textarea
+                  id="body"
+                  name="body"
+                  value={formData.body}
+                  onChange={handleInputChange}
+                  rows={6}
+                  placeholder="Agenda/program highlights"
+                  className={`w-full font-raleway rounded-lg px-3 py-2 border transition-all ${
+                    errors.body
+                      ? "border-2 border-red-500 bg-red-50"
+                      : "border-gray-300 bg-white"
+                  } focus:outline-none focus:border-2 focus:border-primary2 focus:bg-white`}
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <label className="text-sm font-medium text-primary3 font-raleway">
+                    Additional Information
+                  </label>
+                  {!showAdditionalInfo && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAdditionalInfo(true)}
+                      className="px-3 py-1 text-sm border border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white font-rubik transition"
+                    >
+                      + Add Section
+                    </button>
+                  )}
+                </div>
+
+                {showAdditionalInfo && (
+                  <div className="space-y-3">
+                    {details.map((section, idx) => (
+                      <div key={idx} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                        <div className="flex gap-2 mb-3">
+                          <input
+                            type="text"
+                            placeholder="Section header"
+                            value={section.title}
+                            onChange={(e) =>
+                              setDetails((prev) => prev.map((s, i) => (i === idx ? { ...s, title: e.target.value } : s)))
+                            }
+                            className="flex-1 rounded-lg text-gray-600 border border-gray-300 px-3 py-2 text-sm font-raleway focus:outline-none focus:border-primary2"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setDetails((prev) => prev.filter((_, i) => i !== idx))}
+                            className="text-red-500 px-4 py-2 rounded-lg bg-white border border-gray-300 hover:bg-red-50 font-rubik"
+                          >
+                            Remove
+                          </button>
+                        </div>
+
+                        <textarea
+                          placeholder="Section body (use new lines to separate items)"
+                          value={section.body}
+                          onChange={(e) =>
+                            setDetails((prev) => prev.map((s, i) => (i === idx ? { ...s, body: e.target.value } : s)))
+                          }
+                          className="w-full rounded-lg border border-gray-300 text-gray-600 px-3 py-2 text-sm font-raleway h-24 focus:outline-none focus:border-primary2"
+                        />
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => setDetails((d) => [...d, { title: "", body: "" }])}
+                      className="w-full px-4 py-2 border border-dashed border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white transition font-rubik"
+                    >
+                      + Add Another Section
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                  RSVP Link
+                </label>
+                <input
+                  type="url"
+                  id="rsvp"
+                  name="rsvp"
+                  value={formData.rsvp}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/rsvp"
+                  className="w-full font-raleway rounded-lg px-3 py-2 border border-gray-300 focus:outline-none focus:border-2 focus:border-primary2"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                  Visibility *
+                </label>
+                <div className="relative w-full">
+                  <select
+                    id="visibility"
+                    name="visibility"
+                    value={formData.visibility}
+                    onChange={handleInputChange}
+                    className="w-full font-raleway rounded-lg px-3 py-2 border border-gray-300 focus:outline-none focus:border-2 focus:border-primary2 appearance-none pr-10"
+                  >
+                    <option value="" className="text-gray-400">
+                      Select visibility
+                    </option>
+                    <option value="public">Public</option>
+                    <option value="members">Members Only</option>
+                    <option value="officers">Officers Only</option>
+                  </select>
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-primary3">
+                    <ChevronDown className="w-4 h-4" />
+                  </span>
+                </div>
+              </div>
+
+              <div className="h-[1px] bg-gray-200 w-full" />
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
                 {showGlobalError && (
                   <p className="text-red-500 text-sm font-raleway">
                     Please fill all required fields before publishing.
                   </p>
                 )}
 
-                <div className="flex gap-3 ml-auto">
-                  <Link href="/drafts" className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-100 self-center">View drafts</Link>
+                <div className="flex flex-wrap gap-3 ml-auto">
+                  <Link 
+                    href="/drafts" 
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-100 font-raleway transition"
+                  >
+                    View Drafts
+                  </Link>
                   <Button
                     variant="outline"
                     type="button"
@@ -817,7 +923,7 @@ export default function EventsPage() {
                     Save Draft
                   </Button>
                   <Button
-                    variant="primary2"
+                    variant="primary3"
                     type="button"
                     onClick={handlePublish}
                     disabled={isSubmitting}
@@ -848,10 +954,10 @@ export default function EventsPage() {
                 <span className="text-3xl text-white">✔</span>
               </div>
 
-              <h3 className="text-xl text-blue-700 font-semibold">
+              <h3 className="text-xl text-primary3 font-semibold font-rubik">
                 Event Published
               </h3>
-              <p className="text-sm text-blue-400 text-center">
+              <p className="text-sm text-gray-600 text-center font-raleway">
                 Your event was published successfully.
               </p>
 
@@ -874,7 +980,7 @@ export default function EventsPage() {
                     router.push("/events");
                   }}
                 >
-                  View events
+                  View Events
                 </Button>
               </div>
             </div>

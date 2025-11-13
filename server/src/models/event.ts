@@ -25,6 +25,7 @@ export interface IEvent extends Document {
     expiryDate?: Date;
     // Event specific fields
     eventDate: Date;
+    details?: { title: string; items: string[] }[];
     time?: string;
     location?: string;
     organizer?: string;
@@ -130,6 +131,15 @@ const eventSchema = new Schema<IEvent>({
     },
     galleryImages: {
         type: [String],
+        default: [],
+    },
+    details: {
+        type: [
+            {
+                title: { type: String, trim: true },
+                items: { type: [String], default: [] },
+            },
+        ],
         default: [],
     },
 }, { timestamps: true });

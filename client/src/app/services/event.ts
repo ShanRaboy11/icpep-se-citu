@@ -81,6 +81,7 @@ export interface EventData {
     title: string;
     description: string;
     content: string;
+    details?: Array<{ title: string; items: string[] }>;
     tags?: string[];
     priority?: 'normal' | 'important' | 'urgent';
     targetAudience?: string[];
@@ -109,7 +110,11 @@ class EventService {
     private handleError(error: unknown): never {
         if (axios.isAxiosError(error)) {
             const axiosError = error as AxiosError<ApiError>;
-            const errorMessage = axiosError.response?.data?.message || error.message;
+            // Friendly message for timeouts
+            let errorMessage = axiosError.response?.data?.message || error.message;
+            if (axiosError.code === 'ECONNABORTED' || (axiosError.message && axiosError.message.toLowerCase().includes('timeout'))) {
+                errorMessage = 'Request timed out. The upload may be large or the network slow — try reducing image size or retrying.';
+            }
             const statusCode = axiosError.response?.status;
             
             console.error('Service Error Details:', {
@@ -163,6 +168,10 @@ class EventService {
             if (data.tags) {
                 formData.append('tags', JSON.stringify(data.tags));
             }
+            // details is optional and may be present on drafts/publish payloads
+            if ((data as unknown as { details?: Array<{ title: string; items: string[] }> }).details) {
+                formData.append('details', JSON.stringify((data as unknown as { details?: Array<{ title: string; items: string[] }> }).details));
+            }
             if (data.targetAudience) {
                 formData.append('targetAudience', JSON.stringify(data.targetAudience));
             }
@@ -177,7 +186,8 @@ class EventService {
             }
 
             // Let the browser set the Content-Type (including the boundary) for multipart/form-data
-            const response = await api.post('/events', formData);
+            // uploads can take longer than the default 30s; give a longer timeout for multipart uploads
+            const response = await api.post('/events', formData, { timeout: 120000 });
 
             return response.data;
         } catch (error) {
@@ -246,7 +256,8 @@ class EventService {
             }
 
             // Let the browser set the Content-Type (including the boundary) for multipart/form-data
-            const response = await api.patch(`/events/${id}`, formData);
+            // allow longer timeout for update uploads
+            const response = await api.patch(`/events/${id}`, formData, { timeout: 120000 });
 
             return response.data;
         } catch (error) {

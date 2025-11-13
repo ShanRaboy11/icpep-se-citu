@@ -45,7 +45,8 @@ npm install gsap*/
 
 body {
   background: var(--background);
-  color: var(--foreground);
+  /* Use --bodytext for readable primary text color; --foreground is for UI surfaces */
+  color: var(--bodytext);
   font-family: Arial, Helvetica, sans-serif;
 }
 
