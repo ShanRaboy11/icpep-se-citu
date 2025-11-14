@@ -3,10 +3,15 @@ import Event, { IEvent } from '../models/event';
 import { uploadToCloudinary, deleteFromCloudinary, uploadMultipleToCloudinary } from '../utils/cloudinary';
 import mongoose from 'mongoose';
 
-// Properly extend Request to include Multer file
-interface MulterRequest extends Request {
-    file?: Express.Multer.File;
-}
+// Local Multer file shape (avoid relying on global Express.Multer augmentation)
+type MulterFile = MulterLocal.MulterFile;
+
+// Multer-aware request type without extending Express.Request (avoids
+// incompatible declaration issues when other libs augment Request)
+type MulterRequest = Request & {
+    file?: MulterFile;
+    files?: MulterFile[] | { [fieldname: string]: MulterFile[] };
+};
 
 // Define query type for better type safety
 interface EventQuery {
@@ -74,14 +79,19 @@ export const createEvent = async (
         let coverImage: string | null = null;
         let galleryImages: string[] = [];
 
-        const multerFiles = (req as any).files as Express.Multer.File[] | undefined;
-        const singleFile = (req as any).file as Express.Multer.File | undefined;
+        const multerFiles = (req as any).files as MulterFile[] | undefined;
+        const singleFile = (req as any).file as MulterFile | undefined;
 
         if (Array.isArray(multerFiles) && multerFiles.length > 0) {
             try {
                 console.log(`📷 Uploading ${multerFiles.length} images to Cloudinary...`);
-                const buffers = multerFiles.map((f) => ({ buffer: f.buffer }));
-                const results = await uploadMultipleToCloudinary(buffers, 'events');
+                        const buffers = multerFiles
+                            .filter((f) => !!f.buffer)
+                            .map((f) => ({ buffer: f.buffer as Buffer }));
+                        if (buffers.length === 0) {
+                            throw new Error('No file buffers available for upload');
+                        }
+                        const results = await uploadMultipleToCloudinary(buffers, 'events');
                 galleryImages = results.map((r) => (r as any).secure_url).filter(Boolean);
                 console.log('✅ Images uploaded:', galleryImages);
                 // Ensure coverImage is set to first uploaded image if not already
@@ -95,7 +105,11 @@ export const createEvent = async (
                 try {
                     for (const f of multerFiles) {
                         try {
-                            const singleResult = await uploadToCloudinary(f.buffer, 'events');
+                            if (!f.buffer) {
+                                console.warn('Skipping file with empty buffer during fallback upload');
+                                continue;
+                            }
+                            const singleResult = await uploadToCloudinary(f.buffer as Buffer, 'events');
                             const url = (singleResult as any).secure_url;
                             if (url) galleryImages.push(url);
                             if (!coverImage && url) coverImage = url;
@@ -129,7 +143,12 @@ export const createEvent = async (
             // Backwards compatible: if a single file was uploaded under req.file
             try {
                 console.log('📷 Uploading single cover image to Cloudinary...');
-                const result = await uploadToCloudinary(singleFile.buffer, 'events');
+                const buf = singleFile.buffer as Buffer | undefined;
+                if (!buf) {
+                    res.status(400).json({ success: false, message: 'Uploaded file has no data' });
+                    return;
+                }
+                const result = await uploadToCloudinary(buf, 'events');
                 const url = (result as any).secure_url;
                 galleryImages = url ? [url] : [];
                 coverImage = url || coverImage;
@@ -363,12 +382,17 @@ export const updateEvent = async (
 
         // Handle new cover image upload
         // Handle uploaded files (multiple) during update
-        const reqFiles = (req as any).files as Express.Multer.File[] | undefined;
-        const reqSingle = (req as any).file as Express.Multer.File | undefined;
+        const reqFiles = (req as any).files as MulterFile[] | undefined;
+        const reqSingle = (req as any).file as MulterFile | undefined;
         if (Array.isArray(reqFiles) && reqFiles.length > 0) {
             try {
                 console.log(`📷 Uploading ${reqFiles.length} images for update...`);
-                const buffers = reqFiles.map((f) => ({ buffer: f.buffer }));
+                const buffers = reqFiles
+                    .filter((f) => !!f.buffer)
+                    .map((f) => ({ buffer: f.buffer as Buffer }));
+                if (buffers.length === 0) {
+                    throw new Error('No file buffers available for upload');
+                }
                 const results = await uploadMultipleToCloudinary(buffers, 'events');
                 const newUrls = results.map((r) => (r as any).secure_url).filter(Boolean);
                 // Preserve existing galleryImages and append new ones
@@ -386,7 +410,12 @@ export const updateEvent = async (
             if (event.coverImage) {
                 await deleteFromCloudinary(event.coverImage);
             }
-            const result = await uploadToCloudinary(reqSingle.buffer, 'events');
+            const buf = reqSingle.buffer as Buffer | undefined;
+            if (!buf) {
+                res.status(400).json({ success: false, message: 'Uploaded file has no data' });
+                return;
+            }
+            const result = await uploadToCloudinary(buf, 'events');
             req.body.coverImage = result.secure_url;
         }
 
