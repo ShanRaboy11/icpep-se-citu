@@ -56,6 +56,7 @@ export default function AnnouncementsPage() {
   const [previews, setPreviews] = useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
 
