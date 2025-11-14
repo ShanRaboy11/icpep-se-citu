@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 export interface JwtPayload {
   id: string;
   role: string;
-  userId?: string; // ✅ Add this to match controller
+  userId?: string;
 }
 
 // Extend Express Request type to include user
@@ -25,11 +25,10 @@ export const authenticateToken = (
   next: NextFunction
 ) => {
   try {
-    // Get token from header
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    const token = authHeader && authHeader.split(' ')[1];
 
-    console.log('🔐 Token received:', token ? 'Yes' : 'No'); // ✅ DEBUG LOG
+    console.log('🔐 Token received:', token ? 'Yes' : 'No');
 
     if (!token) {
       return res.status(401).json({
@@ -38,16 +37,15 @@ export const authenticateToken = (
       });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     
-    console.log('👤 Decoded token:', decoded); // ✅ DEBUG LOG
-    console.log('🆔 User ID from token:', decoded.id); // ✅ DEBUG LOG
+    console.log('👤 Decoded token:', decoded);
+    console.log('🆔 User ID from token:', decoded.id);
     
     req.user = decoded;
     next();
   } catch (error) {
-    console.error('❌ Token verification failed:', error); // ✅ DEBUG LOG
+    console.error('❌ Token verification failed:', error);
     return res.status(403).json({
       success: false,
       message: 'Invalid or expired token.',
@@ -55,8 +53,9 @@ export const authenticateToken = (
   }
 };
 
-// Alias for authenticateToken (to match protect naming convention)
+// Alias for authenticateToken
 export const protect = authenticateToken;
+export const authenticate = authenticateToken;
 
 // Middleware to check if user has required role
 export const authorizeRole = (...roles: string[]) => {
@@ -78,3 +77,6 @@ export const authorizeRole = (...roles: string[]) => {
     next();
   };
 };
+
+// Alias for authorizeRole
+export const authorizeRoles = authorizeRole;

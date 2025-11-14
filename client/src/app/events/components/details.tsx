@@ -1,3 +1,4 @@
+// components/event-details.tsx
 import { Event } from "../utils/event";
 
 interface Props {
@@ -16,16 +17,18 @@ export default function EventDetails({ title, description, details }: Props) {
         <p>
           <strong>{title}</strong> {description}
         </p>
-        {details.map((section) => (
-          <div key={section.title}>
-            <p className="mt-4 font-semibold">{section.title}:</p>
-            <ul className="mt-0">
-              {section.items.map((item, index) => (
-                <li key={index}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
+
+        {Array.isArray(details) &&
+          details.map((section, idx) => (
+            <div key={idx} className="mt-4">
+              <p className="font-semibold">{section.title}</p>
+              <ul className="mt-2 list-disc list-inside">
+                {section.items.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
       </div>
     </div>
   );

@@ -1,13 +1,24 @@
+import dotenv from 'dotenv';
+
+// Load environment variables as early as possible so modules that read process.env
+// (e.g., the Cloudinary utility) get the values during module initialization.
+dotenv.config();
+
 import express, { Application, Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
+import announcementRoutes from '../src/routes/announcements.route';
+import eventRoutes from './routes/event.routes';
+import startAnnouncementScheduler from './utils/scheduler';
 
-// Load environment variables
-dotenv.config();
+// Global unhandled rejection handler to avoid process crash during development
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+  // Do not exit the process in development; log and continue.
+});
 
 // Initialize express app
 const app: Application = express();
@@ -110,6 +121,7 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
+
 // Root route
 app.get('/', (req: Request, res: Response) => {
   res.json({
@@ -147,14 +159,27 @@ app.get('/api', (req: Request, res: Response) => {
   });
 });
 
-// ✅ ROUTES - Register AFTER middleware
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/announcements', announcementRoutes);
+app.use('/api/events', eventRoutes);
 
-// TODO: Add your other routes here
-// import announcementRoutes from './routes/announcement.routes';
-// app.use('/api/announcements', announcementRoutes);
-// etc...
+
+app.get('/api/debug/env', (req: Request, res: Response) => {
+    res.json({
+        nodeEnv: process.env.NODE_ENV,
+        port: process.env.PORT,
+        mongoUri: process.env.MONGODB_URI ? 'Set' : 'Missing',
+        jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Missing',
+        cloudinary: {
+            cloudName: process.env.CLOUDINARY_CLOUD_NAME ? 'Set' : 'Missing',
+            apiKey: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Missing',
+            apiSecret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Missing',
+        },
+        clientUrl: process.env.CLIENT_URL,
+    });
+});
+
 
 // 404 handler - must be after all routes
 app.use((req: Request, res: Response) => {
@@ -185,6 +210,15 @@ const server = app.listen(PORT, () => {
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
   console.log(`📍 API: http://localhost:${PORT}/api`);
   console.log(`📍 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Connected' : '⏳ Connecting...'}`);
+});
+
+// Start scheduler after successful DB connection
+mongoose.connection.once('open', () => {
+  try {
+    startAnnouncementScheduler();
+  } catch (err) {
+    console.error('❌ Failed to start announcement scheduler:', err);
+  }
 });
 
 // Graceful shutdown

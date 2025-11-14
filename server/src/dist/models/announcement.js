@@ -67,7 +67,7 @@ const announcementSchema = new mongoose_1.Schema({
     },
     type: {
         type: String,
-        enum: ['Event', 'Award', 'Workshop', 'Meeting', 'Seminar', 'Achievement', 'General'],
+        enum: ['Event', 'Award', 'Workshop', 'Meeting', 'Seminar', 'Achievement', 'General', 'News'],
         default: 'General',
         required: true,
     },

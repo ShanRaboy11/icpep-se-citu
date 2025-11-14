@@ -1,6 +1,6 @@
 import { Calendar, MapPin, Clock, Users } from "lucide-react";
 import { Announcement } from "../utils/announcements";
-import { formatDate } from "../utils/announcements";
+import { formatDate, formatTime } from "../utils/announcements";
 
 interface DetailsSidebarProps {
   announcement?: Announcement;
@@ -48,7 +48,7 @@ export default function DetailsSidebar({ announcement }: DetailsSidebarProps) {
           <DetailRow
             icon={<Clock className="h-6 w-6" />}
             label="Time"
-            value={announcement.time}
+            value={formatTime(announcement.time)}
           />
         )}
 
