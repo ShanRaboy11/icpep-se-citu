@@ -107,6 +107,7 @@ export default function EventDetailPage({
             tags: Array.isArray(e.tags) ? e.tags : [],
             bannerImageUrl: toImageUrl(e.bannerImageUrl || e.coverImage || e.image),
             description: e.description || '',
+            content: typeof (e as Record<string, unknown>).content === 'string' ? String((e as Record<string, unknown>).content) : '',
             details: detailsArr,
             galleryImageUrls: Array.isArray(e.galleryImageUrls) ? e.galleryImageUrls : [],
           };
@@ -278,6 +279,7 @@ export default function EventDetailPage({
                 title={event.title}
                 description={event.description}
                 details={event.details}
+                content={event.content}
               />
               {event.status === "Ended" && event.galleryImageUrls && (
                 <EventGallery imageUrls={event.galleryImageUrls} />
