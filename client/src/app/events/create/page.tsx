@@ -806,7 +806,7 @@ export default function EventsPage() {
 
               <div>
                 <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
-                  Topics Covered *
+                  Contents *
                 </label>
                 <textarea
                   id="body"

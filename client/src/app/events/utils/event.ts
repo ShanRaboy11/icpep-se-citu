@@ -13,6 +13,7 @@ export interface Event {
   tags?: string[];
   bannerImageUrl: string;
   description: string;
+  content?: string;
   details: {
     title: string;
     items: string[];
