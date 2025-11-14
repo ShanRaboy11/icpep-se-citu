@@ -34,137 +34,122 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const admissionSchema = new mongoose_1.Schema({
-    category: { type: String, required: true },
-    price: { type: String, required: true },
-}, { _id: false });
-const eventSchema = new mongoose_1.Schema({
-    title: {
-        type: String,
-        required: [true, 'Title is required'],
-        trim: true,
-    },
-    description: {
-        type: String,
-        required: [true, 'Description is required'],
-        maxlength: [300, 'Description cannot exceed 300 characters'],
-    },
-    content: {
-        type: String,
-        required: [true, 'Content is required'],
-    },
-    author: {
+const participantSchema = new mongoose_1.Schema({
+    user: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
-    tags: [String],
-    priority: {
+    status: {
         type: String,
-        enum: ['normal', 'important', 'urgent'],
-        default: 'normal',
+        enum: ['pending', 'approved', 'rejected', 'attended'],
+        default: 'pending',
     },
-    targetAudience: [
+    rsvpDate: {
+        type: Date,
+        default: Date.now,
+    },
+}, { _id: false });
+const organizerSchema = new mongoose_1.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    role: String,
+    imageUrl: String,
+}, { _id: false });
+const eventSchema = new mongoose_1.Schema({
+    title: {
+        type: String,
+        required: [true, 'Event title is required'],
+        trim: true,
+    },
+    description: {
+        type: String,
+        required: [true, 'Event description is required'],
+    },
+    details: [{
+            title: String,
+            content: String,
+        }],
+    tags: [String],
+    eventType: {
+        type: String,
+        enum: ['workshop', 'seminar', 'competition', 'social', 'meeting', 'other'],
+        default: 'other',
+    },
+    date: {
+        type: Date,
+        required: [true, 'Event date is required'],
+    },
+    endDate: Date,
+    mode: {
+        type: String,
+        enum: ['Online', 'In-person', 'Hybrid'],
+        required: [true, 'Event mode is required'],
+    },
+    location: {
+        type: String,
+        required: [true, 'Event location is required'],
+    },
+    venue: String,
+    capacity: {
+        type: Number,
+        min: 0,
+    },
+    rsvpDeadline: Date,
+    participants: [participantSchema],
+    organizer: organizerSchema,
+    organizerUsers: [
         {
-            type: String,
-            enum: ['all', 'members', 'officers', 'faculty'],
-            default: 'all',
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'User',
         },
     ],
+    bannerImageUrl: {
+        type: String,
+        required: [true, 'Banner image is required'],
+    },
+    galleryImageUrls: [String],
+    images: [String], // Legacy field
+    coverImage: String, // Legacy field
     isPublished: {
         type: Boolean,
         default: false,
     },
-    publishDate: {
-        type: Date,
-        default: Date.now,
-    },
-    expiryDate: Date,
-    // Event specific fields
-    eventDate: {
-        type: Date,
-        required: [true, 'Event date is required'],
-    },
-    time: {
-        type: String,
-        trim: true,
-    },
-    // Online / Onsite mode
-    mode: {
-        type: String,
-        enum: ['Online', 'Onsite'],
-        default: 'Onsite',
-    },
-    location: {
-        type: String,
-        trim: true,
-    },
-    organizer: {
-        type: String,
-        trim: true,
-    },
-    contact: {
-        type: String,
-        trim: true,
-    },
-    rsvpLink: {
-        type: String,
-        trim: true,
-    },
-    admissions: [admissionSchema],
-    registrationRequired: {
+    requiresApproval: {
         type: Boolean,
-        default: false,
-    },
-    registrationStart: Date,
-    registrationEnd: Date,
-    // Media
-    coverImage: {
-        type: String,
-        default: null,
-    },
-    views: {
-        type: Number,
-        default: 0,
-    },
-    galleryImages: {
-        type: [String],
-        default: [],
-    },
-    details: {
-        type: [
-            {
-                title: { type: String, trim: true },
-                items: { type: [String], default: [] },
-            },
-        ],
-        default: [],
+        default: true,
     },
 }, { timestamps: true });
+// Virtual for approved participants count
+eventSchema.virtual('approvedCount').get(function () {
+    return this.participants.filter((p) => p.status === 'approved').length;
+});
+// Virtual for dynamic status calculation (Upcoming | Ongoing | Ended)
+eventSchema.virtual('status').get(function () {
+    const now = new Date();
+    const startDate = new Date(this.date);
+    // If endDate is not provided, assume event lasts until the end of the start date's day
+    const endDate = this.endDate
+        ? new Date(this.endDate)
+        : new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), 23, 59, 59, 999); // End of the day
+    if (now < startDate) {
+        return 'Upcoming';
+    }
+    else if (now >= startDate && now <= endDate) {
+        return 'Ongoing';
+    }
+    else {
+        return 'Ended';
+    }
+});
+// Ensure virtuals are included in JSON/Object output
+eventSchema.set('toJSON', { virtuals: true });
+eventSchema.set('toObject', { virtuals: true });
 // Indexes
-eventSchema.index({ eventDate: -1 });
-eventSchema.index({ publishDate: -1 });
-eventSchema.index({ isPublished: 1, eventDate: -1 });
+eventSchema.index({ date: 1 });
+eventSchema.index({ isPublished: 1, date: 1 });
 eventSchema.index({ tags: 1 });
-eventSchema.index({ targetAudience: 1 });
-// Virtual to check if event is expired
-eventSchema.virtual('isExpired').get(function () {
-    if (!this.expiryDate)
-        return false;
-    return new Date() > this.expiryDate;
-});
-// Virtual to format date
-eventSchema.virtual('formattedDate').get(function () {
-    return this.eventDate?.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    }) || '';
-});
-// Method to increment views
-eventSchema.methods.incrementViews = function () {
-    this.views = (this.views || 0) + 1;
-    return this.save();
-};
 const Event = mongoose_1.default.model('Event', eventSchema);
 exports.default = Event;

@@ -23,7 +23,7 @@ export function startAnnouncementScheduler(intervalMs = 30_000) {
                 try {
                     const hasImage = (ann.imageUrl && ann.imageUrl.length > 0) || (ann.galleryImages && ann.galleryImages.length > 0);
                     if (!hasImage) {
-                        console.warn('🟠 Skipping publish for announcement', ann._id, '— at least one image is required (imageUrl or galleryImages)');
+                        console.warn('🟠 Skipping publish for announcement', ann._id, '— no featured image present');
                         continue;
                     }
 
