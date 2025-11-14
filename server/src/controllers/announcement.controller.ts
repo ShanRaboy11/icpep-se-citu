@@ -3,11 +3,15 @@ import Announcement, { IAnnouncement } from '../models/announcement';
 import { uploadToCloudinary, uploadMultipleToCloudinary, deleteFromCloudinary } from '../utils/cloudinary';
 import mongoose from 'mongoose';
 
-// Properly extend Request to include Multer file
-interface MulterRequest extends Request {
-    file?: Express.Multer.File;
-    files?: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] };
-}
+// Local Multer file shape (avoid relying on global Express.Multer augmentation)
+type MulterFile = MulterLocal.MulterFile;
+
+// Multer-aware request type without extending Express.Request to avoid
+// incompatible augmentation issues across different @types packages.
+type MulterRequest = Request & {
+    file?: MulterFile;
+    files?: MulterFile[] | { [fieldname: string]: MulterFile[] };
+};
 
 // Define query type for better type safety
 interface AnnouncementQuery {
@@ -74,16 +78,16 @@ export const createAnnouncement = async (
         let galleryImages: string[] | undefined = undefined;
 
         // Normalize multer files (can be array or object of arrays)
-        const filesArray: Express.Multer.File[] = Array.isArray(req.files)
-            ? (req.files as Express.Multer.File[])
+        const filesArray: MulterFile[] = Array.isArray(req.files)
+            ? (req.files as MulterFile[])
             : req.files && typeof req.files === 'object'
-                ? Object.values(req.files as { [key: string]: Express.Multer.File[] }).flat()
+                ? Object.values(req.files as { [key: string]: MulterFile[] }).flat()
                 : [];
 
         if (filesArray.length > 0) {
             try {
                 console.log(`📷 Uploading ${filesArray.length} image(s) to Cloudinary...`);
-                const results = await uploadMultipleToCloudinary(filesArray as { buffer: Buffer }[], 'announcements');
+            const results = await uploadMultipleToCloudinary(filesArray as { buffer: Buffer }[], 'announcements');
                 const urls = results.map((r) => r.secure_url).filter(Boolean) as string[];
                 if (urls.length > 0) {
                     imageUrl = urls[0];
@@ -102,7 +106,12 @@ export const createAnnouncement = async (
         } else if (req.file) {
             // Backwards compatibility for single-file uploads
             try {
-                const result = await uploadToCloudinary(req.file.buffer, 'announcements');
+                const fileBuf = (req.file as MulterFile).buffer;
+                if (!fileBuf) {
+                    res.status(400).json({ success: false, message: 'Uploaded file has no data' });
+                    return;
+                }
+                const result = await uploadToCloudinary(fileBuf, 'announcements');
                 imageUrl = result.secure_url;
                 galleryImages = imageUrl ? [imageUrl] : undefined;
                 console.log('✅ Image uploaded (single):', imageUrl);
@@ -352,10 +361,10 @@ export const updateAnnouncement = async (
 
         // Handle new image upload(s)
         // Normalize multer files (array or object)
-        const incomingFiles: Express.Multer.File[] = Array.isArray(req.files)
-            ? (req.files as Express.Multer.File[])
+        const incomingFiles: MulterFile[] = Array.isArray(req.files)
+            ? (req.files as MulterFile[])
             : req.files && typeof req.files === 'object'
-                ? Object.values(req.files as { [key: string]: Express.Multer.File[] }).flat()
+                ? Object.values(req.files as { [key: string]: MulterFile[] }).flat()
                 : [];
 
         if (incomingFiles.length > 0) {
@@ -377,7 +386,12 @@ export const updateAnnouncement = async (
             }
 
             // Upload new files
-            const results = await uploadMultipleToCloudinary(incomingFiles as { buffer: Buffer }[], 'announcements');
+            const buffers = incomingFiles.filter((f) => !!f.buffer).map((f) => ({ buffer: f.buffer as Buffer }));
+            if (buffers.length === 0) {
+                res.status(400).json({ success: false, message: 'No valid file data to upload' });
+                return;
+            }
+            const results = await uploadMultipleToCloudinary(buffers, 'announcements');
             const urls = results.map((r) => r.secure_url).filter(Boolean) as string[];
             if (urls.length > 0) {
                 req.body.galleryImages = JSON.stringify(urls);
