@@ -137,7 +137,7 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
     return await bcryptjs_1.default.compare(candidatePassword, this.password);
 };
 // Indexes
-// `unique: true` on studentNumber already creates an index — avoid duplicate index declarations
+userSchema.index({ studentNumber: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ 'membershipStatus.isMember': 1 });
 userSchema.index({ 'membershipStatus.membershipType': 1 });
