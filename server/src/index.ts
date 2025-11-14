@@ -31,21 +31,36 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // 2. Cookie Parser
 app.use(cookieParser());
 
-// 3. CORS - Allow multiple origins
-const allowedOrigins = [
+// 3. CORS - Allow multiple origins. The `FRONTEND_URL` env var may contain a
+// single origin or a comma-separated list of origins (e.g.
+// "https://app.example.com,https://other.example.com"). For quick debugging
+// you may set `ALLOW_ALL_ORIGINS=true` (NOT recommended for production).
+const defaultOrigins = [
   'http://localhost:3000',
   'https://icpep-se-citu.vercel.app',
-  process.env.FRONTEND_URL, 
-].filter(Boolean); 
+];
 
-console.log('🌐 Allowed CORS origins:', allowedOrigins);
+const envFrontends = (process.env.FRONTEND_URL || process.env.FRONTEND_URLS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envFrontends]));
+const allowAllOrigins = String(process.env.ALLOW_ALL_ORIGINS || 'false').toLowerCase() === 'true';
+
+console.log('🌐 CORS allowed origins:', allowedOrigins, 'ALLOW_ALL_ORIGINS=', allowAllOrigins);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, Postman, etc.)
+      // Allow requests with no origin (like mobile apps, Postman, or same-origin server requests)
       if (!origin) return callback(null, true);
-      
+
+      if (allowAllOrigins) {
+        console.log('✅ CORS allow-all enabled — allowing origin:', origin);
+        return callback(null, true);
+      }
+
       if (allowedOrigins.includes(origin)) {
         console.log('✅ CORS allowed for:', origin);
         callback(null, true);
