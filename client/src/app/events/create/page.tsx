@@ -965,7 +965,7 @@ export default function EventsPage() {
         </div>
       </main>
 
-      {showSuccessModal && (
+        {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/40"

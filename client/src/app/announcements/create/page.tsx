@@ -182,7 +182,9 @@ export default function AnnouncementsPage() {
       );
 
       console.log("✅ Announcement created successfully:", response);
+
       setSubmitSuccess(true);
+
       setShowSuccessModal(true);
 
       // reset form so user can create another immediately
@@ -1123,7 +1125,7 @@ export default function AnnouncementsPage() {
         </div>
       )}
 
-      <Footer />
+        <Footer />
     </section>
   );
 }
