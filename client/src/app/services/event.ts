@@ -1,6 +1,33 @@
 import axios, { AxiosError } from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Normalize API base URL and ensure it ends with `/api` so client requests
+// target the server endpoints even if the environment variable was set
+// without the trailing `/api` segment.
+const _RAW_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = (() => {
+    try {
+        let base = String(_RAW_API).replace(/\/+$/, '');
+        if (!base.endsWith('/api')) base = `${base}/api`;
+
+        if (typeof window !== 'undefined') {
+            try {
+                const baseHost = new URL(base).host;
+                const windowHost = window.location.host;
+                if (baseHost === windowHost && !process.env.NEXT_PUBLIC_API_URL) {
+                    console.warn(
+                        '⚠️ WARNING: API base defaults to same origin. In production set `NEXT_PUBLIC_API_URL` to your backend (including protocol).'
+                    );
+                }
+            } catch {
+                // ignore parsing errors
+            }
+        }
+
+        return base;
+    } catch {
+        return 'http://localhost:5000/api';
+    }
+})();
 
 // Create axios instance with default config
 const api = axios.create({
