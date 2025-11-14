@@ -10,25 +10,105 @@ const mongoose_1 = __importDefault(require("mongoose"));
 // Create a new announcement
 const createAnnouncement = async (req, res, next) => {
     try {
-        const { title, description, content, type, priority, targetAudience, isPublished, publishDate, expiryDate, time, location, organizer, contact, attendees, agenda, awardees, attachments, } = req.body;
+        console.log('🔵 CREATE ANNOUNCEMENT - START');
+        console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
+        console.log('📷 File present:', !!req.file);
+        console.log('📷 Files present:', !!req.files && req.files.length);
+        console.log('👤 User:', req.user);
+        const { title, description, content, type, priority, targetAudience, isPublished, publishDate, date, expiryDate, time, location, organizer, contact, attendees, agenda, awardees, attachments, } = req.body;
         // Get author from authenticated user
         const author = req.user?.id;
         if (!author) {
-            res.status(401).json({ message: 'User not authenticated' });
+            console.error('❌ No author ID found');
+            res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
             return;
         }
-        // Handle image upload if present
+        // Handle image upload(s) if present
         let imageUrl = null;
-        if (req.file) {
-            const result = await (0, cloudinary_1.uploadToCloudinary)(req.file.buffer, 'announcements');
-            imageUrl = result.secure_url;
+        let galleryImages = undefined;
+        // Normalize multer files (can be array or object of arrays)
+        const filesArray = Array.isArray(req.files)
+            ? req.files
+            : req.files && typeof req.files === 'object'
+                ? Object.values(req.files).flat()
+                : [];
+        if (filesArray.length > 0) {
+            try {
+                console.log(`📷 Uploading ${filesArray.length} image(s) to Cloudinary...`);
+                const results = await (0, cloudinary_1.uploadMultipleToCloudinary)(filesArray, 'announcements');
+                const urls = results.map((r) => r.secure_url).filter(Boolean);
+                if (urls.length > 0) {
+                    imageUrl = urls[0];
+                    galleryImages = urls;
+                }
+                console.log('✅ Images uploaded:', urls);
+            }
+            catch (uploadError) {
+                console.error('❌ Cloudinary upload failed:', uploadError);
+                res.status(500).json({
+                    success: false,
+                    message: 'Failed to upload image(s)',
+                    error: uploadError instanceof Error ? uploadError.message : 'Unknown error'
+                });
+                return;
+            }
         }
-        // Parse arrays if sent as strings
-        const parsedAgenda = agenda ? JSON.parse(agenda) : undefined;
-        const parsedAwardees = awardees ? JSON.parse(awardees) : undefined;
-        const parsedAttachments = attachments ? JSON.parse(attachments) : undefined;
-        const parsedTargetAudience = targetAudience ? JSON.parse(targetAudience) : ['all'];
-        const announcement = await announcement_1.default.create({
+        else if (req.file) {
+            // Backwards compatibility for single-file uploads
+            try {
+                const result = await (0, cloudinary_1.uploadToCloudinary)(req.file.buffer, 'announcements');
+                imageUrl = result.secure_url;
+                galleryImages = imageUrl ? [imageUrl] : undefined;
+                console.log('✅ Image uploaded (single):', imageUrl);
+            }
+            catch (uploadError) {
+                console.error('❌ Cloudinary upload failed:', uploadError);
+                res.status(500).json({ success: false, message: 'Failed to upload image', error: uploadError instanceof Error ? uploadError.message : 'Unknown error' });
+                return;
+            }
+        }
+        // Parse arrays if sent as strings with error handling
+        let parsedAgenda, parsedAwardees, parsedAttachments, parsedTargetAudience;
+        try {
+            parsedAgenda = agenda ? JSON.parse(agenda) : undefined;
+            parsedAwardees = awardees ? JSON.parse(awardees) : undefined;
+            parsedAttachments = attachments ? JSON.parse(attachments) : undefined;
+            parsedTargetAudience = targetAudience ? JSON.parse(targetAudience) : ['all'];
+        }
+        catch (parseError) {
+            console.error('❌ JSON parsing failed:', parseError);
+            res.status(400).json({
+                success: false,
+                message: 'Invalid JSON data in request',
+                error: parseError instanceof Error ? parseError.message : 'Unknown error'
+            });
+            return;
+        }
+        console.log('📝 Creating announcement with data:', {
+            title,
+            type,
+            author,
+            isPublished: isPublished === 'true' || isPublished === true,
+            targetAudience: parsedTargetAudience,
+            hasImage: !!imageUrl,
+        });
+        // Validate required fields
+        if (!title || !description || !content) {
+            console.error('❌ Missing required fields');
+            res.status(400).json({
+                success: false,
+                message: 'Missing required fields: title, description, or content'
+            });
+            return;
+        }
+        // Parse and normalize publishDate and date into Dates (if provided)
+        const now = new Date();
+        const parsedPublishDate = publishDate ? new Date(publishDate) : undefined;
+        const parsedDate = date ? new Date(date) : undefined;
+        const announcementData = {
             title,
             description,
             content,
@@ -36,8 +116,11 @@ const createAnnouncement = async (req, res, next) => {
             type,
             priority,
             targetAudience: parsedTargetAudience,
-            isPublished: isPublished === 'true' || isPublished === true,
-            publishDate: publishDate || Date.now(),
+            // store a Date if provided, otherwise default to now
+            publishDate: parsedPublishDate ?? new Date(),
+            date: parsedDate ?? undefined,
+            // initial isPublished flag based on incoming value; may be overridden below if scheduling
+            isPublished: (isPublished === 'true' || isPublished === true),
             expiryDate,
             time,
             location,
@@ -47,9 +130,29 @@ const createAnnouncement = async (req, res, next) => {
             agenda: parsedAgenda,
             awardees: parsedAwardees,
             imageUrl,
+            galleryImages,
             attachments: parsedAttachments,
+        };
+        // If a publishDate exists and it's in the future, ensure announcement remains unpublished until scheduler runs
+        if (parsedPublishDate && parsedPublishDate > now) {
+            announcementData.isPublished = false;
+        }
+        console.log('📝 Final announcement data (publishDate/isPublished):', {
+            publishDate: announcementData.publishDate,
+            isPublished: announcementData.isPublished,
         });
+        // Enforce that published announcements must have at least one featured image
+        const willBePublished = announcementData.isPublished === true;
+        if (willBePublished && (!announcementData.imageUrl && (!announcementData.galleryImages || announcementData.galleryImages.length === 0))) {
+            console.error('❌ Attempted to publish announcement without a featured image');
+            res.status(400).json({ success: false, message: 'A featured image is required when publishing an announcement.' });
+            return;
+        }
+        console.log('💾 Saving to database...');
+        const announcement = await announcement_1.default.create(announcementData);
+        console.log('👥 Populating author...');
         await announcement.populate('author', 'firstName lastName studentNumber');
+        console.log('✅ Announcement created successfully:', announcement._id);
         res.status(201).json({
             success: true,
             message: 'Announcement created successfully',
@@ -57,7 +160,17 @@ const createAnnouncement = async (req, res, next) => {
         });
     }
     catch (error) {
-        next(error);
+        console.error('❌ FATAL ERROR in createAnnouncement:', error);
+        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+        // Send error response
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create announcement',
+            error: error instanceof Error ? error.message : 'Unknown error',
+            ...(process.env.NODE_ENV === 'development' && {
+                stack: error instanceof Error ? error.stack : undefined
+            })
+        });
     }
 };
 exports.createAnnouncement = createAnnouncement;
@@ -144,14 +257,59 @@ const updateAnnouncement = async (req, res, next) => {
             res.status(404).json({ message: 'Announcement not found' });
             return;
         }
-        // Handle new image upload
-        if (req.file) {
-            // Delete old image if exists
-            if (announcement.imageUrl) {
-                await (0, cloudinary_1.deleteFromCloudinary)(announcement.imageUrl);
+        // Optional: Check if user is the author
+        // if (announcement.author.toString() !== userId) {
+        //     res.status(403).json({ message: 'Not authorized to update this announcement' });
+        //     return;
+        // }
+        // Handle new image upload(s)
+        // Normalize multer files (array or object)
+        const incomingFiles = Array.isArray(req.files)
+            ? req.files
+            : req.files && typeof req.files === 'object'
+                ? Object.values(req.files).flat()
+                : [];
+        if (incomingFiles.length > 0) {
+            // Delete old images if they exist
+            if (announcement.galleryImages && announcement.galleryImages.length > 0) {
+                for (const url of announcement.galleryImages) {
+                    try {
+                        await (0, cloudinary_1.deleteFromCloudinary)(url);
+                    }
+                    catch (err) {
+                        console.warn('Failed to delete old announcement gallery image:', err);
+                    }
+                }
             }
-            const result = await (0, cloudinary_1.uploadToCloudinary)(req.file.buffer, 'announcements');
-            req.body.imageUrl = result.secure_url;
+            else if (announcement.imageUrl) {
+                try {
+                    await (0, cloudinary_1.deleteFromCloudinary)(announcement.imageUrl);
+                }
+                catch (err) {
+                    console.warn('Failed to delete old announcement image:', err);
+                }
+            }
+            // Upload new files
+            const results = await (0, cloudinary_1.uploadMultipleToCloudinary)(incomingFiles, 'announcements');
+            const urls = results.map((r) => r.secure_url).filter(Boolean);
+            if (urls.length > 0) {
+                req.body.galleryImages = JSON.stringify(urls);
+                req.body.imageUrl = urls[0];
+            }
+        }
+        // If the request is attempting to publish the announcement, ensure at least one image exists
+        // But if the incoming publishDate is in the future, treat as scheduling (do not publish now)
+        const incomingPublishDate = req.body.publishDate ? new Date(req.body.publishDate) : null;
+        if (incomingPublishDate && incomingPublishDate > new Date()) {
+            // ensure we don't publish immediately
+            req.body.isPublished = false;
+        }
+        const requestWantsPublish = req.body.isPublished === 'true' || req.body.isPublished === true;
+        const existingHasImage = (announcement.imageUrl && announcement.imageUrl.length > 0) || (announcement.galleryImages && announcement.galleryImages.length > 0);
+        const incomingHasImage = (req.body.imageUrl && String(req.body.imageUrl).length > 0) || (req.body.galleryImages && String(req.body.galleryImages).length > 0);
+        if (requestWantsPublish && !existingHasImage && !incomingHasImage) {
+            res.status(400).json({ success: false, message: 'A featured image is required to publish an announcement.' });
+            return;
         }
         // Parse arrays if they are strings
         if (req.body.agenda && typeof req.body.agenda === 'string') {
@@ -165,6 +323,15 @@ const updateAnnouncement = async (req, res, next) => {
         }
         if (req.body.targetAudience && typeof req.body.targetAudience === 'string') {
             req.body.targetAudience = JSON.parse(req.body.targetAudience);
+        }
+        // Parse date string into Date for updates
+        if (req.body.date && typeof req.body.date === 'string') {
+            try {
+                req.body.date = new Date(req.body.date);
+            }
+            catch (e) {
+                // leave as-is if parsing fails; validation will catch it
+            }
         }
         const updatedAnnouncement = await announcement_1.default.findByIdAndUpdate(id, req.body, { new: true, runValidators: true }).populate('author', 'firstName lastName studentNumber');
         res.status(200).json({
@@ -192,8 +359,23 @@ const deleteAnnouncement = async (req, res, next) => {
             res.status(404).json({ message: 'Announcement not found' });
             return;
         }
-        // Delete image from cloudinary if exists
-        if (announcement.imageUrl) {
+        // Optional: Check if user is the author
+        // if (announcement.author.toString() !== userId) {
+        //     res.status(403).json({ message: 'Not authorized to delete this announcement' });
+        //     return;
+        // }
+        // Delete image(s) from cloudinary if exist
+        if (announcement.galleryImages && announcement.galleryImages.length > 0) {
+            for (const url of announcement.galleryImages) {
+                try {
+                    await (0, cloudinary_1.deleteFromCloudinary)(url);
+                }
+                catch (err) {
+                    console.warn('Failed to delete announcement gallery image:', err);
+                }
+            }
+        }
+        else if (announcement.imageUrl) {
             await (0, cloudinary_1.deleteFromCloudinary)(announcement.imageUrl);
         }
         await announcement.deleteOne();
@@ -221,6 +403,11 @@ const togglePublishStatus = async (req, res, next) => {
             res.status(404).json({ message: 'Announcement not found' });
             return;
         }
+        // Optional: Check if user is the author
+        // if (announcement.author.toString() !== userId) {
+        //     res.status(403).json({ message: 'Not authorized to modify this announcement' });
+        //     return;
+        // }
         announcement.isPublished = !announcement.isPublished;
         // Set publish date when publishing for the first time
         if (announcement.isPublished && !announcement.publishDate) {
@@ -284,6 +471,10 @@ const getMyAnnouncements = async (req, res, next) => {
     try {
         const userId = req.user?.id;
         const { page = 1, limit = 10, status } = req.query;
+        if (!userId) {
+            res.status(401).json({ message: 'User not authenticated' });
+            return;
+        }
         const query = { author: userId };
         if (status === 'published') {
             query.isPublished = true;
@@ -295,6 +486,7 @@ const getMyAnnouncements = async (req, res, next) => {
         const limitNum = parseInt(limit);
         const skip = (pageNum - 1) * limitNum;
         const announcements = await announcement_1.default.find(query)
+            .populate('author', 'firstName lastName studentNumber')
             .sort('-createdAt')
             .skip(skip)
             .limit(limitNum);

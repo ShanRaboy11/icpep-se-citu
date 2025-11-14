@@ -31,15 +31,9 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // 2. Cookie Parser
 app.use(cookieParser());
 
-// 3. CORS - Allow multiple origins. The `FRONTEND_URL` env var may contain a
-// single origin or a comma-separated list of origins (e.g.
-// "https://app.example.com,https://other.example.com"). For quick debugging
-// you may set `ALLOW_ALL_ORIGINS=true` (NOT recommended for production).
-const defaultOrigins = [
-  'http://localhost:3000',
-  'https://icpep-se-citu.vercel.app',
-];
-
+// 3. CORS - Allow multiple origins. Support comma-separated FRONTEND_URL(s)
+// and allow vercel subdomains by default (useful for preview deployments).
+const defaultOrigins = ['http://localhost:3000', 'https://icpep-se-citu.vercel.app'];
 const envFrontends = (process.env.FRONTEND_URL || process.env.FRONTEND_URLS || '')
   .split(',')
   .map((s) => s.trim())
@@ -47,13 +41,14 @@ const envFrontends = (process.env.FRONTEND_URL || process.env.FRONTEND_URLS || '
 
 const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envFrontends]));
 const allowAllOrigins = String(process.env.ALLOW_ALL_ORIGINS || 'false').toLowerCase() === 'true';
+const allowVercelSubdomains = String(process.env.ALLOW_VERCEL_SUBDOMAINS ?? 'true').toLowerCase() === 'true';
 
-console.log('🌐 CORS allowed origins:', allowedOrigins, 'ALLOW_ALL_ORIGINS=', allowAllOrigins);
+console.log('🌐 CORS configuration — allowedOrigins:', allowedOrigins, 'ALLOW_ALL_ORIGINS=', allowAllOrigins, 'ALLOW_VERCEL_SUBDOMAINS=', allowVercelSubdomains);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, Postman, or same-origin server requests)
+      // Allow requests with no origin (like Postman or same-origin server requests)
       if (!origin) return callback(null, true);
 
       if (allowAllOrigins) {
@@ -61,13 +56,52 @@ app.use(
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
-        console.log('✅ CORS allowed for:', origin);
-        callback(null, true);
-      } else {
-        console.log('❌ CORS blocked for:', origin);
-        callback(new Error('Not allowed by CORS'));
+      try {
+        const originHost = new URL(origin).host;
+
+        // Allow vercel preview subdomains (e.g. *.vercel.app) when enabled
+        if (allowVercelSubdomains && originHost.endsWith('.vercel.app')) {
+          console.log('✅ CORS allowed vercel subdomain:', origin);
+          return callback(null, true);
+        }
+
+        // Direct match against configured allowed origins (may include protocol)
+        if (allowedOrigins.includes(origin)) {
+          console.log('✅ CORS allowed for (direct match):', origin);
+          return callback(null, true);
+        }
+
+        // Try matching by host (handles entries like https://example.com)
+        for (const allowed of allowedOrigins) {
+          try {
+            const allowedHost = new URL(allowed).host;
+            if (allowedHost === originHost) {
+              console.log('✅ CORS allowed for (host match):', origin);
+              return callback(null, true);
+            }
+          } catch {
+            // ignore malformed allowed entries
+          }
+        }
+
+        // Support wildcard-like entries in allowedOrigins using '*' (e.g. *.example.com)
+        for (const allowed of allowedOrigins) {
+          if (allowed.includes('*')) {
+            // Convert wildcard entry to regex: escape dots, replace '*' with '.*'
+            const regexStr = allowed.replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&').replace(/\\\*/g, '.*');
+            const re = new RegExp(`^${regexStr}$`);
+            if (re.test(origin)) {
+              console.log('✅ CORS allowed by wildcard pattern:', origin, 'pattern:', allowed);
+              return callback(null, true);
+            }
+          }
+        }
+      } catch {
+        // If URL parsing fails, fall through to blocked log
       }
+
+      console.log('❌ CORS blocked for:', origin);
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
