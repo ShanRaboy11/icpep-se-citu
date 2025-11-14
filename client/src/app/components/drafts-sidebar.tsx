@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { Megaphone, CalendarDays } from "lucide-react";
 import clsx from "clsx";
 
