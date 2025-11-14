@@ -12,6 +12,7 @@
     "@heroicons/react": "^2.2.0",
     "@react-three/drei": "^10.7.6",
     "@react-three/fiber": "^9.4.0",
+    "@studio-freight/lenis": "^1.0.42",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "embla-carousel-autoplay": "^8.6.0",
