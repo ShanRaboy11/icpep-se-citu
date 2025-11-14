@@ -10,7 +10,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
-import announcementRoutes from '../src/routes/announcements.route';
+import announcementRoutes from './routes/announcements.route';
 import eventRoutes from './routes/event.routes';
 import startAnnouncementScheduler from './utils/scheduler';
 
