@@ -148,11 +148,12 @@ const AboutPage: FC = () => {
 
           {/* ... Your unchanged bottom section ... */}
           <div className="w-full max-w-7xl mx-auto px-6 pb-24">
-            <section className="mt-40">
-              <h2 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 text-center mb-4">
+            {/* MOD: Increased top margin from mt-40 to mt-48 to push this section down slightly */}
+            <section className="mt-48">
+              <h2 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 text-center mb-4">
                 CPE Department Faculty
               </h2>
-              <p className="font-raleway text-gray-600 text-center max-w-2xl mx-auto mb-16">
+              <p className="font-raleway text-gray-600 text-center text-base sm:text-lg max-w-3xl mx-auto mb-16">
                 The esteemed faculty members of the Computer Engineering
                 department who mentor and inspire the next generation.
               </p>
