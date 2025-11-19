@@ -6,12 +6,11 @@ import Grid from "../components/grid";
 import InfoSection from "./sections/info";
 import AdvisorsSection from "./sections/advisors";
 import StudentLeadersSection from "./sections/student-leaders";
-import ProfileCard from "./components/profile-card"; // MOD: Import the new component
+import FacultySection from "./sections/faculty"; // MOD: Import the new component
 
 import { FC } from "react";
 
-// --- COMPONENT FOR FACULTY PROFILE CARD (LOCAL TO THIS PAGE) ---
-// MOD: The ProfileCard component has been moved to its own file.
+// MOD: ProfileCard component is now inside FacultySection.tsx, so it's removed from here.
 
 // --- DATA DEFINITIONS ---
 interface OfficerTerm {
@@ -32,13 +31,38 @@ const officerHistory: OfficerTerm[] = [
   { term: "A.Y. 2020 - 2020" },
 ];
 
+// MOD: Added more faculty members to demonstrate the new layout
 const departmentFaculty: FacultyMember[] = [
   {
-    name: "Dr. Richard Roe",
-    position: "Professor, AI & Machine Learning",
-    imageUrl: "/gle.png",
+    name: "Engr. Roel P. Lauron",
+    position: "Department Head",
+    imageUrl: "/gle.png", // Replace with actual image path
   },
-  // ... other faculty
+  {
+    name: "Dr. Jane Doe",
+    position: "Professor, Embedded Systems",
+    imageUrl: "/gle.png", // Replace with actual image path
+  },
+  {
+    name: "Engr. John Smith",
+    position: "Assoc. Professor, Networking",
+    imageUrl: "/gle.png", // Replace with actual image path
+  },
+  {
+    name: "Dr. Emily White",
+    position: "Professor, VLSI Design",
+    imageUrl: "/gle.png", // Replace with actual image path
+  },
+  {
+    name: "Engr. Michael Brown",
+    position: "Instructor, IoT",
+    imageUrl: "/gle.png", // Replace with actual image path
+  },
+  {
+    name: "Dr. Sarah Green",
+    position: "Professor, Signal Processing",
+    imageUrl: "/gle.png", // Replace with actual image path
+  },
 ];
 
 // --- MAIN PAGE COMPONENT ---
@@ -54,7 +78,7 @@ const AboutPage: FC = () => {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <div className="flex-grow">
-          {/* ... Your unchanged top section ... */}
+          {/* Top Section */}
           <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem]">
             <div className="mb-20 text-center">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
@@ -77,25 +101,9 @@ const AboutPage: FC = () => {
 
           <StudentLeadersSection history={officerHistory} />
 
-          {/* ... Your unchanged bottom section ... */}
-          <div className="w-full max-w-7xl mx-auto px-6 pb-24">
-            <section className="mt-48">
-              <h2 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 text-center mb-4">
-                CPE Department Faculty
-              </h2>
-              <p className="font-raleway text-gray-600 text-center text-base sm:text-lg max-w-3xl mx-auto mb-16">
-                The esteemed faculty members of the Computer Engineering
-                department who mentor and inspire the next generation.
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 justify-items-center">
-                {departmentFaculty.map((faculty) => (
-                  <ProfileCard key={faculty.name} {...faculty} />
-                ))}
-              </div>
-            </section>
-          </div>
+          {/* MOD: Replaced the old faculty section with the new component */}
+          <FacultySection faculty={departmentFaculty} />
         </div>
-
         <Footer />
       </div>
     </div>

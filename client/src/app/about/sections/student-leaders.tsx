@@ -1,17 +1,12 @@
 "use client";
 
 import { FC } from "react";
-import YearCard from "../components/year-card"; // MOD: Import the new component
+import YearCard from "../components/year-card";
 
-// --- TYPE DEFINITIONS ---
 interface OfficerTerm {
   term: string;
 }
 
-// --- COMPONENT FOR INDIVIDUAL CARD ---
-// MOD: The YearCard component has been moved to its own file.
-
-// --- MAIN SECTION COMPONENT ---
 interface StudentLeadersSectionProps {
   history: OfficerTerm[];
 }
