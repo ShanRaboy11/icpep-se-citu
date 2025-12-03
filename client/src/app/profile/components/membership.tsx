@@ -10,7 +10,7 @@ export function MembershipBadge({ type }: MembershipBadgeProps) {
   };
 
   const label = {
-    both: "Both",
+    both: "Local & Regional Member",
     local: "Local",
     regional: "Regional",
   };

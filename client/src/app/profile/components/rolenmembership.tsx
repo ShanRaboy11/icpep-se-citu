@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, Award, Users } from "lucide-react";
+import { Handshake } from "lucide-react";
 import { MembershipBadge } from "./membership";
 
 interface RolenMembershipInformationProps {
@@ -38,7 +38,7 @@ export default function RolenMembershipInformation({
       {/* Header with icon */}
       <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-primary1/20">
         <div className="p-2 bg-primary1/10 rounded-lg hover:bg-primary1/20 transition-colors duration-300">
-          <Shield className="w-5 h-5 text-primary1" />
+          <Handshake className="w-5 h-5 text-primary1" />
         </div>
         <h2 className="text-xl sm:text-2xl font-rubik text-primary3 font-bold">
           Role & Membership
@@ -48,12 +48,7 @@ export default function RolenMembershipInformation({
       <div className="flex flex-col gap-5 text-sm md:text-base">
         {/* Role */}
         <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-50 rounded-lg">
-              <Shield className="w-4 h-4 text-indigo-600" />
-            </div>
-            <span className="text-gray-700 font-raleway text-lg font-medium">Role</span>
-          </div>
+          <span className="text-gray-700 font-raleway text-lg font-medium">Role</span>
           <span className="font-rubik text-primary3 text-lg font-semibold sm:mr-10">
             {displayRole}
           </span>
@@ -62,12 +57,9 @@ export default function RolenMembershipInformation({
         {/* Position (only for officers) */}
         {isOfficer && (
           <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-50 rounded-lg">
-                <Award className="w-4 h-4 text-amber-600" />
+              <div className="flex items-center gap-3">
+                <span className="text-gray-700 font-raleway text-lg font-medium">Position</span>
               </div>
-              <span className="text-gray-700 font-raleway text-lg font-medium">Position</span>
-            </div>
             <span className="font-rubik text-primary3 text-lg font-semibold sm:mr-10">
               {position}
             </span>
@@ -76,12 +68,7 @@ export default function RolenMembershipInformation({
 
         {/* Membership */}
         <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-cyan-50 rounded-lg">
-              <Users className="w-4 h-4 text-cyan-600" />
-            </div>
-            <span className="text-gray-700 font-raleway text-lg font-medium">Membership</span>
-          </div>
+          <span className="text-gray-700 font-raleway text-lg font-medium">Membership</span>
           <MembershipBadge type={membership} />
         </div>
       </div>

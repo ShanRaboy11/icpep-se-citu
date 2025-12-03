@@ -1,6 +1,6 @@
 "use client";
 
-import { User, IdCard, GraduationCap, Mail } from "lucide-react";
+import { User } from "lucide-react";
 
 interface PersonalInformationProps {
   fullName: string;
@@ -30,12 +30,7 @@ export default function PersonalInformation({
       <div className="flex flex-col gap-5 text-sm md:text-base">
         {/* Full Name */}
         <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <User className="w-4 h-4 text-blue-600" />
-            </div>
-            <span className="text-gray-700 font-raleway text-lg font-medium">Full Name</span>
-          </div>
+          <span className="text-gray-700 font-raleway text-lg font-medium">Full Name</span>
           <span className="font-rubik text-primary3 text-lg font-semibold sm:mr-10 text-right">
             {fullName}
           </span>
@@ -43,12 +38,7 @@ export default function PersonalInformation({
 
         {/* ID Number */}
         <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-50 rounded-lg">
-              <IdCard className="w-4 h-4 text-purple-600" />
-            </div>
-            <span className="text-gray-700 font-raleway text-lg font-medium">ID Number</span>
-          </div>
+          <span className="text-gray-700 font-raleway text-lg font-medium">ID Number</span>
           <span className="font-rubik text-primary3 text-lg font-semibold sm:mr-10">
             {idNumber}
           </span>
@@ -56,12 +46,7 @@ export default function PersonalInformation({
 
         {/* Year Level */}
         <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-50 rounded-lg">
-              <GraduationCap className="w-4 h-4 text-green-600" />
-            </div>
-            <span className="text-gray-700 font-raleway text-lg font-medium">Year Level</span>
-          </div>
+          <span className="text-gray-700 font-raleway text-lg font-medium">Year Level</span>
           <span className="font-rubik text-primary3 text-lg font-semibold sm:mr-10">
             {yearLevel}
           </span>
@@ -69,14 +54,9 @@ export default function PersonalInformation({
 
         {/* Email */}
         <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-50 rounded-lg">
-              <Mail className="w-4 h-4 text-orange-600" />
-            </div>
-            <span className="text-gray-700 font-raleway text-lg font-medium">
-              Institutional Email
-            </span>
-          </div>
+          <span className="text-gray-700 font-raleway text-lg font-medium">
+            Institutional Email
+          </span>
           <span className="font-rubik text-primary3 text-lg font-semibold sm:mr-10 truncate max-w-xs text-right">
             {email}
           </span>

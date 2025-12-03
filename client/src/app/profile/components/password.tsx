@@ -1,7 +1,8 @@
 "use client";
-import { Lock, X, Key, Shield, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, Shield, CheckCircle2, AlertCircle } from "lucide-react";
 import Button from "@/app/components/button";
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import authService from '@/app/services/auth';
 
 export default function SecuritySection() {
@@ -88,9 +89,6 @@ export default function SecuritySection() {
 
       <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-red-50 rounded-lg">
-            <Lock className="w-4 h-4 text-red-600" />
-          </div>
           <span className="text-gray-700 font-raleway text-lg font-medium">Password</span>
         </div>
 
@@ -104,14 +102,13 @@ export default function SecuritySection() {
             className="flex items-center gap-2 whitespace-nowrap hover:scale-105 transition-transform duration-200"
             onClick={openModal}
           >
-            <Key className="w-4 h-4" />
             Update
           </Button>
         </div>
       </div>
 
-      {/* Enhanced Modal */}
-      {open && (
+      {/* Enhanced Modal (rendered into document.body via portal to avoid clipping by parent stacking contexts) */}
+      {open && createPortal(
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal} />
           <div
@@ -126,16 +123,13 @@ export default function SecuritySection() {
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary1/10 rounded-lg">
-                  <Lock className="w-5 h-5 text-primary1" />
-                </div>
                 <h3 id="change-password-title" className="text-xl font-rubik font-bold text-primary3">
                   Change Password
                 </h3>
               </div>
-              <button 
-                onClick={closeModal} 
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200" 
+              <button
+                onClick={closeModal}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                 aria-label="Close"
               >
                 <X className="w-5 h-5 text-gray-500" />
@@ -219,7 +213,7 @@ export default function SecuritySection() {
                 <button 
                   type="button" 
                   onClick={closeModal} 
-                  className="px-6 py-2.5 rounded-xl border-2 border-gray-200 font-rubik font-semibold text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                  className="px-6 py-2.5 rounded-xl border-2 border-gray-200 font-rubik font-semibold text-gray-700 hover:cursor-pointer hover:bg-gray-300 transition-colors duration-200"
                 >
                   Cancel
                 </button>
@@ -235,16 +229,14 @@ export default function SecuritySection() {
                       Updating...
                     </>
                   ) : (
-                    <>
-                      <Key className="w-4 h-4" />
-                      Update Password
-                    </>
+                    <>Update Password</>
                   )}
                 </Button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style jsx>{`
