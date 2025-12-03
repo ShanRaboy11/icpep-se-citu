@@ -1,12 +1,12 @@
-//rolenmembership.tsx
 "use client";
 
+import { Shield, Award, Users } from "lucide-react";
 import { MembershipBadge } from "./membership";
 
 interface RolenMembershipInformationProps {
-  role?: string | null; // 'student' | 'council-officer' | 'committee-officer' | 'faculty'
-  councilRole?: string | null; // optional descriptive position text returned by API
-  committeeRole?: string | null; // optional descriptive position text returned by API
+  role?: string | null;
+  councilRole?: string | null;
+  committeeRole?: string | null;
   membership: "both" | "local" | "regional";
 }
 
@@ -20,7 +20,6 @@ export default function RolenMembershipInformation({
   const isCommitteeOfficer = role === 'committee-officer';
   const isOfficer = isCouncilOfficer || isCommitteeOfficer;
 
-  // Determine displayed position: prefer explicit council/committee position text
   let position = '—';
   if (isCouncilOfficer && councilRole) position = councilRole;
   else if (isCommitteeOfficer && committeeRole) position = committeeRole;
@@ -35,30 +34,54 @@ export default function RolenMembershipInformation({
   const displayRole = role ? (roleLabelMap[role] ?? role) : 'Student';
 
   return (
-    <div className="w-full border border-primary1 rounded-lg p-5 px-7 sm:px-10 sm:py-8 bg-white shadow-sm">
-      <h2 className="text-xl sm:text-2xl font-rubik text-black font-semibold mb-4 border-b border-primary1 pb-2">
-        Role & Membership
-      </h2>
+    <div className="w-full border border-primary1/30 rounded-2xl p-6 px-7 sm:px-10 sm:py-8 bg-white shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+      {/* Header with icon */}
+      <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-primary1/20">
+        <div className="p-2 bg-primary1/10 rounded-lg hover:bg-primary1/20 transition-colors duration-300">
+          <Shield className="w-5 h-5 text-primary1" />
+        </div>
+        <h2 className="text-xl sm:text-2xl font-rubik text-primary3 font-bold">
+          Role & Membership
+        </h2>
+      </div>
 
       <div className="flex flex-col gap-5 text-sm md:text-base">
-        <div className="flex flex-row md:items-center justify-between">
-          <span className="text-black font-raleway text-lg">Role</span>
-          <span className="font-rubik text-black text-lg font-md sm:mr-10">
+        {/* Role */}
+        <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-50 rounded-lg">
+              <Shield className="w-4 h-4 text-indigo-600" />
+            </div>
+            <span className="text-gray-700 font-raleway text-lg font-medium">Role</span>
+          </div>
+          <span className="font-rubik text-primary3 text-lg font-semibold sm:mr-10">
             {displayRole}
           </span>
         </div>
 
+        {/* Position (only for officers) */}
         {isOfficer && (
-          <div className="flex flex-row md:items-center justify-between">
-            <span className="text-black font-raleway text-lg">Position</span>
-            <span className="font-rubik text-black text-lg font-md sm:mr-10">
+          <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-50 rounded-lg">
+                <Award className="w-4 h-4 text-amber-600" />
+              </div>
+              <span className="text-gray-700 font-raleway text-lg font-medium">Position</span>
+            </div>
+            <span className="font-rubik text-primary3 text-lg font-semibold sm:mr-10">
               {position}
             </span>
           </div>
         )}
 
-        <div className="flex flex-row md:items-center justify-between">
-          <span className="text-black font-raleway text-lg">Membership</span>
+        {/* Membership */}
+        <div className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-colors duration-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-cyan-50 rounded-lg">
+              <Users className="w-4 h-4 text-cyan-600" />
+            </div>
+            <span className="text-gray-700 font-raleway text-lg font-medium">Membership</span>
+          </div>
           <MembershipBadge type={membership} />
         </div>
       </div>

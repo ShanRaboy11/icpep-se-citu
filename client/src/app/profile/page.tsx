@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, User, Mail, Calendar, Shield, Award, Users } from "lucide-react";
 import { useEffect, useState } from 'react';
 import PersonalInformation from "./components/personalinfo";
 import RolenMembershipInformation from "./components/rolenmembership";
@@ -46,79 +46,136 @@ export default function ProfilePage() {
 
     load();
   }, []);
+
   return (
-    <section className="min-h-screen bg-white flex flex-col relative">
+    <section className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 flex flex-col relative">
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow w-full max-w-7xl mx-auto px-6 mb-5git pt-[9.5rem] pb-12">
-          {/* Page Title */}
-
-          {/* Title Section */}
-          <div className="mb-16 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-              <div className="h-2 w-2 rounded-full bg-primary1"></div>
+        <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
+          {/* Title Section with enhanced styling */}
+          <div className="mb-12 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary1/10 to-primary1/5 px-4 py-1.5 mb-4 border border-primary1/20">
+              <div className="h-2 w-2 rounded-full bg-primary1 animate-pulse"></div>
               <span className="font-raleway text-sm font-semibold text-primary1">
                 COMPanion Information
               </span>
             </div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-              Profile
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary3 to-primary1 bg-clip-text text-transparent leading-tight mb-4">
+              Profile Overview
             </h1>
             <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-              View your details and membership credentials within the ICpEP SE
-              CIT-U Chapter.
+              View your details and membership credentials within the ICpEP SE CIT-U Chapter.
             </p>
           </div>
 
-          <div className="relative bg-[#00A8FF] rounded-2xl p-10 flex flex-col sm:flex-row items-center gap-5 sm:gap-10 text-white mb-6 overflow-hidden">
-            <div className="w-40 h-40 rounded-full bg-blue-100 sm:ml-5 ml-0 border-primary1 border-2 flex items-center justify-center">
-              <Image
-                src={user?.avatar || '/officer.svg'}
-                alt="Profile Photo"
-                width={120}
-                height={120}
-              />
+          {/* Enhanced Profile Header Card */}
+          <div className="relative bg-gradient-to-br from-[#00A8FF] via-[#0095E8] to-[#0082D1] rounded-3xl p-8 sm:p-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-10 text-white mb-8 overflow-hidden shadow-xl border border-white/20">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
+            
+            {/* Profile Image with enhanced styling */}
+            <div className="relative z-10">
+              <div className="w-40 h-40 rounded-full bg-gradient-to-br from-white to-blue-50 p-1 shadow-2xl">
+                <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                  {loading ? (
+                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse"></div>
+                  ) : (
+                    <Image
+                      src={user?.avatar || '/officer.svg'}
+                      alt="Profile Photo"
+                      width={150}
+                      height={150}
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+              </div>
+              {/* Status indicator */}
+              <div className="absolute bottom-2 right-2 w-6 h-6 bg-green-400 rounded-full border-4 border-white shadow-lg"></div>
             </div>
-            <div className="text-center sm:text-left">
-              <h2 className="text-4xl font-bold font-rubik mb-1">
-                {loading ? 'Loading...' : (user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : 'Unknown')}
+
+            {/* User Info */}
+            <div className="text-center sm:text-left relative z-10 flex-grow">
+              <h2 className="text-4xl font-bold font-rubik mb-2 drop-shadow-md">
+                {loading ? (
+                  <span className="inline-block h-10 w-48 bg-white/20 rounded-lg animate-pulse"></span>
+                ) : (
+                  `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || 'Unknown'
+                )}
               </h2>
-              <p className="text-2xl opacity-90 font-rubik">
-                {loading ? '' : formatYearLevel(user?.yearLevel)}
+              <p className="text-xl opacity-90 font-rubik mb-4 drop-shadow">
+                {loading ? (
+                  <span className="inline-block h-6 w-32 bg-white/20 rounded-lg animate-pulse"></span>
+                ) : (
+                  formatYearLevel(user?.yearLevel)
+                )}
               </p>
+              
+              {/* Quick info badges */}
+              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                {!loading && user?.studentNumber && (
+                  <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm border border-white/30">
+                    <User className="w-3.5 h-3.5" />
+                    <span>{user.studentNumber}</span>
+                  </div>
+                )}
+                {!loading && user?.email && (
+                  <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm border border-white/30">
+                    <Mail className="w-3.5 h-3.5" />
+                    <span className="truncate max-w-[200px]">{user.email}</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="absolute right-[5%] top-3/4 transform -translate-y-1/2 w-[80%] h-[180%] opacity-15 pointer-events-none z-0 hidden sm:block">
+
+            {/* Logo watermark - enhanced */}
+            <div className="absolute right-[5%] top-1/2 transform -translate-y-1/2 w-[70%] h-[160%] opacity-10 pointer-events-none z-0 hidden sm:block">
               <Image
                 src="/icpep logo.png"
                 alt="ICpEP-SE Logo"
                 fill
-                className="object-contain object-right mix-blend-soft-light"
+                className="object-contain object-right"
                 sizes="(max-width: 768px) 150px, 300px"
               />
             </div>
           </div>
 
-          <div className="w-full  flex flex-col gap-6 mb-5">
-            <PersonalInformation
-              fullName={loading ? 'Loading...' : (user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : 'Unknown')}
-              idNumber={loading ? '—' : (user?.studentNumber ?? '—')}
-              yearLevel={loading ? '—' : (user?.yearLevel ?? '—')}
-              email={loading ? '—' : (user?.email ?? '—')}
-            />
-            <RolenMembershipInformation
-              role={loading ? undefined : (user?.role ?? undefined)}
-              councilRole={loading ? undefined : (user?.councilRole ?? undefined)}
-              committeeRole={loading ? undefined : (user?.committeeRole ?? undefined)}
-              membership={
-                (user?.membership as any) ??
-                // fallback if server returns membership inside membershipStatus
-                ((user as any)?.membershipStatus?.membershipType ?? 'both')
-              }
-            />
+          {/* Information Cards with enhanced styling - removed transform that breaks modals */}
+          <div className="w-full flex flex-col gap-6 mb-8">
+            <div className="transition-shadow duration-300 hover:shadow-lg">
+              <PersonalInformation
+                fullName={loading ? 'Loading...' : (user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : 'Unknown')}
+                idNumber={loading ? '—' : (user?.studentNumber ?? '—')}
+                yearLevel={loading ? '—' : (user?.yearLevel ?? '—')}
+                email={loading ? '—' : (user?.email ?? '—')}
+              />
+            </div>
+            
+            <div className="transition-shadow duration-300 hover:shadow-lg">
+              <RolenMembershipInformation
+                role={loading ? undefined : (user?.role ?? undefined)}
+                councilRole={loading ? undefined : (user?.councilRole ?? undefined)}
+                committeeRole={loading ? undefined : (user?.committeeRole ?? undefined)}
+                membership={
+                  (user?.membership as any) ??
+                  ((user as any)?.membershipStatus?.membershipType ?? 'both')
+                }
+              />
+            </div>
 
-            <SecuritySection />
+            <div className="transition-shadow duration-300 hover:shadow-lg">
+              <SecuritySection />
+            </div>
           </div>
+
+          {/* Error display if needed */}
+          {error && (
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-center">
+              {error}
+            </div>
+          )}
         </main>
         <Footer />
       </div>
