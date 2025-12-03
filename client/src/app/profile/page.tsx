@@ -1,23 +1,51 @@
+"use client";
+
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
+import { useEffect, useState } from 'react';
 import PersonalInformation from "./components/personalinfo";
 import RolenMembershipInformation from "./components/rolenmembership";
 import SecuritySection from "./components/password";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import Grid from "../components/grid";
+import userService, { CurrentUser } from '../services/user';
 
 export default function ProfilePage() {
-  const user = {
-    name: "Shan Raboy",
-    yearLevel: "3",
-    idNumber: "12-3456-789",
-    email: "gio.macatual@cit.edu",
-    councilRole: "Vice President - Internal",
-    committeeRole: "Head of Internal Affairs",
-    membership: "both",
+  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Format year level as ordinal (1 -> 1st Year, 2 -> 2nd Year, etc.)
+  const formatYearLevel = (value: string | number | undefined | null) => {
+    if (value === undefined || value === null || value === '') return '';
+    const n = typeof value === 'number' ? value : parseInt(String(value), 10);
+    if (Number.isNaN(n)) return String(value);
+    const mod100 = n % 100;
+    const suffix = mod100 >= 11 && mod100 <= 13 ? 'th' : (n % 10 === 1 ? 'st' : n % 10 === 2 ? 'nd' : n % 10 === 3 ? 'rd' : 'th');
+    return `${n}${suffix} Year`;
   };
 
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await userService.getCurrentUser();
+        if (res && res.success && res.data) {
+          setUser(res.data);
+        } else {
+          setError(res.message || 'Failed to load user');
+        }
+      } catch (err) {
+        console.error('Failed to fetch user', err);
+        setError('Failed to load user');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
       <Grid />
@@ -46,7 +74,7 @@ export default function ProfilePage() {
           <div className="relative bg-[#00A8FF] rounded-2xl p-10 flex flex-col sm:flex-row items-center gap-5 sm:gap-10 text-white mb-6 overflow-hidden">
             <div className="w-40 h-40 rounded-full bg-blue-100 sm:ml-5 ml-0 border-primary1 border-2 flex items-center justify-center">
               <Image
-                src="/officer.svg"
+                src={user?.avatar || '/officer.svg'}
                 alt="Profile Photo"
                 width={120}
                 height={120}
@@ -54,10 +82,10 @@ export default function ProfilePage() {
             </div>
             <div className="text-center sm:text-left">
               <h2 className="text-4xl font-bold font-rubik mb-1">
-                {user.name}
+                {loading ? 'Loading...' : (user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : 'Unknown')}
               </h2>
               <p className="text-2xl opacity-90 font-rubik">
-                {user.yearLevel}rd Year
+                {loading ? '' : formatYearLevel(user?.yearLevel)}
               </p>
             </div>
             <div className="absolute right-[5%] top-3/4 transform -translate-y-1/2 w-[80%] h-[180%] opacity-15 pointer-events-none z-0 hidden sm:block">
@@ -73,15 +101,20 @@ export default function ProfilePage() {
 
           <div className="w-full  flex flex-col gap-6 mb-5">
             <PersonalInformation
-              fullName={user.name}
-              idNumber={user.idNumber}
-              yearLevel={user.yearLevel}
-              email={user.email}
+              fullName={loading ? 'Loading...' : (user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : 'Unknown')}
+              idNumber={loading ? '—' : (user?.studentNumber ?? '—')}
+              yearLevel={loading ? '—' : (user?.yearLevel ?? '—')}
+              email={loading ? '—' : (user?.email ?? '—')}
             />
             <RolenMembershipInformation
-              councilRole={user.councilRole}
-              committeeRole={user.committeeRole}
-              membership="both"
+              role={loading ? undefined : (user?.role ?? undefined)}
+              councilRole={loading ? undefined : (user?.councilRole ?? undefined)}
+              committeeRole={loading ? undefined : (user?.committeeRole ?? undefined)}
+              membership={
+                (user?.membership as any) ??
+                // fallback if server returns membership inside membershipStatus
+                ((user as any)?.membershipStatus?.membershipType ?? 'both')
+              }
             />
 
             <SecuritySection />
