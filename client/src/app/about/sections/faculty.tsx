@@ -33,7 +33,7 @@ const DepartmentHeadCard: FC<FacultyMember> = ({
 // --- CARD COMPONENT FOR OTHER FACULTY MEMBERS ---
 const FacultyMemberCard: FC<FacultyMember> = ({ name, position, imageUrl }) => {
   return (
-    <div className="w-full text-center bg-white/50 backdrop-blur-sm border border-gray-200/50 p-6 rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+    <div className="w-full text-center bg-white/50 backdrop-blur-sm border border-gray-200/50 p-6 rounded-3xl shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-1">
       <img
         src={imageUrl}
         alt={`Profile of ${name}`}
