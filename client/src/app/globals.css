@@ -468,3 +468,312 @@ html {
 .animate-pulse-slow {
   animation: pulse-slow 4s ease-in-out infinite;
 }
+
+/* Add these keyframes and classes to your global CSS or Tailwind config */
+
+/* Rotating conic gradient animation for smooth snake effect */
+@keyframes snake-border {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Alternative: Border trace animation */
+@keyframes border-glow {
+  0%, 100% {
+    background-position: 0% 0%;
+  }
+  25% {
+    background-position: 100% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+}
+
+/* Pulsing glow effect */
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    filter: blur(20px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(30px);
+  }
+}
+
+/* Apply to Tailwind config or add as custom class */
+.animate-snake-border {
+  animation: snake-border 4s linear infinite;
+}
+
+.animate-border-glow {
+  animation: border-glow 3s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+
+/* RECOMMENDED IMPLEMENTATION FOR YOUR CARD */
+/* Replace the existing border animation structure with this: */
+
+/* Parent container for the card - add this class */
+.profile-card-wrapper {
+  position: relative;
+  border-radius: 1.5rem; /* rounded-3xl equivalent */
+  overflow: visible; /* allow roaming dot to be visible outside the content box */
+}
+
+/* Animated border layer */
+/* Disable the previous animated border pseudo-element so only the roaming dot animates */
+.profile-card-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -4px; /* allow glow to extend outside card */
+  border-radius: 1.5rem;
+  padding: 4px; /* thickness of the border */
+  /* vivid color gradient for visible glow */
+  background: conic-gradient(
+    from 0deg,
+    rgba(0,168,255,0) 0deg,
+    rgba(0,168,255,0.85) 20deg,
+    rgba(0,149,232,0.95) 90deg,
+    rgba(0,130,209,0.9) 160deg,
+    rgba(139,0,255,0.6) 230deg,
+    rgba(0,168,255,0.85) 300deg,
+    rgba(0,168,255,0)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; /* Safari/Chrome */
+  mask-composite: exclude; /* standard */
+  /* keep static subtle rim for depth but disable animation */
+  animation: none;
+  transform-origin: center center;
+  filter: blur(2px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Card content - ensure it's above the border */
+.profile-card-content {
+  position: relative;
+  z-index: 1;
+  border-radius: 1.5rem;
+  background: linear-gradient(to bottom right, #00A8FF, #0095E8, #0082D1);
+  overflow: hidden;
+}
+
+
+/* ALTERNATIVE: Enhanced version with double glow */
+/* Disable enhanced double-glow animations — we'll use the roaming dot instead */
+.profile-card-enhanced::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 1.5rem;
+  padding: 6px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(0,168,255,0) 0deg,
+    rgba(0,168,255,0.6) 30deg,
+    rgba(139,0,255,0.45) 120deg,
+    rgba(0,130,209,0.55) 210deg,
+    rgba(0,168,255,0)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: none;
+  filter: blur(3px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.profile-card-enhanced::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 1.5rem;
+  padding: 12px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(0,168,255,0) 0deg,
+    rgba(0,149,232,0.25) 60deg,
+    rgba(139,0,255,0.12) 120deg,
+    rgba(0,130,209,0.18) 200deg,
+    rgba(0,168,255,0)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: none;
+  filter: blur(12px);
+  pointer-events: none;
+  opacity: 0.55;
+  z-index: 0;
+}
+
+/* USAGE IN YOUR REACT COMPONENT:
+ 
+Update the profile header card section to use the new structure:
+
+<div className="profile-card-wrapper mb-8">
+  <div className="profile-card-content p-8 sm:p-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-10 text-white overflow-hidden shadow-xl">
+    <!-- Your existing card content here -->
+  </div>
+</div>
+ 
+OR for enhanced version:
+
+<div className="profile-card-wrapper profile-card-enhanced mb-8">
+  <div className="profile-card-content p-8 sm:p-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-10 text-white overflow-hidden shadow-xl">
+    <!-- Your existing card content here -->
+  </div>
+</div>
+
+*/
+
+  /* Circuit / Neon border styles for profile header */
+  .profile-card-wrapper {
+    position: relative;
+  }
+
+  .circuit-outline {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .circuit-track {
+    stroke-dasharray: 616; /* perimeter of rect in SVG viewBox (2*(194+114)) */
+    stroke-dashoffset: 0;
+    animation: circuitFlow 4.8s linear infinite;
+  }
+
+  .circuit-glow {
+    stroke-dasharray: 616;
+    stroke-dashoffset: 0;
+    animation: circuitFlow 4.8s linear infinite, neonPulse 3.2s ease-in-out infinite;
+    opacity: 0.6;
+  }
+
+  @keyframes circuitFlow {
+    to { stroke-dashoffset: -616; }
+  }
+
+  @keyframes neonPulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 0.45; }
+    100% { opacity: 0.7; }
+  }
+
+  /* Legacy neon border keyframes (used by inline SVG earlier) */
+  @keyframes neonBorderFlow {
+    to { stroke-dashoffset: -1200; }
+  }
+
+/* ===== Neon Snake Circuit Border ===== */
+/* SVG overlay that draws a neon 'snake' moving around the card outline */
+.neon-snake-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 30;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.neon-snake-track {
+  fill: none;
+  stroke-width: 5.5; /* thicker tail for more visibility */
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  /* perimeter calculated for rect 1200x380 with rx=22 ≈ 3122 */
+  stroke-dasharray: 3122;
+  stroke-dashoffset: 0;
+  animation: neonSnakeMove 4s linear infinite;
+  /* stronger multi-layer glow */
+  filter: drop-shadow(0 0 8px rgba(0,210,255,0.28)) drop-shadow(0 0 18px rgba(0,140,255,0.14));
+  opacity: 1;
+  mix-blend-mode: screen;
+  stroke-opacity: 0.95;
+}
+
+.neon-snake-head {
+  fill: none;
+  stroke-width: 11;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* head length (visible) then remainder (invisible)
+     larger head and slightly longer bright node for visibility */
+  stroke-dasharray: 22 3100;
+  stroke-dashoffset: 0;
+  animation: neonSnakeMove 4s linear infinite, headPulse 1.6s ease-in-out infinite;
+  /* very strong glow for the head */
+  filter: drop-shadow(0 0 18px rgba(255,255,255,0.98)) drop-shadow(0 0 34px rgba(0,200,255,0.95));
+  mix-blend-mode: screen;
+  stroke-opacity: 1;
+}
+
+@keyframes neonSnakeMove {
+  to { stroke-dashoffset: -3122; }
+}
+
+@keyframes headPulse {
+  0% {
+    opacity: 1;
+    filter: drop-shadow(0 0 18px rgba(255,255,255,0.98)) drop-shadow(0 0 34px rgba(0,200,255,0.95));
+  }
+  50% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 10px rgba(255,255,255,0.9)) drop-shadow(0 0 18px rgba(0,170,255,0.7));
+  }
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 18px rgba(255,255,255,0.98)) drop-shadow(0 0 34px rgba(0,200,255,0.95));
+  }
+}
+
+/* Second moving object (longer, opacity-graded tail) */
+.neon-tail-2 {
+  fill: none;
+  stroke-width: 7.5; /* thicker for visibility */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* much longer visible tail */
+  stroke-dasharray: 2000 1122; /* 2000px visible tail */
+  stroke-dashoffset: 0;
+  animation: neonSnakeMove 4s linear infinite;
+  /* small delay to separate from main head slightly */
+  animation-delay: 0.6s;
+  filter: drop-shadow(0 0 12px rgba(0,200,255,0.55)) drop-shadow(0 0 22px rgba(0,140,255,0.18));
+  mix-blend-mode: screen;
+}
+
+/* Slight responsiveness tweak */
+@media (max-width: 420px) {
+  .neon-tail-2 { stroke-width: 5; stroke-dasharray: 180 2942; }
+}
+
+/* Gradient and soft bloom filter live inside SVG <defs> (defined inline in component) */
+
+/* Fallback for very small cards: reduce stroke thickness */
+@media (max-width: 420px) {
+  .neon-snake-track { stroke-width: 2.2; }
+  .neon-snake-head { stroke-width: 5; }
+  .neon-snake-glow { stroke-width: 7; }
+}
+

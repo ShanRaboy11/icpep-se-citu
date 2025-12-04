@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft, User, Mail, Calendar, Shield, Award, Users, X } from "lucide-react";
+import { User, Shield, Award, Users, X } from "lucide-react";
 import { useEffect, useState, useRef } from 'react';
 import Button from "../components/button";
 import { createPortal } from 'react-dom';
@@ -18,7 +18,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Format year level as ordinal (1 -> 1st Year, 2 -> 2nd Year, etc.)
+  // Format year level
   const formatYearLevel = (value: string | number | undefined | null) => {
     if (value === undefined || value === null || value === '') return '';
     const n = typeof value === 'number' ? value : parseInt(String(value), 10);
@@ -98,7 +98,6 @@ export default function ProfilePage() {
     setEditError(null);
     if (!user?.id) return setEditError('No user id');
     if (!form.firstName || !form.lastName) return setEditError('First and last name are required');
-    // Password validation if user entered a new password
     if (form.password) {
       if (form.password.length < 6) return setEditError('New password must be at least 6 characters');
       if (form.password !== form.confirmPassword) return setEditError('New password and confirmation do not match');
@@ -117,7 +116,6 @@ export default function ProfilePage() {
       if (res && res.success && res.data) {
         setUser(res.data);
         setEditSuccess(res.message || 'Profile updated');
-        // Close modal then refresh whole page so all data re-syncs from backend
         setTimeout(() => {
           setEditOpen(false);
           if (typeof window !== 'undefined') window.location.reload();
@@ -135,11 +133,46 @@ export default function ProfilePage() {
 
   return (
     <section className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 flex flex-col relative">
+      
+      {/* 
+         PRECISE "DOT + TAIL" ANIMATION STYLES
+      */}
+      <style jsx global>{`
+        @keyframes circuit-rotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        
+        .animate-circuit {
+          animation: circuit-rotate 4s linear infinite;
+        }
+
+        .bg-dot-snake {
+          /* 
+             Gradient Construction to Simulate a "Dot" Head:
+             0deg - 320deg: Transparent (Empty Track)
+             320deg - 350deg: Deep Blue -> Cyan (The Tail)
+             350deg - 360deg: PURE WHITE (The "Dot" Head)
+             
+             The abrupt contrast between transparency and the color stops creates the "Snake" look.
+          */
+          background: conic-gradient(
+            from 0deg,
+            transparent 0deg,
+            transparent 300deg,   
+            #0066ff 320deg,       /* Blue Tail Start */
+            #00e5ff 350deg,       /* Cyan Body End */
+            #ffffff 350.1deg,     /* Sharp start of White Head */
+            #ffffff 360deg        /* White Head End */
+          );
+        }
+      `}</style>
+
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
-          {/* Title Section with enhanced styling */}
+          {/* Title Section */}
           <div className="mb-12 text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary1/10 to-primary1/5 px-4 py-1.5 mb-4 border border-primary1/20">
               <div className="h-2 w-2 rounded-full bg-primary1 animate-pulse"></div>
@@ -155,94 +188,139 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          {/* Enhanced Profile Header Card */}
-          <div className="relative rounded-3xl mb-8">
-            {/* Animated glowing border that moves around */}
-            <div className="absolute inset-0 rounded-3xl overflow-hidden">
-              <div className="absolute inset-0 animate-border-rotate">
-                <div className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,transparent_0deg,transparent_270deg,rgba(255,255,255,0.9)_300deg,rgba(255,255,255,1)_330deg,rgba(255,255,255,0.9)_360deg,transparent_390deg,transparent_720deg)]"></div>
-              </div>
-            </div>
+          {/* 
+              DOT + TAIL OUTLINE CARD
+              - p-[2px]: Extremely thin padding to create a razor-sharp outline. NO BULGE.
+              - bg-zinc-200: A subtle "track" color so you can see where the snake is moving.
+          */}
+          <div className="relative mb-8 rounded-3xl overflow-hidden shadow-2xl translate-z-0">
             
-            {/* Inner card content */}
-            <div className="relative bg-gradient-to-br from-[#00A8FF] via-[#0095E8] to-[#0082D1] rounded-3xl p-8 sm:p-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-10 text-white overflow-hidden shadow-xl m-[2px]">
-              {/* Decorative elements */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-float"></div>
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-3xl animate-float-delayed"></div>
+            {/* SVG Neon Snake Circuit Overlay */}
+            <svg className="circuit-outline neon-snake-svg" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden>
+              <defs>
+                <linearGradient id="snakeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#00e5ff" />
+                  <stop offset="40%" stopColor="#00baff" />
+                  <stop offset="70%" stopColor="#0066ff" />
+                  <stop offset="100%" stopColor="#00a8ff" />
+                </linearGradient>
+
+                <linearGradient id="headGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+                  <stop offset="60%" stopColor="#bff8ff" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#00e5ff" stopOpacity="0.85" />
+                </linearGradient>
+                
+                {/* Tail gradient for the second moving object: opacity increases along the tail */}
+                <linearGradient id="tailGradient2" x1="0%" y1="0%" x2="100%" y2="0%" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#00e5ff" stopOpacity="0" />
+                  <stop offset="25%" stopColor="#00d8ff" stopOpacity="0.18" />
+                  <stop offset="50%" stopColor="#00baff" stopOpacity="0.45" />
+                  <stop offset="80%" stopColor="#008cff" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#0066ff" stopOpacity="1" />
+                </linearGradient>
+
+                <filter id="neonBlur" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="6" result="coloredBlur" />
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
+              {/* Main colored track (tail) - aligned exactly to card outline */}
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-snake-track" stroke="url(#snakeGradient)" />
+              {/* Second moving object with longer opacity-graded tail (first copy) */}
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-tail-2" stroke="url(#tailGradient2)" style={{strokeDashoffset: 0}} />
+              {/* Second moving object with longer opacity-graded tail (opposite side) */}
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-tail-2" stroke="url(#tailGradient2)" style={{strokeDashoffset: 1561}} />
+
+              {/* Bright head (first) */}
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-snake-head" stroke="url(#headGradient)" style={{mixBlendMode: 'screen', strokeDashoffset: 0}} />
+              {/* Bright head (opposite side) - identical, placed halfway around the perimeter */}
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-snake-head" stroke="url(#headGradient)" style={{mixBlendMode: 'screen', strokeDashoffset: 1561}} />
+            </svg>
+
+            {/* Inner Card Content - Sits on top, masking the center */}
+            <div className="relative h-full w-full bg-gradient-to-br from-[#00A8FF] via-[#0095E8] to-[#0082D1] rounded-[22px] p-8 sm:p-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-10 text-white overflow-hidden z-10">
               
-              {/* Profile Image with enhanced styling */}
+              {/* Internal Decorations */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-float pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-3xl animate-float-delayed pointer-events-none"></div>
+
+              {/* Profile Image */}
               <div className="relative z-10 animate-scale-in">
-                <div className="w-40 h-40 rounded-full bg-gradient-to-br from-white to-blue-50 p-1 shadow-2xl transition-transform duration-300 hover:scale-105">
-                  <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden">
+                <div className="w-40 h-40 rounded-full bg-gradient-to-br from-white/20 to-white/5 p-1 backdrop-blur-md shadow-lg">
+                  <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden border-4 border-white/20">
+                    {loading ? (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse"></div>
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary3 to-primary1 text-white text-4xl font-bold"
+                        aria-label={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()}
+                      >
+                        {getInitials(user)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* User Info */}
+              <div className="text-center sm:text-left relative z-10 flex-grow animate-slide-in-right">
+                <h2 className="text-4xl font-bold font-rubik mb-2 drop-shadow-md">
                   {loading ? (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse"></div>
+                    <span className="inline-block h-10 w-48 bg-white/20 rounded-lg animate-pulse"></span>
                   ) : (
-                    <div
-                      className="w-36 h-36 rounded-full flex items-center justify-center bg-gradient-to-br from-primary3 to-primary1 text-white text-4xl font-bold"
-                      aria-label={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()}
-                    >
-                      {getInitials(user)}
+                    `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || 'Unknown'
+                  )}
+                </h2>
+                <p className="text-xl opacity-90 font-rubik mb-4 drop-shadow font-light tracking-wide">
+                  {loading ? (
+                    <span className="inline-block h-6 w-32 bg-white/20 rounded-lg animate-pulse"></span>
+                  ) : (
+                    formatYearLevel(user?.yearLevel)
+                  )}
+                </p>
+                
+                {/* Role Badge */}
+                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                  {!loading && (
+                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-semibold border border-white/20 shadow-inner">
+                      <Users className="w-4 h-4 text-cyan-200" />
+                      <span className="tracking-wide text-white">
+                        {(() => {
+                          const roleLabelMap: Record<string, string> = {
+                            'student': 'Student',
+                            'council-officer': 'Council Officer',
+                            'committee-officer': 'Committee Officer',
+                            'faculty': 'Faculty',
+                          };
+                          return user?.role ? (roleLabelMap[user.role as string] ?? user.role) : 'Student';
+                        })()}
+                      </span>
                     </div>
                   )}
                 </div>
               </div>
-            </div>
 
-              {/* User Info */}
-              <div className="text-center sm:text-left relative z-10 flex-grow animate-slide-in-right">
-              <h2 className="text-4xl font-bold font-rubik mb-2 drop-shadow-md transition-all duration-300">
-                {loading ? (
-                  <span className="inline-block h-10 w-48 bg-white/20 rounded-lg animate-pulse"></span>
-                ) : (
-                  `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || 'Unknown'
-                )}
-              </h2>
-              <p className="text-xl opacity-90 font-rubik mb-4 drop-shadow">
-                {loading ? (
-                  <span className="inline-block h-6 w-32 bg-white/20 rounded-lg animate-pulse"></span>
-                ) : (
-                  formatYearLevel(user?.yearLevel)
-                )}
-              </p>
-              
-              
-              {/* Quick info badge: show Role */}
-              <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                {!loading && (
-                  <div className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-sm border border-white/30">
-                    <Users className="w-3.5 h-3.5" />
-                    <span>
-                      {(() => {
-                        const roleLabelMap: Record<string, string> = {
-                          'student': 'Student',
-                          'council-officer': 'Council Officer',
-                          'committee-officer': 'Committee Officer',
-                          'faculty': 'Faculty',
-                        };
-                        return user?.role ? (roleLabelMap[user.role as string] ?? user.role) : 'Student';
-                      })()}
-                    </span>
-                  </div>
-                )}
+              {/* Logo watermark */}
+              <div className="absolute right-[-5%] top-1/2 transform -translate-y-1/2 w-[60%] h-[150%] opacity-[0.07] pointer-events-none z-0 hidden sm:block mix-blend-overlay">
+                <Image
+                  src="/icpep logo.png"
+                  alt="ICpEP-SE Logo"
+                  fill
+                  className="object-contain object-right"
+                  sizes="(max-width: 768px) 150px, 300px"
+                />
               </div>
-            </div>
-
-            {/* Logo watermark - enhanced */}
-            <div className="absolute right-[5%] mt-20 top-1/2 transform -translate-y-1/2 w-[70%] h-[160%] opacity-10 pointer-events-none z-0 hidden sm:block animate-pulse-slow">
-              <Image
-                src="/icpep logo.png"
-                alt="ICpEP-SE Logo"
-                fill
-                className="object-contain object-right"
-                sizes="(max-width: 768px) 150px, 300px"
-              />
-            </div>
             </div>
           </div>
 
-          {/* Information Cards with enhanced styling - removed transform that breaks modals */}
+          {/* Information Cards */}
           <div className="w-full flex flex-col gap-6 mb-8">
-            <div className="transition-shadow duration-300 hover:shadow-lg">
+            <div className="transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg">
               <PersonalInformation
                 fullName={loading ? 'Loading...' : (user ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : 'Unknown')}
                 idNumber={loading ? '—' : (user?.studentNumber ?? '—')}
@@ -251,7 +329,7 @@ export default function ProfilePage() {
               />
             </div>
             
-            <div className="transition-shadow duration-300 hover:shadow-lg">
+            <div className="transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg">
               <RolenMembershipInformation
                 role={loading ? undefined : (user?.role ?? undefined)}
                 councilRole={loading ? undefined : (user?.councilRole ?? undefined)}
@@ -260,64 +338,71 @@ export default function ProfilePage() {
               />
             </div>
 
-            <div className="transition-shadow duration-300 hover:shadow-lg">
+            <div className="transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg">
               <SecuritySection />
             </div>
             <div className="w-full flex justify-end">
               {!loading && (
-                <Button variant="primary3" onClick={openEdit} className="px-4 py-2 mt-2">
+                <Button variant="primary3" onClick={openEdit} className="px-6 py-2.5 mt-2 rounded-xl shadow-lg shadow-primary3/20">
                   Edit Profile
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Edit Profile Modal rendered to body via portal */}
+          {/* Edit Profile Modal */}
           {editOpen && createPortal(
             <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
-              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeEdit} />
-              <div className="relative z-[100000] w-full max-w-xl bg-white rounded-2xl p-8 shadow-2xl border border-gray-200">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-rubik font-bold text-primary3">Edit Profile</h3>
-                  <button onClick={closeEdit} className="p-2 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-500"/></button>
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={closeEdit} />
+              <div className="relative z-[100000] w-full max-w-xl bg-white rounded-2xl p-8 shadow-2xl border border-gray-200 animate-scale-in">
+                <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+                  <h3 className="text-xl font-rubik font-bold text-gray-800">Edit Profile</h3>
+                  <button onClick={closeEdit} className="p-2 rounded-full hover:bg-gray-100 transition-colors"><X className="w-5 h-5 text-gray-500"/></button>
                 </div>
 
                 <form onSubmit={handleEditSubmit} className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">First name</label>
-                    <input ref={firstFieldRef} value={form.firstName} onChange={(e) => setForm({...form, firstName: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">Last name</label>
-                    <input value={form.lastName} onChange={(e) => setForm({...form, lastName: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">First name</label>
+                      <input ref={firstFieldRef} value={form.firstName} onChange={(e) => setForm({...form, firstName: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Last name</label>
+                      <input value={form.lastName} onChange={(e) => setForm({...form, lastName: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all" />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Student number</label>
-                    <input value={form.studentNumber} onChange={(e) => setForm({...form, studentNumber: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                    <input value={form.studentNumber} onChange={(e) => setForm({...form, studentNumber: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
-                    <input value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                    <input value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Year level</label>
-                    <input value={form.yearLevel} onChange={(e) => setForm({...form, yearLevel: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                    <input value={form.yearLevel} onChange={(e) => setForm({...form, yearLevel: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all" />
                   </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
-                      <input value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} placeholder="*********" type="password" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                  <div className="pt-2 border-t border-gray-100 mt-2">
+                    <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wider">Change Password (Optional)</p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+                        <input value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} placeholder="*********" type="password" className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
+                        <input value={form.confirmPassword} onChange={(e) => setForm({...form, confirmPassword: e.target.value})} placeholder="*********" type="password" className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all" />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
-                      <input value={form.confirmPassword} onChange={(e) => setForm({...form, confirmPassword: e.target.value})} placeholder="*********" type="password" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
-                    </div>
+                  </div>
 
-                  {editError && <div className="text-red-600 p-3 bg-red-50 rounded">{editError}</div>}
-                  {editSuccess && <div className="text-green-600 p-3 bg-green-50 rounded">{editSuccess}</div>}
+                  {editError && <div className="text-red-600 text-sm p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2"><Shield className="w-4 h-4"/> {editError}</div>}
+                  {editSuccess && <div className="text-green-600 text-sm p-3 bg-green-50 rounded-lg border border-green-100 flex items-center gap-2"><Award className="w-4 h-4"/> {editSuccess}</div>}
 
-                  <div className="flex justify-end gap-3 pt-2">
-                    <button type="button" onClick={closeEdit} className="px-6 py-2.5 rounded-xl border-2 border-gray-200 hover:cursor-pointer hover:bg-gray-200 font-rubik font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
-                    <Button variant="primary3" type="submit" disabled={editLoading} className="px-6 py-2.5 rounded-xl font-semibold hover:opacity-95">
+                  <div className="flex justify-end gap-3 pt-4">
+                    <button type="button" onClick={closeEdit} className="px-6 py-2.5 rounded-xl border-2 border-gray-200 hover:bg-gray-50 font-rubik font-semibold text-gray-600 transition-colors">Cancel</button>
+                    <Button variant="primary3" type="submit" disabled={editLoading} className="px-6 py-2.5 rounded-xl font-semibold shadow-md">
                       {editLoading ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </div>
@@ -326,9 +411,8 @@ export default function ProfilePage() {
             </div>, document.body
           )}
 
-          {/* Error display if needed */}
           {error && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-center">
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-center animate-fade-in">
               {error}
             </div>
           )}

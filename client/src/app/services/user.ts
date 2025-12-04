@@ -61,7 +61,7 @@ class UserService {
     }
   }
 
-  async updateUser(id: string, payload: Partial<CurrentUser>): Promise<{ success: boolean; data?: CurrentUser; message?: string }> {
+  async updateUser(id: string, payload: Partial<CurrentUser> & { password?: string }): Promise<{ success: boolean; data?: CurrentUser; message?: string }> {
     try {
       const res = await api.put(`/users/${id}`, payload);
       return res.data;
