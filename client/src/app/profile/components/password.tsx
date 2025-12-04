@@ -116,13 +116,10 @@ export default function SecuritySection() {
         <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal} />
           <div
-            className="relative z-[100000] w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl border border-gray-200"
+            className="relative z-[100000] w-full max-w-md bg-white rounded-2xl p-8 shadow-2xl border border-gray-200 animate-scale-in"
             role="dialog"
             aria-modal="true"
             aria-labelledby="change-password-title"
-            style={{
-              animation: 'fadeIn 0.3s ease-out, slideUp 0.3s ease-out'
-            }}
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between mb-6">
@@ -267,16 +264,7 @@ export default function SecuritySection() {
         document.body
       )}
 
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from { transform: translateY(20px); }
-          to { transform: translateY(0); }
-        }
-      `}</style>
+      {/* entrance animation provided by global `.animate-scale-in` class */}
     </div>
   );
 }

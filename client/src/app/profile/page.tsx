@@ -74,20 +74,18 @@ export default function ProfilePage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [editSuccess, setEditSuccess] = useState<string | null>(null);
-  const [form, setForm] = useState({ firstName: '', lastName: '', studentNumber: '', email: '', yearLevel: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', studentNumber: '', email: '', yearLevel: '' });
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
 
   const openEdit = () => {
     setEditError(null);
     setEditSuccess(null);
     setForm({
-        firstName: user?.firstName ?? '',
-        lastName: user?.lastName ?? '',
-        studentNumber: user?.studentNumber ?? '',
-        email: user?.email ?? '',
-        yearLevel: user?.yearLevel ? String(user.yearLevel) : '',
-        password: '',
-        confirmPassword: '',
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      studentNumber: user?.studentNumber ?? '',
+      email: user?.email ?? '',
+      yearLevel: user?.yearLevel ? String(user.yearLevel) : '',
     });
     setEditOpen(true);
     setTimeout(() => firstFieldRef.current?.focus(), 0);
@@ -100,20 +98,17 @@ export default function ProfilePage() {
     setEditError(null);
     if (!user?.id) return setEditError('No user id');
     if (!form.firstName || !form.lastName) return setEditError('First and last name are required');
-    if (form.password) {
-      if (form.password.length < 6) return setEditError('New password must be at least 6 characters');
-      if (form.password !== form.confirmPassword) return setEditError('New password and confirmation do not match');
-    }
+    /* password change removed from the edit modal */
     try {
       setEditLoading(true);
-      const payload: Partial<CurrentUser> & { password?: string } = {
+      const payload: Partial<CurrentUser> = {
         firstName: form.firstName,
         lastName: form.lastName,
         studentNumber: form.studentNumber || undefined,
         email: form.email || undefined,
         yearLevel: form.yearLevel ? (isNaN(Number(form.yearLevel)) ? form.yearLevel : Number(form.yearLevel)) : undefined,
       };
-      if (form.password) payload.password = form.password;
+      /* password removed from payload */
       const res = await userService.updateUser(user.id, payload);
       if (res && res.success && res.data) {
         setUser(res.data);
@@ -385,19 +380,7 @@ export default function ProfilePage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Year level</label>
                     <input value={form.yearLevel} onChange={(e) => setForm({...form, yearLevel: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all" />
                   </div>
-                  <div className="pt-2 border-t border-gray-100 mt-2">
-                    <p className="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wider">Change Password (Optional)</p>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
-                        <input value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} placeholder="*********" type="password" className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
-                        <input value={form.confirmPassword} onChange={(e) => setForm({...form, confirmPassword: e.target.value})} placeholder="*********" type="password" className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all" />
-                      </div>
-                    </div>
-                  </div>
+                  {/* Password change removed from edit modal */}
 
                   {editError && <div className="text-red-600 text-sm p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2"><Shield className="w-4 h-4"/> {editError}</div>}
                   {editSuccess && <div className="text-green-600 text-sm p-3 bg-green-50 rounded-lg border border-green-100 flex items-center gap-2"><Award className="w-4 h-4"/> {editSuccess}</div>}
