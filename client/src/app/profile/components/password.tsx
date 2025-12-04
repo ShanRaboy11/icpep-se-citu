@@ -1,5 +1,5 @@
 "use client";
-import { X, Shield, CheckCircle2, AlertCircle } from "lucide-react";
+import { X, Shield, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import Button from "@/app/components/button";
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -15,6 +15,9 @@ export default function SecuritySection() {
   const [success, setSuccess] = useState<string | null>(null);
 
   const currentRef = useRef<HTMLInputElement | null>(null);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const openModal = () => {
     setError(null);
@@ -145,13 +148,21 @@ export default function SecuritySection() {
                 <div className="relative">
                   <input
                     ref={currentRef}
-                    type="password"
+                    type={showCurrent ? 'text' : 'password'}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all duration-200 font-rubik"
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 pr-10 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all duration-200 font-rubik"
                     placeholder="Enter current password"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrent(s => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded focus:outline-none"
+                    aria-label={showCurrent ? 'Hide current password' : 'Show current password'}
+                  >
+                    {showCurrent ? <EyeOff className="w-5 h-5 text-gray-500" /> : <Eye className="w-5 h-5 text-gray-400" />}
+                  </button>
                 </div>
               </div>
 
@@ -162,13 +173,21 @@ export default function SecuritySection() {
                 </label>
                 <div className="relative">
                   <input
-                    type="password"
+                    type={showNew ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all duration-200 font-rubik"
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 pr-10 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all duration-200 font-rubik"
                     placeholder="Enter new password"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowNew(s => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded focus:outline-none"
+                    aria-label={showNew ? 'Hide new password' : 'Show new password'}
+                  >
+                    {showNew ? <EyeOff className="w-5 h-5 text-gray-500" /> : <Eye className="w-5 h-5 text-gray-400" />}
+                  </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1 font-raleway">
                   Must be at least 6 characters long
@@ -182,13 +201,21 @@ export default function SecuritySection() {
                 </label>
                 <div className="relative">
                   <input
-                    type="password"
+                    type={showConfirm ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all duration-200 font-rubik"
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 pr-10 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all duration-200 font-rubik"
                     placeholder="Confirm new password"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(s => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded focus:outline-none"
+                    aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+                  >
+                    {showConfirm ? <EyeOff className="w-5 h-5 text-gray-500" /> : <Eye className="w-5 h-5 text-gray-400" />}
+                  </button>
                 </div>
               </div>
 

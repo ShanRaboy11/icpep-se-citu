@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowLeft, User, Mail, Calendar, Shield, Award, Users } from "lucide-react";
-import { useEffect, useState } from 'react';
+import { ArrowLeft, User, Mail, Calendar, Shield, Award, Users, X } from "lucide-react";
+import { useEffect, useState, useRef } from 'react';
+import Button from "../components/button";
+import { createPortal } from 'react-dom';
 import PersonalInformation from "./components/personalinfo";
 import RolenMembershipInformation from "./components/rolenmembership";
 import SecuritySection from "./components/password";
@@ -65,6 +67,59 @@ export default function ProfilePage() {
     const raw = u?.membership ?? (u && (u as unknown as { membershipStatus?: { membershipType?: string } })?.membershipStatus?.membershipType);
     if (raw === 'local' || raw === 'regional' || raw === 'both') return raw;
     return 'both';
+  };
+
+  // Edit modal state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSuccess, setEditSuccess] = useState<string | null>(null);
+  const [form, setForm] = useState({ firstName: '', lastName: '', studentNumber: '', email: '', yearLevel: '' });
+  const firstFieldRef = useRef<HTMLInputElement | null>(null);
+
+  const openEdit = () => {
+    setEditError(null);
+    setEditSuccess(null);
+    setForm({
+      firstName: user?.firstName ?? '',
+      lastName: user?.lastName ?? '',
+      studentNumber: user?.studentNumber ?? '',
+      email: user?.email ?? '',
+      yearLevel: user?.yearLevel ? String(user.yearLevel) : '',
+    });
+    setEditOpen(true);
+    setTimeout(() => firstFieldRef.current?.focus(), 0);
+  };
+
+  const closeEdit = () => setEditOpen(false);
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditError(null);
+    if (!user?.id) return setEditError('No user id');
+    if (!form.firstName || !form.lastName) return setEditError('First and last name are required');
+    try {
+      setEditLoading(true);
+      const payload: any = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        studentNumber: form.studentNumber || undefined,
+        email: form.email || undefined,
+        yearLevel: form.yearLevel ? (isNaN(Number(form.yearLevel)) ? form.yearLevel : Number(form.yearLevel)) : undefined,
+      };
+      const res = await userService.updateUser(user.id, payload);
+      if (res && res.success && res.data) {
+        setUser(res.data);
+        setEditSuccess(res.message || 'Profile updated');
+        setTimeout(() => setEditOpen(false), 900);
+      } else {
+        setEditError(res.message || 'Failed to update');
+      }
+    } catch (err: any) {
+      setEditError(err?.message || 'Failed to update');
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   return (
@@ -139,6 +194,7 @@ export default function ProfilePage() {
                 )}
               </p>
               
+              
               {/* Quick info badge: show Role */}
               <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                 {!loading && (
@@ -196,7 +252,61 @@ export default function ProfilePage() {
             <div className="transition-shadow duration-300 hover:shadow-lg">
               <SecuritySection />
             </div>
+            {/* Edit button placed directly under the cards, right-aligned */}
+            <div className="w-full flex justify-end">
+              {!loading && (
+                <Button variant="primary3" onClick={openEdit} className="px-4 py-2 mt-2">
+                  Edit Profile
+                </Button>
+              )}
+            </div>
           </div>
+
+          {/* Edit Profile Modal rendered to body via portal */}
+          {editOpen && createPortal(
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeEdit} />
+              <div className="relative z-[100000] w-full max-w-xl bg-white rounded-2xl p-8 shadow-2xl border border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-rubik font-bold text-primary3">Edit Profile</h3>
+                  <button onClick={closeEdit} className="p-2 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-500"/></button>
+                </div>
+
+                <form onSubmit={handleEditSubmit} className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">First name</label>
+                    <input ref={firstFieldRef} value={form.firstName} onChange={(e) => setForm({...form, firstName: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Last name</label>
+                    <input value={form.lastName} onChange={(e) => setForm({...form, lastName: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Student number</label>
+                    <input value={form.studentNumber} onChange={(e) => setForm({...form, studentNumber: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <input value={form.email} onChange={(e) => setForm({...form, email: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Year level</label>
+                    <input value={form.yearLevel} onChange={(e) => setForm({...form, yearLevel: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                  </div>
+
+                  {editError && <div className="text-red-600 p-3 bg-red-50 rounded">{editError}</div>}
+                  {editSuccess && <div className="text-green-600 p-3 bg-green-50 rounded">{editSuccess}</div>}
+
+                  <div className="flex justify-end gap-3 pt-2">
+                    <button type="button" onClick={closeEdit} className="px-6 py-2.5 rounded-xl border-2 border-gray-200 font-rubik font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" disabled={editLoading} className="px-6 py-2.5 rounded-xl bg-primary2 text-white font-semibold hover:opacity-95">
+                      {editLoading ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>, document.body
+          )}
 
           {/* Error display if needed */}
           {error && (

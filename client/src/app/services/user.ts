@@ -60,6 +60,15 @@ class UserService {
       throw err;
     }
   }
+
+  async updateUser(id: string, payload: Partial<CurrentUser>): Promise<{ success: boolean; data?: CurrentUser; message?: string }> {
+    try {
+      const res = await api.put(`/users/${id}`, payload);
+      return res.data;
+    } catch (err) {
+      throw err;
+    }
+  }
 }
 
 const userService = new UserService();
