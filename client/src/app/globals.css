@@ -704,7 +704,8 @@ OR for enhanced version:
   /* perimeter calculated for rect 1200x380 with rx=22 ≈ 3122 */
   stroke-dasharray: 3122;
   stroke-dashoffset: 0;
-  animation: neonSnakeMove 4s linear infinite;
+  /* Track is static; heads/tails animate */
+  animation: none;
   /* stronger multi-layer glow */
   filter: drop-shadow(0 0 8px rgba(0,210,255,0.28)) drop-shadow(0 0 18px rgba(0,140,255,0.14));
   opacity: 1;
@@ -757,8 +758,6 @@ OR for enhanced version:
   stroke-dasharray: 2000 1122; /* 2000px visible tail */
   stroke-dashoffset: 0;
   animation: neonSnakeMove 4s linear infinite;
-  /* small delay to separate from main head slightly */
-  animation-delay: 0.6s;
   filter: drop-shadow(0 0 12px rgba(0,200,255,0.55)) drop-shadow(0 0 22px rgba(0,140,255,0.18));
   mix-blend-mode: screen;
 }

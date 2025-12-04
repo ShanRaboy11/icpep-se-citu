@@ -81,11 +81,13 @@ export default function ProfilePage() {
     setEditError(null);
     setEditSuccess(null);
     setForm({
-      firstName: user?.firstName ?? '',
-      lastName: user?.lastName ?? '',
-      studentNumber: user?.studentNumber ?? '',
-      email: user?.email ?? '',
-      yearLevel: user?.yearLevel ? String(user.yearLevel) : '',
+        firstName: user?.firstName ?? '',
+        lastName: user?.lastName ?? '',
+        studentNumber: user?.studentNumber ?? '',
+        email: user?.email ?? '',
+        yearLevel: user?.yearLevel ? String(user.yearLevel) : '',
+        password: '',
+        confirmPassword: '',
     });
     setEditOpen(true);
     setTimeout(() => firstFieldRef.current?.focus(), 0);
