@@ -111,7 +111,11 @@ export default function ProfilePage() {
       if (res && res.success && res.data) {
         setUser(res.data);
         setEditSuccess(res.message || 'Profile updated');
-        setTimeout(() => setEditOpen(false), 900);
+        // Close modal then refresh whole page so all data re-syncs from backend
+        setTimeout(() => {
+          setEditOpen(false);
+          if (typeof window !== 'undefined') window.location.reload();
+        }, 700);
       } else {
         setEditError(res.message || 'Failed to update');
       }
@@ -252,7 +256,6 @@ export default function ProfilePage() {
             <div className="transition-shadow duration-300 hover:shadow-lg">
               <SecuritySection />
             </div>
-            {/* Edit button placed directly under the cards, right-aligned */}
             <div className="w-full flex justify-end">
               {!loading && (
                 <Button variant="primary3" onClick={openEdit} className="px-4 py-2 mt-2">
@@ -298,10 +301,10 @@ export default function ProfilePage() {
                   {editSuccess && <div className="text-green-600 p-3 bg-green-50 rounded">{editSuccess}</div>}
 
                   <div className="flex justify-end gap-3 pt-2">
-                    <button type="button" onClick={closeEdit} className="px-6 py-2.5 rounded-xl border-2 border-gray-200 font-rubik font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
-                    <button type="submit" disabled={editLoading} className="px-6 py-2.5 rounded-xl bg-primary2 text-white font-semibold hover:opacity-95">
+                    <button type="button" onClick={closeEdit} className="px-6 py-2.5 rounded-xl border-2 border-gray-200 hover:cursor-pointer hover:bg-gray-200 font-rubik font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
+                    <Button variant="primary3" type="submit" disabled={editLoading} className="px-6 py-2.5 rounded-xl font-semibold hover:opacity-95">
                       {editLoading ? 'Saving...' : 'Save Changes'}
-                    </button>
+                    </Button>
                   </div>
                 </form>
               </div>

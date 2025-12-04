@@ -7,6 +7,7 @@ export interface IUser extends Document {
   studentNumber: string;
   lastName: string;
   firstName: string;
+  email?: string;
   middleName?: string;
   password: string;
   role: 'student' | 'council-officer' | 'committee-officer' | 'faculty';
@@ -54,6 +55,12 @@ const userSchema = new Schema<IUser>(
     middleName: {
       type: String,
       trim: true,
+      default: null,
+    },
+    email: {
+      type: String,
+      trim: true,
+      lowercase: true,
       default: null,
     },
     password: {
