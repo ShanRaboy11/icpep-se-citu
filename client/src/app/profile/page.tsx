@@ -74,7 +74,7 @@ export default function ProfilePage() {
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [editSuccess, setEditSuccess] = useState<string | null>(null);
-  const [form, setForm] = useState({ firstName: '', lastName: '', studentNumber: '', email: '', yearLevel: '' });
+  const [form, setForm] = useState({ firstName: '', lastName: '', studentNumber: '', email: '', yearLevel: '', password: '', confirmPassword: '' });
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
 
   const openEdit = () => {
@@ -98,15 +98,21 @@ export default function ProfilePage() {
     setEditError(null);
     if (!user?.id) return setEditError('No user id');
     if (!form.firstName || !form.lastName) return setEditError('First and last name are required');
+    // Password validation if user entered a new password
+    if (form.password) {
+      if (form.password.length < 6) return setEditError('New password must be at least 6 characters');
+      if (form.password !== form.confirmPassword) return setEditError('New password and confirmation do not match');
+    }
     try {
       setEditLoading(true);
-      const payload: any = {
+      const payload: Partial<CurrentUser> & { password?: string } = {
         firstName: form.firstName,
         lastName: form.lastName,
         studentNumber: form.studentNumber || undefined,
         email: form.email || undefined,
         yearLevel: form.yearLevel ? (isNaN(Number(form.yearLevel)) ? form.yearLevel : Number(form.yearLevel)) : undefined,
       };
+      if (form.password) payload.password = form.password;
       const res = await userService.updateUser(user.id, payload);
       if (res && res.success && res.data) {
         setUser(res.data);
@@ -119,8 +125,9 @@ export default function ProfilePage() {
       } else {
         setEditError(res.message || 'Failed to update');
       }
-    } catch (err: any) {
-      setEditError(err?.message || 'Failed to update');
+    } catch (err: unknown) {
+      if (err instanceof Error) setEditError(err.message || 'Failed to update');
+      else setEditError(String(err) || 'Failed to update');
     } finally {
       setEditLoading(false);
     }
@@ -296,6 +303,14 @@ export default function ProfilePage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Year level</label>
                     <input value={form.yearLevel} onChange={(e) => setForm({...form, yearLevel: e.target.value})} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
                   </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                      <input value={form.password} onChange={(e) => setForm({...form, password: e.target.value})} placeholder="*********" type="password" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+                      <input value={form.confirmPassword} onChange={(e) => setForm({...form, confirmPassword: e.target.value})} placeholder="*********" type="password" className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-primary1 focus:ring-2 focus:ring-primary1/20" />
+                    </div>
 
                   {editError && <div className="text-red-600 p-3 bg-red-50 rounded">{editError}</div>}
                   {editSuccess && <div className="text-green-600 p-3 bg-green-50 rounded">{editSuccess}</div>}

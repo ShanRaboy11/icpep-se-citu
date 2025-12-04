@@ -71,8 +71,9 @@ export default function SecuritySection() {
       } else {
         setError(res.message || 'Failed to change password');
       }
-    } catch (err: any) {
-      setError(err?.message || 'Failed to change password');
+    } catch (err: unknown) {
+      if (err instanceof Error) setError(err.message || 'Failed to change password');
+      else setError(String(err) || 'Failed to change password');
     } finally {
       setLoading(false);
     }
