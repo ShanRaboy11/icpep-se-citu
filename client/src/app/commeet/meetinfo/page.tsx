@@ -25,7 +25,7 @@ const CommeetPage: FunctionComponent = () => {
       meetingType,
       limitedTime,
     });
-    router.push('/commeet/meetinfo');
+    router.push('/commeet/availability');
   }, [meetingName, meetingTopic, startTime, endTime, meetingType, limitedTime, router]);
 
   return (
