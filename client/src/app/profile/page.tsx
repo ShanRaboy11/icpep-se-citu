@@ -382,17 +382,28 @@ export default function ProfilePage() {
                   <div className="relative w-44 h-44 rounded-full bg-gradient-to-br from-white/30 to-white/10 p-1.5 backdrop-blur-xl shadow-2xl transition-all duration-300 group-hover:scale-105">
                     <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden shadow-inner border-4 border-white relative">
                       {loading ? (
-                        <div className="w-full h-full rounded-full relative overflow-hidden" aria-hidden>
-                          <div
-                            className="absolute inset-0 rounded-full"
-                            style={{
-                              background:
-                                'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
-                              backgroundSize: '200% 100%',
-                              animation: 'shimmer 1.6s linear infinite',
-                            }}
-                          />
-                        </div>
+                          <div className="w-full h-full rounded-full relative overflow-hidden" aria-hidden>
+                            <div
+                              className="absolute inset-0 rounded-full"
+                              style={{
+                                background:
+                                  'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
+                                backgroundSize: '200% 100%',
+                                animation: 'shimmer 1.6s linear infinite',
+                              }}
+                            />
+                            {/* small role-badge shimmer on avatar */}
+                            <div
+                              className="absolute right-3 bottom-3 w-8 h-8 rounded-full ring-2 ring-white/30"
+                              aria-hidden
+                              style={{
+                                background:
+                                  'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
+                                backgroundSize: '200% 100%',
+                                animation: 'shimmer 1.6s linear infinite',
+                              }}
+                            />
+                          </div>
                       ) : (
                         <div
                           className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary3 via-primary1 to-primary3 text-white text-5xl font-bold relative overflow-hidden"
@@ -419,7 +430,7 @@ export default function ProfilePage() {
                 <h2 className="text-4xl font-bold font-rubik mb-2 drop-shadow-md">
                   {loading ? (
                     <span
-                      className="inline-block h-10 w-48 rounded-lg"
+                      className="inline-block h-10 w-72 rounded-lg"
                       aria-hidden
                       style={{
                         background:
@@ -452,7 +463,12 @@ export default function ProfilePage() {
 
                 {/* Role Badge */}
                 <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                  {!loading && (
+                  {loading ? (
+                    <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-semibold border border-white/20 shadow-inner">
+                      <div aria-hidden className="w-4 h-4 rounded-full" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s linear infinite' }} />
+                      <div aria-hidden className="h-4 w-28 rounded-lg" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s linear infinite' }} />
+                    </div>
+                  ) : (
                     <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-semibold border border-white/20 shadow-inner">
                       <Users className="w-4 h-4 text-cyan-200" />
                       <span className="tracking-wide text-white">

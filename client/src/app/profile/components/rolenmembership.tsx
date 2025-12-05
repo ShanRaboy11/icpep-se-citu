@@ -1,30 +1,7 @@
 "use client";
 
 import { Handshake } from "lucide-react";
-
-interface MembershipBadgeProps {
-  type: "both" | "local" | "regional";
-}
-
-function MembershipBadge({ type }: MembershipBadgeProps) {
-  const styles = {
-    both: "bg-purple-100 text-purple-700 border-purple-300",
-    local: "bg-blue-100 text-blue-700 border-blue-300",
-    regional: "bg-green-100 text-green-700 border-green-300"
-  };
-  
-  const labels = {
-    both: "Both",
-    local: "Local",
-    regional: "Regional"
-  };
-
-  return (
-    <span className={`px-3 py-1 rounded-full text-sm font-semibold border ${styles[type]}`}>
-      {labels[type]}
-    </span>
-  );
-}
+import { MembershipBadge } from "./membership";
 
 interface RolenMembershipInformationProps {
   role?: string | null;
