@@ -84,14 +84,7 @@ export default function ProfilePage() {
     return "both";
   };
 
-  // Try to find a profile image on the user object (common field names)
-  const avatarSrc = user
-    ? (user as any).profileImage ??
-      (user as any).avatarUrl ??
-      (user as any).avatar ??
-      (user as any).image ??
-      undefined
-    : undefined;
+  // (removed unused avatarSrc helper)
 
   // Edit modal state
   const [editOpen, setEditOpen] = useState(false);
