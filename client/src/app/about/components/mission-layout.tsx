@@ -32,21 +32,21 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
   ];
 
   return (
-    <div className="content-fade flex flex-col md:flex-row gap-8 md:gap-12 items-start justify-center">
-      <div className="text-left max-w-xs flex-shrink-0">
-        <h3 className="font-rubik text-3xl sm:text-4xl font-bold mb-3 text-secondary2">
+    <div className="content-fade flex flex-col md:flex-row gap-6 md:gap-12 items-start justify-center">
+      <div className="text-left w-full sm:max-w-xs flex-shrink-0">
+        <h3 className="font-rubik text-2xl sm:text-4xl font-bold mb-3 text-secondary2">
           {section.title}
         </h3>
-        <p className="font-raleway text-lg sm:text-xl leading-relaxed text-gray-300">
+        <p className="font-raleway text-sm sm:text-xl leading-relaxed text-gray-300">
           {section.content}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-4xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 w-full max-w-4xl">
         {missionPoints.map((point, index) => (
           <div
             key={index}
-            className="flex items-center gap-6 px-5 py-6 rounded-2xl border border-white/10
+            className="flex items-center gap-4 sm:gap-6 p-4 sm:px-5 sm:py-6 rounded-2xl border border-white/10
                        bg-white/5 transition-all duration-300 group hover:bg-white/10"
             style={{
               backgroundImage:
@@ -54,7 +54,7 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
               backgroundSize: "1rem 1rem",
             }}
           >
-            <div className="relative flex-shrink-0 w-24 h-24">
+            <div className="relative flex-shrink-0 w-16 h-16 sm:w-24 sm:h-24">
               <Image
                 src={point.imageUrl}
                 alt={point.title}
@@ -64,10 +64,10 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
             </div>
 
             <div className="flex flex-col justify-center text-left">
-              <h4 className="font-rubik text-xl font-bold text-white leading-snug">
+              <h4 className="font-rubik text-lg sm:text-xl font-bold text-white leading-snug">
                 {point.title}
               </h4>
-              <p className="font-raleway text-base text-gray-300 mt-1 leading-relaxed">
+              <p className="font-raleway text-xs sm:text-base text-gray-300 mt-1 leading-relaxed">
                 {point.description}
               </p>
             </div>
