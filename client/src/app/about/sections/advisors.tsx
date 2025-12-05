@@ -1,46 +1,11 @@
 "use client";
 
 import { FC, useState, useRef, useEffect } from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import AdvisorCard from "../components/advisor-card";
 
-const AdvisorCard: FC<{
-  name: string;
-  position: string;
-  year: string;
-  imageUrl: string;
-}> = ({ name, position, year, imageUrl }) => {
-  return (
-    <div className="relative w-full h-full rounded-[1.25rem] shadow-lg">
-      {/* Gradient border layer */}
-      <div className="absolute inset-0 rounded-[1.25rem] bg-gradient-to-b from-primary1/60 to-primary2/60 p-[2px]">
-        {/* Content layer */}
-        <div className="relative w-full h-full rounded-[1.1rem] overflow-hidden bg-primary3 text-white cursor-pointer group">
-          <Image
-            src={imageUrl}
-            alt={name}
-            fill
-            className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-105"
-          />
-          <div className="absolute top-6 left-6 font-raleway text-sm font-semibold uppercase tracking-wider text-white/80">
-            {year}
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 p-8 h-2/5 bg-gradient-to-t from-[#002231] via-[#002231e6] to-transparent flex flex-col justify-end">
-            <h3 className="font-rubik text-2xl font-bold leading-tight break-words">
-              {name}
-            </h3>
-            <p className="font-raleway text-base uppercase tracking-wider text-white/80 mt-2 break-words">
-              {position}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Carousel
+// Types
 interface AdvisorItem {
   name: string;
   position: string;
@@ -52,8 +17,22 @@ const AdvisorsCarousel: FC<{ items: AdvisorItem[] }> = ({ items }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const baseWidthRem = 20;
+
   const [xOffset, setXOffset] = useState(0);
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const baseWidthRem = isMobile ? 16 : 20;
 
   useEffect(() => {
     const viewport = viewportRef.current;
@@ -65,7 +44,7 @@ const AdvisorsCarousel: FC<{ items: AdvisorItem[] }> = ({ items }) => {
         activeItem.offsetLeft + activeItem.offsetWidth / 2;
       setXOffset(viewportCenter - activeItemCenter);
     }
-  }, [currentIndex]);
+  }, [currentIndex, isMobile]);
 
   const handleNext = () =>
     setCurrentIndex((prev) => Math.min(prev + 1, items.length - 1));
@@ -97,7 +76,7 @@ const AdvisorsCarousel: FC<{ items: AdvisorItem[] }> = ({ items }) => {
                 ref={(el) => {
                   itemRefs.current[index] = el;
                 }}
-                className="w-80 h-[28rem] min-w-[20rem] origin-bottom overflow-visible shrink-0"
+                className="w-64 h-[22rem] min-w-[16rem] sm:w-80 sm:h-[28rem] sm:min-w-[20rem] origin-bottom overflow-visible shrink-0"
                 animate={{ scale }}
                 style={{
                   marginLeft: `-${marginOffset}rem`,
@@ -113,7 +92,6 @@ const AdvisorsCarousel: FC<{ items: AdvisorItem[] }> = ({ items }) => {
         </motion.div>
       </div>
 
-      {/* Navigation Buttons */}
       <div className="relative z-10 mt-4 flex gap-4">
         <button
           onClick={handlePrev}
