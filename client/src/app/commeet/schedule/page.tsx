@@ -69,12 +69,12 @@ const CommeetPage: FunctionComponent = () => {
 
                     {/* 3. Availabilities Section */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
-                        <h3 className="text-xl sm:text-2xl font-normal text-gray-600 tracking-wide font-raleway">
+                        <h3 className="text-xl sm:text-2xl font-normal text-gray-900 tracking-wide font-raleway">
                             Availabilities
                         </h3>
 
                         <button
-                            className={`px-6 py-3 border-2 border-sky-400 rounded-full font-manrope text-sky-400 font-semibold flex items-center justify-center space-x-2
+                            className={`px-6 py-3 border-2 border-sky-400 rounded-full font-raleway text-sky-400 font-semibold flex items-center justify-center space-x-2
                             hover:bg-sky-200 hover:text-white hover:border-sky-400 active:bg-sky-600 active:border-sky-600 active:text-white transition-all duration-200
                             ${isBouncing ? 'animate-bounce' : ''}`} 
                             onClick={onAddAvailabilityClick}
@@ -96,13 +96,13 @@ const CommeetPage: FunctionComponent = () => {
                                 <div className="text-xl text-gray-900 font-medium mb-6 whitespace-nowrap">
                                     {monthYear}
                                 </div>
-                                <div className="text-sm text-gray-600 font-medium">PST</div>
+                                <div className="text-sm text-gray-900 font-medium">PST</div>
                             </div>
                             
                             {/* Grid Column Header */}
                             <div className="flex-1 flex flex-col items-center justify-end pb-2">
-                                <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">{dayLabel}</div>
-                                <div className="text-2xl text-gray-900 font-normal">{dateLabel}</div>
+                                <div className="text-xs text-gray-900 uppercase tracking-widest mb-1">{dayLabel}</div>
+                                <div className="text-xl text-gray-900 font-normal">{dateLabel}</div>
                             </div>
                         </div>
 

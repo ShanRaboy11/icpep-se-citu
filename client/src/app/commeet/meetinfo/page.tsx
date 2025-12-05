@@ -44,7 +44,7 @@ const CommeetPage: FunctionComponent = () => {
           {/* Let's Meet Button */}
           <div className="flex-shrink-0 mt-8 lg:mt-32">
             <button
-              className="px-6 py-3 border-2 border-sky-400 rounded-full font-manrope text-sky-400 font-semibold flex items-center justify-center space-x-2
+              className="px-6 py-3 border-2 border-sky-400 rounded-full font-raleway text-sky-400 font-semibold flex items-center justify-center space-x-2
                          hover:bg-sky-200 hover:text-white hover:border-sky-400 active:bg-sky-600 active:border-sky-600 active:text-white transition-colors duration-200"
               onClick={onLetsMeetBtnClick}
             >

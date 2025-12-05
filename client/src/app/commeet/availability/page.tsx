@@ -3,15 +3,24 @@
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import { FunctionComponent, useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
 
 const CommeetPage: FunctionComponent = () => {
+      const router = useRouter();
     // State to track selected 30-minute slots
     const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
 
-    const onAddAvailabilityClick = useCallback(() => {
+    const onCancelClick = useCallback(() => {
+        console.log("Cancel clicked");
+        router.push('/commeet/schedule'); 
+    }, [router]);
+
+
+    const onContinueClick = useCallback(() => {
         console.log("Selected Availability Slots:", selectedSlots);
-        // Add submission logic here
-    }, [selectedSlots]);
+         router.push('/commeet/schedule'); 
+    }, [router]);
 
     // Toggle logic for clicking a time slot
     const toggleSlot = (timeKey: string) => {
@@ -68,20 +77,37 @@ const CommeetPage: FunctionComponent = () => {
 
                     {/* 3. Availabilities Section */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
-                        <h3 className="text-xl sm:text-2xl font-normal text-gray-600 tracking-wide font-raleway">
+                        <h3 className="text-xl sm:text-2xl font-normal text-black tracking-wide font-raleway">
                             Add your availability
                         </h3>
 
-                        <button
-                            className="px-6 py-3 border-2 border-sky-400 rounded-full font-manrope text-sky-400 font-semibold flex items-center justify-center space-x-2
-                         hover:bg-sky-200 hover:text-white hover:border-sky-400 active:bg-sky-600 active:border-sky-600 active:text-white transition-colors duration-200"
-                            onClick={onAddAvailabilityClick}
-                        >
-                            <span>Add availability</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </button>
+                        {/* Button Group: Cancel & Continue */}
+                        <div className="flex items-center gap-4">
+                            
+                            {/* Cancel Button */}
+                            <button
+                                className="px-6 py-3 border-2 border-sky-400 rounded-full font-raleway text-sky-400 font-semibold flex items-center justify-center space-x-2
+                                            hover:bg-sky-200 hover:text-white hover:border-sky-400 active:bg-sky-600 active:border-sky-600 active:text-white transition-colors duration-200"
+                                onClick={onCancelClick}
+                            >
+                                <span>Cancel</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </button>
+
+                            {/* Continue Button */}
+                            <button
+                                className="px-6 py-3 bg-sky-500 border-2 border-sky-500 rounded-full font-raleway text-white font-normal flex items-center justify-center space-x-2
+                                         hover:bg-sky-600 transition-colors duration-200 shadow-sm"
+                                onClick={onContinueClick}
+                            >
+                                <span>Continue</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Timeline Grid Container */}
@@ -94,13 +120,13 @@ const CommeetPage: FunctionComponent = () => {
                                 <div className="text-xl text-gray-900 font-medium mb-6 whitespace-nowrap">
                                     {monthYear}
                                 </div>
-                                <div className="text-sm text-gray-600 font-medium">PST</div>
+                                <div className="text-sm text-gray-900 font-medium">PST</div>
                             </div>
                             
                             {/* Grid Column Header */}
                             <div className="flex-1 flex flex-col items-center justify-end pb-2">
-                                <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">{dayLabel}</div>
-                                <div className="text-2xl text-gray-900 font-normal">{dateLabel}</div>
+                                <div className="text-xs text-gray-900 uppercase tracking-widest mb-1">{dayLabel}</div>
+                                <div className="text-xl text-gray-900 font-normal">{dateLabel}</div>
                             </div>
                         </div>
 
@@ -135,8 +161,8 @@ const CommeetPage: FunctionComponent = () => {
                                                 onClick={() => toggleSlot(slot1)}
                                                 className={`h-1/2 w-full cursor-pointer transition-colors duration-100 relative
                                                     ${isSlot1Selected 
-                                                        ? 'bg-sky-200 hover:bg-sky-300' // White border creates the gap
-                                                        : 'hover:bg-gray-50'}`}
+                                                        ? 'bg-sky-200 hover:bg-sky-300 border-b-2 border-white' 
+                                                        : 'hover:bg-gray-50 border-b border-gray-100 border-dashed'}`}
                                             >
                                                 {/* Left Indicator Bar */}
                                                 {isSlot1Selected && (
@@ -160,7 +186,7 @@ const CommeetPage: FunctionComponent = () => {
 
                                             {/* Bottom border for the very last item to close the grid */}
                                             {index === times.length - 1 && (
-                                                <div className="absolute bottom-0 left-0 right-0"></div>
+                                                <div className="absolute bottom-0 left-0 right-0 border-b border-gray-200"></div>
                                             )}
                                         </div>
                                     );

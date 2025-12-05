@@ -51,7 +51,6 @@ const CommeetPage: FunctionComponent = () => {
   ) => {
     const headerClasses = "font-extrabold text-white bg-sky-500 rounded-lg";
     
-    // UPDATED: Reduced height, width, and text size for a smaller calendar
     const baseDayClasses = "flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 text-sm sm:text-base font-semibold";
     
     const inactiveClasses = "text-gray-400 bg-gray-100 rounded-lg";
@@ -155,10 +154,8 @@ const CommeetPage: FunctionComponent = () => {
         </div>
 
         {/* Calendar Section */}
-        {/* UPDATED: Changed max-w-5xl to max-w-lg to constrain width, reduced padding */}
         <div className="relative mt-12 mb-12 w-full max-w-lg p-4 bg-white shadow-xl rounded-2xl border border-gray-200 transform transition-all duration-300">
           
-          {/* Calendar Header - UPDATED: Reduced padding and text size */}
           <div className="p-2 bg-sky-500 rounded-lg text-white text-center text-xl font-bold tracking-wide flex items-center justify-between">
             <button onClick={handlePrevMonth} className="p-1 rounded-full hover:bg-sky-400 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
