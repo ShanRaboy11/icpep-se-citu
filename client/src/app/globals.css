@@ -810,3 +810,8 @@ html {
   box-shadow: 0 18px 40px rgba(0,130,209,0.18);
 }
 
+@keyframes shimmer {
+   100% {
+     transform: translateX(100%);
+   }
+ }
