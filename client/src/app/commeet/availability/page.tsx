@@ -3,132 +3,167 @@
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import { FunctionComponent, useCallback } from 'react';
-// useRouter is not used in this specific content, so it can be removed if not needed elsewhere
-// import { useRouter } from 'next/navigation';
 
 const CommeetPage: FunctionComponent = () => {
+    // Hardcoded slots to render the specific visual requested (Static View)
+    // You can change this array to display different static times
+    const availableSlots = ["9:00", "9:30"];
 
-    const onAddBtnContainerClick = useCallback(() => {
-        // Add your code here for when "Add availability" is clicked
+    const onAddAvailabilityClick = useCallback(() => {
         console.log("Add availability clicked!");
     }, []);
 
-    // Placeholder data for display based on the image. These are not editable on this page.
-    const meetingNameDisplay = "Name of the meeting";
-    const meetingTopicPlaceholder = "Topic discussed";
+    // Configuration
+    const monthYear = "Dec 2025";
+    const dayLabel = "FRI";
+    const dateLabel = "5";
+    
+    // Times from 9 AM to 4 PM (16:00)
+    const times = [9, 10, 11, 12, 13, 14, 15, 16];
 
-    // Date and time information for display in the calendar
-    const currentDateInfo = {
-        monthName: "October",
-        year: 2025,
-        dayOfWeek: "Tue",
-        day: 7,
-        timeZone: "(PST)"
+    const formatTime = (hour: number) => {
+        const h = hour % 12 === 0 ? 12 : hour % 12;
+        const ampm = hour < 12 ? 'AM' : 'PM';
+        return `${h} ${ampm}`;
     };
-
-    // Helper to generate an array of 30-minute intervals from 9 am to 2 pm
-    const generateTimeSlots = (startHour: number, endHour: number) => {
-        const slots = [];
-        for (let hour = startHour; hour <= endHour; hour++) {
-            slots.push(`${hour % 12 === 0 ? 12 : hour % 12} ${hour < 12 ? 'am' : 'pm'}`);
-            if (hour < endHour) { // Only add 30-min slot if there's a next hour
-                slots.push(`${hour % 12 === 0 ? 12 : hour % 12}:30 ${hour < 12 ? 'am' : 'pm'}`);
-            }
-        }
-        return slots;
-    };
-
-    const timeSlots = generateTimeSlots(9, 14); // 9 am to 2 pm (inclusive of 2 pm)
-
-    // Using a single day for the calendar grid as per the reference image
-    const days = [`${currentDateInfo.dayOfWeek}\n${currentDateInfo.day}`]; // Use \n for line break in text
 
     return (
-        <div className="w-full relative bg-white overflow-hidden text-center text-[16px] text-black font-raleway min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col bg-white overflow-hidden font-raleway">
             <Header />
 
             {/* Main Content Area */}
-            {/* The outer container div for the commmeet title and other sections */}
-            <div className="flex-1 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 self-stretch">
-                <div className="max-w-7xl w-full flex flex-col items-start space-y-8 lg:space-y-0 lg:space-x-12 px-[75px]"> {/* Added padding to match title alignment */}
-
-                    {/* Commeet Title Section */}
-                    <div className="flex-shrink-0 text-left">
-                        <h1 className="text-6xl sm:text-7xl font-rubik leading-tight mt-12">
+            <div className="flex-1 flex flex-col items-center pt-0 pb-20 px-4 sm:px-6 lg:px-8">
+                <div className="max-w-7xl w-full">
+                    
+                    {/* 1. Branding Section */}
+                    <div className="flex-shrink-0 text-left mb-10">
+                        <h1 className="text-5xl sm:text-6xl font-rubik leading-tight mt-0 pt-4">
                             <span className="text-sky-500 font-bold">com</span>
                             <span className="text-gray-900 font-bold">meet</span>
                         </h1>
                     </div>
 
-                    {/* Meeting Details Section */}
-                    <div className="w-[1180px] text-left mt-12"> {/* Adjusted width and margin */}
-                        <div className="pb-4 border-b-[1px] border-solid border-gray-300">
-                            <div className="text-[36px] tracking-num-0_01 leading-[100%] font-semibold text-gray-900">{meetingNameDisplay}</div>
-                            <div className="mt-4 text-[24px] tracking-num-0_01 leading-[100%] text-gray-700">{meetingTopicPlaceholder}</div>
+                    {/* 2. Meeting Details Section */}
+                    <div className="w-full mb-16">
+                        <div className="pb-4 border-b border-gray-300">
+                            <h2 className="text-2xl sm:text-3xl font-semibold text-gray-800 font-raleway">
+                                Name of the meeting
+                            </h2>
+                            <p className="mt-2 text-xl text-gray-600 font-raleway">
+                                Topic discussed
+                            </p>
                         </div>
                     </div>
 
-                    {/* Availabilities Section */}
-                    <div className="w-[1180px] mt-12 text-left"> {/* Adjusted width and margin */}
-                        <div className="flex justify-between items-center mb-8">
-                            <div className="text-[30px] tracking-num-0_01 leading-[100%] font-semibold text-gray-900">Availabilities</div>
-                            <button
-                                className="flex items-center gap-2 px-6 py-3 rounded-[10px] bg-sky-400 text-white text-[24px] cursor-pointer hover:bg-sky-500 transition-colors"
-                                onClick={onAddBtnContainerClick}
-                            >
-                                <span>Add availability</span>
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                            </button>
+                    {/* 3. Availabilities Section */}
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
+                        <h3 className="text-xl sm:text-2xl font-normal text-gray-600 tracking-wide font-raleway">
+                            Availabilities
+                        </h3>
+
+                        <button
+                            className="px-6 py-3 border-2 border-sky-400 rounded-full font-manrope text-sky-400 font-semibold flex items-center justify-center space-x-2
+                         hover:bg-sky-200 hover:text-white hover:border-sky-400 active:bg-sky-600 active:border-sky-600 active:text-white transition-colors duration-200"
+                            onClick={onAddAvailabilityClick}
+                        >
+                            <span>Add availability</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Timeline Grid Container */}
+                    <div className="w-full">
+                        
+                        {/* Top Header Area */}
+                        <div className="flex w-full">
+                            {/* Left Column Headers */}
+                            <div className="w-20 sm:w-24 shrink-0 flex flex-col justify-between items-end pr-4 pb-2">
+                                <div className="text-xl text-gray-900 font-medium mb-6 whitespace-nowrap">
+                                    {monthYear}
+                                </div>
+                                <div className="text-sm text-gray-600 font-medium">PST</div>
+                            </div>
+                            
+                            {/* Grid Column Header */}
+                            <div className="flex-1 flex flex-col items-center justify-end pb-2">
+                                <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">{dayLabel}</div>
+                                <div className="text-2xl text-gray-900 font-normal">{dateLabel}</div>
+                            </div>
                         </div>
 
-                        <div className="flex gap-8 mt-4">
-                            {/* Date and Time Column */}
-                            <div className="flex flex-col items-end pr-4 min-w-[100px]">
-                                <div className="text-[25px] font-medium text-gray-900 mb-[22px]"> {/* Adjusted margin for alignment */}
-                                    {currentDateInfo.monthName} {currentDateInfo.year}
-                                </div>
-                                {timeSlots.map((time, index) => (
-                                    <div key={index} className="h-[25px] flex items-center text-[20px] font-medium text-gray-700">
-                                        {/* Only show full hours as per reference image */}
-                                        {time.includes(':30') ? '' : time}
+                        {/* The Grid */}
+                        <div className="flex w-full select-none">
+                            
+                            {/* Left: Time Labels Column */}
+                            <div className="w-20 sm:w-24 shrink-0 flex flex-col text-right pr-4 pt-0">
+                                {times.map((hour) => (
+                                    <div key={hour} className="h-16 relative">
+                                        <span className="text-sm text-gray-500 absolute top-0 right-0 transform -translate-y-1/2">
+                                            {formatTime(hour)}
+                                        </span>
                                     </div>
                                 ))}
                             </div>
 
-                            {/* Calendar Grid - Adjusted for single day and gray background */}
-                            <div className="flex-1">
-                                <div className="grid grid-cols-1 gap-0"> {/* Single column for the day header */}
-                                    {days.map((day, index) => (
-                                        <div key={index} className="text-[20px] font-medium text-gray-700 text-center pb-2 border-b border-l border-r border-black whitespace-pre-line">
-                                            {day}
+                            {/* Right: Grid Lines Column */}
+                            <div className="flex-1 border-l border-r border-gray-200">
+                                {times.map((hour, index) => {
+                                    const slot1 = `${hour}:00`;
+                                    const slot2 = `${hour}:30`;
+
+                                    // Check static array instead of state
+                                    const isSlot1Available = availableSlots.includes(slot1);
+                                    const isSlot2Available = availableSlots.includes(slot2);
+
+                                    return (
+                                        <div key={hour} className="h-16 border-t border-gray-200 w-full relative bg-white">
+                                            
+                                            {/* First 30 Mins (Top Half) - Static */}
+                                            <div 
+                                                className={`h-1/2 w-full relative
+                                                    ${isSlot1Available 
+                                                        ? 'bg-sky-200 border-b-2 border-white' // Static Blue + Gap
+                                                        : 'border-b border-gray-100 border-dashed'}`}
+                                            >
+                                                {/* Left Indicator Bar */}
+                                                {isSlot1Available && (
+                                                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-sky-500"></div>
+                                                )}
+                                            </div>
+
+                                            {/* Second 30 Mins (Bottom Half) - Static */}
+                                            <div 
+                                                className={`h-1/2 w-full relative
+                                                    ${isSlot2Available 
+                                                        ? 'bg-sky-200' 
+                                                        : ''}`}
+                                            >
+                                                 {/* Left Indicator Bar */}
+                                                 {isSlot2Available && (
+                                                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-sky-500"></div>
+                                                )}
+                                            </div>
+
+                                            {/* Bottom border for the very last item to close the grid */}
+                                            {index === times.length - 1 && (
+                                                <div className="absolute bottom-0 left-0 right-0 border-b border-gray-200"></div>
+                                            )}
                                         </div>
-                                    ))}
-                                </div>
-                                <div className="grid grid-cols-1 gap-0 border-b border-l border-r border-gray-200"> {/* Grid for time slots */}
-                                    {days.map((day, dayIndex) => (
-                                        <div key={dayIndex} className="flex flex-col">
-                                            {timeSlots.map((_, timeIndex) => (
-                                                <div
-                                                    key={`${dayIndex}-${timeIndex}`}
-                                                    className="h-[25px] border-t border-gray-200 bg-white" // Gray background
-                                                >
-                                                    {/* Content for each time slot goes here (e.g., clickable availability blocks) */}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ))}
-                                </div>
-                                <div className="text-[14px] text-gray-600 mt-2 text-center">Shown in local time {currentDateInfo.timeZone}</div>
+                                    );
+                                })}
                             </div>
                         </div>
+
+                        {/* Footer Text */}
+                        <div className="mt-8 text-center text-gray-400 text-sm font-light font-raleway">
+                            Shown in local time (PST)
+                        </div>
+
                     </div>
                 </div>
             </div>
-
-            {/* Spacer to push footer down */}
-            <div className="flex-1"></div>
 
             <Footer />
         </div>
