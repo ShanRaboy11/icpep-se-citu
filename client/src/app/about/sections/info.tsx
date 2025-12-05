@@ -31,13 +31,14 @@ const InfoSection: FC = () => {
             <button
               key={section.id}
               onClick={() => setActiveIndex(index)}
-              className={`group w-full relative overflow-hidden flex items-center gap-3 p-2 rounded-xl text-left transition-all duration-300
-          cursor-pointer
-          ${
-            isActive
-              ? "bg-gradient-to-br from-primary3 to-secondary1 shadow-md"
-              : "bg-white border-2 border-secondary3 text-black hover:bg-gradient-to-br hover:from-primary3/85 hover:to-secondary1/85"
-          }`}
+              className={`group w-full relative overflow-hidden items-center gap-3 p-2 rounded-xl text-left transition-all duration-300
+              cursor-pointer
+              ${isActive ? "flex" : "hidden sm:flex"}
+              ${
+                isActive
+                  ? "bg-gradient-to-br from-primary3 to-secondary1 shadow-md"
+                  : "bg-white border-2 border-secondary3 text-black hover:bg-gradient-to-br hover:from-primary3/85 hover:to-secondary1/85"
+              }`}
             >
               {isActive && (
                 <div

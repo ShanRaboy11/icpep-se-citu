@@ -10,19 +10,19 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
       iconUrl: "/rocket.png",
       title: "Fostering Innovators",
       description: "Leading and inspiring technological advancement.",
-      sizeClass: "w-3/4 h-3/4",
+      sizeClass: "w-[90%] h-[90%]",
     },
     {
       iconUrl: "/target.png",
       title: "Ethical Leadership",
       description: "Impacting society with technical prowess and integrity.",
-      sizeClass: "w-3/4 h-3/4",
+      sizeClass: "w-[90%] h-[90%]",
     },
     {
       iconUrl: "/megaphone.png",
       title: "Community Driven",
       description: "Building a collaborative and supportive student network.",
-      sizeClass: "w-2/3 h-2/3",
+      sizeClass: "w-[85%] h-[85%]",
     },
   ];
 
@@ -37,11 +37,11 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-5 sm:gap-8 mt-8 sm:mt-12">
+      <div className="grid md:grid-cols-3 gap-3 sm:gap-6 mt-6 sm:mt-10">
         {visionPoints.map((point, index) => (
           <div key={index} className="text-left sm:text-center group">
             <div
-              className="w-full h-24 sm:h-40 rounded-xl sm:rounded-2xl overflow-hidden bg-white/5 mb-2 sm:mb-4 border border-white/10 transition-colors duration-300 group-hover:bg-white/10
+              className="w-full h-16 sm:h-28 rounded-xl sm:rounded-2xl overflow-hidden bg-white/5 mb-2 border border-white/10 transition-colors duration-300 group-hover:bg-white/10
                          flex items-center justify-center"
               style={{
                 backgroundImage:
@@ -58,12 +58,12 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
                 />
               </div>
             </div>
-            
-            <h4 className="font-rubik text-base sm:text-xl font-bold text-white mb-1 sm:mb-0">
+
+            <h4 className="font-rubik text-sm sm:text-lg font-bold text-white mb-1">
               {point.title}
             </h4>
-            
-            <p className="font-raleway text-xs sm:text-base text-gray-300">
+
+            <p className="font-raleway text-[10px] sm:text-sm text-gray-300 leading-tight">
               {point.description}
             </p>
           </div>

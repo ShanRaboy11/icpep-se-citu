@@ -46,7 +46,7 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
         {missionPoints.map((point, index) => (
           <div
             key={index}
-            className="flex items-center gap-4 sm:gap-6 p-4 sm:px-5 sm:py-6 rounded-2xl border border-white/10
+            className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-white/10
                        bg-white/5 transition-all duration-300 group hover:bg-white/10"
             style={{
               backgroundImage:
@@ -54,7 +54,7 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
               backgroundSize: "1rem 1rem",
             }}
           >
-            <div className="relative flex-shrink-0 w-16 h-16 sm:w-24 sm:h-24">
+            <div className="relative flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16">
               <Image
                 src={point.imageUrl}
                 alt={point.title}
@@ -64,10 +64,10 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
             </div>
 
             <div className="flex flex-col justify-center text-left">
-              <h4 className="font-rubik text-lg sm:text-xl font-bold text-white leading-snug">
+              <h4 className="font-rubik text-sm sm:text-lg font-bold text-white leading-snug">
                 {point.title}
               </h4>
-              <p className="font-raleway text-xs sm:text-base text-gray-300 mt-1 leading-relaxed">
+              <p className="font-raleway text-[10px] sm:text-sm text-gray-300 mt-0.5 leading-relaxed">
                 {point.description}
               </p>
             </div>

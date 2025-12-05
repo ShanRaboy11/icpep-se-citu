@@ -9,7 +9,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
     {
       name: "Integrity",
       iconUrl: "/integrity.png",
-      position: "top-[15%] left-[8%] md:top-0 md:left-[-15%]",
+      position: "top-[15%] left-[2%] md:top-0 md:left-[-15%]",
       animationClass: "animate-pulse-subtle",
     },
     {
@@ -49,13 +49,13 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           xmlns="http://www.w3.org/2000/svg"
         >
           <path
-            d="M200 200 H 170 V 80 H 110"
+            d="M200 200 H 170 V 80 H 100"
             stroke="currentColor"
             strokeWidth="2"
             className="text-secondary2"
           />
           <circle
-            cx="110"
+            cx="100"
             cy="80"
             r="4"
             fill="currentColor"
@@ -63,13 +63,13 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           />
 
           <path
-            d="M200 200 H 250 V 20 H 280"
+            d="M200 200 H 230 V 20 H 268"
             stroke="currentColor"
             strokeWidth="2"
             className="text-secondary2"
           />
           <circle
-            cx="280"
+            cx="268"
             cy="20"
             r="4"
             fill="currentColor"
@@ -77,13 +77,13 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           />
 
           <path
-            d="M200 200 H 260 V 182 H 320"
+            d="M200 200 H 260 V 182 H 308"
             stroke="currentColor"
             strokeWidth="2"
             className="text-secondary2"
           />
           <circle
-            cx="320"
+            cx="308"
             cy="182"
             r="4"
             fill="currentColor"
@@ -91,13 +91,13 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           />
 
           <path
-            d="M200 200 H 235 V 320 H 290"
+            d="M200 200 H 225 V 320 H 278"
             stroke="currentColor"
             strokeWidth="2"
             className="text-secondary2"
           />
           <circle
-            cx="290"
+            cx="278"
             cy="320"
             r="4"
             fill="currentColor"
@@ -105,13 +105,13 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           />
 
           <path
-            d="M200 200 H 185 V 280 H 60"
+            d="M200 200 H 185 V 280 H 72"
             stroke="currentColor"
             strokeWidth="2"
             className="text-secondary2"
           />
           <circle
-            cx="60"
+            cx="72"
             cy="280"
             r="4"
             fill="currentColor"
@@ -209,8 +209,8 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           <div
             key={value.name}
             className={`absolute ${value.position} ${value.animationClass} z-20
-              w-16 h-16 sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5
-              flex flex-col items-center justify-center gap-1 sm:gap-2 p-1 sm:p-4
+              w-[74px] h-[74px] sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5
+              flex flex-col items-center justify-center gap-0.5 sm:gap-2 p-1 sm:p-4
               transition-colors duration-300 hover:bg-white/10`}
             style={{
               backgroundImage:
@@ -218,7 +218,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
               backgroundSize: "1rem 1rem",
             }}
           >
-            <div className="relative w-6 h-6 sm:w-14 sm:h-14">
+            <div className="relative w-9 h-9 sm:w-14 sm:h-14">
               <Image
                 src={value.iconUrl}
                 alt={value.name}
@@ -226,7 +226,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
                 className="object-contain"
               />
             </div>
-            <span className="font-rubik font-semibold text-white text-center text-[9px] sm:text-base leading-tight">
+            <span className="font-rubik font-semibold text-white text-center text-[10px] sm:text-base leading-tight">
               {value.name}
             </span>
           </div>
