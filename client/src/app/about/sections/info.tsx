@@ -24,7 +24,7 @@ const InfoSection: FC = () => {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row gap-3 mb-4 sm:mb-6">
         {sections.map((section, index) => {
           const isActive = activeIndex === index;
           return (
@@ -47,7 +47,7 @@ const InfoSection: FC = () => {
                 />
               )}
               <div
-                className={`relative z-10 flex-shrink-0 p-3 rounded-lg transition-all duration-300 ${
+                className={`relative z-10 flex-shrink-0 p-2 sm:p-3 rounded-lg transition-all duration-300 ${
                   isActive
                     ? "bg-white/10 text-secondary2"
                     : "bg-secondary3/10 text-secondary2"
@@ -56,7 +56,7 @@ const InfoSection: FC = () => {
                 {section.icon}
               </div>
               <span
-                className={`relative z-10 font-raleway text-sm font-semibold ${
+                className={`relative z-10 font-raleway text-xs sm:text-sm font-semibold ${
                   isActive
                     ? "text-gray-300"
                     : "text-black group-hover:text-gray-100"
@@ -70,8 +70,8 @@ const InfoSection: FC = () => {
       </div>
 
       <section
-        className="rounded-3xl mt-8 bg-gradient-to-br from-primary3 to-secondary1
-    px-10 sm:px-16 py-16 sm:py-20 shadow-2xl text-white flex flex-col justify-center min-h-[40rem]"
+        className="rounded-3xl mt-4 sm:mt-8 bg-gradient-to-br from-primary3 to-secondary1
+    px-6 sm:px-16 py-10 sm:py-20 shadow-2xl text-white flex flex-col justify-center min-h-[30rem] sm:min-h-[40rem]"
       >
         <div key={activeIndex} className="animate-fade-in">
           {activeSection.id === "org" && <OrgLayout section={activeSection} />}
