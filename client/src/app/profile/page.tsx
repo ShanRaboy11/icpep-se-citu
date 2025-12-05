@@ -190,7 +190,7 @@ export default function ProfilePage() {
               - p-[2px]: Extremely thin padding to create a razor-sharp outline. NO BULGE.
               - bg-zinc-200: A subtle "track" color so you can see where the snake is moving.
           */}
-          <div className="relative mb-8 rounded-3xl overflow-hidden shadow-2xl translate-z-0">
+          <div className="relative mb-8 rounded-3xl overflow-hidden shadow-2xl translate-z-0 profile-snake-wrapper">
             
             {/* SVG Neon Snake Circuit Overlay */}
             <svg className="circuit-outline neon-snake-svg" viewBox="0 0 1200 380" preserveAspectRatio="none" aria-hidden>
@@ -226,17 +226,19 @@ export default function ProfilePage() {
                 </filter>
               </defs>
 
-              {/* Main colored track (tail) - aligned exactly to card outline */}
-              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-snake-track" stroke="url(#snakeGradient)" />
-              {/* Second moving object with longer opacity-graded tail (first copy) */}
-              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-tail-2" stroke="url(#tailGradient2)" style={{strokeDashoffset: 0}} />
-              {/* Second moving object with longer opacity-graded tail (opposite side) */}
-              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-tail-2" stroke="url(#tailGradient2)" style={{strokeDashoffset: 1561}} />
 
-              {/* Bright head (first) */}
-              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-snake-head" stroke="url(#headGradient)" style={{mixBlendMode: 'screen', strokeDashoffset: 0}} />
-              {/* Bright head (opposite side) - identical, placed halfway around the perimeter */}
-              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-snake-head" stroke="url(#headGradient)" style={{mixBlendMode: 'screen', strokeDashoffset: 1561}} />
+              {/* First snake (phase start) */}
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-tail-2 snake-1" stroke="url(#tailGradient2)" />
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-snake-head snake-1" stroke="url(#headGradient)" />
+
+              {/* Second snake (1/3-cycle phase offset) */}
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-tail-2 snake-2" stroke="url(#tailGradient2)" />
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-snake-head snake-2" stroke="url(#headGradient)" />
+
+              {/* Third snake (2/3-cycle phase offset) */}
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-tail-2 snake-3" stroke="url(#tailGradient2)" />
+              <rect x="0" y="0" width="1200" height="380" rx="22" className="neon-snake-head snake-3" stroke="url(#headGradient)" />
+            
             </svg>
 
             {/* Inner Card Content - Sits on top, masking the center */}
