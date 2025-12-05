@@ -22,7 +22,7 @@ const DepartmentHeadCard: FC<FacultyMember> = ({
 
       <div className="relative mb-5">
         <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary1 to-primary3 blur opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
-        
+
         {/* Image Container */}
         <div className="relative w-44 h-44 rounded-full border-4 border-white shadow-xl overflow-hidden">
           <img
@@ -32,7 +32,7 @@ const DepartmentHeadCard: FC<FacultyMember> = ({
           />
         </div>
       </div>
-      
+
       <h3 className="font-rubik text-3xl font-bold text-primary3 mb-2">
         {name}
       </h3>
@@ -47,36 +47,46 @@ const DepartmentHeadCard: FC<FacultyMember> = ({
 const FacultyMemberCard: FC<FacultyMember> = ({ name, position, imageUrl }) => {
   return (
     <div className="group relative w-full flex flex-col items-center bg-white rounded-2xl border border-gray-200 shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1 overflow-hidden p-8">
-      
-      {/* 1. Subtle Background Texture (Optional Tech Feel) */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-           style={{ backgroundImage: 'radial-gradient(#475569 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-      </div>
+      {/* Image Section Wrapper */}
+      {/* We keep the image and the rings in this relative container so they stay perfectly aligned */}
+      <div className="relative mb-6 flex justify-center items-center">
+        {/* --- TEXTURE: RIPPLES / CONNECTED RINGS --- */}
+        {/* These are absolute to the image wrapper center, ensuring perfect alignment */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 flex items-center justify-center pointer-events-none">
+          {/* Ring 1 (Immediate neighbor to photo) */}
+          <div className="absolute w-[180px] h-[180px] rounded-full border border-gray-100 opacity-100"></div>
 
-      {/* 2. Image Section - Improved Circular Frame & Glow */}
-      <div className="relative mb-6">
-        
-        {/* The Glow Effect (Like Dept Head): Fades in on hover behind the frame */}
+          {/* Ring 2 */}
+          <div className="absolute w-[240px] h-[240px] rounded-full border border-gray-100 opacity-80"></div>
+
+          {/* Ring 3 */}
+          <div className="absolute w-[300px] h-[300px] rounded-full border border-gray-50 opacity-60"></div>
+
+          {/* Ring 4 (Fades out into the card edges) */}
+          <div className="absolute w-[360px] h-[360px] rounded-full border border-gray-50 opacity-40"></div>
+        </div>
+
+        {/* Glow Effect (Behind Frame) */}
         <div className="absolute inset-0 bg-primary1/40 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 scale-110 pointer-events-none"></div>
 
-        {/* The Physical Frame */}
-        <div className="relative w-36 h-36 p-1.5 bg-white rounded-full border border-gray-100 shadow-sm group-hover:shadow-md group-hover:border-primary1/20 transition-all duration-300">
+        {/* The Physical Photo Frame */}
+        <div className="relative w-36 h-36 p-1.5 bg-white rounded-full border-2 border-primary1/40 shadow-sm z-10 group-hover:shadow-md group-hover:border-primary1 transition-all duration-300">
           <img
             src={imageUrl}
             alt={`Profile of ${name}`}
-            className="w-full h-full object-cover rounded-full border border-gray-100 group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover rounded-full group-hover:scale-105 transition-transform duration-500"
           />
         </div>
       </div>
 
-      {/* 3. Text Section */}
+      {/* Text Section */}
       <div className="relative z-10 text-center">
-        {/* Name: Permanent Dark Color */}
+        {/* Name */}
         <h4 className="font-rubik font-bold text-xl text-primary3 mb-2">
           {name}
         </h4>
-        
-        {/* Position: Permanent Primary Color */}
+
+        {/* Position */}
         <p className="font-raleway text-sm font-bold text-primary1 uppercase tracking-wider">
           {position}
         </p>
