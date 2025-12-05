@@ -5,8 +5,8 @@ import { Shield, Award, Users, X } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import Button from "../components/button";
 import { createPortal } from "react-dom";
-import PersonalInformation from "./components/personalinfo";
-import RolenMembershipInformation from "./components/rolenmembership";
+import {PersonalInformation} from "./components/personalinfo";
+import {RolenMembershipInformation} from "./components/rolenmembership";
 import SecuritySection from "./components/password";
 import Header from "../components/header";
 import Footer from "../components/footer";
@@ -194,12 +194,16 @@ export default function ProfilePage() {
             /* Sharp start of White Head */ #ffffff 360deg /* White Head End */
           );
         }
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
       `}</style>
 
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
+        <main aria-busy={loading} className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
           {/* Title Section */}
           <div className="mb-12 text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary1/10 to-primary1/5 px-4 py-1.5 mb-4 border border-primary1/20">
@@ -378,15 +382,28 @@ export default function ProfilePage() {
                   <div className="relative w-44 h-44 rounded-full bg-gradient-to-br from-white/30 to-white/10 p-1.5 backdrop-blur-xl shadow-2xl transition-all duration-300 group-hover:scale-105">
                     <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden shadow-inner border-4 border-white relative">
                       {loading ? (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-200 via-gray-300 to-gray-200 animate-pulse relative overflow-hidden">
-                          <div
-                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent"
-                            style={{
-                              animation: "shimmer 2s infinite",
-                              backgroundSize: "200% 100%",
-                            }}
-                          ></div>
-                        </div>
+                          <div className="w-full h-full rounded-full relative overflow-hidden" aria-hidden>
+                            <div
+                              className="absolute inset-0 rounded-full"
+                              style={{
+                                background:
+                                  'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
+                                backgroundSize: '200% 100%',
+                                animation: 'shimmer 1.6s linear infinite',
+                              }}
+                            />
+                            {/* small role-badge shimmer on avatar */}
+                            <div
+                              className="absolute right-3 bottom-3 w-8 h-8 rounded-full ring-2 ring-white/30"
+                              aria-hidden
+                              style={{
+                                background:
+                                  'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
+                                backgroundSize: '200% 100%',
+                                animation: 'shimmer 1.6s linear infinite',
+                              }}
+                            />
+                          </div>
                       ) : (
                         <div
                           className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary3 via-primary1 to-primary3 text-white text-5xl font-bold relative overflow-hidden"
@@ -412,7 +429,16 @@ export default function ProfilePage() {
               <div className="text-center sm:text-left relative z-10 flex-grow animate-slide-in-right">
                 <h2 className="text-4xl font-bold font-rubik mb-2 drop-shadow-md">
                   {loading ? (
-                    <span className="inline-block h-10 w-48 bg-white/20 rounded-lg animate-pulse"></span>
+                    <span
+                      className="inline-block h-10 w-72 rounded-lg"
+                      aria-hidden
+                      style={{
+                        background:
+                          'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmer 1.6s linear infinite',
+                      }}
+                    />
                   ) : (
                     `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() ||
                     "Unknown"
@@ -420,7 +446,16 @@ export default function ProfilePage() {
                 </h2>
                 <p className="text-xl opacity-90 font-rubik mb-4 drop-shadow font-light tracking-wide">
                   {loading ? (
-                    <span className="inline-block h-6 w-32 bg-white/20 rounded-lg animate-pulse"></span>
+                    <span
+                      className="inline-block h-6 w-32 rounded-lg"
+                      aria-hidden
+                      style={{
+                        background:
+                          'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmer 1.6s linear infinite',
+                      }}
+                    />
                   ) : (
                     formatYearLevel(user?.yearLevel)
                   )}
@@ -428,7 +463,12 @@ export default function ProfilePage() {
 
                 {/* Role Badge */}
                 <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                  {!loading && (
+                  {loading ? (
+                    <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-semibold border border-white/20 shadow-inner">
+                      <div aria-hidden className="w-4 h-4 rounded-full" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s linear infinite' }} />
+                      <div aria-hidden className="h-4 w-28 rounded-lg" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s linear infinite' }} />
+                    </div>
+                  ) : (
                     <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-semibold border border-white/20 shadow-inner">
                       <Users className="w-4 h-4 text-cyan-200" />
                       <span className="tracking-wide text-white">
@@ -476,6 +516,7 @@ export default function ProfilePage() {
                 idNumber={loading ? "—" : user?.studentNumber ?? "—"}
                 yearLevel={loading ? "—" : user?.yearLevel ?? "—"}
                 email={loading ? "—" : user?.email ?? "—"}
+                loading={loading}
               />
             </div>
 
@@ -489,11 +530,12 @@ export default function ProfilePage() {
                   loading ? undefined : user?.committeeRole ?? undefined
                 }
                 membership={normalizeMembership(user)}
+                loading={loading}
               />
             </div>
 
             <div className="transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg">
-              <SecuritySection />
+              <SecuritySection loading={loading} />
             </div>
             <div className="w-full flex justify-end">
               {!loading && (

@@ -5,12 +5,14 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import authService from '@/app/services/auth';
 
-export default function SecuritySection() {
+interface SecuritySectionProps { loading?: boolean }
+
+export default function SecuritySection({ loading = false }: SecuritySectionProps) {
   const [open, setOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -61,7 +63,7 @@ export default function SecuritySection() {
     if (newPassword !== confirmPassword) return setError('New password and confirmation do not match');
 
     try {
-      setLoading(true);
+      setSubmitting(true);
       const res = await authService.changePassword(currentPassword, newPassword);
       if (res && res.success) {
         setSuccess(res.message || 'Password changed successfully');
@@ -75,9 +77,39 @@ export default function SecuritySection() {
       if (err instanceof Error) setError(err.message || 'Failed to change password');
       else setError(String(err) || 'Failed to change password');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
+
+  // If parent wants a skeleton for this card, render it
+ if (loading) {
+    return (
+      <div className="relative w-full border border-primary1/30 rounded-2xl p-6 px-7 sm:px-10 sm:py-8 bg-gradient-to-br from-gray-50 to-gray-100 shadow-lg overflow-hidden">
+        {/* Shimmer overlay */}
+        <div
+          className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite]"
+          style={{
+            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%)',
+          }}
+        />
+        
+        <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-primary1/20">
+          <div className="p-2 bg-gray-200 rounded-lg animate-pulse">
+            <div className="w-5 h-5 bg-gray-300 rounded" />
+          </div>
+          <div className="h-7 w-32 bg-gray-200 rounded-md animate-pulse" />
+        </div>
+
+        <div className="flex flex-row items-center justify-between p-3 rounded-xl">
+          <span className="text-gray-400 font-raleway text-lg font-medium">Password</span>
+          <div className="flex items-center gap-4">
+            <div className="h-5 w-32 bg-gray-200 rounded animate-pulse hidden sm:block" />
+            <div className="h-9 w-20 bg-gray-200 rounded-lg animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full border border-primary1/30 rounded-2xl p-6 px-7 sm:px-10 sm:py-8 bg-white shadow-lg hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
@@ -246,9 +278,9 @@ export default function SecuritySection() {
                   type="submit" 
                   variant="primary3" 
                   className="px-5 py-2 flex items-center gap-2 transition-transform duration-200 rounded-lg" 
-                  disabled={loading}
+                  disabled={submitting}
                 >
-                  {loading ? (
+                  {submitting ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       Updating...
