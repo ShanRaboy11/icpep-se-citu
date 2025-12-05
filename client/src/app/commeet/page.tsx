@@ -23,6 +23,7 @@ const CommeetPage: FunctionComponent = () => {
     const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
 
     const dayIndex = day + firstDayOfMonth - 1;
+    const actualDay = day;
 
     if (dayIndex < firstDayOfMonth) { // Previous month's inactive days
       return;
@@ -30,6 +31,7 @@ const CommeetPage: FunctionComponent = () => {
     if (day > totalDaysInMonth) { // Next month's inactive days
       return;
     }
+
 
     setSelectedDates(prevSelectedDates => {
       const newSelectedDates = new Set(prevSelectedDates);
@@ -42,6 +44,7 @@ const CommeetPage: FunctionComponent = () => {
     });
   };
 
+
   const renderDayCell = (
     day: string | number, 
     isHeader: boolean = false,
@@ -49,15 +52,12 @@ const CommeetPage: FunctionComponent = () => {
     isSelected: boolean = false,
     onClick?: (day: number) => void 
   ) => {
-    const headerClasses = "font-extrabold text-white bg-sky-500 rounded-lg";
-    
-    // UPDATED: Reduced height, width, and text size for a smaller calendar
-    const baseDayClasses = "flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 text-sm sm:text-base font-semibold";
-    
-    const inactiveClasses = "text-gray-400 bg-gray-100 rounded-lg";
-    const activeClasses = "text-gray-800 bg-white rounded-lg shadow-sm hover:bg-sky-100 cursor-pointer";
-    const selectedClasses = "bg-sky-400 text-white rounded-full shadow-md";
+    const headerClasses = "font-extrabold text-white bg-sky-500 rounded-xl";
+    const baseDayClasses = "flex items-center justify-center h-24 w-24 sm:h-28 sm:w-28 text-3xl font-semibold";
+    const inactiveClasses = "text-gray-400 bg-gray-100 rounded-xl";
+    const activeClasses = "text-gray-800 bg-white rounded-xl shadow-sm hover:bg-sky-100 cursor-pointer";
 
+    const selectedClasses = "bg-sky-400 text-white rounded-full";
     const finalClasses = isHeader
       ? headerClasses
       : isInactive
@@ -127,22 +127,22 @@ const CommeetPage: FunctionComponent = () => {
   return (
     <div className="min-h-screen flex flex-col overflow-hidden bg-gray-50">
       <Header />
-      <div className="flex-1 flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
+      <div className="flex-1 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8">
         {/* Main Content Area */}
         <div className="max-w-7xl w-full flex flex-col lg:flex-row lg:justify-between items-start lg:items-start space-y-8 lg:space-y-0 lg:space-x-12">
           <div className="flex-shrink-0 text-center lg:text-left">
-            <h1 className="text-5xl sm:text-6xl font-rubik leading-tight mt-8">
+            <h1 className="text-6xl sm:text-7xl font-rubik leading-tight mt-12">
               <span className="text-sky-500 font-bold">com</span>
               <span className="text-gray-900 font-bold">meet</span>
             </h1>
-            <p className="mt-6 text-xl sm:text-2xl font-raleway text-gray-700 max-w-lg whitespace-nowrap">
+            <p className="mt-8 text-2xl sm:text-3xl font-raleway text-gray-700 max-w-lg whitespace-nowrap">
               What days would you like to meet on?
             </p>
           </div>
 
-          <div className="flex-shrink-0 mt-8 lg:mt-24">
+          <div className="flex-shrink-0 mt-8 lg:mt-32">
             <button
-              className="px-6 py-2 border-2 border-gray-900 rounded-full font-manrope text-gray-700 font-semibold flex items-center justify-center space-x-2
+              className="px-6 py-3 border-2 border-sky-400 rounded-full font-raleway text-sky-400 font-semibold flex items-center justify-center space-x-2
                          hover:bg-sky-200 hover:text-white hover:border-sky-400 active:bg-sky-600 active:border-sky-600 active:text-white transition-colors duration-200"
               onClick={onLetsMeetBtnClick}
             >
@@ -155,26 +155,23 @@ const CommeetPage: FunctionComponent = () => {
         </div>
 
         {/* Calendar Section */}
-        {/* UPDATED: Changed max-w-5xl to max-w-lg to constrain width, reduced padding */}
-        <div className="relative mt-12 mb-12 w-full max-w-lg p-4 bg-white shadow-xl rounded-2xl border border-gray-200 transform transition-all duration-300">
-          
-          {/* Calendar Header - UPDATED: Reduced padding and text size */}
-          <div className="p-2 bg-sky-500 rounded-lg text-white text-center text-xl font-bold tracking-wide flex items-center justify-between">
-            <button onClick={handlePrevMonth} className="p-1 rounded-full hover:bg-sky-400 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <div className="relative mt-16 mb-12 w-full max-w-5xl p-6 bg-white shadow-xl rounded-2xl border-2 border-gray-300 transform transition-all duration-300">
+          <div className="p-4 bg-sky-500 rounded-lg text-white text-center text-4xl font-extrabold tracking-wide flex items-center justify-between">
+            <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-sky-400 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <span>{currentMonthName} {currentYear}</span>
-            <button onClick={handleNextMonth} className="p-1 rounded-full hover:bg-sky-400 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-sky-400 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
 
-          {/* Day of Week Headers - UPDATED: Reduced margin and gap */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-4">
+          {/* Day of Week Headers */}
+          <div className="grid grid-cols-7 gap-2 sm:gap-4 mt-8">
             {daysOfWeek.map(day => (
               <div key={day}>
                 {renderDayCell(day, true)}
@@ -182,8 +179,8 @@ const CommeetPage: FunctionComponent = () => {
             ))}
           </div>
 
-          {/* Dates Grid - UPDATED: Reduced margin and gap */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-2">
+          {/* Dates Grid */}
+          <div className="grid grid-cols-7 gap-2 sm:gap-4 mt-4">
             {calendarDays.map((date, index) => {
               const uniqueDateKey = `${currentYear}-${currentDate.getMonth() + 1}-${date.day}`;
               const isSelected = selectedDates.has(uniqueDateKey);
