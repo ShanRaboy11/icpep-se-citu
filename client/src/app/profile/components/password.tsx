@@ -102,8 +102,8 @@ export default function SecuritySection() {
           </span>
 
           <Button
-            variant="primary2"
-            className="flex items-center gap-2 whitespace-nowrap hover:scale-105 transition-transform duration-200"
+            variant="secondary2"
+            className="flex items-center gap-2 whitespace-nowrap hover:scale-105 transition-transform duration-200 px-4 py-2 rounded-lg"
             onClick={openModal}
           >
             Update
@@ -244,8 +244,8 @@ export default function SecuritySection() {
                 </button>
                 <Button 
                   type="submit" 
-                  variant="primary2" 
-                  className="px-6 py-2.5 flex items-center gap-2 hover:scale-105 transition-transform duration-200" 
+                  variant="primary3" 
+                  className="px-5 py-2 flex items-center gap-2 transition-transform duration-200 rounded-lg" 
                   disabled={loading}
                 >
                   {loading ? (

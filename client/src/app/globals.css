@@ -778,3 +778,35 @@ html {
 
 /* Hover: speed up the snakes by reducing the cycle duration variable. This keeps phase offsets proportional. */
 .profile-snake-wrapper:hover { --snake-duration: 2.5s; }
+
+/* Profile header glow and hover-scale */
+.profile-snake-wrapper {
+  position: relative;
+}
+.profile-snake-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -10px; /* allow glow to extend outside */
+  border-radius: 22px;
+  background: conic-gradient(from 0deg, rgba(0,168,255,0.06) 0deg, rgba(0,149,232,0.08) 90deg, rgba(0,130,209,0.06) 180deg, rgba(139,0,255,0.04) 260deg, rgba(0,168,255,0.06) 360deg);
+  filter: blur(18px);
+  opacity: 0.48;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+  z-index: 6;
+}
+.profile-snake-wrapper:hover::before {
+  opacity: 0.8;
+  transform: scale(1.02);
+}
+
+.profile-card-content {
+  transform-origin: center center;
+  transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms ease;
+  will-change: transform, box-shadow;
+}
+.profile-snake-wrapper:hover .profile-card-content {
+  transform: scale(1.02);
+  box-shadow: 0 18px 40px rgba(0,130,209,0.18);
+}
+
