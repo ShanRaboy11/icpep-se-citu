@@ -1,5 +1,4 @@
-import { Event } from "../utils/event";
-
+// components/event-tags.tsx
 interface Props {
   tags: string[];
 }
@@ -11,6 +10,8 @@ const Tag = ({ children }: { children: React.ReactNode }) => (
 );
 
 export default function EventTags({ tags }: Props) {
+  if (!tags || tags.length === 0) return null;
+
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((tag) => (

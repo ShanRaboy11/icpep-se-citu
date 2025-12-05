@@ -2,10 +2,12 @@ import { councilOfficers } from "../utils/announcements";
 
 interface MeetingAttendanceCardProps {
   onViewFull: () => void;
+  attendanceLink?: string | null;
 }
 
 export default function MeetingAttendanceCard({
   onViewFull,
+  attendanceLink,
 }: MeetingAttendanceCardProps) {
   return (
     <div className="rounded-2xl bg-gradient-to-br from-primary3 to-secondary1 p-6 text-white shadow-lg">
@@ -35,6 +37,19 @@ export default function MeetingAttendanceCard({
           </div>
         </div>
       </div>
+
+      {attendanceLink && (
+        <div className="mt-4 mb-3">
+          <a
+            href={attendanceLink}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-block w-full text-center rounded-md bg-white/10 hover:bg-white/20 px-4 py-2 text-sm font-medium"
+          >
+            Open attendance link
+          </a>
+        </div>
+      )}
 
       <button
         onClick={onViewFull}

@@ -5,8 +5,8 @@ services:
     build:
       context: ./server
     volumes:
-      - ./server:/usr/src/app
-      - /usr/src/app/node_modules # Ensures node_modules from build are used
+      - ./server:/usr/src/app:delegated
+      - server_node_modules:/usr/src/app/node_modules # Use a named volume to preserve image-installed node_modules
     ports:
       - "5000:5000"
     env_file:
@@ -48,3 +48,4 @@ services:
 
 volumes:
   mongo-data:
+  server_node_modules:

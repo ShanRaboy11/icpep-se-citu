@@ -16,11 +16,11 @@ router.post('/login', auth_controller_1.login);
 // @access  Public
 router.post('/logout', auth_controller_1.logout);
 // @route   POST /api/auth/first-login-password
-// @desc    Change password on first login
+// @desc    Change password on first login (no current password required)
 // @access  Private (requires valid token)
 router.post('/first-login-password', auth_middleware_1.authenticateToken, auth_controller_1.firstLoginPasswordChange);
 // @route   POST /api/auth/change-password
-// @desc    Change password (regular password change)
+// @desc    Change password (requires current password)
 // @access  Private (requires valid token)
 router.post('/change-password', auth_middleware_1.authenticateToken, auth_controller_1.changePassword);
 // @route   GET /api/auth/me

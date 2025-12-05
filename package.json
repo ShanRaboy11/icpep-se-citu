@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "dev": "concurrently \"npm --prefix server run dev\" \"npm --prefix client run dev\""
+  },
   "dependencies": {
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
@@ -9,6 +12,7 @@
   },
   "devDependencies": {
     "@types/mongoose": "^5.11.96",
-    "@types/node": "^24.9.2"
+    "@types/node": "^24.9.2",
+    "concurrently": "^8.2.0"
   }
 }

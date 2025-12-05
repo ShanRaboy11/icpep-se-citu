@@ -3,15 +3,24 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const dotenv_1 = __importDefault(require("dotenv"));
+// Load environment variables as early as possible so modules that read process.env
+// (e.g., the Cloudinary utility) get the values during module initialization.
+dotenv_1.default.config();
 const express_1 = __importDefault(require("express"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const cors_1 = __importDefault(require("cors"));
-const dotenv_1 = __importDefault(require("dotenv"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
-// Load environment variables
-dotenv_1.default.config();
+const announcements_route_1 = __importDefault(require("../src/routes/announcements.route"));
+const event_routes_1 = __importDefault(require("./routes/event.routes"));
+const scheduler_1 = __importDefault(require("./utils/scheduler"));
+// Global unhandled rejection handler to avoid process crash during development
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+    // Do not exit the process in development; log and continue.
+});
 // Initialize express app
 const app = (0, express_1.default)();
 // ✅ CRITICAL: Middleware MUST come BEFORE routes!
@@ -131,13 +140,24 @@ app.get('/api', (req, res) => {
         ],
     });
 });
-// ✅ ROUTES - Register AFTER middleware
 app.use('/api/auth', auth_routes_1.default);
 app.use('/api/users', user_routes_1.default);
-// TODO: Add your other routes here
-// import announcementRoutes from './routes/announcement.routes';
-// app.use('/api/announcements', announcementRoutes);
-// etc...
+app.use('/api/announcements', announcements_route_1.default);
+app.use('/api/events', event_routes_1.default);
+app.get('/api/debug/env', (req, res) => {
+    res.json({
+        nodeEnv: process.env.NODE_ENV,
+        port: process.env.PORT,
+        mongoUri: process.env.MONGODB_URI ? 'Set' : 'Missing',
+        jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Missing',
+        cloudinary: {
+            cloudName: process.env.CLOUDINARY_CLOUD_NAME ? 'Set' : 'Missing',
+            apiKey: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Missing',
+            apiSecret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Missing',
+        },
+        clientUrl: process.env.CLIENT_URL,
+    });
+});
 // 404 handler - must be after all routes
 app.use((req, res) => {
     res.status(404).json({
@@ -163,6 +183,15 @@ const server = app.listen(PORT, () => {
     console.log(`📍 Health check: http://localhost:${PORT}/health`);
     console.log(`📍 API: http://localhost:${PORT}/api`);
     console.log(`📍 MongoDB: ${mongoose_1.default.connection.readyState === 1 ? '✅ Connected' : '⏳ Connecting...'}`);
+});
+// Start scheduler after successful DB connection
+mongoose_1.default.connection.once('open', () => {
+    try {
+        (0, scheduler_1.default)();
+    }
+    catch (err) {
+        console.error('❌ Failed to start announcement scheduler:', err);
+    }
 });
 // Graceful shutdown
 process.on('SIGTERM', () => {

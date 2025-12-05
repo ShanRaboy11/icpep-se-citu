@@ -10,9 +10,10 @@ export interface Event {
     name: string;
     avatarImageUrl: string;
   };
-  tags: string[];
+  tags?: string[];
   bannerImageUrl: string;
   description: string;
+  content?: string;
   details: {
     title: string;
     items: string[];

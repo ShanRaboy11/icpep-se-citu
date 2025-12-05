@@ -1,11 +1,12 @@
+// components/rsvp-card.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { Event } from "../utils/event";
 
 interface Props {
-  status: Event["status"];
+  status?: "Upcoming" | "Ongoing" | "Ended";
   date: string;
+  rsvpLink?: string; // Optional external RSVP link
 }
 
 const CountdownPill = ({ days, hours }: { days: number; hours: number }) => (
@@ -14,7 +15,7 @@ const CountdownPill = ({ days, hours }: { days: number; hours: number }) => (
   </div>
 );
 
-export default function RsvpCard({ status, date }: Props) {
+export default function RsvpCard({ status, date, rsvpLink }: Props) {
   const [hasRsvpd, setHasRsvpd] = useState(false);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0 });
 
@@ -37,6 +38,14 @@ export default function RsvpCard({ status, date }: Props) {
     return () => clearInterval(timer);
   }, [date]);
 
+  const handleRsvp = () => {
+    if (rsvpLink) {
+      window.open(rsvpLink, '_blank', 'noopener,noreferrer');
+    } else {
+      setHasRsvpd(true);
+    }
+  };
+
   if (status === "Ended") {
     return (
       <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg text-center">
@@ -50,9 +59,26 @@ export default function RsvpCard({ status, date }: Props) {
     );
   }
 
+  if (status === "Ongoing") {
+    return (
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg text-center">
+        <div className="bg-blue-100 text-blue-800 font-raleway font-semibold px-4 py-2 rounded-full text-sm inline-flex items-center gap-2 mb-4">
+          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+          Event in Progress
+        </div>
+        <h2 className="font-rubik font-bold text-xl sm:text-2xl text-primary3">
+          This event is currently happening!
+        </h2>
+        <p className="font-raleway text-bodytext mt-2 text-sm sm:text-base">
+          Registration may still be available at the venue.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg transition-all duration-300">
-      {hasRsvpd ? (
+      {hasRsvpd && !rsvpLink ? (
         <div>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -67,7 +93,9 @@ export default function RsvpCard({ status, date }: Props) {
                 </h2>
               </div>
             </div>
-            <CountdownPill days={timeLeft.days} hours={timeLeft.hours} />
+            {timeLeft.days > 0 || timeLeft.hours > 0 ? (
+              <CountdownPill days={timeLeft.days} hours={timeLeft.hours} />
+            ) : null}
           </div>
           <p className="font-raleway text-sm text-gray-500 mt-6 text-center border-t border-gray-100 pt-4">
             No longer able to attend?{" "}
@@ -87,10 +115,10 @@ export default function RsvpCard({ status, date }: Props) {
             register below.
           </p>
           <button
-            onClick={() => setHasRsvpd(true)}
+            onClick={handleRsvp}
             className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-bold py-4 rounded-xl transition-all text-lg sm:text-xl shadow-lg hover:shadow-primary1/40 transform hover:-translate-y-0.5 cursor-pointer"
           >
-            RSVP Now
+            {rsvpLink ? "Register on External Site" : "RSVP Now"}
           </button>
           <div className="flex items-center justify-center gap-2 mt-4 text-sm font-raleway text-gray-600">
             <div className="flex -space-x-2">
