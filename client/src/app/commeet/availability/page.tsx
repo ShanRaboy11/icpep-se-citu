@@ -2,16 +2,27 @@
 
 import Header from "../../components/header";
 import Footer from "../../components/footer";
-import { FunctionComponent, useCallback } from 'react';
+import { FunctionComponent, useCallback, useState } from 'react';
 
 const CommeetPage: FunctionComponent = () => {
-    // Hardcoded slots to render the specific visual requested (Static View)
-    // You can change this array to display different static times
-    const availableSlots = ["9:00", "9:30"];
+    // State to track selected 30-minute slots
+    const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
 
     const onAddAvailabilityClick = useCallback(() => {
-        console.log("Add availability clicked!");
-    }, []);
+        console.log("Selected Availability Slots:", selectedSlots);
+        // Add submission logic here
+    }, [selectedSlots]);
+
+    // Toggle logic for clicking a time slot
+    const toggleSlot = (timeKey: string) => {
+        setSelectedSlots((prev) => {
+            if (prev.includes(timeKey)) {
+                return prev.filter((t) => t !== timeKey); // Remove if exists
+            } else {
+                return [...prev, timeKey]; // Add if not exists
+            }
+        });
+    };
 
     // Configuration
     const monthYear = "Dec 2025";
@@ -58,7 +69,7 @@ const CommeetPage: FunctionComponent = () => {
                     {/* 3. Availabilities Section */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
                         <h3 className="text-xl sm:text-2xl font-normal text-gray-600 tracking-wide font-raleway">
-                            Availabilities
+                            Add your availability
                         </h3>
 
                         <button
@@ -113,42 +124,43 @@ const CommeetPage: FunctionComponent = () => {
                                     const slot1 = `${hour}:00`;
                                     const slot2 = `${hour}:30`;
 
-                                    // Check static array instead of state
-                                    const isSlot1Available = availableSlots.includes(slot1);
-                                    const isSlot2Available = availableSlots.includes(slot2);
+                                    const isSlot1Selected = selectedSlots.includes(slot1);
+                                    const isSlot2Selected = selectedSlots.includes(slot2);
 
                                     return (
                                         <div key={hour} className="h-16 border-t border-gray-200 w-full relative bg-white">
                                             
-                                            {/* First 30 Mins (Top Half) - Static */}
+                                            {/* First 30 Mins (Top Half) */}
                                             <div 
-                                                className={`h-1/2 w-full relative
-                                                    ${isSlot1Available 
-                                                        ? 'bg-sky-200 border-b-2 border-white' // Static Blue + Gap
-                                                        : 'border-b border-gray-100 border-dashed'}`}
+                                                onClick={() => toggleSlot(slot1)}
+                                                className={`h-1/2 w-full cursor-pointer transition-colors duration-100 relative
+                                                    ${isSlot1Selected 
+                                                        ? 'bg-sky-200 hover:bg-sky-300' // White border creates the gap
+                                                        : 'hover:bg-gray-50'}`}
                                             >
                                                 {/* Left Indicator Bar */}
-                                                {isSlot1Available && (
+                                                {isSlot1Selected && (
                                                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-sky-500"></div>
                                                 )}
                                             </div>
 
-                                            {/* Second 30 Mins (Bottom Half) - Static */}
+                                            {/* Second 30 Mins (Bottom Half) */}
                                             <div 
-                                                className={`h-1/2 w-full relative
-                                                    ${isSlot2Available 
-                                                        ? 'bg-sky-200' 
-                                                        : ''}`}
+                                                onClick={() => toggleSlot(slot2)}
+                                                className={`h-1/2 w-full cursor-pointer transition-colors duration-100 relative
+                                                    ${isSlot2Selected 
+                                                        ? 'bg-sky-200 hover:bg-sky-300' 
+                                                        : 'hover:bg-gray-50'}`}
                                             >
                                                  {/* Left Indicator Bar */}
-                                                 {isSlot2Available && (
+                                                 {isSlot2Selected && (
                                                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-sky-500"></div>
                                                 )}
                                             </div>
 
                                             {/* Bottom border for the very last item to close the grid */}
                                             {index === times.length - 1 && (
-                                                <div className="absolute bottom-0 left-0 right-0 border-b border-gray-200"></div>
+                                                <div className="absolute bottom-0 left-0 right-0"></div>
                                             )}
                                         </div>
                                     );

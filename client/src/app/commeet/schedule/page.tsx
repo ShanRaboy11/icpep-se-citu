@@ -3,24 +3,21 @@
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import { FunctionComponent, useCallback, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const CommeetPage: FunctionComponent = () => {
-    // Empty array to remove the "selected part" (Blue blocks)
+    const router = useRouter();
     const availableSlots: string[] = []; 
-    
-    // State to control button animation
     const [isBouncing, setIsBouncing] = useState(false);
 
     const onAddAvailabilityClick = useCallback(() => {
-        console.log("Add availability clicked!");
-    }, []);
+        router.push('/commeet/availability'); 
+    }, [router]);
 
-    // Click Logic: Triggers animation on button, but slots remain empty (read-only view)
     const onSlotClick = () => {
         setIsBouncing(true);
     };
 
-    // Reset bounce state after animation finishes (1 second)
     useEffect(() => {
         if (isBouncing) {
             const timer = setTimeout(() => {
@@ -30,12 +27,10 @@ const CommeetPage: FunctionComponent = () => {
         }
     }, [isBouncing]);
 
-    // Configuration
     const monthYear = "Dec 2025";
     const dayLabel = "FRI";
     const dateLabel = "5";
     
-    // Times from 9 AM to 4 PM (16:00)
     const times = [9, 10, 11, 12, 13, 14, 15, 16];
 
     const formatTime = (hour: number) => {
@@ -81,7 +76,7 @@ const CommeetPage: FunctionComponent = () => {
                         <button
                             className={`px-6 py-3 border-2 border-sky-400 rounded-full font-manrope text-sky-400 font-semibold flex items-center justify-center space-x-2
                             hover:bg-sky-200 hover:text-white hover:border-sky-400 active:bg-sky-600 active:border-sky-600 active:text-white transition-all duration-200
-                            ${isBouncing ? 'animate-bounce' : ''}`} // Bounces when timeline is clicked
+                            ${isBouncing ? 'animate-bounce' : ''}`} 
                             onClick={onAddAvailabilityClick}
                         >
                             <span>Add availability</span>
