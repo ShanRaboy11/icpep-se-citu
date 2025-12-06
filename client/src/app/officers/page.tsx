@@ -113,7 +113,7 @@ const OfficerSelectionPage: FC = () => {
                   <h2 className="text-2xl sm:text-3xl font-rubik font-bold text-primary3 tracking-tight">
                     Committees
                   </h2>
-                  <span className="text-xs sm:text-sm font-raleway text-gray-400 font-medium">
+                  <span className="text-xs sm:text-sm font-raleway text-gray-600 font-medium">
                     Departmental Teams
                   </span>
                 </div>
