@@ -103,13 +103,13 @@ const InfoSection: FC = () => {
                   {section.id === "org" ? (
                     <>
                       ICPEP SE
-                      <br />
+                      <br className="sm:hidden" />{" "}
                       CIT-U
                     </>
                   ) : section.id === "values" ? (
                     <>
                       Core
-                      <br />
+                      <br className="sm:hidden" />{" "}
                       Values
                     </>
                   ) : (
