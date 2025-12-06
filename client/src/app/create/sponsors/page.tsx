@@ -169,7 +169,7 @@ export default function SponsorsPage() {
         ${showGlobalError && !cover ? "border-red-500" : "border-gray-300"}`}
                     >
                       {" "}
-                      <p className="text-gray-500">Upload Logo</p>
+                      <p className="text-gray-500">Upload Sponsor Logo</p>
                     </div>
                   )}
                 </label>
