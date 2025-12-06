@@ -1,4 +1,5 @@
 import CarouselGallery from "./carousel";
+import Image from "next/image";
 
 interface AnnouncementMediaProps {
   title: string;
@@ -20,7 +21,7 @@ export default function AnnouncementMedia({
   if (allImages.length <= 1) {
     return (
       <div className="bg-white rounded-2xl shadow-md overflow-hidden">
-        <img
+        <Image
           src={imageUrl}
           alt={title}
           className="w-full h-64 sm:h-96 object-cover"
