@@ -35,6 +35,7 @@ const eslintConfig = [
       "react/jsx-key": "off",
       "react-hooks/rules-of-hooks": "off",
       "react-hooks/exhaustive-deps": "off",
+      "@next/next/no-img-element": "off",
     },
   },
 ];
