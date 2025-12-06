@@ -1,8 +1,14 @@
-import { getTypeColor, formatDate } from "../utils/announcements"; // Adjust path if necessary
-import { Announcement } from "../utils/announcements"; // Assuming the interface is also in this file
+import { getTypeColor, formatDate } from "../utils/announcements";
 
-// The props interface can be simplified if you are passing the whole object
-interface AnnouncementCardProps extends Announcement {
+// Props for the card; imageUrl is optional because some announcements may not include one
+interface AnnouncementCardProps {
+  id?: string;
+  title: string;
+  description: string;
+  content?: string;
+  date: string;
+  type: "News" | "Meeting" | "Achievement" | string;
+  imageUrl?: string | null;
   onClick?: () => void;
 }
 
@@ -27,8 +33,10 @@ export function AnnouncementCard({
     >
       <div className="md:flex h-full">
         <div className="md:w-1/3 h-48 md:h-full">
+          {/* show a fallback image when none provided */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={imageUrl}
+            src={imageUrl ?? "/gle.png"}
             alt={title}
             className="w-full h-full object-cover"
           />

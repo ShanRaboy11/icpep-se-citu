@@ -1,13 +1,24 @@
+import dotenv from 'dotenv';
+
+// Load environment variables as early as possible so modules that read process.env
+// (e.g., the Cloudinary utility) get the values during module initialization.
+dotenv.config();
+
 import express, { Application, Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
+import announcementRoutes from './routes/announcements.route';
+import eventRoutes from './routes/event.routes';
+import startAnnouncementScheduler from './utils/scheduler';
 
-// Load environment variables
-dotenv.config();
+// Global unhandled rejection handler to avoid process crash during development
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🚨 Unhandled Rejection at:', promise, 'reason:', reason);
+  // Do not exit the process in development; log and continue.
+});
 
 // Initialize express app
 const app: Application = express();
@@ -20,28 +31,77 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 // 2. Cookie Parser
 app.use(cookieParser());
 
-// 3. CORS - Allow multiple origins
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://icpep-se-citu.vercel.app',
-  process.env.FRONTEND_URL, 
-].filter(Boolean); 
+// 3. CORS - Allow multiple origins. Support comma-separated FRONTEND_URL(s)
+// and allow vercel subdomains by default (useful for preview deployments).
+const defaultOrigins = ['http://localhost:3000', 'https://icpep-se-citu.vercel.app'];
+const envFrontends = (process.env.FRONTEND_URL || process.env.FRONTEND_URLS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
-console.log('🌐 Allowed CORS origins:', allowedOrigins);
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envFrontends]));
+const allowAllOrigins = String(process.env.ALLOW_ALL_ORIGINS || 'false').toLowerCase() === 'true';
+const allowVercelSubdomains = String(process.env.ALLOW_VERCEL_SUBDOMAINS ?? 'true').toLowerCase() === 'true';
+
+console.log('🌐 CORS configuration — allowedOrigins:', allowedOrigins, 'ALLOW_ALL_ORIGINS=', allowAllOrigins, 'ALLOW_VERCEL_SUBDOMAINS=', allowVercelSubdomains);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, Postman, etc.)
+      // Allow requests with no origin (like Postman or same-origin server requests)
       if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.includes(origin)) {
-        console.log('✅ CORS allowed for:', origin);
-        callback(null, true);
-      } else {
-        console.log('❌ CORS blocked for:', origin);
-        callback(new Error('Not allowed by CORS'));
+
+      if (allowAllOrigins) {
+        console.log('✅ CORS allow-all enabled — allowing origin:', origin);
+        return callback(null, true);
       }
+
+      try {
+        const originHost = new URL(origin).host;
+
+        // Allow vercel preview subdomains (e.g. *.vercel.app) when enabled
+        if (allowVercelSubdomains && originHost.endsWith('.vercel.app')) {
+          console.log('✅ CORS allowed vercel subdomain:', origin);
+          return callback(null, true);
+        }
+
+        // Direct match against configured allowed origins (may include protocol)
+        if (allowedOrigins.includes(origin)) {
+          console.log('✅ CORS allowed for (direct match):', origin);
+          return callback(null, true);
+        }
+
+        // Try matching by host (handles entries like https://example.com)
+        for (const allowed of allowedOrigins) {
+          try {
+            const allowedHost = new URL(allowed).host;
+            if (allowedHost === originHost) {
+              console.log('✅ CORS allowed for (host match):', origin);
+              return callback(null, true);
+            }
+          } catch {
+            // ignore malformed allowed entries
+          }
+        }
+
+        // Support wildcard-like entries in allowedOrigins using '*' (e.g. *.example.com)
+        for (const allowed of allowedOrigins) {
+          if (allowed.includes('*')) {
+            // Convert wildcard entry to regex: escape dots, replace '*' with '.*'
+            const regexStr = allowed.replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&').replace(/\\\*/g, '.*');
+            const re = new RegExp(`^${regexStr}$`);
+            if (re.test(origin)) {
+              console.log('✅ CORS allowed by wildcard pattern:', origin, 'pattern:', allowed);
+              return callback(null, true);
+            }
+          }
+        }
+      } catch {
+        // If URL parsing fails, fall through to blocked log
+      }
+
+      console.log('❌ CORS blocked for:', origin);
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -110,6 +170,7 @@ app.get('/health', (req: Request, res: Response) => {
   });
 });
 
+
 // Root route
 app.get('/', (req: Request, res: Response) => {
   res.json({
@@ -147,14 +208,27 @@ app.get('/api', (req: Request, res: Response) => {
   });
 });
 
-// ✅ ROUTES - Register AFTER middleware
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/announcements', announcementRoutes);
+app.use('/api/events', eventRoutes);
 
-// TODO: Add your other routes here
-// import announcementRoutes from './routes/announcement.routes';
-// app.use('/api/announcements', announcementRoutes);
-// etc...
+
+app.get('/api/debug/env', (req: Request, res: Response) => {
+    res.json({
+        nodeEnv: process.env.NODE_ENV,
+        port: process.env.PORT,
+        mongoUri: process.env.MONGODB_URI ? 'Set' : 'Missing',
+        jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Missing',
+        cloudinary: {
+            cloudName: process.env.CLOUDINARY_CLOUD_NAME ? 'Set' : 'Missing',
+            apiKey: process.env.CLOUDINARY_API_KEY ? 'Set' : 'Missing',
+            apiSecret: process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Missing',
+        },
+        clientUrl: process.env.CLIENT_URL,
+    });
+});
+
 
 // 404 handler - must be after all routes
 app.use((req: Request, res: Response) => {
@@ -185,6 +259,15 @@ const server = app.listen(PORT, () => {
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
   console.log(`📍 API: http://localhost:${PORT}/api`);
   console.log(`📍 MongoDB: ${mongoose.connection.readyState === 1 ? '✅ Connected' : '⏳ Connecting...'}`);
+});
+
+// Start scheduler after successful DB connection
+mongoose.connection.once('open', () => {
+  try {
+    startAnnouncementScheduler();
+  } catch (err) {
+    console.error('❌ Failed to start announcement scheduler:', err);
+  }
 });
 
 // Graceful shutdown

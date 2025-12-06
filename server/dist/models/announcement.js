@@ -67,7 +67,7 @@ const announcementSchema = new mongoose_1.Schema({
     },
     type: {
         type: String,
-        enum: ['Event', 'Award', 'Workshop', 'Meeting', 'Seminar', 'Achievement', 'General'],
+        enum: ['Event', 'Award', 'Workshop', 'Meeting', 'Seminar', 'Achievement', 'General', 'News'],
         default: 'General',
         required: true,
     },
@@ -101,6 +101,10 @@ const announcementSchema = new mongoose_1.Schema({
         type: String,
         trim: true,
     },
+    date: {
+        type: Date,
+        required: false,
+    },
     organizer: {
         type: String,
         trim: true,
@@ -120,6 +124,10 @@ const announcementSchema = new mongoose_1.Schema({
     imageUrl: {
         type: String,
         default: null,
+    },
+    galleryImages: {
+        type: [String],
+        default: []
     },
     attachments: [attachmentSchema],
     views: {

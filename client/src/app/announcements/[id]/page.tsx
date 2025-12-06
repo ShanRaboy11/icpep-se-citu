@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AnnouncementDetails from "../components/details";
 import DetailsSidebar from "../components/info";
@@ -10,7 +10,86 @@ import Header from "../../components/header";
 import Footer from "../../components/footer";
 import { ArrowLeft } from "lucide-react";
 import AnnouncementMedia from "../components/media";
-import { announcements } from "../utils/announcements";
+import announcementService from "../../services/announcement";
+import { Announcement as UtilAnnouncement } from "../utils/announcements";
+
+// Local/raw announcement type coming from the API
+interface RawAnnouncement {
+  _id: string;
+  id?: string;
+  title: string;
+  description: string;
+  content?: string;
+  type: string;
+  imageUrl?: string | null;
+  galleryImages?: string[];
+  galleryImageUrls?: string[];
+  publishDate?: string;
+  date?: string;
+  author?: {
+    firstName: string;
+    lastName: string;
+    studentNumber: string;
+  };
+  views?: number;
+  isPublished?: boolean;
+  time?: string;
+  location?: string;
+  organizer?: string;
+  contact?: string;
+  attendees?: string;
+  agenda?: string[];
+  awardees?: Array<{
+    name: string;
+    program?: string;
+    year: string;
+    award: string;
+  }>;
+  attachments?: Array<{
+    name: string;
+    url: string;
+    fileType?: string;
+  }>;
+  priority?: string;
+  expiryDate?: string;
+}
+
+// Helper function to format date
+const formatDate = (dateString: string): string => {
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Date not available";
+    
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  } catch {
+    return "Date not available";
+  }
+};
+
+// Helper function to format time from 24h to 12h format
+const formatTime = (timeString: string | undefined): string => {
+  if (!timeString) return "Time not specified";
+  
+  try {
+    // Handle time formats like "14:30" or "14:30:00"
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours, 10);
+    const min = minutes || '00';
+    
+    if (isNaN(hour)) return timeString;
+    
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    
+    return `${displayHour}:${min} ${period}`;
+  } catch {
+    return timeString;
+  }
+};
 
 export default function AnnouncementDetailPage({
   params,
@@ -18,20 +97,131 @@ export default function AnnouncementDetailPage({
   params: { id: string };
 }) {
   const [showFullAttendance, setShowFullAttendance] = useState(false);
+  const [announcement, setAnnouncement] = useState<RawAnnouncement | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Find the announcement by ID - later this will be a database fetch
-  const announcement = announcements.find((a) => a.id === params.id);
+  // Fetch announcement from database
+  useEffect(() => {
+    const fetchAnnouncement = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  // Optional chaining and default fallback to avoid undefined errors
-  const title = announcement?.title || "No title available";
-  const imageUrl = announcement?.imageUrl || "/default-image.jpg"; // Default fallback image
-  const galleryImageUrls = announcement?.galleryImageUrls || []; // Fallback to empty array
-  const isMeeting = announcement?.type.toLowerCase() === "meeting"; // Use optional chaining
+        const response = await announcementService.getAnnouncementById(params.id);
+
+        if (response.success && response.data) {
+          setAnnouncement(response.data as RawAnnouncement);
+        } else {
+          setError("Announcement not found");
+        }
+      } catch (err) {
+        console.error("Failed to fetch announcement:", err);
+        setError("Failed to load announcement. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (params.id) {
+      fetchAnnouncement();
+    }
+  }, [params.id]);
 
   const handleBack = () => {
     router.push("/announcements");
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col">
+        <Header />
+        <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="w-full h-64 rounded-lg bg-gray-100 animate-pulse" />
+              <div className="h-6 w-3/4 bg-gray-100 rounded animate-pulse" />
+              <div className="space-y-3 mt-4">
+                <div className="h-4 bg-gray-100 rounded animate-pulse" />
+                <div className="h-4 bg-gray-100 rounded animate-pulse w-5/6" />
+                <div className="h-4 bg-gray-100 rounded animate-pulse w-4/6" />
+              </div>
+            </div>
+
+            <div className="lg:col-span-1 space-y-6">
+              <div className="h-12 w-full bg-gray-100 rounded animate-pulse" />
+              <div className="h-48 bg-gray-100 rounded animate-pulse" />
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Error or not found state
+  if (error || !announcement) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <main className="flex flex-grow flex-col items-center justify-center text-center px-4 pt-[9.5rem] pb-12">
+          <h1 className="font-rubik text-4xl font-bold text-primary3 mb-4">
+            {error || "Announcement Not Found"}
+          </h1>
+          <p className="font-raleway max-w-md text-gray-600 mb-8">
+            {error
+              ? "There was an error loading this announcement."
+              : "Sorry, the announcement you are looking for does not exist."}
+          </p>
+          <button
+            onClick={() => router.push("/announcements")}
+            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2"
+          >
+            <ArrowLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
+            <span>Back to Announcements</span>
+          </button>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const title = announcement.title;
+  const imageUrl = announcement.imageUrl || "/default-image.jpg";
+  const galleryImageUrls: string[] = announcement.galleryImages ?? [];
+  const isMeeting = announcement.type.toLowerCase() === "meeting";
+
+  // Map RawAnnouncement to the UI Announcement shape expected by shared components
+  let utilAnnouncement: UtilAnnouncement | undefined = undefined;
+  if (announcement) {
+    const typeKey = (announcement.type || '').toLowerCase();
+    const mappedType: UtilAnnouncement['type'] =
+      typeKey === 'meeting' ? 'Meeting' : typeKey === 'achievement' ? 'Achievement' : 'News';
+
+    const organizerStr = typeof announcement.organizer === 'string'
+      ? announcement.organizer
+      : (announcement.organizer && typeof announcement.organizer === 'object')
+        ? String((announcement.organizer as Record<string, unknown>).name ?? '')
+        : '';
+
+    utilAnnouncement = {
+      id: announcement._id || announcement.id || '',
+      title: announcement.title,
+      description: announcement.description,
+      date: announcement.publishDate || announcement.date || new Date().toISOString(),
+      type: mappedType,
+      imageUrl: imageUrl,
+      galleryImageUrls: Array.isArray(announcement.galleryImages) ? announcement.galleryImages : [],
+      time: announcement.time,
+      location: announcement.location,
+  organizer: organizerStr,
+      attendees: announcement.attendees,
+      agenda: announcement.agenda,
+      awardees: announcement.awardees,
+    };
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white relative overflow-hidden font-sans">
@@ -40,7 +230,7 @@ export default function AnnouncementDetailPage({
 
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
-        <main className="flex-grow w-full max-w-6xl mx-auto px-6 pt-[9.5rem] pb-12">
+        <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-12">
           <div className="mb-8 flex justify-start">
             <button
               onClick={handleBack}
@@ -69,9 +259,9 @@ export default function AnnouncementDetailPage({
             </div>
 
             <div className="lg:col-span-1 space-y-6">
-              <DetailsSidebar announcement={announcement} />
+              <DetailsSidebar announcement={utilAnnouncement} />
 
-              {isMeeting && (
+              {isMeeting && announcement.attendees && (
                 <MeetingAttendanceCard
                   onViewFull={() => setShowFullAttendance(true)}
                 />
@@ -83,6 +273,7 @@ export default function AnnouncementDetailPage({
         <AttendanceModal
           isOpen={showFullAttendance}
           onClose={() => setShowFullAttendance(false)}
+          announcement={utilAnnouncement ?? null}
         />
         <Footer />
       </div>

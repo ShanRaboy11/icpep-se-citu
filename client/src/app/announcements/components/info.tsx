@@ -1,6 +1,6 @@
 import { Calendar, MapPin, Clock, Users } from "lucide-react";
 import { Announcement } from "../utils/announcements";
-import { formatDate } from "../utils/announcements";
+import { formatDate, formatTime } from "../utils/announcements";
 
 interface DetailsSidebarProps {
   announcement?: Announcement;
@@ -16,7 +16,7 @@ const DetailRow = ({
   value: string;
 }) => (
   <div className="flex items-center gap-4">
-    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-primary1/10 text-primary1">
+    <div className="flex h-10 w-10 sm:h-11 sm:w-11 flex-shrink-0 items-center justify-center rounded-lg bg-primary1/10 text-primary1">
       {icon}
     </div>
     <div>
@@ -32,8 +32,8 @@ export default function DetailsSidebar({ announcement }: DetailsSidebarProps) {
   if (!announcement) return null;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
-      <h3 className="font-rubik text-2xl font-bold text-primary3 mb-4 pb-2 border-b border-gray-100">
+    <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-lg">
+      <h3 className="font-rubik text-xl sm:text-2xl font-bold text-primary3 mb-4 pb-2 border-b border-gray-100">
         {announcement.type} Details
       </h3>
 
@@ -48,7 +48,7 @@ export default function DetailsSidebar({ announcement }: DetailsSidebarProps) {
           <DetailRow
             icon={<Clock className="h-6 w-6" />}
             label="Time"
-            value={announcement.time}
+            value={formatTime(announcement.time)}
           />
         )}
 

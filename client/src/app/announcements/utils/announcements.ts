@@ -51,6 +51,19 @@ export const formatDate = (dateString: string) => {
   });
 };
 
+// Add this to your utils/announcements.ts file
+export const formatTime = (time: string): string => {
+  // Handle various time formats (HH:mm, HH:mm:ss, etc.)
+  const timeParts = time.split(':');
+  let hours = parseInt(timeParts[0], 10);
+  const minutes = timeParts[1];
+  
+  const period = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12; // Convert to 12-hour format, 0 becomes 12
+  
+  return `${hours}:${minutes} ${period}`;
+};
+
 export const announcements: Announcement[] = [
   {
     id: "1",
@@ -104,6 +117,30 @@ export const announcements: Announcement[] = [
       "Chapter Performance Review",
       "Financial Status & Budget Planning",
       "Strategic Initiatives Planning",
+    ],
+  },
+  {
+    id: "4",
+    title: "Student Leadership Conference",
+    description:
+      "A conference to develop leadership skills among CPE students. Includes guest speakers, breakout sessions, and team-building activities.",
+    date: "2024-12-10",
+    time: "9:00 AM",
+    location: "Conference Hall B",
+    type: "Achievement",
+    imageUrl: "/gle.png",
+    galleryImageUrls: [
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=500&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop",
+    ],
+    organizer: "ICpEP.SE CIT-U Chapter",
+    awardees: [
+      { name: "Leah Santos", year: "3rd Year", award: "Best Team Leader" },
+      {
+        name: "Carlos Dela Cruz",
+        year: "4th Year",
+        award: "Innovative Leader",
+      },
     ],
   },
 ];
