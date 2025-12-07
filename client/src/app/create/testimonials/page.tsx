@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Sidebar from "@/app/components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
@@ -158,9 +159,10 @@ export default function TestimonialsPage() {
         </div>
       )}
 
-      <Header />
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
 
-      <main className="relative z-10 flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
+        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
         {/* Page Header with Gradient */}
         <div className="mb-12 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary1/10 to-primary2/10 rounded-3xl blur-3xl -z-10" />
@@ -189,9 +191,6 @@ export default function TestimonialsPage() {
               {/* Form Header */}
               <div className="bg-gradient-to-r from-primary1 to-primary2 p-8">
                 <h2 className="text-3xl font-bold text-white font-rubik flex items-center gap-3">
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
                   Content Details
                 </h2>
                 <p className="text-blue-100 font-raleway mt-2">Fill in the information below to create a testimonial</p>
@@ -402,21 +401,24 @@ export default function TestimonialsPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-3 ml-auto w-full sm:w-auto">
+                  <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
+                    <Link
+                      href="/drafts"
+                      className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 text-center flex items-center justify-center"
+                    >
+                      View drafts
+                    </Link>
                     <Button variant="outline" className="flex-1 sm:flex-none">
                       Save Draft
                     </Button>
                     <Button
-                      variant="primary2"
+                      variant="primary3"
                       type="button"
                       onClick={handlePublish}
                       disabled={isSubmitting}
-                      className="disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none shadow-lg shadow-primary2/30 hover:shadow-xl hover:bg-primary2 hover:shadow-primary2/40 transition-all duration-300"
+                      className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span className="flex items-center gap-2">
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
                         Publish
                       </span>
                     </Button>
@@ -489,7 +491,6 @@ export default function TestimonialsPage() {
         </div>
       )}
 
-      <div className="relative z-10">
         <Footer />
       </div>
     </section>

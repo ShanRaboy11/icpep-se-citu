@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+import Link from "next/link";
 import Sidebar from "@/app/components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
@@ -137,19 +138,16 @@ export default function SponsorsPage() {
   };
 
   return (
-    <section className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+    <section className="min-h-screen bg-white flex flex-col relative">
       <Grid />
       
       {/* Loading Overlay */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md transition-all animate-in fade-in duration-200">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in duration-300">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-blue-100 rounded-full" />
-              <div className="w-16 h-16 border-4 border-primary2 border-t-transparent rounded-full animate-spin absolute inset-0" />
-            </div>
-            <p className="text-gray-700 font-rubik text-base font-semibold">
-              Publishing sponsor...
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all duration-300">
+          <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
+            <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
+            <p className="text-primary3 font-semibold font-rubik animate-pulse">
+              Publishing Sponsor...
             </p>
           </div>
         </div>
@@ -187,10 +185,7 @@ export default function SponsorsPage() {
                 {/* Form Header */}
                 <div className="bg-gradient-to-r from-primary1 to-primary2 p-8">
                   <h2 className="text-3xl font-bold text-white font-rubik flex items-center gap-3">
-                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Sponsor Details
+                    Content Details
                   </h2>
                   <p className="text-blue-100 font-raleway mt-2">Upload logo and provide sponsor information</p>
                 </div>
@@ -377,31 +372,32 @@ export default function SponsorsPage() {
                   {/* Actions */}
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200">
                     {showGlobalError && (
-                      <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-3 rounded-xl border border-red-200 w-full sm:w-auto">
-                        <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p className="text-sm font-raleway font-medium">
-                          Please fill all required fields
-                        </p>
-                      </div>
+                      <p className="text-red-500 text-sm font-bold font-raleway animate-pulse">
+                        Please fill all required fields before publishing.
+                      </p>
                     )}
 
-                    <div className="flex gap-3 ml-auto w-full sm:w-auto">
-                      <Button variant="outline" className="flex-1 sm:flex-none">
+                    <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
+                      <Link
+                        href="/drafts"
+                        className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 text-center flex items-center justify-center"
+                      >
+                        View drafts
+                      </Link>
+                      <Button
+                        variant="outline"
+                        className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300"
+                      >
                         Save Draft
                       </Button>
                       <Button
-                        variant="primary2"
+                        variant="primary3"
                         type="button"
                         onClick={handlePublish}
                         disabled={isSubmitting}
-                        className="disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none shadow-lg shadow-primary2/30 hover:shadow-xl hover:shadow-primary2/40 transition-all duration-300"
+                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="flex items-center gap-2">
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
                           Publish
                         </span>
                       </Button>
@@ -418,49 +414,55 @@ export default function SponsorsPage() {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => setShowSuccessModal(false)}
           />
 
-          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
-            <div className="flex flex-col items-center gap-6">
-              {/* Success Icon with Animation */}
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
-                  <svg className="w-12 h-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl transform animate-in zoom-in-95 duration-300 border border-gray-100">
+            <div className="flex flex-col items-center gap-6 text-center">
+              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-2 animate-bounce">
+                <svg
+                  className="w-10 h-10 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="3"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
               </div>
 
-              <div className="text-center space-y-2">
-                <h3 className="text-2xl text-primary3 font-bold font-rubik">
-                  Successfully Published!
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-gray-900 font-rubik">
+                  Sponsor Published!
                 </h3>
-                <p className="text-gray-600 font-raleway">
-                  Your sponsor has been added and is now live.
+                <p className="text-gray-500 font-raleway">
+                  Your sponsor has been successfully published and is now live.
                 </p>
               </div>
 
-              <div className="flex gap-3 mt-2 w-full">
-                <Button
-                  variant="outline"
+              <div className="w-full pt-2 flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    // Redirect to sponsors list if needed
+                  }}
+                  className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all duration-300 shadow-lg shadow-gray-900/20"
+                >
+                  View Sponsors
+                </button>
+                <button
                   onClick={() => setShowSuccessModal(false)}
-                  className="flex-1"
+                  className="w-full py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all duration-300"
                 >
                   Close
-                </Button>
-
-                <Button
-                  variant="primary3"
-                  onClick={() => setShowSuccessModal(false)}
-                  className="flex-1"
-                >
-                  View All
-                </Button>
+                </button>
               </div>
             </div>
           </div>

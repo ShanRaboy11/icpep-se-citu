@@ -450,9 +450,10 @@ export default function AnnouncementsPage() {
         </div>
       )}
 
-      <Header />
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
 
-      <main className="relative z-10 flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
+        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
         {/* Page Header with Gradient */}
         <div className="mb-12 relative">
           <div className="absolute inset-0 bg-gradient-to-r from-primary1/10 to-primary2/10 rounded-3xl blur-3xl -z-10" />
@@ -478,9 +479,6 @@ export default function AnnouncementsPage() {
               {/* Form Header */}
               <div className="bg-gradient-to-r from-primary1 to-primary2 p-8">
                 <h2 className="text-3xl font-bold text-white font-rubik flex items-center gap-3">
-                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
                   Content Details
                 </h2>
                 <p className="text-blue-100 font-raleway mt-2">Fill in the information below to create an announcement</p>
@@ -1134,17 +1132,20 @@ export default function AnnouncementsPage() {
                   </div>
                 </div>
               )}
-              <div className="flex flex-wrap items-center justify-between gap-3 mt-6">
+              <div className="h-px bg-gray-100 w-full" />
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
                 {showGlobalError && (
-                  <p className="text-red-500 text-sm font-raleway">
+                  <p className="text-red-500 text-sm font-bold font-raleway animate-pulse">
                     Please fill all required fields before publishing.
                   </p>
                 )}
 
-                <div className="flex gap-3 ml-auto">
+                <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
                   <Link
                     href="/drafts"
-                    className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-100 self-center"
+                    className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 text-center"
                   >
                     View drafts
                   </Link>
@@ -1153,6 +1154,7 @@ export default function AnnouncementsPage() {
                     type="button"
                     onClick={handleSaveDraft}
                     disabled={isSubmitting}
+                    className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300"
                   >
                     Save Draft
                   </Button>
@@ -1161,61 +1163,76 @@ export default function AnnouncementsPage() {
                     type="button"
                     onClick={handlePublish}
                     disabled={isSubmitting}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? "Publishing..." : "Publish"}
                   </Button>
                 </div>
               </div>
-            </form>
+            </div>
+          </div>
           </div>
         </div>
       </main>
 
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => {
               setShowSuccessModal(false);
               setSubmitSuccess(false);
             }}
           />
 
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center">
-                <span className="text-3xl text-white">✔</span>
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl transform animate-in zoom-in-95 duration-300 border border-gray-100">
+            <div className="flex flex-col items-center gap-6 text-center">
+              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-2 animate-bounce">
+                <svg
+                  className="w-10 h-10 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="3"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
               </div>
 
-              <h3 className="text-xl text-blue-700 font-semibold">
-                Announcement Published
-              </h3>
-              <p className="text-sm text-blue-400 text-center">
-                Your announcement was published successfully.
-              </p>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-gray-900 font-rubik">
+                  Announcement Published!
+                </h3>
+                <p className="text-gray-500 font-raleway">
+                  Your announcement has been successfully published and is now
+                  live.
+                </p>
+              </div>
 
-              <div className="flex gap-3 mt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowSuccessModal(false);
-                    setSubmitSuccess(false);
-                  }}
-                >
-                  Close
-                </Button>
-
-                <Button
-                  variant="primary3"
+              <div className="w-full pt-2 flex flex-col gap-3">
+                <button
                   onClick={() => {
                     setShowSuccessModal(false);
                     setSubmitSuccess(false);
                     router.push("/announcements");
                   }}
+                  className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all duration-300 shadow-lg shadow-gray-900/20"
                 >
-                  View announcements
-                </Button>
+                  View Announcements
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSubmitSuccess(false);
+                  }}
+                  className="w-full py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all duration-300"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
@@ -1223,6 +1240,7 @@ export default function AnnouncementsPage() {
       )}
 
         <Footer />
+      </div>
     </section>
   );
 }
