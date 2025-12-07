@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import announcementRoutes from './routes/announcements.route';
 import eventRoutes from './routes/event.routes';
+import testimonialRoutes from './routes/testimonial.routes';
 import startAnnouncementScheduler from './utils/scheduler';
 
 // Global unhandled rejection handler to avoid process crash during development
@@ -212,6 +213,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/testimonials', testimonialRoutes);
 
 
 app.get('/api/debug/env', (req: Request, res: Response) => {
