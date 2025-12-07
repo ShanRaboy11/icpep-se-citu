@@ -655,7 +655,7 @@ export default function ProfilePage() {
                       <button
                         type="button"
                         onClick={closeEdit}
-                        className="px-6 py-2.5 rounded-xl border-2 border-gray-200 hover:bg-gray-50 font-rubik hover:cursor-pointer font-semibold text-gray-600 transition-colors"
+                        className="px-6 py-2.5 rounded-xl border-2 border-gray-200 font-rubik hover:cursor-pointer hover:bg-gray-300 font-semibold text-gray-600 transition-colors"
                       >
                         Cancel
                       </button>
