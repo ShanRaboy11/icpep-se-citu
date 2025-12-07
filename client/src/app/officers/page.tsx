@@ -2,6 +2,7 @@
 
 import { FC } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 import Header from "../components/header";
 import Footer from "../components/footer";
@@ -76,6 +77,24 @@ const OfficerSelectionPage: FC = () => {
 
         <div className="flex-grow">
           <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem]">
+            <div className="mb-8 flex justify-start">
+              <button
+                onClick={() => router.back()}
+                title="Back to About"
+                className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
+                         rounded-full border-2 border-primary1 text-primary1 
+                         overflow-hidden transition-all duration-300 ease-in-out 
+                         active:scale-95 before:absolute before:inset-0 
+                         before:bg-gradient-to-r before:from-transparent 
+                         before:via-white/40 before:to-transparent 
+                         before:translate-x-[-100%] hover:before:translate-x-[100%] 
+                         before:transition-transform before:duration-700"
+              >
+                <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
+              </button>
+            </div>
+
+            {/* Header Section */}
             <div className="mb-16 text-center">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
                 <div className="h-2 w-2 rounded-full bg-primary1"></div>

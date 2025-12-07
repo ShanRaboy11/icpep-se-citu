@@ -58,7 +58,7 @@ const OfficersPage = () => {
           <div className="mb-8 flex justify-start">
             <button
               onClick={() => router.back()}
-              title="Back to Selection"
+              title="Go Back"
               className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
                          rounded-full border-2 border-primary1 text-primary1 
                          overflow-hidden transition-all duration-300 ease-in-out 
@@ -85,7 +85,7 @@ const OfficersPage = () => {
 
           {/* Officers Grid */}
           <div className="w-full">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8 justify-items-center">
               {data.officers.map((officer, index) => (
                 <OfficerCard
                   key={index}
