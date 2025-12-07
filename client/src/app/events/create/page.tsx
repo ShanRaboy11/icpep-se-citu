@@ -7,6 +7,7 @@ import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
+import Grid from "../../components/grid";
 import { ChevronDown } from "lucide-react";
 import eventService from "../../services/event";
 
@@ -311,95 +312,139 @@ export default function EventsPage() {
   }, [errors]);
 
   return (
-    <section className="min-h-screen bg-white flex flex-col relative">
-      <Header />
+    <section className="min-h-screen bg-gray-50/50 flex flex-col relative">
+      {/* Background Grid */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <Grid />
+      </div>
 
-      <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
-        <div className="text-center sm:text-left mb-10">
-          <h1 className="text-2xl sm:text-5xl font-bold font-rubik text-primary3">
-            Compose
-          </h1>
-          <div className="h-[3px] bg-primary1 w-24 sm:w-full mt-3 mx-auto rounded-full" />
+      {/* Loading Overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all duration-300">
+          <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
+            <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
+            <p className="text-primary3 font-semibold font-rubik animate-pulse">
+              Publishing Event...
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
+
+        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
+        {/* Page Header with Gradient */}
+        <div className="mb-12 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary1/10 to-primary2/10 rounded-3xl blur-3xl -z-10" />
+          <div className="text-center sm:text-left">
+            <h1 className="text-3xl sm:text-6xl font-bold font-rubik bg-gradient-to-r from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent mb-3">
+              Compose Event
+            </h1>
+            <p className="text-gray-600 font-raleway text-lg">
+              Create and schedule upcoming events
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          <aside className="w-full lg:w-64 flex-shrink-0">
-            <Sidebar />
+          <aside className="w-full lg:w-72 flex-shrink-0">
+            <div className="sticky top-24">
+              <Sidebar />
+            </div>
           </aside>
 
           <div className="flex-1">
-            {submitSuccess && (
-              <div className="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-                Event published successfully!
-              </div>
-            )}
-
-            <form className="border border-primary1 rounded-2xl p-6 space-y-6 bg-white mb-10">
-              {/* Header */}
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-semibold text-primary1 font-rubik">
-                  Content
+            <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+              {/* Form Header */}
+              <div className="bg-gradient-to-r from-primary1 to-primary2 p-8">
+                <h2 className="text-3xl font-bold text-white font-rubik flex items-center gap-3">
+                  Content Details
                 </h2>
-                <p className="text-sm text-gray-500 font-raleway mt-1">
-                  Provide key information
-                </p>
+                <p className="text-blue-100 font-raleway mt-2">Fill in the information below to create an event</p>
               </div>
+
+              <div className="p-8 space-y-8">
 
               {/* Upload Image */}
-              <div>
-                <label className="text-md font-medium text-primary3 font-raleway mb-2 block">
-                  Cover Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImagesChange}
-                  ref={fileInputRef}
-                />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-4">
+                  <svg className="w-5 h-5 text-primary2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <label className="text-lg font-semibold text-primary3 font-rubik">
+                    Cover Image
+                  </label>
+                </div>
 
                 <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => fileInputRef.current?.click()}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
-                  className="block cursor-pointer"
+                  className={`w-full rounded-2xl p-3 transition-all duration-300 border-2 ${
+                    previews.length > 0
+                      ? "border-green-400 bg-green-50/30"
+                      : "border-gray-300 bg-gray-50/50 hover:border-primary2 hover:bg-primary2/5"
+                  }`}
                 >
-                  {previews.length > 0 ? (
-                    <div className="relative">
-                      <img
-                        src={previews[0]}
-                        alt="preview"
-                        className="w-full h-48 object-cover rounded-lg border border-gray-300"
-                      />
-                      <button
-                        type="button"
-                        onClick={(ev) => {
-                          ev.stopPropagation();
-                          try { URL.revokeObjectURL(previews[0]); } catch {}
-                          setImages([]);
-                          setPreviews([]);
-                        }}
-                        aria-label="Remove image"
-                        className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 border shadow-sm hover:bg-red-50"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-gray-50 transition">
-                      <p className="text-gray-500 font-raleway">Click to upload cover image</p>
-                    </div>
-                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImagesChange}
+                    ref={fileInputRef}
+                  />
+
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click(); }}
+                    className="block cursor-pointer group"
+                  >
+                    {previews.length > 0 ? (
+                      <div className="relative overflow-hidden rounded-xl group-image">
+                        <img
+                          src={previews[0]}
+                          alt="preview"
+                          className="w-full h-64 object-cover rounded-xl border-2 border-white shadow-md transition-transform duration-300 hover:scale-105"
+                        />
+                        <button
+                          type="button"
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            try { URL.revokeObjectURL(previews[0]); } catch {}
+                            setImages([]);
+                            setPreviews([]);
+                          }}
+                          aria-label="Remove image"
+                          className="absolute top-4 right-4 bg-white w-10 h-10 flex items-center justify-center rounded-full text-red-500 shadow-lg hover:bg-red-50 hover:scale-110 transition-all duration-200"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="py-12 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="w-16 h-16 rounded-full bg-primary2/10 flex items-center justify-center group-hover:bg-primary2/20 transition-colors duration-300">
+                            <svg className="w-8 h-8 text-primary2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-gray-700 font-semibold font-rubik">Click to upload cover image</p>
+                            <p className="text-sm text-gray-500 mt-1 font-raleway">PNG, JPG up to 10MB</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Tags */}
-              <div>
-                <label className="text-md font-medium text-primary3 font-raleway mb-2 block">
+              <div className="space-y-3">
+                <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
                   Tags
                 </label>
-                <div className="flex flex-wrap gap-2 items-center">
+                <div className="flex flex-wrap gap-2 items-center p-4 bg-gray-50 rounded-2xl border border-gray-200">
                   {predefinedTags.map((tag) => (
                     <button
                       key={tag}
@@ -411,10 +456,10 @@ export default function EventsPage() {
                             : [...prev, tag]
                         )
                       }
-                      className={`px-3 py-1 text-sm rounded-full border transition font-rubik ${
+                      className={`px-4 py-2 text-sm font-bold rounded-xl border-2 transition-all duration-300 font-rubik ${
                         tags.includes(tag)
-                          ? "bg-primary2 text-white border-primary2"
-                          : "border-gray-300 text-gray-600 hover:bg-gray-100"
+                          ? "bg-primary2 text-white border-primary2 shadow-md shadow-primary2/30"
+                          : "border-gray-200 text-gray-500 bg-white hover:border-primary2 hover:text-primary2"
                       }`}
                     >
                       {tag}
@@ -425,14 +470,14 @@ export default function EventsPage() {
                     <button
                       type="button"
                       onClick={() => setShowTagInput(true)}
-                      className="px-3 py-1 border border-primary2 text-primary2 rounded-full hover:bg-primary2 hover:text-white transition font-rubik text-sm"
+                      className="px-4 py-2 border-2 border-dashed border-primary2 text-primary2 rounded-xl hover:bg-primary2 hover:text-white transition-all duration-300 font-rubik text-sm font-bold"
                     >
                       + Add Custom Tag
                     </button>
                   )}
 
                   {showTagInput && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
                       <input
                         type="text"
                         value={newTag}
@@ -446,8 +491,9 @@ export default function EventsPage() {
                             setShowTagInput(false);
                           }
                         }}
-                        className="border border-gray-300 rounded-lg px-3 py-1 font-rubik text-sm focus:outline-none focus:border-primary2"
-                        placeholder="Enter custom tag..."
+                        className="border-2 border-primary2 rounded-xl px-3 py-2 font-rubik text-sm focus:outline-none focus:ring-2 focus:ring-primary2/20 w-40"
+                        placeholder="Enter tag..."
+                        autoFocus
                       />
                       <button
                         type="button"
@@ -457,7 +503,7 @@ export default function EventsPage() {
                           setNewTag("");
                           setShowTagInput(false);
                         }}
-                        className="px-3 py-1 bg-primary2 text-white rounded-lg text-sm hover:bg-primary3"
+                        className="px-3 py-2 bg-primary2 text-white rounded-xl text-sm font-bold hover:bg-primary3 transition-colors"
                       >
                         Add
                       </button>
@@ -467,7 +513,7 @@ export default function EventsPage() {
                           setNewTag("");
                           setShowTagInput(false);
                         }}
-                        className="px-3 py-1 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-100"
+                        className="px-3 py-2 border-2 border-gray-200 text-gray-500 rounded-xl text-sm font-bold hover:bg-gray-100 transition-colors"
                       >
                         Cancel
                       </button>
@@ -481,7 +527,7 @@ export default function EventsPage() {
                     {tags.map((tag, index) => (
                       <span
                         key={index}
-                        className="flex items-center gap-2 bg-primary2 text-white font-rubik px-4 py-1 rounded-full text-sm"
+                        className="flex items-center gap-2 bg-primary2/10 text-primary2 font-bold font-rubik px-4 py-2 rounded-xl text-sm border border-primary2/20"
                       >
                         {tag}
                         <button
@@ -489,7 +535,7 @@ export default function EventsPage() {
                           onClick={() =>
                             setTags(tags.filter((_, i) => i !== index))
                           }
-                          className="text-white hover:text-red-200 font-bold"
+                          className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-primary2 hover:text-white transition-colors"
                         >
                           ×
                         </button>
@@ -499,20 +545,22 @@ export default function EventsPage() {
                 )}
               </div>
 
-              <div className="h-[1px] bg-gray-200 w-full" />
+              <div className="h-px bg-gray-100 w-full" />
 
               {/* Details Section */}
-              <div>
-                <h3 className="text-xl font-semibold text-primary3 font-rubik mb-1">
-                  Details
-                </h3>
-                <p className="text-sm text-gray-500 font-raleway mb-4">
-                  Specify event date, time, and location
-                </p>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold text-primary3 font-rubik mb-1">
+                    Event Schedule
+                  </h3>
+                  <p className="text-sm text-gray-500 font-raleway">
+                    Specify event date, time, and location
+                  </p>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-primary3 font-rubik">
                       Date *
                     </label>
                     <input
@@ -521,16 +569,16 @@ export default function EventsPage() {
                       name="date"
                       value={formData.date}
                       onChange={handleInputChange}
-                      className={`w-full font-raleway rounded-lg px-3 py-2 border transition-all ${
+                      className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${
                         errors.date
-                          ? "border-2 border-red-500 bg-red-50"
-                          : "border-gray-300 bg-white text-gray-600"
-                      } focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white`}
+                          ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                          : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                      }`}
                     />
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-primary3 font-rubik">
                       Time *
                     </label>
                     <input
@@ -539,16 +587,16 @@ export default function EventsPage() {
                       name="time"
                       value={formData.time}
                       onChange={handleInputChange}
-                      className={`w-full font-raleway rounded-lg px-3 py-2 border transition-all ${
+                      className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${
                         errors.time
-                          ? "border-2 border-red-500 bg-red-50"
-                          : "border-gray-300 bg-white text-gray-600"
-                      } focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white`}
+                          ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                          : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                      }`}
                     />
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-primary3 font-rubik">
                       Location
                     </label>
                     <input
@@ -557,22 +605,22 @@ export default function EventsPage() {
                       value={formData.location}
                       onChange={handleInputChange}
                       placeholder="Where is it happening?"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 font-raleway"
+                      className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 bg-gray-50/30 focus:bg-white focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 transition-all duration-300"
                     />
                   </div>
                 </div>
 
                 {/* Admission Section */}
-                <div className="mt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-medium text-primary3 font-raleway">
+                <div className="space-y-4 pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <label className="text-lg font-semibold text-primary3 font-rubik">
                       Admission Prices
                     </label>
                     {!showAdmissionInput && (
                       <button
                         type="button"
                         onClick={() => setShowAdmissionInput(true)}
-                        className="px-3 py-1 text-sm border border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white font-rubik transition"
+                        className="px-4 py-2 text-sm font-bold border-2 border-primary2 text-primary2 rounded-xl hover:bg-primary2 hover:text-white transition-all duration-300 font-rubik"
                       >
                         + Add Admission
                       </button>
@@ -580,13 +628,14 @@ export default function EventsPage() {
                   </div>
 
                   {showAdmissionInput && (
-                    <div className="flex flex-col sm:flex-row gap-3 mb-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                    <div className="flex flex-col sm:flex-row gap-3 p-4 border-2 border-primary2/20 rounded-2xl bg-primary2/5 animate-in fade-in slide-in-from-top-2 duration-300">
                       <input
                         type="text"
                         placeholder="Category (e.g., General, VIP)"
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 font-raleway focus:outline-none focus:border-primary2"
+                        className="flex-1 border-2 border-white bg-white rounded-xl px-4 py-3 font-rubik focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
+                        autoFocus
                       />
 
                       <input
@@ -594,7 +643,7 @@ export default function EventsPage() {
                         placeholder="Price"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
-                        className="w-full sm:w-32 border border-gray-300 rounded-lg px-3 py-2 font-raleway focus:outline-none focus:border-primary2"
+                        className="w-full sm:w-32 border-2 border-white bg-white rounded-xl px-4 py-3 font-rubik focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                       />
 
                       <div className="flex gap-2">
@@ -610,7 +659,7 @@ export default function EventsPage() {
                             setPrice("");
                             setShowAdmissionInput(false);
                           }}
-                          className="px-4 py-2 bg-primary2 text-white rounded-lg hover:bg-primary3 font-rubik"
+                          className="px-6 py-2 bg-primary2 text-white rounded-xl font-bold hover:bg-primary3 transition-colors font-rubik"
                         >
                           Add
                         </button>
@@ -622,7 +671,7 @@ export default function EventsPage() {
                             setPrice("");
                             setShowAdmissionInput(false);
                           }}
-                          className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-100 font-rubik"
+                          className="px-4 py-2 border-2 border-gray-200 bg-white text-gray-500 rounded-xl font-bold hover:bg-gray-50 transition-colors font-rubik"
                         >
                           Cancel
                         </button>
@@ -631,13 +680,14 @@ export default function EventsPage() {
                   )}
 
                   {admissions.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-3">
                       {admissions.map((ad, index) => (
                         <span
                           key={index}
-                          className="flex items-center gap-2 bg-primary2 text-white font-raleway px-4 py-1 rounded-full text-sm"
+                          className="flex items-center gap-3 bg-white border-2 border-primary2/20 text-primary3 font-bold font-rubik px-5 py-2 rounded-xl shadow-sm"
                         >
-                          {ad.category} — {ad.price}
+                          <span>{ad.category}</span>
+                          <span className="text-primary2 bg-primary2/10 px-2 py-0.5 rounded-md text-sm">{ad.price}</span>
                           <button
                             type="button"
                             onClick={() =>
@@ -645,7 +695,7 @@ export default function EventsPage() {
                                 admissions.filter((_, i) => i !== index)
                               )
                             }
-                            className="text-white hover:text-red-200 font-bold"
+                            className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors ml-1"
                           >
                             ×
                           </button>
@@ -657,87 +707,96 @@ export default function EventsPage() {
               </div>
 
               {/* Mode */}
-              <div>
-                <label className="text-md font-medium text-primary3 font-raleway mb-2 block">
-                  Mode
+              <div className="space-y-3">
+                <label className="text-lg font-semibold text-primary3 font-rubik">
+                  Event Mode
                 </label>
-                <div className="flex gap-3">
+                <div className="flex gap-4 p-1.5 bg-gray-50 rounded-2xl border border-gray-200 w-fit">
                   <button
                     type="button"
                     onClick={() => setMode('Onsite')}
-                    className={`px-4 py-2 rounded-full border font-rubik ${mode === 'Onsite' ? 'bg-primary2 text-white border-primary2' : 'border-gray-300 text-gray-600'}`}
+                    className={`px-6 py-3 rounded-xl text-sm font-bold font-rubik transition-all duration-300 ${
+                      mode === 'Onsite'
+                        ? "bg-white text-primary1 shadow-md shadow-gray-200 ring-1 ring-black/5"
+                        : "text-gray-500 hover:text-primary1 hover:bg-white/50"
+                    }`}
                   >
                     Onsite
                   </button>
                   <button
                     type="button"
                     onClick={() => setMode('Online')}
-                    className={`px-4 py-2 rounded-full border font-rubik ${mode === 'Online' ? 'bg-primary2 text-white border-primary2' : 'border-gray-300 text-gray-600'}`}
+                    className={`px-6 py-3 rounded-xl text-sm font-bold font-rubik transition-all duration-300 ${
+                      mode === 'Online'
+                        ? "bg-white text-primary1 shadow-md shadow-gray-200 ring-1 ring-black/5"
+                        : "text-gray-500 hover:text-primary1 hover:bg-white/50"
+                    }`}
                   >
                     Online
                   </button>
                 </div>
               </div>
 
-              <div className="h-[1px] bg-gray-200 w-full" />
+              <div className="h-px bg-gray-100 w-full" />
 
               {/* Registration Section */}
-              <div>
-                <label className="text-sm font-medium text-primary3 font-raleway mb-3 block">
-                  Registration
-                </label>
-
-                <div className="flex items-center gap-3 mb-4">
-                  <input
-                    type="checkbox"
-                    id="registrationToggle"
-                    checked={registrationRequired}
-                    onChange={() => setRegistrationRequired((prev) => !prev)}
-                    className="h-4 w-4"
-                  />
-                  <label
-                    htmlFor="registrationToggle"
-                    className="text-sm font-raleway text-gray-600"
-                  >
-                    Registration Required
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-lg font-semibold text-primary3 font-rubik">
+                    Registration
                   </label>
+                  <div className="flex items-center gap-3 bg-gray-50 px-4 py-2 rounded-xl border border-gray-200">
+                    <input
+                      type="checkbox"
+                      id="registrationToggle"
+                      checked={registrationRequired}
+                      onChange={() => setRegistrationRequired((prev) => !prev)}
+                      className="w-5 h-5 text-primary2 rounded focus:ring-primary2 border-gray-300"
+                    />
+                    <label
+                      htmlFor="registrationToggle"
+                      className="text-sm font-bold text-gray-600 font-rubik cursor-pointer select-none"
+                    >
+                      Registration Required
+                    </label>
+                  </div>
                 </div>
 
                 {registrationRequired && (
-                  <div className="grid sm:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                    <div>
-                      <label className="text-sm font-raleway text-primary3 block mb-2">
+                  <div className="grid sm:grid-cols-2 gap-6 p-6 border-2 border-primary2/20 rounded-2xl bg-primary2/5 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-primary3 font-rubik">
                         Registration Opens
                       </label>
                       <input
                         type="datetime-local"
                         value={registrationStart}
                         onChange={(e) => setRegistrationStart(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary2"
+                        className="w-full rounded-xl border-2 border-white bg-white px-4 py-3 text-gray-600 focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                       />
                     </div>
 
-                    <div>
-                      <label className="text-sm font-raleway text-primary3 block mb-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-primary3 font-rubik">
                         Registration Closes
                       </label>
                       <input
                         type="datetime-local"
                         value={registrationEnd}
                         onChange={(e) => setRegistrationEnd(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary2"
+                        className="w-full rounded-xl border-2 border-white bg-white px-4 py-3 text-gray-600 focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                       />
                     </div>
                   </div>
                 )}
               </div>
 
-              <div className="h-[1px] bg-gray-200 w-full" />
+              <div className="h-px bg-gray-100 w-full" />
 
               {/* Organizer Section */}
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+              <div className="grid sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-primary3 font-rubik">
                     Organizer
                   </label>
                   <input
@@ -745,11 +804,11 @@ export default function EventsPage() {
                     placeholder="Organizer name or group"
                     value={organizer}
                     onChange={(e) => setOrganizer(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 font-raleway"
+                    className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 bg-gray-50/30 focus:bg-white focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 transition-all duration-300"
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-primary3 font-rubik">
                     Contact Email
                   </label>
                   <input
@@ -758,81 +817,110 @@ export default function EventsPage() {
                     placeholder="organizer@example.com"
                     value={formData.contact}
                     onChange={handleInputChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 font-raleway"
+                    className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 bg-gray-50/30 focus:bg-white focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 transition-all duration-300"
                   />
                 </div>
               </div>
 
-              <div className="h-[1px] bg-gray-200 w-full" />
+              <div className="h-px bg-gray-100 w-full" />
 
               {/* Event Content */}
-              <div>
-                <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
-                  Event Title *
-                </label>
-                <input
-                  id="title"
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  placeholder="Add a clear and descriptive title"
-                  className={`w-full font-raleway rounded-lg px-3 py-2 border transition-all ${
-                    errors.title
-                      ? "border-2 border-red-500 bg-red-50"
-                      : "border-gray-300 bg-white"
-                  } focus:outline-none focus:border-2 focus:border-primary2 focus:bg-white`}
-                />
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="title"
+                    className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                  >
+                    Event Title
+                    {formData.title && <span className="text-green-500 text-xs">✓</span>}
+                  </label>
+                  <input
+                    id="title"
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    placeholder="Add a clear and descriptive title"
+                    className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${
+                      errors.title
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                        : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                    }`}
+                  />
+                  {errors.title && (
+                    <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
+                      <span>•</span> Title is required.
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="description"
+                    className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                  >
+                    Description
+                    {formData.description && <span className="text-green-500 text-xs">✓</span>}
+                  </label>
+                  <input
+                    id="description"
+                    type="text"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Short description for notification"
+                    className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${
+                      errors.description
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                        : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                    }`}
+                  />
+                  {errors.description && (
+                    <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
+                      <span>•</span> Description is required.
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="body"
+                    className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                  >
+                    Contents
+                    {formData.body && <span className="text-green-500 text-xs">✓</span>}
+                  </label>
+                  <textarea
+                    id="body"
+                    name="body"
+                    value={formData.body}
+                    onChange={handleInputChange}
+                    rows={8}
+                    placeholder="Agenda/program highlights"
+                    className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 resize-y min-h-[200px] ${
+                      errors.body
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                        : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                    }`}
+                  />
+                  {errors.body && (
+                    <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
+                      <span>•</span> Content is required.
+                    </p>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
-                  Description *
-                </label>
-                <input
-                  id="description"
-                  type="text"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  placeholder="Short description for notification"
-                  className={`w-full font-raleway rounded-lg px-3 py-2 border transition-all ${
-                    errors.description
-                      ? "border-2 border-red-500 bg-red-50"
-                      : "border-gray-300 bg-white"
-                  } focus:outline-none focus:border-2 focus:border-primary2 focus:bg-white`}
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
-                  Contents *
-                </label>
-                <textarea
-                  id="body"
-                  name="body"
-                  value={formData.body}
-                  onChange={handleInputChange}
-                  rows={6}
-                  placeholder="Agenda/program highlights"
-                  className={`w-full font-raleway rounded-lg px-3 py-2 border transition-all ${
-                    errors.body
-                      ? "border-2 border-red-500 bg-red-50"
-                      : "border-gray-300 bg-white"
-                  } focus:outline-none focus:border-2 focus:border-primary2 focus:bg-white`}
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-medium text-primary3 font-raleway">
+              <div className="space-y-4 pt-4 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <label className="text-lg font-semibold text-primary3 font-rubik">
                     Additional Information
                   </label>
                   {!showAdditionalInfo && (
                     <button
                       type="button"
                       onClick={() => setShowAdditionalInfo(true)}
-                      className="px-3 py-1 text-sm border border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white font-rubik transition"
+                      className="px-4 py-2 text-sm font-bold border-2 border-primary2 text-primary2 rounded-xl hover:bg-primary2 hover:text-white transition-all duration-300 font-rubik"
                     >
                       + Add Section
                     </button>
@@ -840,10 +928,10 @@ export default function EventsPage() {
                 </div>
 
                 {showAdditionalInfo && (
-                  <div className="space-y-3">
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                     {details.map((section, idx) => (
-                      <div key={idx} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                        <div className="flex gap-2 mb-3">
+                      <div key={idx} className="p-6 border-2 border-gray-200 rounded-2xl bg-gray-50/50 hover:border-primary2/30 transition-all duration-300">
+                        <div className="flex gap-3 mb-4">
                           <input
                             type="text"
                             placeholder="Section header"
@@ -851,12 +939,12 @@ export default function EventsPage() {
                             onChange={(e) =>
                               setDetails((prev) => prev.map((s, i) => (i === idx ? { ...s, title: e.target.value } : s)))
                             }
-                            className="flex-1 rounded-lg text-gray-600 border border-gray-300 px-3 py-2 text-sm font-raleway focus:outline-none focus:border-primary2"
+                            className="flex-1 rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                           />
                           <button
                             type="button"
                             onClick={() => setDetails((prev) => prev.filter((_, i) => i !== idx))}
-                            className="text-red-500 px-4 py-2 rounded-lg bg-white border border-gray-300 hover:bg-red-50 font-rubik"
+                            className="px-4 py-2 rounded-xl bg-white border-2 border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 font-bold transition-all"
                           >
                             Remove
                           </button>
@@ -868,7 +956,7 @@ export default function EventsPage() {
                           onChange={(e) =>
                             setDetails((prev) => prev.map((s, i) => (i === idx ? { ...s, body: e.target.value } : s)))
                           }
-                          className="w-full rounded-lg border border-gray-300 text-gray-600 px-3 py-2 text-sm font-raleway h-24 focus:outline-none focus:border-primary2"
+                          className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 h-32 focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all resize-y"
                         />
                       </div>
                     ))}
@@ -876,7 +964,7 @@ export default function EventsPage() {
                     <button
                       type="button"
                       onClick={() => setDetails((d) => [...d, { title: "", body: "" }])}
-                      className="w-full px-4 py-2 border border-dashed border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white transition font-rubik"
+                      className="w-full px-6 py-4 border-2 border-dashed border-primary2 text-primary2 rounded-2xl hover:bg-primary2 hover:text-white transition-all duration-300 font-bold font-rubik"
                     >
                       + Add Another Section
                     </button>
@@ -884,8 +972,9 @@ export default function EventsPage() {
                 )}
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
+              {/* RSVP Link */}
+              <div className="space-y-2">
+                <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
                   RSVP Link
                 </label>
                 <input
@@ -895,13 +984,14 @@ export default function EventsPage() {
                   value={formData.rsvp}
                   onChange={handleInputChange}
                   placeholder="https://example.com/rsvp"
-                  className="w-full font-raleway rounded-lg px-3 py-2 border border-gray-300 focus:outline-none focus:border-2 focus:border-primary2"
+                  className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 bg-gray-50/30 focus:bg-white focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 transition-all duration-300"
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-primary3 font-raleway mb-2 block">
-                  Visibility *
+              {/* Visibility */}
+              <div className="space-y-2">
+                <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
+                  Visibility
                 </label>
                 <div className="relative w-full">
                   <select
@@ -909,35 +999,33 @@ export default function EventsPage() {
                     name="visibility"
                     value={formData.visibility}
                     onChange={handleInputChange}
-                    className="w-full font-raleway rounded-lg px-3 py-2 border border-gray-300 focus:outline-none focus:border-2 focus:border-primary2 appearance-none pr-10"
+                    className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 bg-gray-50/30 focus:bg-white focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 transition-all duration-300 appearance-none cursor-pointer"
                   >
-                    <option value="" className="text-gray-400">
-                      Select visibility
-                    </option>
-                    <option value="public">Public</option>
+                    <option value="" className="text-gray-400">Select visibility</option>
+                    <option value="public">Public (Everyone)</option>
                     <option value="members">Members Only</option>
                     <option value="officers">Officers Only</option>
                   </select>
-                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-primary3">
-                    <ChevronDown className="w-4 h-4" />
+                  <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-primary3">
+                    <ChevronDown className="w-5 h-5" />
                   </span>
                 </div>
               </div>
 
-              <div className="h-[1px] bg-gray-200 w-full" />
+              <div className="h-px bg-gray-100 w-full" />
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
                 {showGlobalError && (
-                  <p className="text-red-500 text-sm font-raleway">
+                  <p className="text-red-500 text-sm font-bold font-raleway animate-pulse">
                     Please fill all required fields before publishing.
                   </p>
                 )}
 
-                <div className="flex flex-wrap gap-3 ml-auto">
+                <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
                   <Link 
                     href="/drafts" 
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-100 font-raleway transition"
+                    className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 text-center"
                   >
                     View Drafts
                   </Link>
@@ -946,6 +1034,7 @@ export default function EventsPage() {
                     type="button"
                     onClick={handleSaveDraft}
                     disabled={isSubmitting}
+                    className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300"
                   >
                     Save Draft
                   </Button>
@@ -954,61 +1043,75 @@ export default function EventsPage() {
                     type="button"
                     onClick={handlePublish}
                     disabled={isSubmitting}
-                    className="disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? "Publishing..." : "Publish"}
                   </Button>
                 </div>
               </div>
-            </form>
+            </div>
           </div>
+        </div>
         </div>
       </main>
 
-        {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => {
               setShowSuccessModal(false);
               setSubmitSuccess(false);
             }}
           />
 
-          <div className="relative bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-lg">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center">
-                <span className="text-3xl text-white">✔</span>
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl transform animate-in zoom-in-95 duration-300 border border-gray-100">
+            <div className="flex flex-col items-center gap-6 text-center">
+              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-2 animate-bounce">
+                <svg
+                  className="w-10 h-10 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="3"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
               </div>
 
-              <h3 className="text-xl text-primary3 font-semibold font-rubik">
-                Event Published
-              </h3>
-              <p className="text-sm text-gray-600 text-center font-raleway">
-                Your event was published successfully.
-              </p>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-gray-900 font-rubik">
+                  Event Published!
+                </h3>
+                <p className="text-gray-500 font-raleway">
+                  Your event has been successfully created and is now live.
+                </p>
+              </div>
 
-              <div className="flex gap-3 mt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowSuccessModal(false);
-                    setSubmitSuccess(false);
-                  }}
-                >
-                  Close
-                </Button>
-
-                <Button
-                  variant="primary3"
+              <div className="w-full pt-2 flex flex-col gap-3">
+                <button
                   onClick={() => {
                     setShowSuccessModal(false);
                     setSubmitSuccess(false);
                     router.push("/events");
                   }}
+                  className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all duration-300 shadow-lg shadow-gray-900/20"
                 >
                   View Events
-                </Button>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSubmitSuccess(false);
+                  }}
+                  className="w-full py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all duration-300"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
@@ -1016,6 +1119,7 @@ export default function EventsPage() {
       )}
 
       <Footer />
+      </div>
     </section>
   );
 }
