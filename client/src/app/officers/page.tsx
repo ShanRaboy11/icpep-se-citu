@@ -1,119 +1,87 @@
 "use client";
 
+import { FC } from "react";
 import { useRouter } from "next/navigation";
-import React from "react";
-import OfficerCard1 from "../components/cards/officercard1";
-import OfficerCard2 from "../components/cards/officercard2";
-import OfficerCard3 from "../components/cards/officercard3";
-import Header from "../components/header";
-import Footer from "../components/footer";
 import { ArrowLeft } from "lucide-react";
 
-const councilOfficers = [
-  { position: "PRESIDENT", role: "", lastName: "Dela Cruz", firstName: "Juan" },
-  {
-    position: "VICE PRESIDENT",
-    role: "INTERNAL",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
-  },
+import Header from "../components/header";
+import Footer from "../components/footer";
+import Grid from "../components/grid";
+import SelectionCard from "./components/selection-card";
 
+const committeeData = [
   {
-    position: "VICE PRESIDENT",
-    role: "EXTERNAL",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
-  },
-  { position: "TREASURER", role: "", lastName: "Dela Cruz", firstName: "Juan" },
-  { position: "SECRETARY", role: "", lastName: "Dela Cruz", firstName: "Juan" },
-  { position: "AUDITOR", role: "", lastName: "Dela Cruz", firstName: "Juan" },
-  { position: "PRO", role: "", lastName: "Dela Cruz", firstName: "Juan" },
-  { position: "PIO", role: "", lastName: "Dela Cruz", firstName: "Juan" },
-];
-
-const ssgRepresentatives = [
-  {
-    position: "SSG",
-    role: "REPRESENTATIVE",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
+    title: "Committee on Internal Affairs",
+    slug: "internal-affairs",
+    gradient: "bg-gradient-to-br from-[#00A7EE] to-blue-600",
+    shadow: "hover:shadow-sky-500/40",
   },
   {
-    position: "SSG",
-    role: "REPRESENTATIVE",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
-  },
-];
-
-const yearLevelReps = [
-  {
-    position: "1ST YEAR",
-    role: "REPRESENTATIVE",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
+    title: "Committee on External Affairs",
+    slug: "external-affairs",
+    gradient: "bg-gradient-to-br from-[#9333ea] to-purple-900",
+    shadow: "hover:shadow-purple-600/40",
   },
   {
-    position: "2ND YEAR",
-    role: "REPRESENTATIVE",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
+    title: "Committee on Finance",
+    slug: "finance",
+    gradient: "bg-gradient-to-br from-[#ca8a04] to-yellow-700",
+    shadow: "hover:shadow-yellow-600/40",
   },
   {
-    position: "3RD YEAR",
-    role: "REPRESENTATIVE",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
+    title: "Committee on Public Relations",
+    slug: "public-relations",
+    gradient: "bg-gradient-to-br from-[#ea580c] to-red-600",
+    shadow: "hover:shadow-orange-600/40",
   },
   {
-    position: "4TH YEAR",
-    role: "REPRESENTATIVE",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
+    title: "Research and Development Committee",
+    slug: "research-and-development",
+    gradient: "bg-gradient-to-br from-[#2563eb] to-indigo-800",
+    shadow: "hover:shadow-blue-600/40",
   },
   {
-    position: "1ST YEAR",
-    role: "REPRESENTATIVE",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
+    title: "Training and Seminar Committee",
+    slug: "training-and-seminar",
+    gradient: "bg-gradient-to-br from-[#16a34a] to-green-800",
+    shadow: "hover:shadow-green-600/40",
   },
   {
-    position: "2ND YEAR",
-    role: "REPRESENTATIVE",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
+    title: "Sports and Cultural Committee",
+    slug: "sports-and-cultural",
+    gradient: "bg-gradient-to-br from-[#dc2626] to-red-900",
+    shadow: "hover:shadow-red-600/40",
   },
   {
-    position: "3RD YEAR",
-    role: "REPRESENTATIVE",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
-  },
-  {
-    position: "4TH YEAR",
-    role: "REPRESENTATIVE",
-    lastName: "Dela Cruz",
-    firstName: "Juan",
+    title: "Media and Documentation Committee",
+    slug: "media-and-documentation",
+    gradient: "bg-gradient-to-br from-[#4f46e5] to-indigo-900",
+    shadow: "hover:shadow-indigo-600/40",
   },
 ];
 
-const OfficersPage = () => {
+const OfficerSelectionPage: FC = () => {
   const router = useRouter();
-  const handleBackToHome = () => {
-    router.push("/");
-  };
+
+  const pillText = "Organizational Structure";
+  const title = "Council & Committees";
+  const subtitle =
+    "Select a department to view the officers and members dedicated to serving our chapter.";
 
   return (
-    <section className="min-h-screen bg-white flex flex-col relative">
-      {/* Title Section */}
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+      <Grid />
 
-      <Header />
-      <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
-        <div className="mb-8 flex justify-start">
-          <button
-            onClick={handleBackToHome}
-            title="Back to About Us"
-            className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
+
+        <div className="flex-grow">
+          <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem]">
+            <div className="mb-8 flex justify-start">
+              <button
+                onClick={() => router.back()}
+                title="Back to About"
+                className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
                          rounded-full border-2 border-primary1 text-primary1 
                          overflow-hidden transition-all duration-300 ease-in-out 
                          active:scale-95 before:absolute before:inset-0 
@@ -121,132 +89,75 @@ const OfficersPage = () => {
                          before:via-white/40 before:to-transparent 
                          before:translate-x-[-100%] hover:before:translate-x-[100%] 
                          before:transition-transform before:duration-700"
-          >
-            <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
-          </button>
-        </div>
-        <div className="text-center mb-20 max-w-4xl mx-auto flex flex-col items-center justify-center">
-          <h1 className="text-4xl md:text-6xl font-extrabold uppercase font-rubik text-gray-900">
-            The 6th Administration
-          </h1>
-          <p className="mt-4 text-lg text-gray-700 font-raleway">
-            A team of student leaders dedicated to serving, inspiring, and
-            leading our organization toward growth and innovation.
-          </p>
-        </div>
+              >
+                <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
+              </button>
+            </div>
 
-        {/* Council Officers Section */}
-        <div className="w-full max-w-7xl">
-          <h2 className="text-3xl md:text-5xl sm:mx-15 font-bold font-rubik mb-5 text-black">
-            Council Officers
-          </h2>
-          <p className="text-gray-700 mb-18 sm:mx-15 sm:text-lg font-raleway">
-            Meet the key officers leading the 6th Administration — dedicated
-            student leaders ensuring the organization’s smooth operations,
-            innovation, and growth throughout the academic year.
-          </p>
+            {/* Header Section */}
+            <div className="mb-16 text-center">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+                <div className="h-2 w-2 rounded-full bg-primary1"></div>
+                <span className="font-raleway text-sm font-semibold text-primary1">
+                  {pillText}
+                </span>
+              </div>
 
-          {/* Officers Grid */}
-          <div className="flex flex-wrap justify-center gap-8 mb-10">
-            {councilOfficers
-              .slice(0, 3)
-              .map((officer, index) =>
-                officer.position === "VICE PRESIDENT" ? (
-                  <OfficerCard2
-                    key={index}
-                    position={officer.position}
-                    role={officer.role}
-                    lastName={officer.lastName}
-                    firstName={officer.firstName}
-                    image="/officer.svg"
+              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+                {title}
+              </h1>
+
+              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
+                {subtitle}
+              </p>
+            </div>
+
+            <section className="w-full max-w-6xl mx-auto flex flex-col gap-8 mb-24">
+              {/* Executive Council */}
+              <div className="w-full">
+                <SelectionCard
+                  title="Executive Council"
+                  gradient="bg-gradient-to-br from-primary3 to-secondary1"
+                  shadowColorClass="hover:shadow-primary3/40"
+                  className="h-48 sm:h-80"
+                  paddingClass="px-6 pt-12 sm:pt-8 pb-6"
+                  onClick={() => router.push("/officers/council")}
+                />
+              </div>
+
+              {/* Divider */}
+              <div className="flex items-center gap-4 py-8">
+                <div className="h-12 w-1.5 rounded-full bg-gradient-to-b from-primary3 to-secondary1 shadow-sm"></div>
+                <div className="flex flex-col">
+                  <h2 className="text-2xl sm:text-3xl font-rubik font-bold text-primary3 tracking-tight">
+                    Committees
+                  </h2>
+                  <span className="text-xs sm:text-sm font-raleway text-gray-600 font-medium">
+                    Departmental Teams
+                  </span>
+                </div>
+              </div>
+
+              {/* Committee Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {committeeData.map((committee) => (
+                  <SelectionCard
+                    key={committee.slug}
+                    title={committee.title}
+                    gradient={committee.gradient}
+                    shadowColorClass={committee.shadow}
+                    onClick={() => router.push(`/officers/${committee.slug}`)}
                   />
-                ) : (
-                  <OfficerCard1
-                    key={index}
-                    position={officer.position}
-                    role={officer.role}
-                    lastName={officer.lastName}
-                    firstName={officer.firstName}
-                    image="/officer.svg"
-                  />
-                )
-              )}
-          </div>
-
-          {/* Row 2 – 3 cards (Treasurer, Secretary, Auditor) */}
-          <div className="flex flex-wrap justify-center gap-8 mb-10">
-            {councilOfficers.slice(3, 6).map((officer, index) => (
-              <OfficerCard1
-                key={index}
-                position={officer.position}
-                role={officer.role}
-                lastName={officer.lastName}
-                firstName={officer.firstName}
-                image="/officer.svg"
-              />
-            ))}
-          </div>
-
-          {/* Row 3 – 2 cards centered (PRO, PIO) */}
-          <div className="flex flex-wrap justify-center gap-8">
-            {councilOfficers.slice(6, 8).map((officer, index) => (
-              <OfficerCard1
-                key={index}
-                position={officer.position}
-                role={officer.role}
-                lastName={officer.lastName}
-                firstName={officer.firstName}
-                image="/officer.svg"
-              />
-            ))}
+                ))}
+              </div>
+            </section>
           </div>
         </div>
 
-        <div className="w-full max-w-7xl sm:text-left text-center mt-30 mb-30">
-          <h2 className="text-3xl md:text-5xl sm:mx-15 font-bold font-rubik mb-5 text-black">
-            Representatives
-          </h2>
-          <p className="text-gray-700 mb-18 sm:mx-15 sm:text-lg font-raleway">
-            Meet the representatives of the 6th Administration — student leaders
-            who bridge communication between the council and the student body,
-            ensuring participation and representation across all year levels.
-          </p>
-
-          {/* SSG Representatives */}
-          <div className="flex flex-wrap justify-center gap-8 mb-10">
-            {ssgRepresentatives.map((rep, index) => (
-              <OfficerCard2
-                key={index}
-                position={rep.position}
-                role={rep.role}
-                lastName={rep.lastName}
-                firstName={rep.firstName}
-                image="/officer.svg"
-              />
-            ))}
-          </div>
-
-          {/* Year-Level Representatives */}
-          <div
-            className="sm:mx-15 grid gap-8 justify-items-center
-                        grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-          >
-            {yearLevelReps.map((rep, index) => (
-              <OfficerCard3
-                key={index}
-                position={rep.position}
-                role={rep.role}
-                lastName={rep.lastName}
-                firstName={rep.firstName}
-                image="/officer.svg"
-              />
-            ))}
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </section>
+        <Footer />
+      </div>
+    </div>
   );
 };
 
-export default OfficersPage;
+export default OfficerSelectionPage;

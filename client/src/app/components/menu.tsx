@@ -20,7 +20,6 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
 
   const router = useRouter();
 
-  // Define a base set of submenus
   const baseSubmenus: Record<string, string[]> = {
     Home: [
       "Home",
@@ -48,7 +47,6 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     Developers: ["About ExceptionHandlers", "Developers profiles"],
   };
 
-  // Conditionally add 'Connect' and 'Users' based on role
   const submenus: Record<string, string[]> = { ...baseSubmenus };
 
   if (userRole === "council-officer") {
@@ -56,9 +54,8 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     submenus.Users = ["User Management"];
   }
 
-  // Handle navigation for menu items
   const handleMenuClick = (item: string) => {
-    onExit(); // Close the menu on any top-level item click
+    onExit();
     if (item === "Developers") {
       router.push("/developers");
     } else if (item === "Home") {
@@ -74,31 +71,28 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     } else if (item === "Users") {
       router.push("/users");
     } else {
-      console.log(`Navigate to /${item.toLowerCase().replace(/\s/g, "-")}`); // Basic fallback
-      // Add other specific navigation logic here as needed
+      console.log(`Navigate to /${item.toLowerCase().replace(/\s/g, "-")}`);
     }
   };
 
-  // Handle navigation for submenu items
   const handleSubmenuClick = (parentItem: string, submenuItem: string) => {
-    onExit(); // Close the menu on any submenu item click
+    onExit();
     if (parentItem === "Developers" && submenuItem === "Developers profiles") {
-      router.push("/developers"); // Or a specific /developers/profiles page
+      router.push("/developers");
     } else if (parentItem === "Events" && submenuItem === "Upcoming events") {
-      router.push("/events"); // Or a specific /events/upcoming page
+      router.push("/events");
     } else if (parentItem === "Users" && submenuItem === "User Management") {
-      router.push("/users/management"); // Example for a specific user management page
+      router.push("/users/management");
     } else if (parentItem === "Connect" && submenuItem === "Lettucemeet") {
-      router.push("/connect/lettucemeet"); // Example
+      router.push("/connect/lettucemeet");
     } else if (
       parentItem === "Membership" &&
       submenuItem === "Membership details"
     ) {
-      router.push("/membership"); // Example
+      router.push("/membership");
     } else if (parentItem === "Membership" && submenuItem === "Merch") {
-      router.push("/merch"); // Example
+      router.push("/merch");
     }
-    // Add more specific submenu navigation here
     console.log(
       `Navigate to /${parentItem
         .toLowerCase()
@@ -106,7 +100,6 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     );
   };
 
-  // Cancel timeout when hovered changes (user re-enters)
   useEffect(() => {
     if (hovered && leaveTimeout.current) {
       clearTimeout(leaveTimeout.current);
@@ -119,10 +112,9 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   };
 
   const handleMouseLeave = () => {
-    // Delay hover removal by a short period to allow moving to submenu
     leaveTimeout.current = setTimeout(() => {
       setHovered(null);
-    }, 300); // 300ms is a common duration for hover delays
+    }, 300);
   };
 
   const currentMenu = hovered;
@@ -168,7 +160,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                   key={item}
                   onMouseEnter={() => handleMouseEnter(item)}
                   onMouseLeave={handleMouseLeave}
-                  onClick={() => handleMenuClick(item)} // Changed to top-level click handler
+                  onClick={() => handleMenuClick(item)}
                   className="relative inline-block cursor-pointer group w-fit"
                 >
                   <span
@@ -207,7 +199,6 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                 ? "opacity-100 translate-x-0"
                 : "opacity-0 -translate-x-8 pointer-events-none"
             }`}
-            // Ensure mouse leave for the entire submenu area still triggers the delay
             onMouseLeave={handleMouseLeave}
           >
             {currentMenu && submenus[currentMenu]?.length > 0 && (
@@ -219,7 +210,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                   <div
                     key={submenu}
                     className="relative inline-block cursor-pointer group w-fit"
-                    onClick={() => handleSubmenuClick(currentMenu, submenu)} // New submenu click handler
+                    onClick={() => handleSubmenuClick(currentMenu, submenu)}
                   >
                     <span className="text-md sm:text-2xl font-raleway transition-colors duration-300 group-hover:text-white/80">
                       {submenu}

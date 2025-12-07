@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
-/*npm install embla-carousel-react
+/*
+npm install embla-carousel-react
 npm install ogl
-npm install gsap*/
+npm install gsap
+*/
 
 :root {
   --background: #fefeff;
@@ -394,6 +396,78 @@ html {
 
 .animate-shake {
   animation: shake 0.3s ease-in-out;
+}
+
+@keyframes progress-bar-animation {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.animate-progress {
+  animation: progress-bar-animation 7s linear forwards;
+}
+
+.content-fade {
+  animation: fade-in 0.6s ease-out;
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2.5s ease-in-out infinite;
+}
+
+.static-glow {
+  filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 12px currentColor);
+}
+
+@keyframes spin-slow {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 25s linear infinite;
+}
+
+@keyframes spin-3d {
+  from {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(360deg) rotateY(360deg);
+  }
+}
+
+.animate-spin-3d {
+  animation: spin-3d 30s linear infinite;
 }
 
 @keyframes border-rotate {
