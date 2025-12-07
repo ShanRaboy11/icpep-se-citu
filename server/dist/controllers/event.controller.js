@@ -33,7 +33,12 @@ const createEvent = async (req, res, next) => {
         if (Array.isArray(multerFiles) && multerFiles.length > 0) {
             try {
                 console.log(`📷 Uploading ${multerFiles.length} images to Cloudinary...`);
-                const buffers = multerFiles.map((f) => ({ buffer: f.buffer }));
+                const buffers = multerFiles
+                    .filter((f) => !!f.buffer)
+                    .map((f) => ({ buffer: f.buffer }));
+                if (buffers.length === 0) {
+                    throw new Error('No file buffers available for upload');
+                }
                 const results = await (0, cloudinary_1.uploadMultipleToCloudinary)(buffers, 'events');
                 galleryImages = results.map((r) => r.secure_url).filter(Boolean);
                 console.log('✅ Images uploaded:', galleryImages);
@@ -49,6 +54,10 @@ const createEvent = async (req, res, next) => {
                 try {
                     for (const f of multerFiles) {
                         try {
+                            if (!f.buffer) {
+                                console.warn('Skipping file with empty buffer during fallback upload');
+                                continue;
+                            }
                             const singleResult = await (0, cloudinary_1.uploadToCloudinary)(f.buffer, 'events');
                             const url = singleResult.secure_url;
                             if (url)
@@ -87,7 +96,12 @@ const createEvent = async (req, res, next) => {
             // Backwards compatible: if a single file was uploaded under req.file
             try {
                 console.log('📷 Uploading single cover image to Cloudinary...');
-                const result = await (0, cloudinary_1.uploadToCloudinary)(singleFile.buffer, 'events');
+                const buf = singleFile.buffer;
+                if (!buf) {
+                    res.status(400).json({ success: false, message: 'Uploaded file has no data' });
+                    return;
+                }
+                const result = await (0, cloudinary_1.uploadToCloudinary)(buf, 'events');
                 const url = result.secure_url;
                 galleryImages = url ? [url] : [];
                 coverImage = url || coverImage;
@@ -285,7 +299,12 @@ const updateEvent = async (req, res, next) => {
         if (Array.isArray(reqFiles) && reqFiles.length > 0) {
             try {
                 console.log(`📷 Uploading ${reqFiles.length} images for update...`);
-                const buffers = reqFiles.map((f) => ({ buffer: f.buffer }));
+                const buffers = reqFiles
+                    .filter((f) => !!f.buffer)
+                    .map((f) => ({ buffer: f.buffer }));
+                if (buffers.length === 0) {
+                    throw new Error('No file buffers available for upload');
+                }
                 const results = await (0, cloudinary_1.uploadMultipleToCloudinary)(buffers, 'events');
                 const newUrls = results.map((r) => r.secure_url).filter(Boolean);
                 // Preserve existing galleryImages and append new ones
@@ -306,7 +325,12 @@ const updateEvent = async (req, res, next) => {
             if (event.coverImage) {
                 await (0, cloudinary_1.deleteFromCloudinary)(event.coverImage);
             }
-            const result = await (0, cloudinary_1.uploadToCloudinary)(reqSingle.buffer, 'events');
+            const buf = reqSingle.buffer;
+            if (!buf) {
+                res.status(400).json({ success: false, message: 'Uploaded file has no data' });
+                return;
+            }
+            const result = await (0, cloudinary_1.uploadToCloudinary)(buf, 'events');
             req.body.coverImage = result.secure_url;
         }
         // Parse arrays/objects if they are strings

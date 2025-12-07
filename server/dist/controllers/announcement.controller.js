@@ -59,7 +59,12 @@ const createAnnouncement = async (req, res, next) => {
         else if (req.file) {
             // Backwards compatibility for single-file uploads
             try {
-                const result = await (0, cloudinary_1.uploadToCloudinary)(req.file.buffer, 'announcements');
+                const fileBuf = req.file.buffer;
+                if (!fileBuf) {
+                    res.status(400).json({ success: false, message: 'Uploaded file has no data' });
+                    return;
+                }
+                const result = await (0, cloudinary_1.uploadToCloudinary)(fileBuf, 'announcements');
                 imageUrl = result.secure_url;
                 galleryImages = imageUrl ? [imageUrl] : undefined;
                 console.log('✅ Image uploaded (single):', imageUrl);
@@ -290,7 +295,12 @@ const updateAnnouncement = async (req, res, next) => {
                 }
             }
             // Upload new files
-            const results = await (0, cloudinary_1.uploadMultipleToCloudinary)(incomingFiles, 'announcements');
+            const buffers = incomingFiles.filter((f) => !!f.buffer).map((f) => ({ buffer: f.buffer }));
+            if (buffers.length === 0) {
+                res.status(400).json({ success: false, message: 'No valid file data to upload' });
+                return;
+            }
+            const results = await (0, cloudinary_1.uploadMultipleToCloudinary)(buffers, 'announcements');
             const urls = results.map((r) => r.secure_url).filter(Boolean);
             if (urls.length > 0) {
                 req.body.galleryImages = JSON.stringify(urls);
