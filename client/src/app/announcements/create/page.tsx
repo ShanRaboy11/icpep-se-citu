@@ -7,6 +7,7 @@ import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
+import Grid from "@/app/components/grid";
 import { ChevronDown } from "lucide-react";
 import announcementService, { AnnouncementData } from "../../services/announcement";
 
@@ -433,45 +434,78 @@ export default function AnnouncementsPage() {
 
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
+      <Grid />
+      {/* Loading Overlay */}
+      {isSubmitting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md transition-all animate-in fade-in duration-200">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in duration-300">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-blue-100 rounded-full" />
+              <div className="w-16 h-16 border-4 border-primary2 border-t-transparent rounded-full animate-spin absolute inset-0" />
+            </div>
+            <p className="text-gray-700 font-rubik text-base font-semibold">
+              Publishing your announcement...
+            </p>
+          </div>
+        </div>
+      )}
+
       <Header />
 
-      <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
-        <div className="text-center sm:text-left mb-10">
-          <h1 className="text-2xl sm:text-5xl font-bold font-rubik text-primary3">
-            Compose
-          </h1>
-          <div className="h-[3px] bg-primary1 w-24 sm:w-full mt-3 mx-auto rounded-full" />
+      <main className="relative z-10 flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
+        {/* Page Header with Gradient */}
+        <div className="mb-12 relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary1/10 to-primary2/10 rounded-3xl blur-3xl -z-10" />
+          <div className="text-center sm:text-left">
+            <h1 className="text-3xl sm:text-6xl font-bold font-rubik bg-gradient-to-r from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent mb-3">
+              Compose Announcement
+            </h1>
+            <p className="text-gray-600 font-raleway text-lg">
+              Share updates, news, and important information
+            </p>
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          <aside className="w-full lg:w-64 flex-shrink-0">
-            <Sidebar />
+          <aside className="w-full lg:w-72 flex-shrink-0">
+            <div className="sticky top-24">
+              <Sidebar />
+            </div>
           </aside>
 
           <div className="flex-1">
-            <form className="border border-primary1 rounded-2xl p-6 space-y-4 bg-white mb-10">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl sm:text-3xl font-semibold text-primary1 font-rubik">
-                  Content
+            <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+              {/* Form Header */}
+              <div className="bg-gradient-to-r from-primary1 to-primary2 p-8">
+                <h2 className="text-3xl font-bold text-white font-rubik flex items-center gap-3">
+                  <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  Content Details
                 </h2>
+                <p className="text-blue-100 font-raleway mt-2">Fill in the information below to create an announcement</p>
               </div>
-              <p className="text-sm text-gray-500 font-raleway -mt-5">
-                Provide key information
-              </p>
+
+              <div className="p-8 space-y-8">
 
               {/* Image Upload */}
-              <div>
-                <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
-                  Featured Image
-                </label>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-4">
+                  <svg className="w-5 h-5 text-primary2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <label className="text-lg font-semibold text-primary3 font-rubik">
+                    Featured Image
+                  </label>
+                </div>
 
                 <div
-                  className={`w-full rounded-lg px-3 py-3 transition-colors border ${
+                  className={`w-full rounded-2xl p-3 transition-all duration-300 border-2 ${
                     errors.image
-                      ? "border-red-500 bg-red-50"
+                      ? "border-red-400 bg-red-50/50"
                       : previews.length > 0
-                      ? "border-green-400 bg-green-50"
-                      : "border-gray-300 bg-white"
+                      ? "border-green-400 bg-green-50/30"
+                      : "border-gray-300 bg-gray-50/50 hover:border-primary2 hover:bg-primary2/5"
                   }`}
                   aria-invalid={errors.image ? "true" : "false"}
                 >
@@ -492,18 +526,18 @@ export default function AnnouncementsPage() {
                       if (e.key === "Enter" || e.key === " ")
                         fileInputRef.current?.click();
                     }}
-                    className="block"
+                    className="block cursor-pointer group"
                   >
                     {previews.length > 0 ? (
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         {previews.map((p, i) => (
-                          <div key={i} className="relative">
+                          <div key={i} className="relative overflow-hidden rounded-xl group-image">
                             {/* small preview using native img for local object URLs */}
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={p}
                               alt={`preview-${i}`}
-                              className="w-full h-32 object-cover rounded-lg border"
+                              className="w-full h-40 object-cover rounded-xl border-2 border-white shadow-md transition-transform duration-300 hover:scale-105"
                             />
                             <button
                               type="button"
@@ -521,20 +555,31 @@ export default function AnnouncementsPage() {
                                 );
                               }}
                               aria-label={`Remove image ${i + 1}`}
-                              className="absolute top-1 right-1 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 border shadow-sm"
+                              className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 shadow-lg hover:bg-red-50 hover:scale-110 transition-all duration-200"
                             >
                               ×
                             </button>
                           </div>
                         ))}
                         {/* Plus tile to allow adding more images */}
-                        <div className="flex items-center justify-center border-2 border-dashed border-primary1 text-primary1 rounded-lg h-32 cursor-pointer">
-                          <span className="text-3xl font-bold">+</span>
+                        <div className="flex flex-col items-center justify-center border-2 border-dashed border-primary2/50 text-primary2 rounded-xl h-40 cursor-pointer hover:bg-primary2/5 transition-colors duration-300">
+                          <span className="text-4xl font-light mb-2">+</span>
+                          <span className="text-sm font-rubik">Add More</span>
                         </div>
                       </div>
                     ) : (
-                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition">
-                        <p className="text-gray-500">Upload image(s)</p>
+                      <div className="py-12 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="w-16 h-16 rounded-full bg-primary2/10 flex items-center justify-center group-hover:bg-primary2/20 transition-colors duration-300">
+                            <svg className="w-8 h-8 text-primary2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                          </div>
+                          <div>
+                            <p className="text-gray-700 font-semibold font-rubik">Click to upload featured image(s)</p>
+                            <p className="text-sm text-gray-500 mt-1 font-raleway">PNG, JPG up to 10MB</p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -547,50 +592,50 @@ export default function AnnouncementsPage() {
                         setPreviews([]);
                         setImages([]);
                       }}
-                      className="mt-2 text-red-500 text-sm hover:underline"
+                      className="mt-4 text-red-500 text-sm hover:text-red-600 font-medium flex items-center gap-1 transition-colors"
                     >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                       Remove all images
                     </button>
                   )}
                 </div>
 
                 {errors.image && (
-                  <p className="text-sm text-red-600 mt-2">
-                    A featured image is required to publish.
+                  <p className="text-sm text-red-600 mt-2 font-raleway flex items-center gap-1">
+                    <span>•</span> A featured image is required to publish.
                   </p>
                 )}
               </div>
 
-              <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
-                Tag
-              </label>
-              <div className="mb-4 flex justify-start">
-                <div className="flex space-x-1 rounded-xl bg-primary1/10 p-1">
+              {/* Tag Selection */}
+              <div className="space-y-3">
+                <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
+                  Category
+                </label>
+                <div className="flex flex-wrap gap-2 p-1.5 bg-gray-50 rounded-2xl border border-gray-200 w-fit">
                   {tabs.map((tab) => (
                     <button
                       key={tab}
                       type="button"
                       onClick={() => setActiveTab(tab)}
-                      className={`relative w-full rounded-lg px-4 py-2 sm:px-6 sm:py-2.5 text-sm font-rubik font-semibold transition-colors duration-300 ease-in-out cursor-pointer
-    ${
-      activeTab === tab
-        ? "bg-white text-primary1 shadow"
-        : "text-primary1/60 hover:bg-white/60"
-    }
-  `}
+                      className={`relative px-6 py-3 rounded-xl text-sm font-bold font-rubik transition-all duration-300 ${
+                        activeTab === tab
+                          ? "bg-white text-primary1 shadow-md shadow-gray-200 ring-1 ring-black/5"
+                          : "text-gray-500 hover:text-primary1 hover:bg-white/50"
+                      }`}
                     >
                       {tab}
-                      {activeTab === tab && (
-                        <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 h-0.5 w-1/3 bg-primary1"></span>
-                      )}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                <div>
-                  <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
+              {/* Date, Time, Location Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-primary3 font-rubik">
                     Date
                   </label>
                   <input
@@ -599,20 +644,16 @@ export default function AnnouncementsPage() {
                     name="date"
                     value={formData.date}
                     onChange={handleInputChange}
-                    className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.date
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
+                    className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${
+                      errors.date
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                        : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                    }`}
                   />
                 </div>
 
-                <div>
-                  <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-primary3 font-rubik">
                     Time
                   </label>
                   <input
@@ -621,255 +662,311 @@ export default function AnnouncementsPage() {
                     name="time"
                     value={formData.time}
                     onChange={handleInputChange}
-                    className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.time
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
+                    className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${
+                      errors.time
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                        : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                    }`}
                   />
                 </div>
 
-                <div>
-                  <label className="text-md font-normal text-primary3 font-raleway mb-2 block">
+                <div className="space-y-2 sm:col-span-2 lg:col-span-2">
+                  <label className="text-sm font-semibold text-primary3 font-rubik">
                     Location
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      placeholder="Where is it happening?"
+                      className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 bg-gray-50/30 focus:bg-white focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 transition-all duration-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        organizer.trim() === ""
+                          ? setShowOrganizerInput((prev) => !prev)
+                          : setOrganizer("")
+                      }
+                      className={`px-4 rounded-xl border-2 font-bold transition-all duration-300 ${
+                        organizer || showOrganizerInput
+                          ? "border-red-200 text-red-500 hover:bg-red-50"
+                          : "border-primary2 text-primary2 hover:bg-primary2 hover:text-white"
+                      }`}
+                      title={organizer || showOrganizerInput ? "Remove Organizer" : "Add Organizer"}
+                    >
+                      {organizer || showOrganizerInput ? "×" : "+"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {showOrganizerInput && (
+                <div className="animate-in slide-in-from-top-2 fade-in duration-300">
+                  <label className="text-sm font-semibold text-primary3 font-rubik mb-2 block">
+                    Organizer
                   </label>
                   <input
                     type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    placeholder="Where is it happening?"
-                    className="w-full border border-gray-300 text-gray-500 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik"
+                    placeholder="Organizer name or group"
+                    value={organizer}
+                    onChange={(e) => setOrganizer(e.target.value)}
+                    className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 bg-gray-50/30 focus:bg-white focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 transition-all duration-300"
                   />
                 </div>
-                <div className="flex flex-col justify-end">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      organizer.trim() === ""
-                        ? setShowOrganizerInput((prev) => !prev)
-                        : setOrganizer("")
-                    }
-                    className="px-4 py-2 border border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white font-rubik"
-                  >
-                    + Add Organizer
-                  </button>
-                </div>
-              </div>
-              {showOrganizerInput && (
-                <input
-                  type="text"
-                  placeholder="Organizer name or group"
-                  value={organizer}
-                  onChange={(e) => setOrganizer(e.target.value)}
-                  className="w-full border border-gray-300 text-gray-500 rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-primary2 focus:text-black font-rubik animate-fade-in"
-                />
               )}
-              <div className="h-[1px] bg-primary2 w-full mt-8 mx-auto rounded-full" />
-              <label className="text-md font-normal text-primary3 font-raleway mt-5 mb-2 block">
-                Title
-              </label>
-              <input
-                id="title"
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="Add a clear and descriptive title"
-                className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.title
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
-              />
+              <div className="h-px bg-gray-100 w-full" />
 
-              <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
-                Summary
-              </label>
-              <input
-                id="summary"
-                type="text"
-                name="summary"
-                value={formData.summary}
-                onChange={handleInputChange}
-                placeholder="Short description for notification"
-                className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.summary
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
-              />
+              {/* Title */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="title"
+                  className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                >
+                  Title
+                  {formData.title && <span className="text-green-500 text-xs">✓</span>}
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  placeholder="Add a clear and descriptive title"
+                  className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${
+                    errors.title
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                      : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                  }`}
+                />
+                {errors.title && (
+                  <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
+                    <span>•</span> Title is required.
+                  </p>
+                )}
+              </div>
 
-              <label className="text-md font-normal text-primary3 font-raleway mb-1 block">
-                Body
-              </label>
-              <textarea
-                id="body"
-                name="body"
-                value={formData.body}
-                onChange={handleInputChange}
-                rows={6}
-                placeholder="Add full details, links, and attachments"
-                className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.body
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
-              />
+              {/* Summary */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="summary"
+                  className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                >
+                  Summary
+                  {formData.summary && <span className="text-green-500 text-xs">✓</span>}
+                </label>
+                <input
+                  id="summary"
+                  type="text"
+                  name="summary"
+                  value={formData.summary}
+                  onChange={handleInputChange}
+                  placeholder="Brief overview of the announcement"
+                  className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${
+                    errors.summary
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                      : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                  }`}
+                />
+                {errors.summary && (
+                  <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
+                    <span>•</span> Summary is required.
+                  </p>
+                )}
+              </div>
+              {/* Body */}
+              <div className="space-y-2">
+                <label
+                  htmlFor="body"
+                  className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                >
+                  Body
+                  {formData.body && <span className="text-green-500 text-xs">✓</span>}
+                </label>
+                <textarea
+                  id="body"
+                  name="body"
+                  value={formData.body}
+                  onChange={handleInputChange}
+                  rows={8}
+                  placeholder="Add full details, links, and attachments"
+                  className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 resize-y min-h-[200px] ${
+                    errors.body
+                      ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                      : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                  }`}
+                />
+                {errors.body && (
+                  <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
+                    <span>•</span> Body is required.
+                  </p>
+                )}
+              </div>
 
               {activeTab === "Achievement" && (
-                <div className="mt-4 space-y-2 mb-10">
-                  <h3 className="text-lg font-raleway font-semibold text-primary3">
-                    Awardees
-                  </h3>
-
-                  {awardees.map((a, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-1 sm:grid-cols-5 gap-3 items-center bg-gray-50 p-4 rounded-lg border border-gray-200"
+                <div className="space-y-4 animate-in slide-in-from-top-4 fade-in duration-300">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-primary3 font-rubik">
+                      Awardees
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={addAwardee}
+                      className="px-4 py-2 bg-primary2/10 text-primary2 rounded-xl font-bold text-sm hover:bg-primary2 hover:text-white transition-all duration-300"
                     >
-                      <input
-                        type="text"
-                        placeholder="Name"
-                        value={a.name}
-                        onChange={(e) =>
-                          handleAwardeeChange(index, "name", e.target.value)
-                        }
-                        className="border border-gray-300 text-gray-500 rounded-lg p-2 font-rubik focus:outline-none  focus:border-2 focus:border-primary2 focus:text-black"
-                      />
+                      + Add Awardee
+                    </button>
+                  </div>
 
-                      <input
-                        type="text"
-                        placeholder="Program (optional)"
-                        value={a.program}
-                        onChange={(e) =>
-                          handleAwardeeChange(index, "program", e.target.value)
-                        }
-                        className="border border-gray-300 text-gray-500 rounded-lg p-2 font-rubik focus:outline-none  focus:border-2 focus:border-primary2 focus:text-black"
-                      />
-
-                      <input
-                        type="text"
-                        placeholder="Year"
-                        value={a.year}
-                        onChange={(e) =>
-                          handleAwardeeChange(index, "year", e.target.value)
-                        }
-                        className="border border-gray-300 text-gray-500 rounded-lg p-2 font-rubik focus:outline-none  focus:border-2 focus:border-primary2 focus:text-black"
-                      />
-
-                      <input
-                        type="text"
-                        placeholder="Award"
-                        value={a.award}
-                        onChange={(e) =>
-                          handleAwardeeChange(index, "award", e.target.value)
-                        }
-                        className="border border-gray-300 text-gray-500 rounded-lg p-2 font-rubik focus:outline-none  focus:border-2 focus:border-primary2 focus:text-black"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => removeAwardee(index)}
-                        className="text-red-500 font-bold"
+                  <div className="space-y-3">
+                    {awardees.map((a, index) => (
+                      <div
+                        key={index}
+                        className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start bg-gray-50 p-4 rounded-2xl border border-gray-200 group hover:border-primary2/30 transition-all duration-300"
                       >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                        <div className="sm:col-span-3">
+                          <input
+                            type="text"
+                            placeholder="Name"
+                            value={a.name}
+                            onChange={(e) =>
+                              handleAwardeeChange(index, "name", e.target.value)
+                            }
+                            className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
+                          />
+                        </div>
 
-                  <button
-                    type="button"
-                    onClick={addAwardee}
-                    className="px-4 py-2 bg-primary2 text-white rounded-lg font-rubik hover:bg-primary3"
-                  >
-                    + Add Awardee
-                  </button>
+                        <div className="sm:col-span-3">
+                          <input
+                            type="text"
+                            placeholder="Program (optional)"
+                            value={a.program}
+                            onChange={(e) =>
+                              handleAwardeeChange(index, "program", e.target.value)
+                            }
+                            className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <input
+                            type="text"
+                            placeholder="Year"
+                            value={a.year}
+                            onChange={(e) =>
+                              handleAwardeeChange(index, "year", e.target.value)
+                            }
+                            className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-3">
+                          <input
+                            type="text"
+                            placeholder="Award"
+                            value={a.award}
+                            onChange={(e) =>
+                              handleAwardeeChange(index, "award", e.target.value)
+                            }
+                            className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
+                          />
+                        </div>
+
+                        <div className="sm:col-span-1 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => removeAwardee(index)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-200"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              <label className="text-md font-normal text-primary3 font-raleway mt-5 mb-1 block">
-                Visibility
-              </label>
-              <div className="relative w-full">
-                <select
-                  id="visibility"
-                  name="visibility"
-                  value={formData.visibility}
-                  onChange={handleInputChange}
-                  className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.visibility
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white appearance-none pr-10
-`}
-                >
-                  <option value="" className="text-gray-500">
-                    Select visibility
-                  </option>
-                  <option value="public">Public</option>
-                  <option value="members">Members Only</option>
-                  <option value="officers">Officers Only</option>
-                </select>
-                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-primary3">
-                  <ChevronDown className="w-4 h-4" />
-                </span>
+              {/* Visibility */}
+              <div className="space-y-2">
+                <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
+                  Visibility
+                </label>
+                <div className="relative w-full">
+                  <select
+                    id="visibility"
+                    name="visibility"
+                    value={formData.visibility}
+                    onChange={handleInputChange}
+                    className={`w-full rounded-xl border-2 px-5 py-4 text-lg appearance-none cursor-pointer transition-all duration-300 ${
+                      errors.visibility
+                        ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
+                        : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
+                    }`}
+                  >
+                    <option value="" className="text-gray-500">Select visibility</option>
+                    <option value="public">Public (Everyone)</option>
+                    <option value="members">Members Only</option>
+                    <option value="officers">Officers Only</option>
+                  </select>
+                  <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-primary3">
+                    <ChevronDown className="w-5 h-5" />
+                  </span>
+                </div>
               </div>
 
-              <label className="text-md font-normal text-primary3 font-raleway block mb-1 mt-1">
-                Attachments
-              </label>
-              <p className="text-sm text-gray-500 mb-3">Optional — attach supporting files or links (e.g. PDFs, images, or external resources).</p>
+              <div className="h-px bg-gray-100 w-full" />
 
-              <div className="flex items-center gap-3 mb-3">
-                <input
-                  id="fileUpload"
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
+              {/* Attachments */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
+                    Attachments
+                  </label>
+                  <p className="text-sm text-gray-500 font-raleway mt-1">
+                    Optional — attach supporting files or links (e.g. PDFs, images, or external resources).
+                  </p>
+                </div>
 
-                <button
-                  onClick={() => document.getElementById("fileUpload")?.click()}
-                  className="px-4 py-2 bg-primary2 text-white rounded-lg hover:bg-primary3 font-rubik"
-                  type="button"
-                >
-                  + Add File
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <input
+                    id="fileUpload"
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={handleFileChange}
+                  />
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (showLinkInput && newLink.trim() === "") {
-                      setShowLinkInput(false);
-                      return;
-                    }
-                    setShowLinkInput(true);
-                  }}
-                  className="px-4 py-2 border border-primary2 text-primary2 rounded-lg hover:bg-primary2 hover:text-white font-rubik"
-                >
-                  + Add Link
-                </button>
+                  <button
+                    onClick={() => document.getElementById("fileUpload")?.click()}
+                    className="px-6 py-3 bg-primary2 text-white rounded-xl font-bold shadow-lg shadow-primary2/30 hover:bg-primary3 hover:shadow-primary2/50 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2"
+                    type="button"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                    </svg>
+                    Add File
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (showLinkInput && newLink.trim() === "") {
+                        setShowLinkInput(false);
+                        return;
+                      }
+                      setShowLinkInput(true);
+                    }}
+                    className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300 flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                    Add Link
+                  </button>
+                </div>
               </div>
 
               {showLinkInput && (

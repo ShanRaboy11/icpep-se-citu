@@ -141,7 +141,7 @@ export default function TestimonialsPage() {
   };
 
   return (
-    <section className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+    <section className="min-h-screen bg-white flex flex-col relative">
       <Grid />
       {/* Loading Overlay */}
       {isSubmitting && (
@@ -411,7 +411,7 @@ export default function TestimonialsPage() {
                       type="button"
                       onClick={handlePublish}
                       disabled={isSubmitting}
-                      className="disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none shadow-lg shadow-primary2/30 hover:shadow-xl hover:shadow-primary2/40 transition-all duration-300"
+                      className="disabled:opacity-50 disabled:cursor-not-allowed flex-1 sm:flex-none shadow-lg shadow-primary2/30 hover:shadow-xl hover:bg-primary2 hover:shadow-primary2/40 transition-all duration-300"
                     >
                       <span className="flex items-center gap-2">
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -489,7 +489,9 @@ export default function TestimonialsPage() {
         </div>
       )}
 
-      <Footer />
+      <div className="relative z-10">
+        <Footer />
+      </div>
     </section>
   );
 }
