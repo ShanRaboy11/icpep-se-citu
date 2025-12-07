@@ -2,8 +2,10 @@
 
 import Header from "../components/header";
 import Footer from "../components/footer";
+import Grid from "../components/grid";
 import { FunctionComponent, useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
+import { ChevronLeft, ChevronRight, CalendarCheck } from "lucide-react";
 
 const CommeetPage: FunctionComponent = () => {
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
@@ -24,19 +26,15 @@ const CommeetPage: FunctionComponent = () => {
 
     const dayIndex = day + firstDayOfMonth - 1;
 
-    if (dayIndex < firstDayOfMonth) { // Previous month's inactive days
-      return;
-    }
-    if (day > totalDaysInMonth) { // Next month's inactive days
-      return;
-    }
+    if (dayIndex < firstDayOfMonth) return; // Prev month padding
+    if (day > totalDaysInMonth) return; // Next month padding
 
     setSelectedDates(prevSelectedDates => {
       const newSelectedDates = new Set(prevSelectedDates);
       if (newSelectedDates.has(dateKey)) {
-        newSelectedDates.delete(dateKey); // Deselect
+        newSelectedDates.delete(dateKey);
       } else {
-        newSelectedDates.add(dateKey); // Select
+        newSelectedDates.add(dateKey);
       }
       return newSelectedDates;
     });
@@ -49,29 +47,36 @@ const CommeetPage: FunctionComponent = () => {
     isSelected: boolean = false,
     onClick?: (day: number) => void 
   ) => {
-    const headerClasses = "font-extrabold text-white bg-sky-500 rounded-lg";
-    
-    const baseDayClasses = "flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 text-sm sm:text-base font-semibold";
-    
-    const inactiveClasses = "text-gray-400 bg-gray-100 rounded-lg";
-    const activeClasses = "text-gray-800 bg-white rounded-lg shadow-sm hover:bg-sky-100 cursor-pointer";
-    const selectedClasses = "bg-sky-400 text-white rounded-full shadow-md";
+    // Header Cells (Mon, Tue, etc.)
+    if (isHeader) {
+      return (
+        <div className="flex items-center justify-center h-10 w-full text-xs sm:text-sm font-bold text-primary3/60 font-raleway uppercase tracking-wider">
+          {day}
+        </div>
+      );
+    }
 
-    const finalClasses = isHeader
-      ? headerClasses
-      : isInactive
-        ? inactiveClasses
-        : isSelected
-          ? selectedClasses
-          : activeClasses;
+    // Interactive Day Cells
+    const baseClasses = "flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 text-sm sm:text-base font-rubik font-medium rounded-xl transition-all duration-200 ease-out";
+    
+    let stateClasses = "";
+    if (isInactive) {
+      stateClasses = "text-gray-300 cursor-default";
+    } else if (isSelected) {
+      stateClasses = "bg-primary1 text-white shadow-lg shadow-primary1/30 scale-105 font-bold";
+    } else {
+      stateClasses = "text-gray-700 hover:bg-primary1/10 hover:text-primary1 cursor-pointer hover:scale-105 active:scale-95";
+    }
 
-    const clickableProps = (!isHeader && !isInactive && onClick && typeof day === 'number')
+    const clickableProps = (!isInactive && onClick && typeof day === 'number')
       ? { onClick: () => onClick(day) }
       : {};
 
     return (
-      <div className={`${baseDayClasses} ${finalClasses}`} {...clickableProps}>
-        {day}
+      <div className="flex justify-center items-center p-1">
+        <div className={`${baseClasses} ${stateClasses}`} {...clickableProps}>
+          {day}
+        </div>
       </div>
     );
   };
@@ -123,78 +128,115 @@ const CommeetPage: FunctionComponent = () => {
   const currentMonthName = currentDate.toLocaleString('default', { month: 'long' });
   const currentYear = currentDate.getFullYear();
 
+  // Page Content Constants
+  const pillText = "Schedule";
+  const title = "ComMeet";
+  const subtitle = "Select the dates you are available to meet with the community.";
+
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden bg-gray-50">
-      <Header />
-      <div className="flex-1 flex flex-col items-center py-16 px-4 sm:px-6 lg:px-8">
-        {/* Main Content Area */}
-        <div className="max-w-7xl w-full flex flex-col lg:flex-row lg:justify-between items-start lg:items-start space-y-8 lg:space-y-0 lg:space-x-12">
-          <div className="flex-shrink-0 text-center lg:text-left">
-            <h1 className="text-5xl sm:text-6xl font-rubik leading-tight mt-8">
-              <span className="text-sky-500 font-bold">com</span>
-              <span className="text-gray-900 font-bold">meet</span>
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+      <Grid />
+
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
+
+        <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24">
+          
+          {/* Header Section */}
+          <div className="mb-16 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+              <div className="h-2 w-2 rounded-full bg-primary1"></div>
+              <span className="font-raleway text-sm font-semibold text-primary1">
+                {pillText}
+              </span>
+            </div>
+
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+              {title}
             </h1>
-            <p className="mt-6 text-xl sm:text-2xl font-raleway text-gray-700 max-w-lg whitespace-nowrap">
-              What days would you like to meet on?
+
+            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+              {subtitle}
             </p>
           </div>
 
-          <div className="flex-shrink-0 mt-8 lg:mt-24">
-            <button
-              className="px-6 py-3 border-2 border-sky-400 rounded-full font-raleway text-sky-400 font-semibold flex items-center justify-center space-x-2
-                         hover:bg-sky-200 hover:text-white hover:border-sky-400 active:bg-sky-600 active:border-sky-600 active:text-white transition-colors duration-200"
-              onClick={onLetsMeetBtnClick}
-            >
-              <span>Let&apos;s meet</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Calendar Section */}
-        <div className="relative mt-12 mb-12 w-full max-w-lg p-4 bg-white shadow-xl rounded-2xl border border-gray-200 transform transition-all duration-300">
-          
-          <div className="p-2 bg-sky-500 rounded-lg text-white text-center text-xl font-bold tracking-wide flex items-center justify-between">
-            <button onClick={handlePrevMonth} className="p-1 rounded-full hover:bg-sky-400 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <span>{currentMonthName} {currentYear}</span>
-            <button onClick={handleNextMonth} className="p-1 rounded-full hover:bg-sky-400 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Day of Week Headers - UPDATED: Reduced margin and gap */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-4">
-            {daysOfWeek.map(day => (
-              <div key={day}>
-                {renderDayCell(day, true)}
+          {/* Calendar Content */}
+          <div className="flex flex-col items-center">
+            <div className="w-full max-w-xl bg-white rounded-[2rem] shadow-2xl border border-gray-100 p-6 sm:p-10 transform transition-all hover:shadow-primary1/5">
+              
+              {/* Calendar Controls */}
+              <div className="flex items-center justify-between mb-8">
+                <button 
+                  onClick={handlePrevMonth} 
+                  className="p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-primary3 transition-all active:scale-95"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                
+                <h2 className="text-xl sm:text-2xl font-rubik font-bold text-primary3 text-center">
+                  {currentMonthName} <span className="text-primary1 font-light">{currentYear}</span>
+                </h2>
+                
+                <button 
+                  onClick={handleNextMonth} 
+                  className="p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-primary3 transition-all active:scale-95"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
               </div>
-            ))}
+
+              {/* Day Headers */}
+              <div className="grid grid-cols-7 mb-4 border-b border-gray-100 pb-2">
+                {daysOfWeek.map(day => (
+                  <div key={day} className="text-center">
+                    {renderDayCell(day, true)}
+                  </div>
+                ))}
+              </div>
+
+              {/* Dates Grid */}
+              <div className="grid grid-cols-7 gap-y-2">
+                {calendarDays.map((date, index) => {
+                  const uniqueDateKey = `${currentYear}-${currentDate.getMonth() + 1}-${date.day}`;
+                  const isSelected = selectedDates.has(uniqueDateKey);
+                  return (
+                    <div key={index} className="w-full">
+                      {renderDayCell(date.day, false, date.inactive, isSelected, handleDateClick)}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Bottom Action Section */}
+              <div className="mt-10 flex flex-col items-center gap-4">
+                <div className="h-px w-full bg-gray-100 mb-2"></div>
+                <button
+                  onClick={onLetsMeetBtnClick}
+                  disabled={selectedDates.size === 0}
+                  className={`
+                    w-full sm:w-auto px-8 py-3.5 rounded-full font-rubik font-semibold text-white shadow-lg flex items-center justify-center gap-2 transition-all duration-300
+                    ${selectedDates.size > 0 
+                      ? "bg-gradient-to-r from-primary3 to-primary1 hover:shadow-primary1/30 hover:-translate-y-1 cursor-pointer" 
+                      : "bg-gray-300 cursor-not-allowed"}
+                  `}
+                >
+                  <span>Let&apos;s Meet</span>
+                  <CalendarCheck className="w-5 h-5" />
+                </button>
+                <p className="text-xs font-raleway text-gray-400">
+                  {selectedDates.size === 0 
+                    ? "Select at least one date to proceed" 
+                    : `${selectedDates.size} date${selectedDates.size > 1 ? 's' : ''} selected`}
+                </p>
+              </div>
+
+            </div>
           </div>
 
-          {/* Dates Grid - UPDATED: Reduced margin and gap */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-2">
-            {calendarDays.map((date, index) => {
-              const uniqueDateKey = `${currentYear}-${currentDate.getMonth() + 1}-${date.day}`;
-              const isSelected = selectedDates.has(uniqueDateKey);
-              return (
-                <div key={index}>
-                  {renderDayCell(date.day, false, date.inactive, isSelected, handleDateClick)}
-                </div>
-              );
-            })}
-          </div>
+        </main>
 
-        </div>
+        <Footer />
       </div>
-      <Footer />
     </div>
   );
 };

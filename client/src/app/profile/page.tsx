@@ -177,11 +177,15 @@ export default function ProfilePage() {
 
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
+        {/* FIX: Wrapped Header in high z-index to stay above content */}
+        <div className="relative z-[100]">
+          <Header />
+        </div>
 
+        {/* FIX: Added relative z-0 to main to enforce stacking order below header */}
         <main
           aria-busy={loading}
-          className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24"
+          className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 relative z-0"
         >
           {/* --- Page Title --- */}
           <div className="mb-16 text-center">
