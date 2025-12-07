@@ -38,7 +38,7 @@ interface OfficerCardProps {
   shadow: string;
 }
 
-// --- 2. Reusable Officer Card Component (Matches SelectionCard Style) ---
+// --- 2. Reusable Officer Card Component ---
 
 const OfficerCard: FC<OfficerCardProps> = ({
   position,
@@ -86,7 +86,7 @@ const OfficerCard: FC<OfficerCardProps> = ({
 
       {/* Content */}
       <div className="relative w-full h-full flex flex-col z-10">
-        <div className="pt-6 px-4">
+        <div className="pt-6 px-4 z-20">
           <h2 className="font-rubik text-xl sm:text-2xl font-bold uppercase leading-tight tracking-tight text-white drop-shadow-md text-center">
             {position}
           </h2>
@@ -97,22 +97,27 @@ const OfficerCard: FC<OfficerCardProps> = ({
           )}
         </div>
 
-        <div className="relative flex-grow mt-2">
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[110%] h-[90%]">
-            {image ? (
+        {/* Middle Section containing Dome Background AND Image */}
+        <div className="relative flex-grow mt-2 w-full">
+          
+          {/* 1. The Dome Shape - Background Layer */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[110%] h-[90%] bg-white/20 rounded-t-full backdrop-blur-sm z-0" />
+
+          {/* 2. The Person Image - Scaled slightly larger (140%) */}
+          {image && (
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[140%] h-[110%] z-10">
               <Image
                 src={image}
                 alt={name}
                 fill
-                className="object-contain object-bottom drop-shadow-xl"
+                className="object-contain object-bottom drop-shadow-2xl"
               />
-            ) : (
-              <div className="w-full h-full bg-white/20 mask-image-gradient rounded-t-full backdrop-blur-sm" />
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        <div className="absolute bottom-6 left-6 text-left">
+        {/* Name Section */}
+        <div className="absolute bottom-6 left-6 text-left z-20">
           <h3 className="font-raleway text-2xl font-bold leading-none text-white drop-shadow-md">
             {lastName},
           </h3>
@@ -132,7 +137,7 @@ const departments: DepartmentsMap = {
     title: "Executive Council",
     description: "Leading the chapter with vision and integrity.",
     gradient: "bg-gradient-to-br from-blue-600 to-sky-400",
-    shadow: "shadow-blue-500/40",
+    shadow: "hover:shadow-blue-500/40", // FIXED: Changed from 'shadow-...' to 'hover:shadow-...'
     officers: [
       { position: "President", name: "Doe, John" },
       { position: "VP Internal", name: "Smith, Jane" },
@@ -238,7 +243,7 @@ const departments: DepartmentsMap = {
     ],
   },
   "research-and-development": {
-    title: "R&D Committee",
+    title: "Research & Development Committee",
     description: "Innovating and improving chapter processes.",
     gradient: "bg-gradient-to-br from-[#2563eb] to-indigo-800",
     shadow: "hover:shadow-indigo-500/40",
@@ -277,7 +282,7 @@ const departments: DepartmentsMap = {
     ],
   },
   "media-and-documentation": {
-    title: "Media & Documentation",
+    title: "Media & Documentation Committee",
     description: "Capturing moments and creating visual identity.",
     gradient: "bg-gradient-to-br from-[#4f46e5] to-indigo-900",
     shadow: "hover:shadow-indigo-500/40",
@@ -374,7 +379,7 @@ const OfficersPage = () => {
                   position={officer.position}
                   role={officer.role}
                   name={officer.name}
-                  // Pass image URL here: image={officer.image}
+                  image="/faculty.png"
                   gradient={data.gradient}
                   shadow={data.shadow}
                 />
