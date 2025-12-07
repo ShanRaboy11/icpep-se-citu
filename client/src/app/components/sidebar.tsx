@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Megaphone, CalendarDays, Quote, Handshake } from "lucide-react";
+import {
+  Megaphone,
+  CalendarDays,
+  Quote,
+  Handshake,
+  ShoppingBag,
+} from "lucide-react";
 import clsx from "clsx";
 
 const Sidebar = () => {
@@ -28,6 +34,11 @@ const Sidebar = () => {
       name: "Sponsors",
       href: "/create/sponsors",
       icon: <Handshake size={20} />,
+    },
+    {
+      name: "Merch",
+      href: "/create/merch",
+      icon: <ShoppingBag size={20} />,
     },
   ];
 
