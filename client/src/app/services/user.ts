@@ -69,6 +69,29 @@ class UserService {
       throw err;
     }
   }
+
+  async listUsers(params?: { role?: string; isActive?: boolean; page?: number; limit?: number }): Promise<CurrentUser[]> {
+    try {
+      const search = new URLSearchParams();
+      if (params?.role) search.set('role', params.role);
+      if (typeof params?.isActive === 'boolean') search.set('isActive', String(params.isActive));
+      if (params?.page) search.set('page', String(params.page));
+      if (params?.limit) search.set('limit', String(params.limit));
+      const res = await api.get(`/users${search.toString() ? `?${search.toString()}` : ''}`);
+      const payload = res.data as { success: boolean; data: any[] };
+      return (payload.data || []).map((u) => ({
+        id: u._id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        role: u.role,
+        email: u.email,
+        yearLevel: u.yearLevel,
+        studentNumber: u.studentNumber,
+      }));
+    } catch (err) {
+      throw err;
+    }
+  }
 }
 
 const userService = new UserService();

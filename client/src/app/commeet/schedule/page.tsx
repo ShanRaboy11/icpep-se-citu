@@ -16,16 +16,15 @@ import {
   Pencil,
 } from "lucide-react";
 
-// Mock Data
-const meetingData = {
-  title: "1st Strategic Meeting",
-  agenda:
-    "Budget Planning for Q1 & Event Calendar Finalization. We need to discuss the allocation of funds for the upcoming sports fest and seminar series.",
-  departments: [
-    "Executive Council",
-    "Committee on Finance",
-    "Committee on Internal Affairs",
-  ],
+// Backend-driven data
+type Meeting = {
+  _id: string;
+  title: string;
+  agenda: string;
+  departments: string[];
+  selectedDates: string[];
+  startTime: string;
+  endTime: string;
 };
 
 const CommeetPage: FunctionComponent = () => {
@@ -33,35 +32,47 @@ const CommeetPage: FunctionComponent = () => {
 
   // --- State ---
   const [isEditing, setIsEditing] = useState(false);
+  const [meetingId, setMeetingId] = useState<string | null>(null);
+  const [meeting, setMeeting] = useState<Meeting | null>(null);
 
   // confirmedSlots: The "saved" state (only updates on Confirm)
   const [confirmedSlots, setConfirmedSlots] = useState<string[]>([]);
   // draftSlots: The "working" state (updates while dragging/clicking)
   const [draftSlots, setDraftSlots] = useState<string[]>([]);
 
-  const [currentStartDate, setCurrentStartDate] = useState(
-    new Date(2025, 11, 5)
-  );
+  const [currentStartDate, setCurrentStartDate] = useState<Date | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragMode, setDragMode] = useState<"add" | "remove">("add");
 
   // --- Configuration ---
-  const times = [9, 10, 11, 12, 13, 14, 15, 16];
+  const [times, setTimes] = useState<number[]>([]);
   const timeColWidth = "w-14 sm:w-24";
 
   // --- Helpers ---
-  const getVisibleDates = () => {
-    const dates = [];
-    for (let i = 0; i < 3; i++) {
-      const d = new Date(currentStartDate);
-      d.setDate(d.getDate() + i);
-      dates.push(d);
-    }
-    return dates;
+  const getLocalDateKey = (date: Date | null) => {
+    if (!date) return "";
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
   };
 
-  const visibleDates = getVisibleDates();
-  const formatDateKey = (date: Date) => date.toISOString().split("T")[0];
+  const visibleDates = (() => {
+    if (!meeting) return [] as Date[];
+    const allDates = meeting.selectedDates.map((d) => new Date(d));
+
+    // Find index of currentStartDate
+    if (!currentStartDate) return allDates.slice(0, 3);
+
+    const startIdx = allDates.findIndex(
+      (d) => getLocalDateKey(d) === getLocalDateKey(currentStartDate)
+    );
+
+    if (startIdx === -1) return allDates.slice(0, 3);
+    return allDates.slice(startIdx, startIdx + 3);
+  })();
+
+  const formatDateKey = (date: Date) => getLocalDateKey(date);
 
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString("en-US", {
@@ -82,16 +93,71 @@ const CommeetPage: FunctionComponent = () => {
 
   // --- Handlers ---
   const handlePrev = () => {
-    const newDate = new Date(currentStartDate);
-    newDate.setDate(newDate.getDate() - 3);
-    setCurrentStartDate(newDate);
+    if (!meeting || !currentStartDate) return;
+    const allDates = meeting.selectedDates.map((d) => new Date(d));
+    const idx = allDates.findIndex(
+      (d) =>
+        d.toISOString().split("T")[0] ===
+        currentStartDate.toISOString().split("T")[0]
+    );
+    if (idx > 0) {
+      setCurrentStartDate(allDates[Math.max(0, idx - 3)]);
+    }
   };
 
   const handleNext = () => {
-    const newDate = new Date(currentStartDate);
-    newDate.setDate(newDate.getDate() + 3);
-    setCurrentStartDate(newDate);
+    if (!meeting || !currentStartDate) return;
+    const allDates = meeting.selectedDates.map((d) => new Date(d));
+    const idx = allDates.findIndex(
+      (d) =>
+        d.toISOString().split("T")[0] ===
+        currentStartDate.toISOString().split("T")[0]
+    );
+    if (idx + 3 < allDates.length) {
+      setCurrentStartDate(allDates[idx + 3]);
+    }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("meetingId");
+    if (!id) return;
+    setMeetingId(id);
+    (async () => {
+      const { getMeeting } = await import("../../services/meeting");
+      const { getMyAvailability } = await import("../../services/availability");
+      const m = await getMeeting(id);
+      setMeeting(m);
+
+      // Derive times from start/end time
+      const parse = (t: string) => {
+        const [hm, ap] = t.split(" ");
+        const [hh, mm] = hm.split(":").map(Number);
+        let hour = hh % 12;
+        if (ap.toUpperCase() === "PM") hour += 12;
+        return hour + (mm >= 30 ? 0.5 : 0);
+      };
+      const startHour = Math.floor(parse(m.startTime));
+      const endHour = Math.ceil(parse(m.endTime));
+      const arr: number[] = [];
+      for (let h = startHour; h < endHour; h++) arr.push(h);
+      setTimes(arr);
+
+      // Set currentStartDate to first selected date
+      if (m.selectedDates.length > 0) {
+        setCurrentStartDate(new Date(m.selectedDates[0]));
+      }
+
+      // Load previously saved availability for current user
+      try {
+        const mine = await getMyAvailability(id);
+        setConfirmedSlots(mine.slots || []);
+      } catch (e) {
+        // If unauthenticated or no prior availability, leave as empty
+        setConfirmedSlots([]);
+      }
+    })().catch(console.error);
+  }, []);
 
   // Helper to modify the Draft State
   const updateDraftSlotState = useCallback(
@@ -107,8 +173,9 @@ const CommeetPage: FunctionComponent = () => {
     []
   );
 
-  const handleMouseDown = (key: string) => {
+  const handleMouseDown = (e: React.MouseEvent, key: string) => {
     if (!isEditing) return;
+    e.preventDefault(); // Prevents text selection
     setIsDragging(true);
     // Check against DRAFT slots while editing
     const isAlreadySelected = draftSlots.includes(key);
@@ -142,16 +209,32 @@ const CommeetPage: FunctionComponent = () => {
   };
 
   const onConfirmClick = () => {
-    // Commit draft to confirmed
-    console.log("Saving Slots:", draftSlots);
-    setConfirmedSlots([...draftSlots]);
-    setIsEditing(false);
-    setIsDragging(false);
+    // Persist slots to backend, then commit locally
+    if (!meetingId) return;
+    (async () => {
+      try {
+        const { saveMyAvailability } = await import(
+          "../../services/availability"
+        );
+        await saveMyAvailability(meetingId, draftSlots);
+        // Read back from backend to ensure we mirror persisted state,
+        // including last-end slots and any server-side normalization.
+        const { getMyAvailability } = await import(
+          "../../services/availability"
+        );
+        const mine = await getMyAvailability(meetingId);
+        setConfirmedSlots(mine.slots || []);
+        setIsEditing(false);
+        setIsDragging(false);
+      } catch (err) {
+        console.error("Failed to save availability from schedule", err);
+      }
+    })();
   };
 
   const onContinueClick = () => {
-    console.log("Proceeding with:", confirmedSlots);
-    router.push("/commeet/availability");
+    if (!meetingId) return;
+    router.push(`/commeet/availability?meetingId=${meetingId}`);
   };
 
   const hasConfirmedSlots = confirmedSlots.length > 0;
@@ -188,7 +271,7 @@ const CommeetPage: FunctionComponent = () => {
             {/* 1. Meeting Details Section */}
             <div className="text-left mb-12">
               <h1 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 leading-tight mb-6">
-                {meetingData.title}
+                {meeting?.title || "Loading..."}
               </h1>
 
               <div className="flex flex-col gap-4 text-gray-600 font-raleway text-base">
@@ -197,14 +280,14 @@ const CommeetPage: FunctionComponent = () => {
                     Departments:
                   </span>
                   <span className="text-gray-600 font-medium">
-                    {meetingData.departments.join(", ")}
+                    {meeting?.departments?.join(", ")}
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-0">
                   <span className="font-bold text-gray-800 w-32 shrink-0 font-rubik">
                     Agenda:
                   </span>
-                  <span className="leading-relaxed">{meetingData.agenda}</span>
+                  <span className="leading-relaxed">{meeting?.agenda}</span>
                 </div>
               </div>
             </div>
@@ -228,7 +311,6 @@ const CommeetPage: FunctionComponent = () => {
               <div className="shrink-0">
                 {!isEditing ? (
                   <button
-                    // Added sm:min-w-[11.5rem] to ensure same size for Add/Edit states
                     className="group p-2.5 sm:px-6 sm:py-2.5 bg-gradient-to-r from-primary3 to-primary1 rounded-xl font-rubik text-white font-bold text-sm shadow-md shadow-primary1/20 hover:shadow-lg hover:shadow-primary1/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer sm:min-w-[11.5rem]"
                     onClick={onAddAvailabilityClick}
                   >
@@ -276,22 +358,26 @@ const CommeetPage: FunctionComponent = () => {
               {/* Header Row 1: [Month Year] ... [ < > ] */}
               <div className="flex justify-between items-center mb-6">
                 <div className="text-xl sm:text-2xl text-gray-900 font-bold font-rubik">
-                  {formatMonthYear(currentStartDate)}
+                  {currentStartDate ? formatMonthYear(currentStartDate) : ""}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handlePrev}
-                    className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/5 rounded-full transition-all cursor-pointer active:scale-90"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <button
-                    onClick={handleNext}
-                    className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/5 rounded-full transition-all cursor-pointer active:scale-90"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </div>
+                {meeting &&
+                  meeting.selectedDates &&
+                  meeting.selectedDates.length > 3 && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handlePrev}
+                        className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/5 rounded-full transition-all cursor-pointer active:scale-90"
+                      >
+                        <ChevronLeft className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={handleNext}
+                        className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/5 rounded-full transition-all cursor-pointer active:scale-90"
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+                    </div>
+                  )}
               </div>
 
               {/* Header Row 2: PST + Date Columns */}
@@ -389,7 +475,9 @@ const CommeetPage: FunctionComponent = () => {
                             >
                               {/* Top Half (:00) */}
                               <div
-                                onMouseDown={() => handleMouseDown(fullKey1)}
+                                onMouseDown={(e) =>
+                                  handleMouseDown(e, fullKey1)
+                                }
                                 onMouseEnter={() => handleMouseEnter(fullKey1)}
                                 className={`h-1/2 w-full transition-colors duration-75 relative border-b border-gray-50 border-dashed
                                                                     ${
@@ -401,13 +489,15 @@ const CommeetPage: FunctionComponent = () => {
                                                                     }`}
                               >
                                 {isSlot1Selected && (
-                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]"></div>
+                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] pointer-events-none"></div>
                                 )}
                               </div>
 
                               {/* Bottom Half (:30) */}
                               <div
-                                onMouseDown={() => handleMouseDown(fullKey2)}
+                                onMouseDown={(e) =>
+                                  handleMouseDown(e, fullKey2)
+                                }
                                 onMouseEnter={() => handleMouseEnter(fullKey2)}
                                 className={`h-1/2 w-full transition-colors duration-75 relative
                                                                     ${
@@ -419,13 +509,13 @@ const CommeetPage: FunctionComponent = () => {
                                                                     }`}
                               >
                                 {isSlot2Selected && (
-                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]"></div>
+                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] pointer-events-none"></div>
                                 )}
                               </div>
 
-                              {/* Closing Border for last item in column */}
+                              {/* Closing Border for last item in column - Added pointer-events-none to prevent blocking clicks */}
                               {timeIndex === times.length - 1 && (
-                                <div className="absolute bottom-0 left-0 right-0 border-b border-gray-100"></div>
+                                <div className="absolute bottom-0 left-0 right-0 border-b border-gray-100 pointer-events-none"></div>
                               )}
                             </div>
                           );
