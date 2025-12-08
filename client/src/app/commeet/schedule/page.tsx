@@ -151,7 +151,7 @@ const CommeetPage: FunctionComponent = () => {
 
   const onContinueClick = () => {
     console.log("Proceeding with:", confirmedSlots);
-    router.push("/commeet/match");
+    router.push("/commeet/availability");
   };
 
   const hasConfirmedSlots = confirmedSlots.length > 0;
