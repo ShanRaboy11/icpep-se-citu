@@ -16,16 +16,15 @@ import {
   Pencil,
 } from "lucide-react";
 
-// Mock Data
-const meetingData = {
-  title: "1st Strategic Meeting",
-  agenda:
-    "Budget Planning for Q1 & Event Calendar Finalization. We need to discuss the allocation of funds for the upcoming sports fest and seminar series.",
-  departments: [
-    "Executive Council",
-    "Committee on Finance",
-    "Committee on Internal Affairs",
-  ],
+// Backend-driven data
+type Meeting = {
+  _id: string;
+  title: string;
+  agenda: string;
+  departments: string[];
+  selectedDates: string[];
+  startTime: string;
+  endTime: string;
 };
 
 const CommeetPage: FunctionComponent = () => {
@@ -33,34 +32,28 @@ const CommeetPage: FunctionComponent = () => {
 
   // --- State ---
   const [isEditing, setIsEditing] = useState(false);
+  const [meetingId, setMeetingId] = useState<string | null>(null);
+  const [meeting, setMeeting] = useState<Meeting | null>(null);
 
   // confirmedSlots: The "saved" state (only updates on Confirm)
   const [confirmedSlots, setConfirmedSlots] = useState<string[]>([]);
   // draftSlots: The "working" state (updates while dragging/clicking)
   const [draftSlots, setDraftSlots] = useState<string[]>([]);
 
-  const [currentStartDate, setCurrentStartDate] = useState(
-    new Date(2025, 11, 5)
-  );
+  const [currentStartDate, setCurrentStartDate] = useState<Date | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragMode, setDragMode] = useState<"add" | "remove">("add");
 
   // --- Configuration ---
-  const times = [9, 10, 11, 12, 13, 14, 15, 16];
+  const [times, setTimes] = useState<number[]>([]);
   const timeColWidth = "w-14 sm:w-24";
 
   // --- Helpers ---
-  const getVisibleDates = () => {
-    const dates = [];
-    for (let i = 0; i < 3; i++) {
-      const d = new Date(currentStartDate);
-      d.setDate(d.getDate() + i);
-      dates.push(d);
-    }
+  const visibleDates = (() => {
+    if (!meeting) return [] as Date[];
+    const dates = meeting.selectedDates.slice(0, 3).map((d) => new Date(d));
     return dates;
-  };
-
-  const visibleDates = getVisibleDates();
+  })();
   const formatDateKey = (date: Date) => date.toISOString().split("T")[0];
 
   const formatMonthYear = (date: Date) => {
@@ -81,17 +74,36 @@ const CommeetPage: FunctionComponent = () => {
   };
 
   // --- Handlers ---
-  const handlePrev = () => {
-    const newDate = new Date(currentStartDate);
-    newDate.setDate(newDate.getDate() - 3);
-    setCurrentStartDate(newDate);
-  };
+  const handlePrev = () => {};
+  const handleNext = () => {};
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("meetingId");
+    if (!id) return;
+    setMeetingId(id);
+    (async () => {
+      const { getMeeting } = await import("../../services/meeting");
+      const m = await getMeeting(id);
+      setMeeting(m);
 
-  const handleNext = () => {
-    const newDate = new Date(currentStartDate);
-    newDate.setDate(newDate.getDate() + 3);
-    setCurrentStartDate(newDate);
-  };
+      // Derive times from start/end time
+      const parse = (t: string) => {
+        const [hm, ap] = t.split(" ");
+        const [hh, mm] = hm.split(":").map(Number);
+        let hour = hh % 12;
+        if (ap.toUpperCase() === "PM") hour += 12;
+        return hour + (mm >= 30 ? 0.5 : 0);
+      };
+      const startHour = Math.floor(parse(m.startTime));
+      const endHour = Math.ceil(parse(m.endTime));
+      const arr: number[] = [];
+      for (let h = startHour; h < endHour; h++) arr.push(h);
+      setTimes(arr);
+
+      // Set currentStartDate to first selected date
+      setCurrentStartDate(new Date(m.selectedDates[0]));
+    })().catch(console.error);
+  }, []);
 
   // Helper to modify the Draft State
   const updateDraftSlotState = useCallback(
@@ -142,16 +154,26 @@ const CommeetPage: FunctionComponent = () => {
   };
 
   const onConfirmClick = () => {
-    // Commit draft to confirmed
-    console.log("Saving Slots:", draftSlots);
-    setConfirmedSlots([...draftSlots]);
-    setIsEditing(false);
-    setIsDragging(false);
+    // Persist slots to backend, then commit locally
+    if (!meetingId) return;
+    (async () => {
+      try {
+        const { saveMyAvailability } = await import(
+          "../../services/availability"
+        );
+        await saveMyAvailability(meetingId, draftSlots);
+        setConfirmedSlots([...draftSlots]);
+        setIsEditing(false);
+        setIsDragging(false);
+      } catch (err) {
+        console.error("Failed to save availability from schedule", err);
+      }
+    })();
   };
 
   const onContinueClick = () => {
-    console.log("Proceeding with:", confirmedSlots);
-    router.push("/commeet/availability");
+    if (!meetingId) return;
+    router.push(`/commeet/availability?meetingId=${meetingId}`);
   };
 
   const hasConfirmedSlots = confirmedSlots.length > 0;
@@ -188,7 +210,7 @@ const CommeetPage: FunctionComponent = () => {
             {/* 1. Meeting Details Section */}
             <div className="text-left mb-12">
               <h1 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 leading-tight mb-6">
-                {meetingData.title}
+                {meeting?.title || "Loading..."}
               </h1>
 
               <div className="flex flex-col gap-4 text-gray-600 font-raleway text-base">
@@ -197,14 +219,14 @@ const CommeetPage: FunctionComponent = () => {
                     Departments:
                   </span>
                   <span className="text-gray-600 font-medium">
-                    {meetingData.departments.join(", ")}
+                    {meeting?.departments?.join(", ")}
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-0">
                   <span className="font-bold text-gray-800 w-32 shrink-0 font-rubik">
                     Agenda:
                   </span>
-                  <span className="leading-relaxed">{meetingData.agenda}</span>
+                  <span className="leading-relaxed">{meeting?.agenda}</span>
                 </div>
               </div>
             </div>
@@ -276,22 +298,26 @@ const CommeetPage: FunctionComponent = () => {
               {/* Header Row 1: [Month Year] ... [ < > ] */}
               <div className="flex justify-between items-center mb-6">
                 <div className="text-xl sm:text-2xl text-gray-900 font-bold font-rubik">
-                  {formatMonthYear(currentStartDate)}
+                  {currentStartDate ? formatMonthYear(currentStartDate) : ""}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handlePrev}
-                    className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/5 rounded-full transition-all cursor-pointer active:scale-90"
-                  >
-                    <ChevronLeft className="w-6 h-6" />
-                  </button>
-                  <button
-                    onClick={handleNext}
-                    className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/5 rounded-full transition-all cursor-pointer active:scale-90"
-                  >
-                    <ChevronRight className="w-6 h-6" />
-                  </button>
-                </div>
+                {meeting &&
+                  meeting.selectedDates &&
+                  meeting.selectedDates.length >= 3 && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handlePrev}
+                        className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/5 rounded-full transition-all cursor-pointer active:scale-90"
+                      >
+                        <ChevronLeft className="w-6 h-6" />
+                      </button>
+                      <button
+                        onClick={handleNext}
+                        className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/5 rounded-full transition-all cursor-pointer active:scale-90"
+                      >
+                        <ChevronRight className="w-6 h-6" />
+                      </button>
+                    </div>
+                  )}
               </div>
 
               {/* Header Row 2: PST + Date Columns */}
