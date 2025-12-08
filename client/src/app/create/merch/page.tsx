@@ -1,12 +1,24 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "@/app/components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import Link from "next/link";
+import { Pencil, Trash2, RefreshCw } from "lucide-react"; // Icons
+
+// --- INTERFACES ---
+interface MerchItem {
+  _id: string;
+  name: string;
+  description: string;
+  orderLink: string;
+  image?: string;
+  prices: { category: string; price: string }[];
+  isActive?: boolean;
+}
 
 type FormErrors = {
   name: boolean;
@@ -16,10 +28,130 @@ type FormErrors = {
 };
 
 export default function SponsorsPage() {
+  // Note: Function name should ideally be MerchPage based on context, but keeping as requested
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // --- MANAGEMENT STATE ---
+  const [merchList, setMerchList] = useState<MerchItem[]>([]);
+  const [isLoadingList, setIsLoadingList] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // 1. FETCH MERCH (Simulated)
+  const fetchMerch = async () => {
+    setIsLoadingList(true);
+    // Simulate API Call: await merchService.getAll()
+    setTimeout(() => {
+      const mockData: MerchItem[] = [
+        {
+          _id: "1",
+          name: "ICPEP.SE Lanyard",
+          description: "Official Lanyard 2024",
+          orderLink: "https://forms.gle/...",
+          image: "/gle.png",
+          prices: [
+            { category: "Member", price: "150" },
+            { category: "Non-Member", price: "180" },
+          ],
+        },
+        {
+          _id: "2",
+          name: "Varsity Jacket",
+          description: "Limited Edition Jacket",
+          orderLink: "https://forms.gle/...",
+          image: "/gle.png",
+          prices: [{ category: "Regular", price: "1200" }],
+        },
+      ];
+      setMerchList(mockData);
+      setIsLoadingList(false);
+    }, 1000);
+  };
+
+  useEffect(() => {
+    fetchMerch();
+  }, []);
+
+  // 2. HANDLE EDIT CLICK
+  const handleEditClick = (item: MerchItem) => {
+    setEditingId(item._id);
+    setFormData({
+      name: item.name,
+      descrip: item.description,
+      orderlink: item.orderLink,
+    });
+    setPrices(item.prices); // Populate prices array
+    setPreview(item.image || null);
+    setCover(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // 3. CANCEL EDIT
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setFormData({ name: "", descrip: "", orderlink: "" });
+    setPrices([]);
+    setPreview(null);
+    setCover(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // 4. HANDLE DELETE
+  const handleDelete = (id: string) => {
+    if (!confirm("Delete this item?")) return;
+    setMerchList((prev) => prev.filter((m) => m._id !== id));
+  };
+
+  // 5. PUBLISH / UPDATE LOGIC
+  const handlePublish = async () => {
+    const newErrors = {
+      name: !formData.name.trim(),
+      descrip: !formData.descrip.trim(),
+      orderlink: !formData.orderlink.trim(),
+      prices: prices.length === 0,
+    };
+
+    setErrors(newErrors);
+    setPriceError(prices.length === 0); // Trigger price error only if empty
+
+    if (Object.values(newErrors).some(Boolean) || (!cover && !editingId)) {
+      setShowGlobalError(true);
+      return;
+    }
+
+    setShowGlobalError(false);
+    setIsSubmitting(true);
+    setPriceError(false);
+
+    // Simulate API Call
+    setTimeout(() => {
+      const newItem: MerchItem = {
+        _id: editingId || Date.now().toString(),
+        name: formData.name,
+        description: formData.descrip,
+        orderLink: formData.orderlink,
+        image: preview || undefined,
+        prices: prices,
+      };
+
+      if (editingId) {
+        // Update Logic
+        setMerchList((prev) =>
+          prev.map((item) => (item._id === editingId ? newItem : item))
+        );
+      } else {
+        // Create Logic
+        setMerchList((prev) => [newItem, ...prev]);
+      }
+
+      handleCancelEdit(); // Reset form
+      setIsSubmitting(false);
+      setShowSuccessModal(true);
+    }, 1500);
+  };
+
   const [prices, setPrices] = useState<{ category: string; price: string }[]>(
     []
   );
@@ -61,28 +193,6 @@ export default function SponsorsPage() {
     orderlink: false,
     prices: false,
   });
-
-  const handlePublish = async () => {
-    const newErrors = {
-      name: !formData.name.trim(),
-      descrip: !formData.descrip.trim(),
-      orderlink: !formData.orderlink.trim(),
-      prices: prices.length === 0,
-    };
-
-    setErrors(newErrors);
-    setPriceError(true);
-
-    if (Object.values(newErrors).some(Boolean) || !cover) {
-      setShowGlobalError(true);
-      return;
-    }
-
-    setShowGlobalError(false);
-    setIsSubmitting(true);
-
-    setPriceError(false);
-  };
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -158,7 +268,7 @@ export default function SponsorsPage() {
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              Publishing Sponsor...
+              {editingId ? "Updating..." : "Publishing..."}
             </p>
           </div>
         </div>
@@ -168,22 +278,22 @@ export default function SponsorsPage() {
         <Header />
 
         <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
-          {/* Page Header with Gradient */}
+          {/* Page Header */}
           <div className="mb-12 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-primary1/10 to-primary2/10 rounded-3xl blur-3xl -z-10" />
             <div className="text-center sm:text-left">
               <h1 className="text-3xl sm:text-6xl font-bold font-rubik bg-gradient-to-r from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent mb-3">
-                Compose Merchandise
+                {editingId ? "Edit Merchandise" : "Compose Merchandise"}
               </h1>
               <p className="text-gray-600 font-raleway text-lg">
-                Add and showcase your official merchandise
+                {editingId
+                  ? "Update product details below"
+                  : "Add and showcase your official merchandise"}
               </p>
             </div>
           </div>
 
-          {/* Sidebar + Main Form */}
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar */}
             <aside className="w-full lg:w-72 flex-shrink-0">
               <div className="sticky top-24">
                 <Sidebar />
@@ -191,37 +301,48 @@ export default function SponsorsPage() {
             </aside>
 
             {/* Main Content */}
-            <div className="flex-1">
-              <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                {/* Form Header */}
+            <div className="flex-1 space-y-12">
+              {/* 1. THE FORM */}
+              <div
+                className={`bg-white rounded-3xl shadow-xl shadow-gray-200/50 border overflow-hidden transition-all duration-300 ${
+                  editingId
+                    ? "border-primary1 shadow-primary1/20"
+                    : "border-gray-100"
+                }`}
+              >
+                {/* Edit Banner */}
+                {editingId && (
+                  <div className="bg-amber-50 border-b border-amber-100 px-8 py-5 flex items-center justify-between">
+                    <span className="text-amber-800 font-medium font-rubik text-sm flex items-center gap-2">
+                      <Pencil size={14} /> Editing Mode Active
+                    </span>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="text-sm font-bold text-amber-900 underline"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
                 <div className="bg-gradient-to-r from-primary1 to-primary2 p-8">
                   <h2 className="text-3xl font-bold text-white font-rubik flex items-center gap-3">
-                    Content Details
+                    {editingId ? "Edit Details" : "Content Details"}
                   </h2>
                   <p className="text-blue-100 font-raleway mt-2">
-                    Fill in the information below to add a merchandise
+                    {editingId
+                      ? "Modify the information below"
+                      : "Fill in the information below to add a merchandise"}
                   </p>
                 </div>
 
                 <div className="p-8 space-y-8">
-                  {/* Upload Logo Section */}
+                  {/* Upload Image Section */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 mb-4">
-                      <svg
-                        className="w-5 h-5 text-primary2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
+                      {/* Icon */}
                       <label className="text-lg font-semibold text-primary3 font-rubik">
-                        Merchandise Image
+                        Merchandise Image{" "}
                         <span className="text-red-500 ml-1">*</span>
                       </label>
                     </div>
@@ -231,26 +352,22 @@ export default function SponsorsPage() {
                       accept="image/*"
                       className="hidden"
                       onChange={handleCoverChange}
+                      ref={fileInputRef}
                     />
 
                     <div
                       role="button"
                       tabIndex={0}
                       onClick={() => fileInputRef.current?.click()}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ")
-                          fileInputRef.current?.click();
-                      }}
                       className="block cursor-pointer group"
                     >
                       {preview ? (
                         <div className="relative overflow-hidden rounded-2xl">
                           <img
                             src={preview}
-                            alt="sponsor logo preview"
+                            alt="preview"
                             className="w-full h-64 object-contain bg-gray-50 rounded-2xl border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
                           <button
                             type="button"
                             onClick={(ev) => {
@@ -261,8 +378,7 @@ export default function SponsorsPage() {
                               setCover(null);
                               setPreview(null);
                             }}
-                            aria-label="Remove image"
-                            className="absolute top-4 right-4 bg-white w-10 h-10 flex items-center justify-center rounded-full text-red-500 shadow-lg hover:bg-red-50 hover:scale-110 transition-all duration-200 font-bold text-xl"
+                            className="absolute top-4 right-4 bg-white w-10 h-10 flex items-center justify-center rounded-full text-red-500 shadow-lg hover:bg-red-50"
                           >
                             ×
                           </button>
@@ -270,7 +386,7 @@ export default function SponsorsPage() {
                       ) : (
                         <div
                           className={`border-3 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
-                            showGlobalError && !cover
+                            showGlobalError && !cover && !editingId
                               ? "border-red-400 bg-red-50/50"
                               : "border-gray-300 bg-gray-50/50 group-hover:border-primary2 group-hover:bg-primary2/5"
                           }`}
@@ -296,254 +412,116 @@ export default function SponsorsPage() {
                                 Click to upload merchandise image
                               </p>
                               <p className="text-sm text-gray-500 mt-1 font-raleway">
-                                PNG, JPG, SVG up to 10MB
+                                PNG, JPG up to 10MB
                               </p>
                             </div>
                           </div>
                         </div>
                       )}
                     </div>
-                    {showGlobalError && !cover && (
-                      <p className="text-sm text-red-600 font-raleway flex items-center gap-1">
-                        <span>•</span> Please upload a merchandise image
-                      </p>
-                    )}
                   </div>
 
                   {/* Divider */}
                   <div className="border-t border-gray-200 pt-8">
-                    <div className="flex items-center gap-2 mb-6">
-                      <svg
-                        className="w-5 h-5 text-primary2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <h3 className="text-2xl font-bold text-primary3 font-rubik">
-                        Merchandise Information
-                      </h3>
-                    </div>
-                    <p className="text-sm text-gray-500 font-raleway mb-6">
-                      Provide the merchandise information
-                    </p>
+                    <h3 className="text-2xl font-bold text-primary3 font-rubik">
+                      Merchandise Information
+                    </h3>
                   </div>
 
                   {/* Name Input */}
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-primary3 font-raleway flex items-center gap-2">
-                      Merchandise Name
-                      <span className="text-red-500">*</span>
+                    <label className="text-sm font-semibold text-primary3 font-raleway">
+                      Merchandise Name <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                      <input
-                        id="name"
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        placeholder="e.g., ICPEP.SE Lanyard"
-                        className={`w-full font-raleway rounded-xl px-4 py-3.5 pr-10
-                          border-2 transition-all duration-200
-                          ${
-                            errors.name
-                              ? "border-red-400 bg-red-50 text-red-900 placeholder-red-400"
-                              : "border-gray-200 bg-white text-gray-700 placeholder-gray-400"
-                          }
-                          focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 focus:text-black focus:bg-white
-                        `}
-                      />
-                      {errors.name && (
-                        <svg
-                          className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                    {errors.name && (
-                      <p className="text-sm text-red-600 font-raleway flex items-center gap-1">
-                        <span>•</span> Please enter a merchandise name
-                      </p>
-                    )}
+                    <input
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="e.g., ICPEP.SE Lanyard"
+                      className={`w-full font-raleway rounded-xl px-4 py-3.5 border-2 ${
+                        errors.name ? "border-red-400" : "border-gray-200"
+                      } focus:border-primary2 outline-none`}
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-primary3 font-raleway flex items-center gap-2">
-                      Merchandise Description
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="descrip"
-                        type="text"
-                        name="descrip"
-                        value={formData.descrip}
-                        onChange={handleInputChange}
-                        placeholder="e.g., Keep your essentials close with our official lanyard."
-                        className={`w-full font-raleway rounded-xl px-4 py-3.5 pr-10
-                          border-2 transition-all duration-200
-                          ${
-                            errors.descrip
-                              ? "border-red-400 bg-red-50 text-red-900 placeholder-red-400"
-                              : "border-gray-200 bg-white text-gray-700 placeholder-gray-400"
-                          }
-                          focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 focus:text-black focus:bg-white
-                        `}
-                      />
-                      {errors.descrip && (
-                        <svg
-                          className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                    {errors.descrip && (
-                      <p className="text-sm text-red-600 font-raleway flex items-center gap-1">
-                        <span>•</span> Please enter a merchandise description
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-primary3 font-raleway flex items-center gap-2">
-                      Form Link
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="orderlink"
-                        type="url"
-                        name="orderlink"
-                        value={formData.orderlink}
-                        onChange={handleInputChange}
-                        placeholder="https://example.com/orderlink"
-                        className={`w-full font-raleway rounded-xl px-4 py-3.5 pr-10
-                          border-2 transition-all duration-200
-                          ${
-                            errors.orderlink
-                              ? "border-red-400 bg-red-50 text-red-900 placeholder-red-400"
-                              : "border-gray-200 bg-white text-gray-700 placeholder-gray-400"
-                          }
-                          focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 focus:text-black focus:bg-white
-                        `}
-                      />
-                      {errors.orderlink && (
-                        <svg
-                          className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                    {errors.descrip && (
-                      <p className="text-sm text-red-600 font-raleway flex items-center gap-1">
-                        <span>•</span> Please enter a form link
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-primary3 font-raleway flex items-center gap-2">
-                      Merchandise Prices
-                      <span className="text-red-500">*</span>
-                    </label>
 
-                    {/* Input Section */}
+                  {/* Description Input */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-primary3 font-raleway">
+                      Merchandise Description{" "}
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="descrip"
+                      name="descrip"
+                      value={formData.descrip}
+                      onChange={handleInputChange}
+                      placeholder="e.g., Keep your essentials close..."
+                      className={`w-full font-raleway rounded-xl px-4 py-3.5 border-2 ${
+                        errors.descrip ? "border-red-400" : "border-gray-200"
+                      } focus:border-primary2 outline-none`}
+                    />
+                  </div>
+
+                  {/* Link Input */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-primary3 font-raleway">
+                      Form Link <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="orderlink"
+                      type="url"
+                      name="orderlink"
+                      value={formData.orderlink}
+                      onChange={handleInputChange}
+                      placeholder="https://example.com/orderlink"
+                      className={`w-full font-raleway rounded-xl px-4 py-3.5 border-2 ${
+                        errors.orderlink ? "border-red-400" : "border-gray-200"
+                      } focus:border-primary2 outline-none`}
+                    />
+                  </div>
+
+                  {/* Prices Section */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-primary3 font-raleway">
+                      Merchandise Prices <span className="text-red-500">*</span>
+                    </label>
                     <div
-                      className={`flex flex-col sm:flex-row gap-3 p-4 rounded-2xl transition-all
-      ${
-        priceError
-          ? "border-2 border-red-400 bg-red-50"
-          : "border-2 border-primary2/20 bg-primary2/5"
-      }
-      focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 focus:text-black focus:bg-white
-    `}
+                      className={`flex flex-col sm:flex-row gap-3 p-4 rounded-2xl transition-all ${
+                        priceError
+                          ? "border-2 border-red-400 bg-red-50"
+                          : "border-2 border-primary2/20 bg-primary2/5"
+                      }`}
                     >
                       <input
                         type="text"
-                        placeholder="Category (e.g., General, VIP)"
+                        placeholder="Category (e.g., General)"
                         value={priceCategory}
-                        onChange={(e) => {
-                          setPriceCategory(e.target.value);
-                          if (priceError) setPriceError(false);
-                        }}
-                        className={`flex-1 rounded-xl px-4 py-3 font-rubik border-2 transition-all
-        ${
-          priceError
-            ? "border-red-300 bg-red-50 placeholder-red-400"
-            : "border-white bg-white"
-        }
-        focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 focus:text-black focus:bg-white
-      `}
+                        onChange={(e) => setPriceCategory(e.target.value)}
+                        className="flex-1 rounded-xl px-4 py-3 font-rubik border-2 border-white bg-white focus:border-primary2 outline-none"
                       />
-
                       <input
                         type="text"
                         placeholder="Price (₱)"
                         value={priceValue}
-                        onChange={(e) => {
-                          setPriceValue(e.target.value);
-                          if (priceError) setPriceError(false);
-                        }}
-                        className={`w-full sm:w-32 rounded-xl px-4 py-3 font-rubik border-2 transition-all
-        ${
-          priceError
-            ? "border-red-300 bg-red-50 placeholder-red-400"
-            : "border-white bg-white"
-        }
-      `}
+                        onChange={(e) => setPriceValue(e.target.value)}
+                        className="w-full sm:w-32 rounded-xl px-4 py-3 font-rubik border-2 border-white bg-white focus:border-primary2 outline-none"
                       />
-
                       <button
                         type="button"
                         onClick={handleAddPrice}
-                        className="px-6 py-2 bg-primary2 text-white rounded-xl font-bold hover:bg-primary3 transition-colors font-rubik"
+                        className="px-6 py-2 bg-primary2 text-white rounded-xl font-bold hover:bg-primary3"
                       >
                         Add
                       </button>
                     </div>
 
-                    {priceError && (
-                      <p className="text-sm text-red-600 font-raleway flex items-center gap-1">
-                        <span>•</span> Please enter both a category and price
-                      </p>
-                    )}
-
-                    {/* Display Added Prices */}
-                    <div className="flex flex-nowrap gap-3 mt-4">
+                    {/* Display Prices */}
+                    <div className="flex flex-wrap gap-3 mt-4">
                       {prices.map((p, index) => (
                         <span
                           key={index}
-                          className="flex items-center gap-3 bg-white border-2 border-primary2/20 text-primary3 font-bold font-rubik px-5 py-2 rounded-xl shadow-sm"
+                          className="flex items-center gap-3 bg-white border-2 border-primary2/20 text-primary3 font-bold font-rubik px-5 py-2 rounded-xl"
                         >
                           <span>{p.category}</span>
                           <span className="text-primary2 bg-primary2/10 px-2 py-0.5 rounded-md text-sm">
@@ -552,18 +530,12 @@ export default function SponsorsPage() {
                           <button
                             type="button"
                             onClick={() => handleDeletePrice(index)}
-                            className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors ml-1"
+                            className="w-6 h-6 flex items-center justify-center rounded-full hover:text-red-500"
                           >
                             ×
                           </button>
                         </span>
                       ))}
-
-                      {prices.length === 0 && (
-                        <p className="text-gray-500 text-sm font-raleway">
-                          No prices added yet.
-                        </p>
-                      )}
                     </div>
                   </div>
 
@@ -571,34 +543,165 @@ export default function SponsorsPage() {
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200">
                     {showGlobalError && (
                       <p className="text-red-500 text-sm font-bold font-raleway animate-pulse">
-                        Please fill all required fields before publishing.
+                        Please fill all fields.
                       </p>
                     )}
 
                     <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-                      <Link
-                        href="/drafts"
-                        className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 text-center flex items-center justify-center"
-                      >
-                        View drafts
-                      </Link>
-                      <Button
-                        variant="outline"
-                        className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300"
-                      >
-                        Save Draft
-                      </Button>
+                      {!editingId && (
+                        <Link
+                          href="/drafts"
+                          className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 text-center"
+                        >
+                          View drafts
+                        </Link>
+                      )}
+
+                      {editingId && (
+                        <Button
+                          variant="outline"
+                          type="button"
+                          onClick={handleCancelEdit}
+                          className="text-red-500 border-red-200 hover:bg-red-50"
+                        >
+                          Cancel Edit
+                        </Button>
+                      )}
+
+                      {!editingId && (
+                        <Button variant="outline">Save Draft</Button>
+                      )}
+
                       <Button
                         variant="primary3"
                         type="button"
                         onClick={handlePublish}
                         disabled={isSubmitting}
-                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50"
                       >
-                        <span className="flex items-center gap-2">Publish</span>
+                        {editingId ? "Update Merch" : "Publish"}
                       </Button>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* 2. MANAGE MERCH LIST */}
+              <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+                <div className="p-8 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-primary3 font-rubik">
+                      Manage Merchandise
+                    </h2>
+                    <p className="text-gray-500 font-raleway text-sm mt-1">
+                      Total: {merchList.length} items
+                    </p>
+                  </div>
+                  <button
+                    onClick={fetchMerch}
+                    className="flex items-center gap-2 text-sm text-primary1 font-bold hover:bg-primary1/10 px-4 py-2 rounded-lg"
+                  >
+                    <RefreshCw size={16} /> Refresh List
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  {isLoadingList ? (
+                    <div className="p-12 text-center text-gray-500 font-raleway">
+                      Loading existing merchandise...
+                    </div>
+                  ) : merchList.length === 0 ? (
+                    <div className="p-12 text-center text-gray-400 font-raleway">
+                      No items found. Create one above!
+                    </div>
+                  ) : (
+                    <table className="w-full text-left border-collapse min-w-[700px]">
+                      <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold font-rubik tracking-wider">
+                        <tr>
+                          <th className="px-6 py-4">Image</th>
+                          <th className="px-6 py-4">Name</th>
+                          <th className="px-6 py-4">Prices</th>
+                          <th className="px-6 py-4">Link</th>
+                          <th className="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100 font-raleway">
+                        {merchList.map((item) => (
+                          <tr
+                            key={item._id}
+                            className={`hover:bg-blue-50/40 transition-colors group ${
+                              editingId === item._id
+                                ? "bg-blue-50 ring-1 ring-inset ring-primary1/30"
+                                : ""
+                            }`}
+                          >
+                            <td className="px-6 py-4">
+                              <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+                                {item.image ? (
+                                  <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                                    No Img
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="font-bold text-gray-800 font-rubik">
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate max-w-[150px]">
+                                {item.description}
+                              </p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col gap-1">
+                                {item.prices.map((p, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="text-xs bg-gray-100 px-2 py-1 rounded w-fit"
+                                  >
+                                    {p.category}: ₱{p.price}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <a
+                                href={item.orderLink}
+                                target="_blank"
+                                className="text-primary1 hover:underline text-sm truncate max-w-[100px] block"
+                              >
+                                View Form
+                              </a>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                <button
+                                  onClick={() => handleEditClick(item)}
+                                  className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
+                                  title="Edit"
+                                >
+                                  <Pencil size={18} />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(item._id)}
+                                  className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               </div>
             </div>
@@ -612,56 +715,19 @@ export default function SponsorsPage() {
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setShowSuccessModal(false)}
           />
-
-          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl transform animate-in zoom-in-95 duration-300 border border-gray-100">
-            <div className="flex flex-col items-center gap-6 text-center">
-              <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-2 animate-bounce">
-                <svg
-                  className="w-10 h-10 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="3"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-gray-900 font-rubik">
-                  Merchandise Published!
-                </h3>
-                <p className="text-gray-500 font-raleway">
-                  Your merchandise has been successfully published and is now
-                  live.
-                </p>
-              </div>
-
-              <div className="w-full pt-2 flex flex-col gap-3">
-                <button
-                  onClick={() => {
-                    setShowSuccessModal(false);
-                    // Redirect to merch list if needed
-                  }}
-                  className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all duration-300 shadow-lg shadow-gray-900/20"
-                >
-                  View Merch
-                </button>
-                <button
-                  onClick={() => setShowSuccessModal(false)}
-                  className="w-full py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all duration-300"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center">
+            <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
+              {editingId ? "Updated Successfully!" : "Published Successfully!"}
+            </h3>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold mt-4"
+            >
+              Continue
+            </button>
           </div>
         </div>
       )}

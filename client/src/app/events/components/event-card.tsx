@@ -10,7 +10,10 @@ interface Props {
 }
 
 export default function EventCard({ event }: Props) {
-  const defaultImg = event.bannerImageUrl ?? (event as unknown as { image?: string }).image ?? "/placeholder.svg";
+  const defaultImg =
+    event.bannerImageUrl ??
+    (event as unknown as { image?: string }).image ??
+    "/placeholder.svg";
   const [imgSrc, setImgSrc] = useState<string>(defaultImg);
   const [imgLoaded, setImgLoaded] = useState(false);
 
@@ -19,7 +22,7 @@ export default function EventCard({ event }: Props) {
     setImgLoaded(false);
     setImgSrc(defaultImg);
   }
-  
+
   const eventDate = new Date(event.date);
   const formattedDate = eventDate.toLocaleDateString("en-US", {
     month: "long",
