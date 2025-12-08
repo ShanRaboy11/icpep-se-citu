@@ -27,18 +27,24 @@ export default function EventsListPage() {
         setIsLoading(true);
         const response = await eventService.getEvents({
           isPublished: true,
-          sort: '-eventDate',
+          sort: "-eventDate",
           limit: 100,
         });
 
         if (response.success && response.data) {
-          const raw = Array.isArray(response.data) ? (response.data as Array<Record<string, unknown>>) : [];
+          const raw = Array.isArray(response.data)
+            ? (response.data as Array<Record<string, unknown>>)
+            : [];
 
           const toImageUrl = (url: unknown): string => {
             if (!url) return "/placeholder.svg";
             if (typeof url !== "string") return "/placeholder.svg";
             if (url.startsWith("http")) return url;
-            const backendHost = (process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+            const backendHost = (
+              process.env.NEXT_PUBLIC_BACKEND_URL ||
+              process.env.NEXT_PUBLIC_API_URL ||
+              "http://localhost:5000"
+            ).replace(/\/+$/, "");
             if (url.startsWith("/")) return `${backendHost}${url}`;
             return url;
           };
@@ -47,7 +53,9 @@ export default function EventsListPage() {
           const transformedEvents = raw.map((evt) => {
             const title = String(evt["title"] ?? "");
             const description = String(evt["description"] ?? "");
-            const date = String(evt["eventDate"] ?? evt["date"] ?? new Date().toISOString());
+            const date = String(
+              evt["eventDate"] ?? evt["date"] ?? new Date().toISOString()
+            );
             const endDate = evt["expiryDate"] ?? evt["endDate"] ?? undefined;
             const organizerRaw = evt["organizer"];
             const organizer =
@@ -55,21 +63,34 @@ export default function EventsListPage() {
                 ? { name: organizerRaw, avatarImageUrl: "/icpep logo.png" }
                 : (organizerRaw as Record<string, unknown> | undefined)
                 ? {
-                    name: String((organizerRaw as Record<string, unknown>)['name'] ?? ''),
-                    avatarImageUrl: String((organizerRaw as Record<string, unknown>)['avatarImageUrl'] ?? '/icpep logo.png'),
+                    name: String(
+                      (organizerRaw as Record<string, unknown>)["name"] ?? ""
+                    ),
+                    avatarImageUrl: String(
+                      (organizerRaw as Record<string, unknown>)[
+                        "avatarImageUrl"
+                      ] ?? "/icpep logo.png"
+                    ),
                   }
                 : { name: "", avatarImageUrl: "/icpep logo.png" };
 
-            const tags = Array.isArray(evt["tags"]) ? (evt["tags"] as unknown[]).map((t) => String(t)) : [];
+            const tags = Array.isArray(evt["tags"])
+              ? (evt["tags"] as unknown[]).map((t) => String(t))
+              : [];
 
-            const normalizeDetails = (d: unknown): { title: string; items: string[] }[] => {
+            const normalizeDetails = (
+              d: unknown
+            ): { title: string; items: string[] }[] => {
               if (Array.isArray(d)) {
                 return (d as Array<Record<string, unknown>>).map((item) => ({
                   title: String(item.title ?? ""),
                   items: Array.isArray(item.items)
                     ? (item.items as unknown[]).map((it) => String(it))
                     : typeof item.items === "string"
-                    ? String(item.items).split('\n').map((s) => s.trim()).filter(Boolean)
+                    ? String(item.items)
+                        .split("\n")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
                     : [],
                 }));
               }
@@ -88,7 +109,8 @@ export default function EventsListPage() {
             const modeValue = String(evt["mode"] ?? "").toLowerCase();
             const mode = modeValue === "online" ? "Online" : "Onsite";
 
-            const banner = evt["bannerImageUrl"] ?? evt["coverImage"] ?? evt["image"];
+            const banner =
+              evt["bannerImageUrl"] ?? evt["coverImage"] ?? evt["image"];
 
             const transformed: Event = {
               id: String(evt["_id"] ?? evt["id"] ?? ""),

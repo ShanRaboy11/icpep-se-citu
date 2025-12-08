@@ -77,7 +77,10 @@ export default function AnnouncementsPage() {
       const dbType = typeMap[activeTab] || activeTab;
       return announcement.type.toLowerCase() === dbType.toLowerCase();
     })
-    .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+    .sort(
+      (a, b) =>
+        new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
+    );
 
   const handleAnnouncementClick = (announcement: Announcement) => {
     // Navigate to the detail page using the database ID
@@ -213,7 +216,9 @@ export default function AnnouncementsPage() {
                       title={announcement.title}
                       description={announcement.description}
                       content={announcement.content}
-                      type={announcement.type as "News" | "Meeting" | "Achievement"}
+                      type={
+                        announcement.type as "News" | "Meeting" | "Achievement"
+                      }
                       imageUrl={announcement.imageUrl || undefined}
                       date={announcement.publishDate}
                       onClick={() => handleAnnouncementClick(announcement)}
