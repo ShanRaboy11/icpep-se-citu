@@ -277,13 +277,13 @@ export default function SponsorsPage() {
               >
                 {/* Edit Mode Banner */}
                 {editingId && (
-                  <div className="bg-amber-50 border-b border-amber-100 px-8 py-3 flex items-center justify-between">
+                  <div className="bg-amber-50 border-b border-amber-100 px-8 py-5 flex items-center justify-between">
                     <span className="text-amber-800 font-medium font-rubik text-sm flex items-center gap-2">
                       <Pencil size={14} /> Editing Mode Active
                     </span>
                     <button
                       onClick={handleCancelEdit}
-                      className="text-xs font-bold text-amber-900 underline"
+                      className="text-sm font-bold text-amber-900 underline"
                     >
                       Cancel
                     </button>
@@ -361,9 +361,29 @@ export default function SponsorsPage() {
                           }`}
                         >
                           <div className="flex flex-col items-center gap-4">
-                            <p className="text-gray-700 font-semibold font-rubik">
-                              Click to upload sponsor logo
-                            </p>
+                            <div className="w-16 h-16 rounded-full bg-primary2/10 flex items-center justify-center group-hover:bg-primary2/20 transition-colors duration-300">
+                              <svg
+                                className="w-8 h-8 text-primary2"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 4v16m8-8H4"
+                                />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-gray-700 font-semibold font-rubik">
+                                Click to upload sponsor logo
+                              </p>
+                              <p className="text-sm text-gray-500 mt-1 font-raleway">
+                                PNG, JPG, SVG up to 10MB
+                              </p>
+                            </div>
                           </div>
                         </div>
                       )}

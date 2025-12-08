@@ -276,13 +276,13 @@ export default function TestimonialsPage() {
               >
                 {/* Added: Edit Mode Banner */}
                 {editingId && (
-                  <div className="bg-amber-50 border-b border-amber-100 px-8 py-3 flex items-center justify-between">
+                  <div className="bg-amber-50 border-b border-amber-100 px-8 py-5 flex items-center justify-between">
                     <span className="text-amber-800 font-medium font-rubik text-sm flex items-center gap-2">
                       <Pencil size={14} /> Editing Mode Active
                     </span>
                     <button
                       onClick={handleCancelEdit}
-                      className="text-xs font-bold text-amber-900 underline"
+                      className="text-sm font-bold text-amber-900 underline"
                     >
                       Cancel
                     </button>

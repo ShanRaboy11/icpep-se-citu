@@ -7,7 +7,7 @@ import Header from "../components/header";
 import Footer from "../components/footer";
 import EventCard from "./components/event-card";
 import Grid from "../components/grid";
-import { Home, Sparkles } from "lucide-react"; // Import Sparkles
+import { Home } from "lucide-react";
 import eventService from "../services/event";
 
 // Define a new type for our processed event
@@ -20,10 +20,6 @@ export default function EventsListPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // --- 1. NEW STATE ---
-  const [editMode, setEditMode] = useState(false);
-  const toggleEdit = () => setEditMode((prev) => !prev);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -53,6 +49,7 @@ export default function EventsListPage() {
             return url;
           };
 
+          // Transform backend data to match Event type
           const transformedEvents = raw.map((evt) => {
             const title = String(evt["title"] ?? "");
             const description = String(evt["description"] ?? "");
@@ -108,8 +105,10 @@ export default function EventsListPage() {
             };
 
             const details = normalizeDetails(evt["details"]);
+
             const modeValue = String(evt["mode"] ?? "").toLowerCase();
             const mode = modeValue === "online" ? "Online" : "Onsite";
+
             const banner =
               evt["bannerImageUrl"] ?? evt["coverImage"] ?? evt["image"];
 
@@ -170,13 +169,15 @@ export default function EventsListPage() {
     if (statusOrder[a.status] !== statusOrder[b.status]) {
       return statusOrder[a.status] - statusOrder[b.status];
     }
+
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
+
     return a.status === "Upcoming" ? dateA - dateB : dateB - dateA;
   });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden select-none">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
@@ -188,7 +189,7 @@ export default function EventsListPage() {
               className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
                          rounded-full border-2 border-primary1 text-primary1 
                          overflow-hidden transition-all duration-300 ease-in-out 
-                         active:scale-95 hover:shadow-md before:absolute before:inset-0 
+                         active:scale-95 before:absolute before:inset-0 
                          before:bg-gradient-to-r before:from-transparent 
                          before:via-white/40 before:to-transparent 
                          before:translate-x-[-100%] hover:before:translate-x-[100%] 
@@ -198,9 +199,7 @@ export default function EventsListPage() {
             </button>
           </div>
 
-          {/* Header Section with Toggle */}
-          <div className="mb-16 text-center relative">
-            {/* --- 2. THE PARTY MODE BUTTON --- */}
+          <div className="mb-16 text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
               <div className="h-2 w-2 rounded-full bg-primary1"></div>
               <span className="font-raleway text-sm font-semibold text-primary1">
@@ -217,6 +216,7 @@ export default function EventsListPage() {
           </div>
 
           {isLoading ? (
+            // Render a grid of skeleton cards to improve perceived performance
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div
@@ -246,14 +246,8 @@ export default function EventsListPage() {
             </div>
           ) : sortedEvents.length > 0 ? (
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
-              {sortedEvents.map((event, index) => (
-                // --- 3. PASS PROPS TO CARD ---
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  edit={editMode}
-                  index={index}
-                />
+              {sortedEvents.map((event) => (
+                <EventCard key={event.id} event={event} />
               ))}
             </div>
           ) : (
@@ -263,24 +257,6 @@ export default function EventsListPage() {
               </p>
             </div>
           )}
-          <div className="w-full flex justify-end mt-8">
-            <button
-              onClick={toggleEdit}
-              className={`mt-10 group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-rubik font-semibold transition-all duration-300 ${
-                editMode
-                  ? "bg-primary1 text-white shadow-lg shadow-primary1/30 scale-105"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              <Sparkles
-                size={18}
-                className={`transition-transform duration-300 ${
-                  editMode ? "animate-spin-slowmo" : ""
-                }`}
-              />
-              <span>{editMode ? "Edit Mode: ON" : "Activate Edit"}</span>
-            </button>
-          </div>
         </main>
         <Footer />
       </div>
