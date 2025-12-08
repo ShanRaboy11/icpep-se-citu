@@ -138,32 +138,30 @@ export default function EventCalendarPage() {
             <div className="flex justify-between items-center mb-4 sm:p-5 ">
               <button
                 onClick={prevMonth}
-                className="p-2 rounded-full hover:bg-gray-100 text-primary1 hover:text-primary3 transition-all active:scale-95 cursor-pointer"
+                className="px-3 py-2 bg-primary1 text-white rounded-lg hover:bg-primary2 transition flex items-center justify-center"
               >
-                <ChevronLeft className="sm:w-8 sm:h-8 w-6 h-6" />
+                <ChevronLeft className="w-5 h-6" />
               </button>
 
-              <h2 className="text-xl sm:text-3xl font-rubik font-bold text-primary3 text-center">
+              <h2 className="text-xl sm:text-3xl font-rubik text-primary3 font-bold">
                 {currentMonth.toLocaleString("default", { month: "long" })}{" "}
-                <span className="text-primary1 font-light">
-                  {currentMonth.getFullYear()}
-                </span>
+                {currentMonth.getFullYear()}
               </h2>
 
               <button
                 onClick={nextMonth}
-                className="p-2 rounded-full hover:bg-gray-100 text-primary1 hover:text-primary3 transition-all active:scale-95 cursor-pointer"
+                className="px-3 py-2 bg-primary1 text-white rounded-lg hover:bg-primary2 transition flex items-center justify-center"
               >
-                <ChevronRight className="sm:w-8 sm:h-8 w-6 h-6" />
+                <ChevronRight className="w-5 h-6" />
               </button>
             </div>
 
             {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1 mb-6 text-center sm:p-5 ">
+            <div className="grid grid-cols-7 gap-1 mb-6 text-center sm:p-5">
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
                 <div
                   key={d}
-                  className="font-raleway font-semibold text-gray-600 pb-5 sm:text-lg mb-2"
+                  className="font-raleway font-semibold text-gray-600 pb-5 sm:text-lg"
                 >
                   {d}
                 </div>
