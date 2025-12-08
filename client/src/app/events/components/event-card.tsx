@@ -47,14 +47,14 @@ export default function EventCard({ event, edit, index = 0 }: Props) {
 
   // Logic: Destination URL
   // If editing, go to create page with ID. If not, go to details.
-  const href = edit ? `/event/create?id=${event.id}` : `/events/${event.id}`;
+  const href = edit ? `/events/create?id=${event.id}` : `/events/${event.id}`;
 
   // Logic: Animation Staggering
   const animationStyle = edit ? { animationDelay: `${index * 0.1}s` } : {};
 
   return (
     <Link
-      href={href}
+      href={`/events/${event.id}`}
       onClick={(e) => {
         // If we want to block navigation for some reason we can,
         // but usually for edit we want to go through.
@@ -105,7 +105,7 @@ export default function EventCard({ event, edit, index = 0 }: Props) {
             setImgSrc("/placeholder.svg");
             setImgLoaded(true);
           }}
-          className={`h-full w-full object-cover transition-transform duration-700 ease-in-out ${
+          className={`h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
             imgLoaded && (edit || !edit) ? "group-hover:scale-105" : ""
           } ${imgLoaded ? "opacity-100" : "opacity-0"}`}
         />

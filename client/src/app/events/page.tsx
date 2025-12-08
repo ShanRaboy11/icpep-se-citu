@@ -188,7 +188,11 @@ export default function EventsListPage() {
               className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
                          rounded-full border-2 border-primary1 text-primary1 
                          overflow-hidden transition-all duration-300 ease-in-out 
-                         active:scale-95 hover:shadow-md"
+                         active:scale-95 hover:shadow-md before:absolute before:inset-0 
+                         before:bg-gradient-to-r before:from-transparent 
+                         before:via-white/40 before:to-transparent 
+                         before:translate-x-[-100%] hover:before:translate-x-[100%] 
+                         before:transition-transform before:duration-700"
             >
               <Home className="h-6 w-6" />
             </button>
@@ -217,13 +221,21 @@ export default function EventsListPage() {
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 shadow-lg"
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 shadow-lg transition-all duration-300 ease-in-out"
                 >
-                  <div className="relative h-48 bg-gray-100 animate-pulse" />
-                  <div className="flex flex-1 flex-col p-6 bg-white space-y-4">
-                    <div className="h-4 w-1/3 bg-gray-200 rounded animate-pulse" />
-                    <div className="h-6 w-3/4 bg-gray-200 rounded animate-pulse" />
-                    <div className="h-4 w-full bg-gray-200 rounded animate-pulse" />
+                  <div className="relative h-48 flex-shrink-0 overflow-hidden bg-gray-100">
+                    <div className="absolute inset-0 animate-pulse bg-gray-200" />
+                  </div>
+
+                  <div className="flex flex-1 flex-col p-6 bg-white">
+                    <div className="h-4 w-32 bg-gray-200 rounded mb-3 animate-pulse" />
+                    <div className="h-6 w-48 bg-gray-200 rounded mb-2 animate-pulse" />
+                    <div className="h-4 w-full bg-gray-100 rounded mb-6 animate-pulse" />
+
+                    <div className="mt-auto flex gap-2">
+                      <div className="h-8 w-24 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-8 w-32 bg-gray-200 rounded animate-pulse ml-auto" />
+                    </div>
                   </div>
                 </div>
               ))}
