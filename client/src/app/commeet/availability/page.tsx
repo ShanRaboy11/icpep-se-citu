@@ -90,19 +90,27 @@ const AvailabilityPage: FunctionComponent = () => {
     "bg-white rounded-[2rem] border border-gray-200 shadow-lg p-6 sm:p-8 transition-all duration-300 hover:shadow-primary1/40 hover:-translate-y-2";
 
   // --- Helpers ---
+  const getLocalDateKey = (date: Date | null) => {
+    if (!date) return "";
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
   const visibleDates = (() => {
     if (!meetingDetails) return [] as Date[];
     if (!currentStartDate) return [];
 
     const allDates = meetingDetails.selectedDates.map((d) => new Date(d));
     const startIdx = allDates.findIndex(
-      (d) => d.getTime() === currentStartDate.getTime()
+      (d) => getLocalDateKey(d) === getLocalDateKey(currentStartDate)
     );
     if (startIdx === -1) return allDates.slice(0, 3);
     return allDates.slice(startIdx, startIdx + 3);
   })();
 
-  const formatDateKey = (date: Date) => date.toISOString().split("T")[0];
+  const formatDateKey = (date: Date) => getLocalDateKey(date);
   const formatMonthYear = (date: Date) =>
     date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
   const formatDayName = (date: Date) =>
@@ -170,7 +178,9 @@ const AvailabilityPage: FunctionComponent = () => {
       // 3. Get Meeting Details
       const m = await getMeeting(id);
       setMeetingDetails(m);
-      setCurrentStartDate(new Date(m.selectedDates[0]));
+      if (m.selectedDates.length > 0) {
+        setCurrentStartDate(new Date(m.selectedDates[0]));
+      }
 
       // 4. Calculate Times
       const parseHour = (t: string) => {
@@ -190,6 +200,10 @@ const AvailabilityPage: FunctionComponent = () => {
       try {
         const mine = await getMyAvailability(id);
         setMySavedSlots(mine.slots || []);
+        // Track current user ID for optimistic updates
+        if ((mine as any).user) {
+          setCurrentUserId(String((mine as any).user));
+        }
         setCanEdit(true);
       } catch (err) {
         console.warn("My availability unavailable (likely guest)", err);
@@ -312,7 +326,9 @@ const AvailabilityPage: FunctionComponent = () => {
     []
   );
 
-  const handleSlotMouseDown = (key: string) => {
+  const handleSlotMouseDown = (e: React.MouseEvent, key: string) => {
+    e.preventDefault(); // Prevents selection cursor during drag
+
     if (isEditing) {
       setIsDragging(true);
       const isAlreadySelected = draftSlots.includes(key);
@@ -320,6 +336,7 @@ const AvailabilityPage: FunctionComponent = () => {
       setDragMode(mode);
       updateDraftSlotState(key, mode);
     } else {
+      // Toggle focus logic
       if (focusedSlot === key && isFocusLocked) {
         setIsFocusLocked(false);
         setFocusedSlot(null);
@@ -375,19 +392,19 @@ const AvailabilityPage: FunctionComponent = () => {
       );
       try {
         await saveMyAvailability(id, draftSlots);
-        
+
         // 1. Update My Slots Locally
         setMySavedSlots([...draftSlots]);
-        
-        // 2. FIX: INSTANTLY Update Responders List (Optimistic Update)
-        // This ensures the heat map updates immediately without page refresh
+
+        // 2. INSTANTLY Update Responders List (Optimistic Update)
         setResponders((prev) => {
-           return prev.map(r => {
-             if(r.id === currentUserId) {
-                return { ...r, slots: [...draftSlots] };
-             }
-             return r;
-           });
+          return prev.map((r) => {
+            // Match based on stringified IDs to be safe
+            if (String(r.id) === String(currentUserId)) {
+              return { ...r, slots: [...draftSlots] };
+            }
+            return r;
+          });
         });
 
         setIsEditing(false);
@@ -417,7 +434,9 @@ const AvailabilityPage: FunctionComponent = () => {
     if (!currentStartDate || !meetingDetails) return;
     const allDates = meetingDetails.selectedDates.map((d) => new Date(d));
     const currentIdx = allDates.findIndex(
-      (d) => d.getTime() === currentStartDate.getTime()
+      (d) =>
+        d.toISOString().split("T")[0] ===
+        currentStartDate.toISOString().split("T")[0]
     );
     if (currentIdx > 0) {
       const newIdx = Math.max(0, currentIdx - 3);
@@ -429,7 +448,9 @@ const AvailabilityPage: FunctionComponent = () => {
     if (!currentStartDate || !meetingDetails) return;
     const allDates = meetingDetails.selectedDates.map((d) => new Date(d));
     const currentIdx = allDates.findIndex(
-      (d) => d.getTime() === currentStartDate.getTime()
+      (d) =>
+        d.toISOString().split("T")[0] ===
+        currentStartDate.toISOString().split("T")[0]
     );
     if (currentIdx + 3 < allDates.length) {
       setCurrentStartDate(allDates[currentIdx + 3]);
@@ -564,24 +585,25 @@ const AvailabilityPage: FunctionComponent = () => {
 
                   {/* Action Buttons */}
                   <div className="shrink-0">
-                    {!isEditing && (!viewingId || viewingId === currentUserId) && (
-                      <button
-                        onClick={onEditClick}
-                        disabled={!canEdit}
-                        className={`group p-2.5 sm:px-6 sm:py-2.5 rounded-xl font-rubik text-white font-bold text-sm flex items-center justify-center gap-2 sm:min-w-[11.5rem]
+                    {!isEditing &&
+                      (!viewingId || viewingId === currentUserId) && (
+                        <button
+                          onClick={onEditClick}
+                          disabled={!canEdit}
+                          className={`group p-2.5 sm:px-6 sm:py-2.5 rounded-xl font-rubik text-white font-bold text-sm flex items-center justify-center gap-2 sm:min-w-[11.5rem]
                                         ${
                                           canEdit
                                             ? "bg-gradient-to-r from-primary3 to-primary1 shadow-md shadow-primary1/20 hover:shadow-lg hover:shadow-primary1/30 hover:-translate-y-0.5 cursor-pointer"
                                             : "bg-gray-300 cursor-not-allowed"
                                         }
                                     `}
-                      >
-                        <Pencil className="w-5 h-5 stroke-[2.5px]" />
-                        <span className="hidden sm:inline">
-                          Update Availability
-                        </span>
-                      </button>
-                    )}
+                        >
+                          <Pencil className="w-5 h-5 stroke-[2.5px]" />
+                          <span className="hidden sm:inline">
+                            Update Availability
+                          </span>
+                        </button>
+                      )}
 
                     {isEditing && (
                       <div className="flex gap-2">
@@ -768,8 +790,8 @@ const AvailabilityPage: FunctionComponent = () => {
                                 >
                                   {/* Top Half */}
                                   <div
-                                    onMouseDown={() =>
-                                      handleSlotMouseDown(fullKey1)
+                                    onMouseDown={(e) =>
+                                      handleSlotMouseDown(e, fullKey1)
                                     }
                                     onMouseEnter={() =>
                                       handleSlotMouseEnter(fullKey1)
@@ -788,7 +810,7 @@ const AvailabilityPage: FunctionComponent = () => {
                                   >
                                     {isSel1 && (
                                       <div
-                                        className={`absolute inset-0 ${
+                                        className={`absolute inset-0 pointer-events-none ${
                                           isEditing || viewingId
                                             ? "bg-sky-100"
                                             : "bg-sky-500"
@@ -802,14 +824,14 @@ const AvailabilityPage: FunctionComponent = () => {
                                       ></div>
                                     )}
                                     {(isEditing || viewingId) && isSel1 && (
-                                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]"></div>
+                                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] pointer-events-none"></div>
                                     )}
                                   </div>
 
                                   {/* Bottom Half */}
                                   <div
-                                    onMouseDown={() =>
-                                      handleSlotMouseDown(fullKey2)
+                                    onMouseDown={(e) =>
+                                      handleSlotMouseDown(e, fullKey2)
                                     }
                                     onMouseEnter={() =>
                                       handleSlotMouseEnter(fullKey2)
@@ -828,7 +850,7 @@ const AvailabilityPage: FunctionComponent = () => {
                                   >
                                     {isSel2 && (
                                       <div
-                                        className={`absolute inset-0 ${
+                                        className={`absolute inset-0 pointer-events-none ${
                                           isEditing || viewingId
                                             ? "bg-sky-100"
                                             : "bg-sky-500"
@@ -842,11 +864,11 @@ const AvailabilityPage: FunctionComponent = () => {
                                       ></div>
                                     )}
                                     {(isEditing || viewingId) && isSel2 && (
-                                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]"></div>
+                                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] pointer-events-none"></div>
                                     )}
                                   </div>
 
-                                  {/* FIX: Pointer events none on bottom border to prevent blocking clicks */}
+                                  {/* FIX: Pointer events none on bottom border to prevent blocking clicks on last item */}
                                   {timeIndex === times.length - 1 && (
                                     <div className="absolute bottom-0 left-0 right-0 border-b border-gray-100 pointer-events-none"></div>
                                   )}
@@ -921,7 +943,7 @@ const AvailabilityPage: FunctionComponent = () => {
                         const isAvailableNow = focusedSlot
                           ? responder.slots.includes(focusedSlot)
                           : null;
-                        
+
                         const isMe = responder.id === currentUserId;
 
                         return (
@@ -981,7 +1003,7 @@ const AvailabilityPage: FunctionComponent = () => {
                                   className={`${pillBase} bg-orange-50 text-orange-500 border border-orange-100`}
                                 >
                                   Pending
-                                  </span>
+                                </span>
                               ) : (
                                 <div
                                   className={`w-2.5 h-2.5 rounded-full transition-colors ${

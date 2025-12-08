@@ -36,13 +36,13 @@ const MeetInfoPage: FunctionComponent = () => {
   const [agenda, setAgenda] = useState("");
 
   // Custom Time State
-  const [startHour, setStartHour] = useState("09");
+  const [startHour, setStartHour] = useState("08");
   const [startMinute, setStartMinute] = useState("00");
   const [startPeriod, setStartPeriod] = useState("AM");
 
-  const [endHour, setEndHour] = useState("10");
+  const [endHour, setEndHour] = useState("05");
   const [endMinute, setEndMinute] = useState("00");
-  const [endPeriod, setEndPeriod] = useState("AM");
+  const [endPeriod, setEndPeriod] = useState("PM");
 
   // Dept & Limit State
   const [selectedDepts, setSelectedDepts] = useState<string[]>([]);

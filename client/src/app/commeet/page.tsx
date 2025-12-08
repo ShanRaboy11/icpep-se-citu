@@ -44,14 +44,33 @@ const CommeetPage: FunctionComponent = () => {
         console.log("Attempting to fetch meetings...");
         const { listMeetings } = await import("../services/meeting");
 
-        // Try fetching WITHOUT the filter first to see if ANYTHING exists
-        const allItems = await listMeetings({});
-        console.log("RAW DB DUMP (All Meetings):", allItems);
-
-        // Then try with the upcoming filter
+        // Fetch upcoming meetings
         const upcomingItems = await listMeetings({ upcoming: true });
-        console.log("Filtered Upcoming Meetings:", upcomingItems);
 
+        // --- SORTING LOGIC: EARLIEST AT TOP ---
+        upcomingItems.sort((a: Meeting, b: Meeting) => {
+          // Helper to get the timestamp of the earliest date in a meeting's list
+          const getEarliestTimestamp = (m: Meeting) => {
+            if (!m.selectedDates || m.selectedDates.length === 0) {
+              // If no dates exist, push to the very bottom (Infinity)
+              return Infinity;
+            }
+            // 1. Copy array to avoid mutating read-only props
+            // 2. Sort strings to find the first ISO date
+            // 3. Convert to timestamp number
+            const earliestIso = [...m.selectedDates].sort()[0];
+            return new Date(earliestIso).getTime();
+          };
+
+          const timeA = getEarliestTimestamp(a);
+          const timeB = getEarliestTimestamp(b);
+
+          // Ascending sort (A - B) puts smaller numbers (earlier dates) first
+          return timeA - timeB;
+        });
+        // --- END SORTING LOGIC ---
+
+        console.log("Sorted Upcoming Meetings:", upcomingItems);
         setUpcoming(upcomingItems);
       } catch (err) {
         console.error("CRITICAL FAILURE LOADING MEETINGS:", err);
@@ -81,7 +100,6 @@ const CommeetPage: FunctionComponent = () => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
-    // 1. Check if the date is valid within the month view
     const firstDayOfMonth = new Date(year, month, 1).getDay();
     const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
     const dayIndex = day + firstDayOfMonth - 1;
@@ -89,23 +107,17 @@ const CommeetPage: FunctionComponent = () => {
     if (dayIndex < firstDayOfMonth) return;
     if (day > totalDaysInMonth) return;
 
-    // --- NEW LOGIC START: Prevent past dates ---
-    
-    // Create a date object for the clicked day (set to midnight)
+    // --- Prevent past dates ---
     const clickedDate = new Date(year, month, day);
     clickedDate.setHours(0, 0, 0, 0);
 
-    // Create a date object for today (set to midnight)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // If clicked date is strictly less than today, do nothing.
     if (clickedDate < today) {
-      return; 
+      return;
     }
-    // --- NEW LOGIC END ---
 
-    // FIX: Do NOT use padStart. The render loop uses "2025-10-5", not "2025-10-05"
     const dateKey = `${year}-${month + 1}-${day}`;
 
     setSelectedDates((prevSelectedDates) => {
@@ -397,28 +409,35 @@ const CommeetPage: FunctionComponent = () => {
                         }
                       `}
                     >
-                      {/* Date Badge */}
-                      <div className="flex items-center gap-2">
+                      {/* Date Badge - Added fixed width (sm:w-32) for list view alignment */}
+                      <div
+                        className={`flex items-center gap-2 ${
+                          viewMode === "list" ? "sm:w-32 sm:shrink-0" : ""
+                        }`}
+                      >
                         <div className="p-1.5 bg-primary1/10 rounded-lg text-primary1 group-hover:bg-primary1 group-hover:text-white transition-colors duration-300 shrink-0">
                           <Calendar className="w-4 h-4" />
                         </div>
-                        <span className="font-raleway font-semibold text-gray-600 text-sm">
-                          {meeting.selectedDates[0]
-                            ? formatDateDisplay(meeting.selectedDates[0])
+                        <span className="font-raleway font-semibold text-gray-600 text-sm truncate">
+                          {meeting.selectedDates &&
+                          meeting.selectedDates.length > 0
+                            ? formatDateDisplay(
+                                [...meeting.selectedDates].sort()[0]
+                              )
                             : "TBD"}
                         </span>
                       </div>
 
-                      {/* Title */}
+                      {/* Title - Removed sm:px-2, added text-left, added trim() */}
                       <div
                         className={`${
                           viewMode === "list"
-                            ? "sm:flex-1 sm:px-2"
-                            : "min-h-[3rem]"
+                            ? "sm:flex-1 text-left"
+                            : "min-h-[3rem] text-left"
                         }`}
                       >
                         <h4 className="font-rubik font-bold text-base text-primary3 group-hover:text-primary1 transition-colors leading-tight">
-                          {meeting.title}
+                          {meeting.title.trim()}
                         </h4>
                       </div>
 

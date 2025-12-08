@@ -49,12 +49,30 @@ const CommeetPage: FunctionComponent = () => {
   const timeColWidth = "w-14 sm:w-24";
 
   // --- Helpers ---
+  const getLocalDateKey = (date: Date | null) => {
+    if (!date) return "";
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
   const visibleDates = (() => {
     if (!meeting) return [] as Date[];
-    const dates = meeting.selectedDates.slice(0, 3).map((d) => new Date(d));
-    return dates;
+    const allDates = meeting.selectedDates.map((d) => new Date(d));
+
+    // Find index of currentStartDate
+    if (!currentStartDate) return allDates.slice(0, 3);
+
+    const startIdx = allDates.findIndex(
+      (d) => getLocalDateKey(d) === getLocalDateKey(currentStartDate)
+    );
+
+    if (startIdx === -1) return allDates.slice(0, 3);
+    return allDates.slice(startIdx, startIdx + 3);
   })();
-  const formatDateKey = (date: Date) => date.toISOString().split("T")[0];
+
+  const formatDateKey = (date: Date) => getLocalDateKey(date);
 
   const formatMonthYear = (date: Date) => {
     return date.toLocaleDateString("en-US", {
@@ -74,8 +92,32 @@ const CommeetPage: FunctionComponent = () => {
   };
 
   // --- Handlers ---
-  const handlePrev = () => {};
-  const handleNext = () => {};
+  const handlePrev = () => {
+    if (!meeting || !currentStartDate) return;
+    const allDates = meeting.selectedDates.map((d) => new Date(d));
+    const idx = allDates.findIndex(
+      (d) =>
+        d.toISOString().split("T")[0] ===
+        currentStartDate.toISOString().split("T")[0]
+    );
+    if (idx > 0) {
+      setCurrentStartDate(allDates[Math.max(0, idx - 3)]);
+    }
+  };
+
+  const handleNext = () => {
+    if (!meeting || !currentStartDate) return;
+    const allDates = meeting.selectedDates.map((d) => new Date(d));
+    const idx = allDates.findIndex(
+      (d) =>
+        d.toISOString().split("T")[0] ===
+        currentStartDate.toISOString().split("T")[0]
+    );
+    if (idx + 3 < allDates.length) {
+      setCurrentStartDate(allDates[idx + 3]);
+    }
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const id = params.get("meetingId");
@@ -83,6 +125,7 @@ const CommeetPage: FunctionComponent = () => {
     setMeetingId(id);
     (async () => {
       const { getMeeting } = await import("../../services/meeting");
+      const { getMyAvailability } = await import("../../services/availability");
       const m = await getMeeting(id);
       setMeeting(m);
 
@@ -101,7 +144,18 @@ const CommeetPage: FunctionComponent = () => {
       setTimes(arr);
 
       // Set currentStartDate to first selected date
-      setCurrentStartDate(new Date(m.selectedDates[0]));
+      if (m.selectedDates.length > 0) {
+        setCurrentStartDate(new Date(m.selectedDates[0]));
+      }
+
+      // Load previously saved availability for current user
+      try {
+        const mine = await getMyAvailability(id);
+        setConfirmedSlots(mine.slots || []);
+      } catch (e) {
+        // If unauthenticated or no prior availability, leave as empty
+        setConfirmedSlots([]);
+      }
     })().catch(console.error);
   }, []);
 
@@ -119,8 +173,9 @@ const CommeetPage: FunctionComponent = () => {
     []
   );
 
-  const handleMouseDown = (key: string) => {
+  const handleMouseDown = (e: React.MouseEvent, key: string) => {
     if (!isEditing) return;
+    e.preventDefault(); // Prevents text selection
     setIsDragging(true);
     // Check against DRAFT slots while editing
     const isAlreadySelected = draftSlots.includes(key);
@@ -162,7 +217,13 @@ const CommeetPage: FunctionComponent = () => {
           "../../services/availability"
         );
         await saveMyAvailability(meetingId, draftSlots);
-        setConfirmedSlots([...draftSlots]);
+        // Read back from backend to ensure we mirror persisted state,
+        // including last-end slots and any server-side normalization.
+        const { getMyAvailability } = await import(
+          "../../services/availability"
+        );
+        const mine = await getMyAvailability(meetingId);
+        setConfirmedSlots(mine.slots || []);
         setIsEditing(false);
         setIsDragging(false);
       } catch (err) {
@@ -250,7 +311,6 @@ const CommeetPage: FunctionComponent = () => {
               <div className="shrink-0">
                 {!isEditing ? (
                   <button
-                    // Added sm:min-w-[11.5rem] to ensure same size for Add/Edit states
                     className="group p-2.5 sm:px-6 sm:py-2.5 bg-gradient-to-r from-primary3 to-primary1 rounded-xl font-rubik text-white font-bold text-sm shadow-md shadow-primary1/20 hover:shadow-lg hover:shadow-primary1/30 hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer sm:min-w-[11.5rem]"
                     onClick={onAddAvailabilityClick}
                   >
@@ -302,7 +362,7 @@ const CommeetPage: FunctionComponent = () => {
                 </div>
                 {meeting &&
                   meeting.selectedDates &&
-                  meeting.selectedDates.length >= 3 && (
+                  meeting.selectedDates.length > 3 && (
                     <div className="flex gap-2">
                       <button
                         onClick={handlePrev}
@@ -415,7 +475,9 @@ const CommeetPage: FunctionComponent = () => {
                             >
                               {/* Top Half (:00) */}
                               <div
-                                onMouseDown={() => handleMouseDown(fullKey1)}
+                                onMouseDown={(e) =>
+                                  handleMouseDown(e, fullKey1)
+                                }
                                 onMouseEnter={() => handleMouseEnter(fullKey1)}
                                 className={`h-1/2 w-full transition-colors duration-75 relative border-b border-gray-50 border-dashed
                                                                     ${
@@ -427,13 +489,15 @@ const CommeetPage: FunctionComponent = () => {
                                                                     }`}
                               >
                                 {isSlot1Selected && (
-                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]"></div>
+                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] pointer-events-none"></div>
                                 )}
                               </div>
 
                               {/* Bottom Half (:30) */}
                               <div
-                                onMouseDown={() => handleMouseDown(fullKey2)}
+                                onMouseDown={(e) =>
+                                  handleMouseDown(e, fullKey2)
+                                }
                                 onMouseEnter={() => handleMouseEnter(fullKey2)}
                                 className={`h-1/2 w-full transition-colors duration-75 relative
                                                                     ${
@@ -445,13 +509,13 @@ const CommeetPage: FunctionComponent = () => {
                                                                     }`}
                               >
                                 {isSlot2Selected && (
-                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]"></div>
+                                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-sky-500 shadow-[0_0_10px_rgba(14,165,233,0.5)] pointer-events-none"></div>
                                 )}
                               </div>
 
-                              {/* Closing Border for last item in column */}
+                              {/* Closing Border for last item in column - Added pointer-events-none to prevent blocking clicks */}
                               {timeIndex === times.length - 1 && (
-                                <div className="absolute bottom-0 left-0 right-0 border-b border-gray-100"></div>
+                                <div className="absolute bottom-0 left-0 right-0 border-b border-gray-100 pointer-events-none"></div>
                               )}
                             </div>
                           );

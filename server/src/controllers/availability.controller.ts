@@ -71,7 +71,17 @@ export const setMyAvailability = async (req: Request, res: Response) => {
       return;
     }
 
-    const allowedDates = new Set(meeting.selectedDates);
+    // Normalize allowed dates into padded YYYY-MM-DD to avoid UTC/local or padding mismatches
+    const padDateKey = (key: string): string => {
+      if (!key) return "";
+      const parts = key.split("-").map((p) => p.trim());
+      if (parts.length !== 3) return key;
+      const [y, m, d] = parts;
+      const mm = String(parseInt(m, 10)).padStart(2, "0");
+      const dd = String(parseInt(d, 10)).padStart(2, "0");
+      return `${y}-${mm}-${dd}`;
+    };
+    const allowedDates = new Set(meeting.selectedDates.map(padDateKey));
 
     const parseTime = (t: string): number => {
       const [hm, ap] = t.split(" ");
@@ -87,11 +97,15 @@ export const setMyAvailability = async (req: Request, res: Response) => {
     for (const s of slots) {
       const [dateStr, timeStr] = s.split("|");
       if (!dateStr || !timeStr) continue;
-      if (!allowedDates.has(dateStr)) continue;
+      const normalizedDate = padDateKey(dateStr);
+      if (!allowedDates.has(normalizedDate)) continue;
       const [th, tm] = timeStr.split(":").map((v) => parseInt(v, 10));
       if (Number.isNaN(th) || Number.isNaN(tm)) continue;
       const minutes = th * 60 + tm;
-      if (minutes < startMin || minutes > endMin) continue;
+      // Enforce end-time exclusivity: slot start must be < endMin
+      // Client chooses 30-min starts (:00 or :30). For an end at 17:00,
+      // the last valid start is 16:30. Any start at 17:00 or later is invalid.
+      if (minutes < startMin || minutes >= endMin) continue;
       validSlots.push(s);
     }
 
@@ -137,12 +151,10 @@ export const getAvailabilitySummary = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to summarize availability",
-        error: (error as Error).message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Failed to summarize availability",
+      error: (error as Error).message,
+    });
   }
 };

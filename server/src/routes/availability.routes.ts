@@ -9,9 +9,9 @@ import {
 
 const router = express.Router();
 
-// Meeting-level availability list
-router.get("/:meetingId", authenticate, getMeetingAvailability);
-router.get("/:meetingId/summary", authenticate, getAvailabilitySummary);
+// Meeting-level availability list (public read)
+router.get("/:meetingId", getMeetingAvailability);
+router.get("/:meetingId/summary", getAvailabilitySummary);
 
 // Current user availability for a meeting
 router.get("/:meetingId/me", authenticate, getMyAvailability);
