@@ -7,7 +7,7 @@ import Header from "../components/header";
 import Footer from "../components/footer";
 import EventCard from "./components/event-card";
 import Grid from "../components/grid";
-import { Home } from "lucide-react";
+import { Home, Sparkles } from "lucide-react"; // Import Sparkles
 import eventService from "../services/event";
 
 // Define a new type for our processed event
@@ -21,33 +21,44 @@ export default function EventsListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // --- 1. NEW STATE ---
+  const [editMode, setEditMode] = useState(false);
+  const toggleEdit = () => setEditMode((prev) => !prev);
+
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setIsLoading(true);
         const response = await eventService.getEvents({
           isPublished: true,
-          sort: '-eventDate',
+          sort: "-eventDate",
           limit: 100,
         });
 
         if (response.success && response.data) {
-          const raw = Array.isArray(response.data) ? (response.data as Array<Record<string, unknown>>) : [];
+          const raw = Array.isArray(response.data)
+            ? (response.data as Array<Record<string, unknown>>)
+            : [];
 
           const toImageUrl = (url: unknown): string => {
             if (!url) return "/placeholder.svg";
             if (typeof url !== "string") return "/placeholder.svg";
             if (url.startsWith("http")) return url;
-            const backendHost = (process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+            const backendHost = (
+              process.env.NEXT_PUBLIC_BACKEND_URL ||
+              process.env.NEXT_PUBLIC_API_URL ||
+              "http://localhost:5000"
+            ).replace(/\/+$/, "");
             if (url.startsWith("/")) return `${backendHost}${url}`;
             return url;
           };
 
-          // Transform backend data to match Event type
           const transformedEvents = raw.map((evt) => {
             const title = String(evt["title"] ?? "");
             const description = String(evt["description"] ?? "");
-            const date = String(evt["eventDate"] ?? evt["date"] ?? new Date().toISOString());
+            const date = String(
+              evt["eventDate"] ?? evt["date"] ?? new Date().toISOString()
+            );
             const endDate = evt["expiryDate"] ?? evt["endDate"] ?? undefined;
             const organizerRaw = evt["organizer"];
             const organizer =
@@ -55,21 +66,34 @@ export default function EventsListPage() {
                 ? { name: organizerRaw, avatarImageUrl: "/icpep logo.png" }
                 : (organizerRaw as Record<string, unknown> | undefined)
                 ? {
-                    name: String((organizerRaw as Record<string, unknown>)['name'] ?? ''),
-                    avatarImageUrl: String((organizerRaw as Record<string, unknown>)['avatarImageUrl'] ?? '/icpep logo.png'),
+                    name: String(
+                      (organizerRaw as Record<string, unknown>)["name"] ?? ""
+                    ),
+                    avatarImageUrl: String(
+                      (organizerRaw as Record<string, unknown>)[
+                        "avatarImageUrl"
+                      ] ?? "/icpep logo.png"
+                    ),
                   }
                 : { name: "", avatarImageUrl: "/icpep logo.png" };
 
-            const tags = Array.isArray(evt["tags"]) ? (evt["tags"] as unknown[]).map((t) => String(t)) : [];
+            const tags = Array.isArray(evt["tags"])
+              ? (evt["tags"] as unknown[]).map((t) => String(t))
+              : [];
 
-            const normalizeDetails = (d: unknown): { title: string; items: string[] }[] => {
+            const normalizeDetails = (
+              d: unknown
+            ): { title: string; items: string[] }[] => {
               if (Array.isArray(d)) {
                 return (d as Array<Record<string, unknown>>).map((item) => ({
                   title: String(item.title ?? ""),
                   items: Array.isArray(item.items)
                     ? (item.items as unknown[]).map((it) => String(it))
                     : typeof item.items === "string"
-                    ? String(item.items).split('\n').map((s) => s.trim()).filter(Boolean)
+                    ? String(item.items)
+                        .split("\n")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
                     : [],
                 }));
               }
@@ -84,11 +108,10 @@ export default function EventsListPage() {
             };
 
             const details = normalizeDetails(evt["details"]);
-
             const modeValue = String(evt["mode"] ?? "").toLowerCase();
             const mode = modeValue === "online" ? "Online" : "Onsite";
-
-            const banner = evt["bannerImageUrl"] ?? evt["coverImage"] ?? evt["image"];
+            const banner =
+              evt["bannerImageUrl"] ?? evt["coverImage"] ?? evt["image"];
 
             const transformed: Event = {
               id: String(evt["_id"] ?? evt["id"] ?? ""),
@@ -147,15 +170,13 @@ export default function EventsListPage() {
     if (statusOrder[a.status] !== statusOrder[b.status]) {
       return statusOrder[a.status] - statusOrder[b.status];
     }
-
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
-
     return a.status === "Upcoming" ? dateA - dateB : dateB - dateA;
   });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden select-none">
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
@@ -167,7 +188,7 @@ export default function EventsListPage() {
               className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
                          rounded-full border-2 border-primary1 text-primary1 
                          overflow-hidden transition-all duration-300 ease-in-out 
-                         active:scale-95 before:absolute before:inset-0 
+                         active:scale-95 hover:shadow-md before:absolute before:inset-0 
                          before:bg-gradient-to-r before:from-transparent 
                          before:via-white/40 before:to-transparent 
                          before:translate-x-[-100%] hover:before:translate-x-[100%] 
@@ -177,7 +198,9 @@ export default function EventsListPage() {
             </button>
           </div>
 
-          <div className="mb-16 text-center">
+          {/* Header Section with Toggle */}
+          <div className="mb-16 text-center relative">
+            {/* --- 2. THE PARTY MODE BUTTON --- */}
             <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
               <div className="h-2 w-2 rounded-full bg-primary1"></div>
               <span className="font-raleway text-sm font-semibold text-primary1">
@@ -194,7 +217,6 @@ export default function EventsListPage() {
           </div>
 
           {isLoading ? (
-            // Render a grid of skeleton cards to improve perceived performance
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div
@@ -224,8 +246,14 @@ export default function EventsListPage() {
             </div>
           ) : sortedEvents.length > 0 ? (
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
-              {sortedEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
+              {sortedEvents.map((event, index) => (
+                // --- 3. PASS PROPS TO CARD ---
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  edit={editMode}
+                  index={index}
+                />
               ))}
             </div>
           ) : (
@@ -235,6 +263,24 @@ export default function EventsListPage() {
               </p>
             </div>
           )}
+          <div className="w-full flex justify-end mt-8">
+            <button
+              onClick={toggleEdit}
+              className={`mt-10 group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-rubik font-semibold transition-all duration-300 ${
+                editMode
+                  ? "bg-primary1 text-white shadow-lg shadow-primary1/30 scale-105"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              <Sparkles
+                size={18}
+                className={`transition-transform duration-300 ${
+                  editMode ? "animate-spin-slowmo" : ""
+                }`}
+              />
+              <span>{editMode ? "Edit Mode: ON" : "Activate Edit"}</span>
+            </button>
+          </div>
         </main>
         <Footer />
       </div>
