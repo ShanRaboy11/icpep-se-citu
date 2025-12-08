@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Plus, X, Save, Search, Edit2, Trash2 } from 'lucide-react';
 
-// Define the shape of your FAQ object
+// 1. Interface for Type Safety
 interface FAQ {
   id: number;
   question: string;
@@ -12,6 +12,7 @@ interface FAQ {
 }
 
 export default function FAQPage() {
+  // 2. State Management
   const [faqs, setFaqs] = useState<FAQ[]>([
     {
       id: 1,
@@ -38,15 +39,16 @@ export default function FAQPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
   const [editingFaq, setEditingFaq] = useState<FAQ | null>(null);
   const [formData, setFormData] = useState({ question: '', answer: '' });
 
+  // Filter Logic
   const filteredFaqs = faqs.filter(faq => 
     faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
     faq.answer.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Handlers
   const toggleFAQ = (id: number) => {
     setExpandedId(expandedId === id ? null : id);
   };
@@ -145,29 +147,29 @@ export default function FAQPage() {
           </div>
         </div>
 
-        {/* Right Accordion Block - INTEGRATED STYLE */}
-        <div className="w-full md:w-6/12 min-h-[340px]">
-          {filteredFaqs.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-3xl bg-white/50">
-              <p className="text-gray-500 font-medium">No questions found.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredFaqs.map((faq) => {
+        {/* Right Accordion Block - Integrated EXACT Style */}
+        <div className="w-full md:w-1/2 min-h-[340px]">
+          <div className="space-y-4">
+            {filteredFaqs.length === 0 ? (
+               <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-3xl bg-white/50">
+                  <p className="font-raleway text-bodytext font-medium">No questions found.</p>
+               </div>
+            ) : (
+              filteredFaqs.map((faq) => {
                 const isOpen = expandedId === faq.id;
                 
                 return (
                   <div
                     key={faq.id}
-                    className="border-b border-gray-300/80 pb-4 cursor-pointer group"
+                    className="border-b border-gray-300/80 pb-4 cursor-pointer"
                     onClick={() => toggleFAQ(faq.id)}
                   >
                     <div className="flex justify-between items-center">
-                      <h3 className={`font-rubik text-xl font-semibold transition-colors ${isOpen ? 'text-blue-600' : 'text-slate-800'}`}>
+                      <h3 className="font-rubik text-primary3 text-xl font-semibold">
                         {faq.question}
                       </h3>
                       <span
-                        className={`text-2xl font-bold text-blue-600 transition-transform duration-300 ease-in-out ${
+                        className={`text-2xl font-bold text-primary1 transition-transform duration-300 ease-in-out ${
                           isOpen ? "rotate-45" : "rotate-0"
                         }`}
                       >
@@ -180,40 +182,40 @@ export default function FAQPage() {
                       }`}
                     >
                       <div className="overflow-hidden">
-                        <p className="font-raleway text-slate-600 text-sm md:text-base leading-relaxed pt-3">
+                        <p className="font-raleway text-bodytext text-sm md:text-base leading-relaxed pt-3">
                           {faq.answer}
                         </p>
 
-                        {/* Edit/Delete Buttons - Kept functional inside the styled block */}
+                        {/* Functional Buttons (Preserved inside the style) */}
                         <div className="flex gap-3 mt-4 mb-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openModal(faq);
-                              }}
-                              className="flex items-center gap-1.5 text-xs uppercase tracking-wider font-bold text-slate-500 hover:text-blue-600 transition-colors px-3 py-1.5 bg-slate-100 hover:bg-blue-50 rounded-lg"
-                            >
-                              <Edit2 size={14} />
-                              Edit
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteFaq(faq.id);
-                              }}
-                              className="flex items-center gap-1.5 text-xs uppercase tracking-wider font-bold text-slate-500 hover:text-red-600 transition-colors px-3 py-1.5 bg-slate-100 hover:bg-red-50 rounded-lg"
-                            >
-                              <Trash2 size={14} />
-                              Delete
-                            </button>
-                          </div>
+                           <button
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               openModal(faq);
+                             }}
+                             className="flex items-center gap-1.5 text-xs uppercase tracking-wider font-bold text-bodytext hover:text-primary1 transition-colors px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                           >
+                             <Edit2 size={14} />
+                             Edit
+                           </button>
+                           <button
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               deleteFaq(faq.id);
+                             }}
+                             className="flex items-center gap-1.5 text-xs uppercase tracking-wider font-bold text-bodytext hover:text-red-600 transition-colors px-3 py-1.5 bg-gray-100 hover:bg-red-50 rounded-lg"
+                           >
+                             <Trash2 size={14} />
+                             Delete
+                           </button>
+                         </div>
                       </div>
                     </div>
                   </div>
                 );
-              })}
-            </div>
-          )}
+              })
+            )}
+          </div>
         </div>
       </div>
 
