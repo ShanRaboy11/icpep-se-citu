@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnnouncementCard } from "./components/announcement-card";
 import Header from "../components/header";
 import Footer from "../components/footer";
-import { Home, Sparkles } from "lucide-react"; // Import Sparkles
+import { Home } from "lucide-react";
 import Grid from "../components/grid";
 import announcementService from "../services/announcement";
 
@@ -33,10 +33,6 @@ export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // --- 1. NEW STATE: Edit Mode ---
-  const [editMode, setEditMode] = useState(false);
-  const toggleEdit = () => setEditMode((prev) => !prev);
 
   // Fetch announcements from the database
   useEffect(() => {
@@ -81,10 +77,7 @@ export default function AnnouncementsPage() {
       const dbType = typeMap[activeTab] || activeTab;
       return announcement.type.toLowerCase() === dbType.toLowerCase();
     })
-    .sort(
-      (a, b) =>
-        new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()
-    );
+    .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
 
   const handleAnnouncementClick = (announcement: Announcement) => {
     // Navigate to the detail page using the database ID
@@ -98,7 +91,7 @@ export default function AnnouncementsPage() {
   const tabs = ["All", "News", "Meeting", "Achievement"];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden select-none">
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
@@ -112,7 +105,7 @@ export default function AnnouncementsPage() {
               className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
                          rounded-full border-2 border-primary1 text-primary1 
                          overflow-hidden transition-all duration-300 ease-in-out 
-                         active:scale-95 hover:shadow-md  before:absolute before:inset-0 
+                         active:scale-95 before:absolute before:inset-0 
                          before:bg-gradient-to-r before:from-transparent 
                          before:via-white/40 before:to-transparent 
                          before:translate-x-[-100%] hover:before:translate-x-[100%] 
@@ -122,8 +115,8 @@ export default function AnnouncementsPage() {
             </button>
           </div>
 
-          {/* Title Section with Toggle */}
-          <div className="mb-16 text-center relative">
+          {/* Title Section */}
+          <div className="mb-16 text-center">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
               <div className="h-2 w-2 rounded-full bg-primary1"></div>
               <span className="font-raleway text-sm font-semibold text-primary1">
@@ -163,7 +156,7 @@ export default function AnnouncementsPage() {
             </div>
           </div>
 
-          {/* Loading State */}
+          {/* Loading State - skeletons that match AnnouncementCard layout */}
           {loading && (
             <div className="space-y-12">
               {Array.from({ length: 6 }).map((_, idx) => (
@@ -213,22 +206,17 @@ export default function AnnouncementsPage() {
             <div className="pb-14">
               {filteredAnnouncements.length > 0 ? (
                 <div className="space-y-12">
-                  {filteredAnnouncements.map((announcement, index) => (
-                    // --- 3. PASS PROPS ---
+                  {filteredAnnouncements.map((announcement) => (
                     <AnnouncementCard
                       key={announcement._id}
                       id={announcement._id}
                       title={announcement.title}
                       description={announcement.description}
                       content={announcement.content}
-                      type={
-                        announcement.type as "News" | "Meeting" | "Achievement"
-                      }
+                      type={announcement.type as "News" | "Meeting" | "Achievement"}
                       imageUrl={announcement.imageUrl || undefined}
                       date={announcement.publishDate}
                       onClick={() => handleAnnouncementClick(announcement)}
-                      edit={editMode} // Pass edit state
-                      index={index} // Pass index for stagger
                     />
                   ))}
                 </div>
@@ -243,24 +231,6 @@ export default function AnnouncementsPage() {
               )}
             </div>
           )}
-          <div className="w-full flex justify-end mt-8">
-            <button
-              onClick={toggleEdit}
-              className={`mt-10 group relative inline-flex items-center gap-2 px-6 py-2.5 rounded-full font-rubik font-semibold transition-all duration-300 ${
-                editMode
-                  ? "bg-primary1 text-white shadow-lg shadow-primary1/30 scale-105"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              <Sparkles
-                size={18}
-                className={`transition-transform duration-300 ${
-                  editMode ? "animate-spin-slowmo" : ""
-                }`}
-              />
-              <span>{editMode ? "Edit Mode: ON" : "Activate Edit"}</span>
-            </button>
-          </div>
         </main>
         <Footer />
       </div>
