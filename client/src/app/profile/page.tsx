@@ -1,40 +1,33 @@
 "use client";
 
 import Image from "next/image";
-import { Shield, Award, Users, X } from "lucide-react";
+import { Shield, Award, Users, X, Edit3 } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
-import Button from "../components/button";
 import { createPortal } from "react-dom";
-import {PersonalInformation} from "./components/personalinfo";
-import {RolenMembershipInformation} from "./components/rolenmembership";
-import SecuritySection from "./components/password";
+import Button from "../components/button";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import Grid from "../components/grid";
 import userService, { CurrentUser } from "../services/user";
+
+// Components
+import { PersonalInformation } from "./components/personal-information";
+import { RolenMembershipInformation } from "./components/role-membership";
+import SecuritySection from "./components/password";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Format year level
+  // --- Formatters ---
   const formatYearLevel = (value: string | number | undefined | null) => {
     if (value === undefined || value === null || value === "") return "";
     const n = typeof value === "number" ? value : parseInt(String(value), 10);
     if (Number.isNaN(n)) return String(value);
-    const mod100 = n % 100;
-    const suffix =
-      mod100 >= 11 && mod100 <= 13
-        ? "th"
-        : n % 10 === 1
-        ? "st"
-        : n % 10 === 2
-        ? "nd"
-        : n % 10 === 3
-        ? "rd"
-        : "th";
-    return `${n}${suffix} Year`;
+
+    // Returns "BSCpE [Number]" format
+    return `BSCpE ${n}`;
   };
 
   const getInitials = (u?: CurrentUser | null) => {
@@ -44,13 +37,25 @@ export default function ProfilePage() {
     if (first || last) {
       const a = first ? first.charAt(0) : "";
       const b = last ? last.charAt(0) : first.length > 1 ? first.charAt(1) : "";
-      const initials = `${a}${b}`.toUpperCase();
-      return initials || "U";
+      return `${a}${b}`.toUpperCase() || "U";
     }
     if (u.email) return u.email.charAt(0).toUpperCase();
     return "U";
   };
 
+  const normalizeMembership = (
+    u?: CurrentUser | null
+  ): "both" | "local" | "regional" => {
+    const raw =
+      u?.membership ??
+      (u &&
+        (u as unknown as { membershipStatus?: { membershipType?: string } })
+          ?.membershipStatus?.membershipType);
+    if (raw === "local" || raw === "regional" || raw === "both") return raw;
+    return "both";
+  };
+
+  // --- Data Loading ---
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -68,25 +73,10 @@ export default function ProfilePage() {
         setLoading(false);
       }
     };
-
     load();
   }, []);
 
-  const normalizeMembership = (
-    u?: CurrentUser | null
-  ): "both" | "local" | "regional" => {
-    const raw =
-      u?.membership ??
-      (u &&
-        (u as unknown as { membershipStatus?: { membershipType?: string } })
-          ?.membershipStatus?.membershipType);
-    if (raw === "local" || raw === "regional" || raw === "both") return raw;
-    return "both";
-  };
-
-  // (removed unused avatarSrc helper)
-
-  // Edit modal state
+  // --- Edit Modal State ---
   const [editOpen, setEditOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -98,7 +88,8 @@ export default function ProfilePage() {
     email: "",
     yearLevel: "",
   });
-  const firstFieldRef = useRef<HTMLInputElement | null>(null);
+  // Changed ref to point to Email since names are now disabled
+  const emailFieldRef = useRef<HTMLInputElement | null>(null);
 
   const openEdit = () => {
     setEditError(null);
@@ -111,7 +102,7 @@ export default function ProfilePage() {
       yearLevel: user?.yearLevel ? String(user.yearLevel) : "",
     });
     setEditOpen(true);
-    setTimeout(() => firstFieldRef.current?.focus(), 0);
+    setTimeout(() => emailFieldRef.current?.focus(), 0);
   };
 
   const closeEdit = () => setEditOpen(false);
@@ -120,12 +111,14 @@ export default function ProfilePage() {
     e.preventDefault();
     setEditError(null);
     if (!user?.id) return setEditError("No user id");
+    // Names are disabled but we still check if they exist in state
     if (!form.firstName || !form.lastName)
       return setEditError("First and last name are required");
-    /* password change removed from the edit modal */
+
     try {
       setEditLoading(true);
       const payload: Partial<CurrentUser> = {
+        // Names are disabled for editing
         firstName: form.firstName,
         lastName: form.lastName,
         studentNumber: form.studentNumber || undefined,
@@ -136,7 +129,7 @@ export default function ProfilePage() {
             : Number(form.yearLevel)
           : undefined,
       };
-      /* password removed from payload */
+
       const res = await userService.updateUser(user.id, payload);
       if (res && res.success && res.data) {
         setUser(res.data);
@@ -149,513 +142,335 @@ export default function ProfilePage() {
         setEditError(res.message || "Failed to update");
       }
     } catch (err: unknown) {
-      if (err instanceof Error) setEditError(err.message || "Failed to update");
-      else setEditError(String(err) || "Failed to update");
+      setEditError(err instanceof Error ? err.message : String(err));
     } finally {
       setEditLoading(false);
     }
   };
 
+  const pillText = "COMPanion Information";
+  const title = "Profile Overview";
+  const subtitle =
+    "View your details and membership credentials within the ICpEP SE CIT-U Chapter.";
+
   return (
-    <section className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 flex flex-col relative">
-      {/* 
-         PRECISE "DOT + TAIL" ANIMATION STYLES
-      */}
+    <section className="min-h-screen bg-slate-50 flex flex-col relative overflow-x-hidden">
+      {/* Background Decor */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-100/40 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-cyan-100/40 rounded-full blur-[120px]" />
+      </div>
+
       <style jsx global>{`
-        @keyframes circuit-rotate {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        .animate-circuit {
-          animation: circuit-rotate 4s linear infinite;
-        }
-
-        .bg-dot-snake {
-          /* 
-             Gradient Construction to Simulate a "Dot" Head:
-             0deg - 320deg: Transparent (Empty Track)
-             320deg - 350deg: Deep Blue -> Cyan (The Tail)
-             350deg - 360deg: PURE WHITE (The "Dot" Head)
-             
-             The abrupt contrast between transparency and the color stops creates the "Snake" look.
-          */
-          background: conic-gradient(
-            from 0deg,
-            transparent 0deg,
-            transparent 300deg,
-            #0066ff 320deg,
-            /* Blue Tail Start */ #00e5ff 350deg,
-            /* Cyan Body End */ #ffffff 350.1deg,
-            /* Sharp start of White Head */ #ffffff 360deg /* White Head End */
-          );
-        }
         @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
+          0% {
+            background-position: -200% 0;
+          }
+          100% {
+            background-position: 200% 0;
+          }
+        }
+        .noise-bg {
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
         }
       `}</style>
 
       <Grid />
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
-        <main aria-busy={loading} className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
-          {/* Title Section */}
-          <div className="mb-12 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary1/10 to-primary1/5 px-4 py-1.5 mb-4 border border-primary1/20">
-              <div className="h-2 w-2 rounded-full bg-primary1 animate-pulse"></div>
+        {/* FIX: Wrapped Header in high z-index to stay above content */}
+        <div className="relative z-[100]">
+          <Header />
+        </div>
+
+        {/* FIX: Added relative z-0 to main to enforce stacking order below header */}
+        <main
+          aria-busy={loading}
+          className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 relative z-0"
+        >
+          {/* --- Page Title --- */}
+          <div className="mb-16 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+              <div className="h-2 w-2 rounded-full bg-primary1"></div>
               <span className="font-raleway text-sm font-semibold text-primary1">
-                COMPanion Information
+                {pillText}
               </span>
             </div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary3 to-primary1 bg-clip-text text-transparent leading-tight mb-4">
-              Profile Overview
+
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+              {title}
             </h1>
-            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-              View your details and membership credentials within the ICpEP SE
-              CIT-U Chapter.
+
+            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
+              {subtitle}
             </p>
           </div>
 
-          {/* Profile Card */}
-          <div className="relative mb-8 rounded-3xl overflow-hidden shadow-2xl translate-z-0 profile-snake-wrapper transform-gpu transition-transform duration-300 ease-out hover:scale-105">
-            {/* SVG Neon Snake Circuit Overlay */}
-            <svg
-              className="circuit-outline neon-snake-svg"
-              viewBox="0 0 1200 380"
-              preserveAspectRatio="none"
-              aria-hidden
-            >
-              <defs>
-                <linearGradient
-                  id="snakeGradient"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
-                  <stop offset="0%" stopColor="#00e5ff" />
-                  <stop offset="40%" stopColor="#00baff" />
-                  <stop offset="70%" stopColor="#0066ff" />
-                  <stop offset="100%" stopColor="#00a8ff" />
-                </linearGradient>
+          {/* --- Hero Profile Card (RESIZED & SCALED DOWN) --- */}
+          <div className="relative mb-8 rounded-[2rem] overflow-hidden shadow-2xl shadow-blue-900/10 group transition-all duration-500 hover:shadow-3xl hover:translate-y-[-2px]">
+            {/* Card Background & Noise */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0066CC] via-[#0088EE] to-[#00A8FF]">
+              <div className="absolute inset-0 noise-bg mix-blend-overlay opacity-20"></div>
+            </div>
 
-                <linearGradient
-                  id="headGradient"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-                  <stop offset="60%" stopColor="#bff8ff" stopOpacity="0.95" />
-                  <stop offset="100%" stopColor="#00e5ff" stopOpacity="0.85" />
-                </linearGradient>
+            {/* Internal Decorations */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
+            <div className="absolute bottom-0 left-0 w-56 h-56 bg-white/10 rounded-full blur-3xl pointer-events-none translate-y-1/2 -translate-x-1/3"></div>
 
-                {/* Tail gradient for the second moving object: opacity increases along the tail */}
-                <linearGradient
-                  id="tailGradient2"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop offset="0%" stopColor="#00e5ff" stopOpacity="0" />
-                  <stop offset="25%" stopColor="#00d8ff" stopOpacity="0.18" />
-                  <stop offset="50%" stopColor="#00baff" stopOpacity="0.45" />
-                  <stop offset="80%" stopColor="#008cff" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="#0066ff" stopOpacity="1" />
-                </linearGradient>
+            {/* Content Container - REDUCED PADDING */}
+            <div className="relative p-6 sm:p-8 lg:pl-16 lg:pr-8 flex flex-col sm:flex-row items-center gap-6 sm:gap-10 lg:gap-12 text-white z-10">
+              {/* Profile Image / Initials Section */}
+              <div className="relative flex-shrink-0">
+                {/* Glow Layers */}
+                <div className="absolute -inset-6 rounded-full bg-cyan-400/30 blur-2xl animate-pulse"></div>
+                <div className="absolute -inset-1 rounded-full bg-gradient-to-tr from-cyan-300 to-white/50 blur-md opacity-70"></div>
 
-                <filter
-                  id="neonBlur"
-                  x="-50%"
-                  y="-50%"
-                  width="200%"
-                  height="200%"
-                >
-                  <feGaussianBlur stdDeviation="6" result="coloredBlur" />
-                  <feMerge>
-                    <feMergeNode in="coloredBlur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-
-              {/* First snake (phase start) */}
-              <rect
-                x="0"
-                y="0"
-                width="1200"
-                height="380"
-                rx="22"
-                className="neon-tail-2 snake-1"
-                stroke="url(#tailGradient2)"
-              />
-              <rect
-                x="0"
-                y="0"
-                width="1200"
-                height="380"
-                rx="22"
-                className="neon-snake-head snake-1"
-                stroke="url(#headGradient)"
-              />
-
-              {/* Second snake (1/3-cycle phase offset) */}
-              <rect
-                x="0"
-                y="0"
-                width="1200"
-                height="380"
-                rx="22"
-                className="neon-tail-2 snake-2"
-                stroke="url(#tailGradient2)"
-              />
-              <rect
-                x="0"
-                y="0"
-                width="1200"
-                height="380"
-                rx="22"
-                className="neon-snake-head snake-2"
-                stroke="url(#headGradient)"
-              />
-
-              {/* Third snake (2/3-cycle phase offset) */}
-              <rect
-                x="0"
-                y="0"
-                width="1200"
-                height="380"
-                rx="22"
-                className="neon-tail-2 snake-3"
-                stroke="url(#tailGradient2)"
-              />
-              <rect
-                x="0"
-                y="0"
-                width="1200"
-                height="380"
-                rx="22"
-                className="neon-snake-head snake-3"
-                stroke="url(#headGradient)"
-              />
-            </svg>
-
-            {/* Inner Card Content - Sits on top, masking the center */}
-            <div className="relative h-full w-full bg-gradient-to-br from-[#00A8FF] via-[#0095E8] to-[#0082D1] rounded-[22px] p-8 sm:p-10 flex flex-col sm:flex-row items-center gap-6 sm:gap-10 text-white overflow-hidden z-10 profile-card-content">
-              {/* Internal Decorations */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl animate-float pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full blur-3xl animate-float-delayed pointer-events-none"></div>
-
-              <div className="relative z-10 animate-scale-in group">
-                {/* Unified white glow matching the snake (replaces the thin outline) */}
-                <div className="absolute inset-0 rounded-full opacity-80 group-hover:opacity-100 transition-opacity duration-500 blur-3xl pointer-events-none z-10">
-                  <div
-                    className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-200/40 via-white/90 to-cyan-200/40 animate-spin"
-                    style={{ animationDuration: "3s" }}
-                  />
-                </div>
-
-                {/* Profile Image */}
-                <div className="relative lg:ml-8 z-10 animate-scale-in group">
-                  {/* Animated glow that matches the snake - Made MORE prominent */}
-                  <div className="absolute inset-0 -m-4 rounded-full opacity-80 group-hover:opacity-100 transition-opacity duration-500">
-                    <div
-                      className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-400 animate-spin blur-2xl"
-                      style={{ animationDuration: "3s" }}
-                    ></div>
-                  </div>
-                  <div className="absolute inset-0 -m-2 rounded-full opacity-90 group-hover:opacity-100 transition-opacity duration-500">
-                    <div
-                      className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-300 via-blue-400 to-cyan-300 animate-spin blur-lg"
-                      style={{ animationDuration: "3s" }}
-                    ></div>
-                  </div>
-
-                  <div className="relative w-44 h-44 rounded-full bg-gradient-to-br from-white/30 to-white/10 p-1.5 backdrop-blur-xl shadow-2xl transition-all duration-300 group-hover:scale-105">
-                    <div className="w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden shadow-inner border-4 border-white relative">
-                      {loading ? (
-                          <div className="w-full h-full rounded-full relative overflow-hidden" aria-hidden>
-                            <div
-                              className="absolute inset-0 rounded-full"
-                              style={{
-                                background:
-                                  'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
-                                backgroundSize: '200% 100%',
-                                animation: 'shimmer 1.6s linear infinite',
-                              }}
-                            />
-                            {/* small role-badge shimmer on avatar */}
-                            <div
-                              className="absolute right-3 bottom-3 w-8 h-8 rounded-full ring-2 ring-white/30"
-                              aria-hidden
-                              style={{
-                                background:
-                                  'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
-                                backgroundSize: '200% 100%',
-                                animation: 'shimmer 1.6s linear infinite',
-                              }}
-                            />
-                          </div>
-                      ) : (
-                        <div
-                          className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary3 via-primary1 to-primary3 text-white text-5xl font-bold relative overflow-hidden"
-                          aria-label={`${user?.firstName ?? ""} ${
-                            user?.lastName ?? ""
-                          }`.trim()}
-                        >
-                          {/* Subtle shine effect on hover */}
-                          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-
-                          {/* Initials with enhanced shadow */}
-                          <span className="relative z-10 drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]">
-                            {getInitials(user)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                {/* Avatar Container - REDUCED SIZE */}
+                <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full p-1.5 bg-gradient-to-b from-white/40 to-white/10 backdrop-blur-md shadow-2xl">
+                  <div className="w-full h-full rounded-full bg-white/95 flex items-center justify-center overflow-hidden border-[3px] border-white/90 relative shadow-inner">
+                    {loading ? (
+                      <div className="w-full h-full rounded-full bg-gray-100 animate-pulse" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary3 via-[#0055AA] to-primary3 text-white text-4xl sm:text-5xl font-rubik font-bold relative group-hover:scale-105 transition-transform duration-500">
+                        {/* Inner shine */}
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-40"></div>
+                        <span className="relative z-10 drop-shadow-lg">
+                          {getInitials(user)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* User Info */}
-              <div className="text-center sm:text-left relative z-10 flex-grow animate-slide-in-right">
-                <h2 className="text-4xl font-bold font-rubik mb-2 drop-shadow-md">
+              {/* Text Info */}
+              <div className="text-center sm:text-left flex-grow flex flex-col justify-center">
+                {/* NAME - REDUCED SIZE */}
+                <h2 className="text-3xl sm:text-5xl font-bold font-rubik mb-2 drop-shadow-sm tracking-tight leading-tight">
                   {loading ? (
-                    <span
-                      className="inline-block h-10 w-72 rounded-lg"
-                      aria-hidden
-                      style={{
-                        background:
-                          'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
-                        backgroundSize: '200% 100%',
-                        animation: 'shimmer 1.6s linear infinite',
-                      }}
-                    />
+                    <div className="h-10 w-56 bg-white/20 rounded-xl animate-pulse mx-auto sm:mx-0" />
                   ) : (
                     `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() ||
                     "Unknown"
                   )}
                 </h2>
-                <p className="text-xl opacity-90 font-rubik mb-4 drop-shadow font-light tracking-wide">
-                  {loading ? (
-                    <span
-                      className="inline-block h-6 w-32 rounded-lg"
-                      aria-hidden
-                      style={{
-                        background:
-                          'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)',
-                        backgroundSize: '200% 100%',
-                        animation: 'shimmer 1.6s linear infinite',
-                      }}
-                    />
-                  ) : (
-                    formatYearLevel(user?.yearLevel)
-                  )}
-                </p>
 
-                {/* Role Badge */}
-                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                  {loading ? (
-                    <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-semibold border border-white/20 shadow-inner">
-                      <div aria-hidden className="w-4 h-4 rounded-full" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s linear infinite' }} />
-                      <div aria-hidden className="h-4 w-28 rounded-lg" style={{ background: 'linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.04) 100%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s linear infinite' }} />
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full text-sm font-semibold border border-white/20 shadow-inner">
-                      <Users className="w-4 h-4 text-cyan-200" />
-                      <span className="tracking-wide text-white">
-                        {(() => {
-                          const roleLabelMap: Record<string, string> = {
-                            student: "Student",
-                            "council-officer": "Council Officer",
-                            "committee-officer": "Committee Officer",
-                            faculty: "Faculty",
-                          };
-                          return user?.role
-                            ? roleLabelMap[user.role as string] ?? user.role
-                            : "Student";
-                        })()}
-                      </span>
-                    </div>
+                {/* ROW: Year Level + Role Badge */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-4 mt-1">
+                  {/* YEAR LEVEL - ADJUSTED SIZE */}
+                  <p className="text-base sm:text-lg font-raleway font-semibold text-cyan-50 tracking-wide drop-shadow-md">
+                    {loading ? (
+                      <div className="h-5 w-24 bg-white/20 rounded-lg animate-pulse" />
+                    ) : (
+                      formatYearLevel(user?.yearLevel)
+                    )}
+                  </p>
+
+                  {/* SEPARATOR */}
+                  {!loading && (
+                    <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-cyan-200"></span>
                   )}
+
+                  {/* ROLE BADGE */}
+                  <div>
+                    {loading ? (
+                      <div className="h-7 w-28 bg-white/20 rounded-full animate-pulse" />
+                    ) : (
+                      <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-gradient-to-r from-cyan-400/20 to-blue-400/20 border border-cyan-200/40 backdrop-blur-md group-hover:bg-white/10 transition-colors">
+                        <Users className="w-3.5 h-3.5 text-cyan-200" />
+                        <span className="font-rubik text-xs font-bold tracking-widest text-white uppercase">
+                          {(() => {
+                            const roleLabelMap: Record<string, string> = {
+                              student: "Student",
+                              "council-officer": "Council Officer",
+                              "committee-officer": "Committee Officer",
+                              faculty: "Faculty",
+                            };
+                            return user?.role
+                              ? roleLabelMap[user.role as string] ?? user.role
+                              : "Student";
+                          })()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Logo watermark */}
-              <div className="absolute right-[-5%] top-1/2 transform -translate-y-1/2 w-[80%] mt-28 mr-5 left-90 h-[180%] opacity-[0.10] pointer-events-none z-0 hidden sm:block mix-blend-overlay">
+              {/* Watermark Logo - REDUCED SIZE */}
+              <div className="absolute right-[-30px] top-1/2 -translate-y-1/2 w-[300px] h-[300px] opacity-[0.08] pointer-events-none hidden lg:block mix-blend-overlay">
                 <Image
                   src="/icpep logo.png"
-                  alt="ICpEP-SE Logo"
+                  alt="Logo"
                   fill
-                  className="object-contain object-right"
-                  sizes="(max-width: 768px) 150px, 300px"
+                  className="object-contain"
                 />
               </div>
             </div>
           </div>
 
-          {/* Information Cards */}
-          <div className="w-full flex flex-col gap-6 mb-8">
-            <div className="transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg">
-              <PersonalInformation
-                fullName={
-                  loading
-                    ? "Loading..."
-                    : user
-                    ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
-                    : "Unknown"
-                }
-                idNumber={loading ? "—" : user?.studentNumber ?? "—"}
-                yearLevel={loading ? "—" : user?.yearLevel ?? "—"}
-                email={loading ? "—" : user?.email ?? "—"}
-                loading={loading}
-              />
+          {/* --- Content Sections (Grid Layout) --- */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 items-start">
+            {/* Left Column (Personal & Role) */}
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              <div className="transform transition-all duration-300 hover:translate-y-[-2px]">
+                <PersonalInformation
+                  fullName={
+                    loading
+                      ? ""
+                      : user
+                      ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
+                      : "Unknown"
+                  }
+                  idNumber={loading ? "" : user?.studentNumber ?? "—"}
+                  yearLevel={loading ? "" : user?.yearLevel ?? "—"}
+                  email={loading ? "" : user?.email ?? "—"}
+                  loading={loading}
+                />
+              </div>
+
+              <div className="transform transition-all duration-300 hover:translate-y-[-2px]">
+                <RolenMembershipInformation
+                  role={loading ? undefined : user?.role}
+                  councilRole={loading ? undefined : user?.councilRole}
+                  committeeRole={loading ? undefined : user?.committeeRole}
+                  membership={normalizeMembership(user)}
+                  loading={loading}
+                />
+              </div>
             </div>
 
-            <div className="transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg">
-              <RolenMembershipInformation
-                role={loading ? undefined : user?.role ?? undefined}
-                councilRole={
-                  loading ? undefined : user?.councilRole ?? undefined
-                }
-                committeeRole={
-                  loading ? undefined : user?.committeeRole ?? undefined
-                }
-                membership={normalizeMembership(user)}
-                loading={loading}
-              />
-            </div>
+            {/* Right Column (Security & Actions) */}
+            <div className="flex flex-col gap-6 h-full">
+              <div className="transform transition-all duration-300 hover:translate-y-[-2px]">
+                <SecuritySection loading={loading} />
+              </div>
 
-            <div className="transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg">
-              <SecuritySection loading={loading} />
-            </div>
-            <div className="w-full flex justify-end">
+              {/* Edit Card (COMPACT DESIGN) */}
               {!loading && (
-                <Button
-                  variant="primary3"
-                  onClick={openEdit}
-                  className="px-6 py-2.5 mt-2 rounded-xl shadow-lg shadow-primary3/20"
-                >
-                  Edit Profile
-                </Button>
+                <div className="bg-white border border-primary1/10 rounded-3xl p-5 shadow-lg flex flex-row items-center justify-between gap-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary1/10 rounded-2xl text-primary1 flex-shrink-0">
+                      <Edit3 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-rubik font-bold text-lg text-primary3">
+                        Update Profile
+                      </h3>
+                      <p className="font-raleway text-xs text-gray-500 mt-0.5">
+                        Keep details current
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="primary3"
+                    onClick={openEdit}
+                    className="px-5 py-2.5 rounded-xl shadow-md font-rubik font-semibold text-sm whitespace-nowrap cursor-pointer"
+                  >
+                    Edit
+                  </Button>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Edit Profile Modal */}
+          {/* --- Edit Modal --- */}
           {editOpen &&
             createPortal(
               <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
                 <div
-                  className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+                  className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
                   onClick={closeEdit}
                 />
-                <div className="relative z-[100000] w-full max-w-xl bg-white rounded-2xl p-8 shadow-2xl border border-gray-200 animate-scale-in">
-                  <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
-                    <h3 className="text-xl font-rubik font-bold text-gray-800">
-                      Edit Profile
-                    </h3>
+                <div className="relative z-[100000] w-full max-w-2xl bg-white rounded-[2rem] p-8 shadow-2xl border border-white/50 animate-scale-in flex flex-col max-h-[90vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10">
+                    <div>
+                      <h3 className="text-2xl font-rubik font-bold text-primary3">
+                        Edit Profile
+                      </h3>
+                      <p className="text-sm font-raleway text-gray-500 mt-1">
+                        Update your personal information below.
+                      </p>
+                    </div>
                     <button
                       onClick={closeEdit}
-                      className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                      className="p-2 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors cursor-pointer"
                     >
-                      <X className="w-5 h-5 text-gray-500" />
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
 
                   <form
                     onSubmit={handleEditSubmit}
-                    className="grid grid-cols-1 gap-4"
+                    className="grid grid-cols-1 gap-6"
                   >
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          First name
-                        </label>
-                        <input
-                          ref={firstFieldRef}
-                          value={form.firstName}
-                          onChange={(e) =>
-                            setForm({ ...form, firstName: e.target.value })
-                          }
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Last name
-                        </label>
-                        <input
-                          value={form.lastName}
-                          onChange={(e) =>
-                            setForm({ ...form, lastName: e.target.value })
-                          }
-                          className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Student number
-                      </label>
-                      <input
-                        value={form.studentNumber}
-                        onChange={(e) =>
-                          setForm({ ...form, studentNumber: e.target.value })
-                        }
-                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all"
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <InputField
+                        label="First Name"
+                        value={form.firstName}
+                        onChange={(val) => setForm({ ...form, firstName: val })}
+                        disabled={true} // DISABLED
+                      />
+                      <InputField
+                        label="Last Name"
+                        value={form.lastName}
+                        onChange={(val) => setForm({ ...form, lastName: val })}
+                        disabled={true} // DISABLED
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Email
-                      </label>
-                      <input
-                        value={form.email}
-                        onChange={(e) =>
-                          setForm({ ...form, email: e.target.value })
+
+                    <InputField
+                      label="Student Number"
+                      value={form.studentNumber}
+                      onChange={(val) =>
+                        setForm({ ...form, studentNumber: val })
+                      }
+                      disabled={true} // DISABLED
+                    />
+
+                    <InputField
+                      label="Institutional Email"
+                      value={form.email}
+                      onChange={(val) => setForm({ ...form, email: val })}
+                      ref={emailFieldRef} // Focus starts here
+                      type="email"
+                    />
+
+                    <InputField
+                      label="Year Level"
+                      value={form.yearLevel}
+                      onChange={(val) => {
+                        // Prevent input > 5
+                        if (
+                          val === "" ||
+                          (Number(val) >= 1 && Number(val) <= 5)
+                        ) {
+                          setForm({ ...form, yearLevel: val });
                         }
-                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Year level
-                      </label>
-                      <input
-                        value={form.yearLevel}
-                        onChange={(e) =>
-                          setForm({ ...form, yearLevel: e.target.value })
-                        }
-                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all"
-                      />
-                    </div>
-                    {/* Password change removed from edit modal */}
+                      }}
+                      type="number"
+                      min={1}
+                      max={5}
+                    />
 
                     {editError && (
-                      <div className="text-red-600 text-sm p-3 bg-red-50 rounded-lg border border-red-100 flex items-center gap-2">
-                        <Shield className="w-4 h-4" /> {editError}
+                      <div className="text-red-600 font-raleway font-medium text-sm p-4 bg-red-50 rounded-xl border border-red-100 flex items-center gap-3">
+                        <Shield className="w-5 h-5 flex-shrink-0" />
+                        <span>{editError}</span>
                       </div>
                     )}
                     {editSuccess && (
-                      <div className="text-green-600 text-sm p-3 bg-green-50 rounded-lg border border-green-100 flex items-center gap-2">
-                        <Award className="w-4 h-4" /> {editSuccess}
+                      <div className="text-green-600 font-raleway font-medium text-sm p-4 bg-green-50 rounded-xl border border-green-100 flex items-center gap-3">
+                        <Award className="w-5 h-5 flex-shrink-0" />
+                        <span>{editSuccess}</span>
                       </div>
                     )}
 
-                    <div className="flex justify-end gap-3 pt-4">
+                    <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-2">
                       <button
                         type="button"
                         onClick={closeEdit}
-                        className="px-6 py-2.5 rounded-xl border-2 border-gray-200 font-rubik hover:cursor-pointer hover:bg-gray-300 font-semibold text-gray-600 transition-colors"
+                        className="px-6 py-3 rounded-xl border border-gray-200 font-rubik font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all cursor-pointer"
                       >
                         Cancel
                       </button>
@@ -663,9 +478,9 @@ export default function ProfilePage() {
                         variant="primary3"
                         type="submit"
                         disabled={editLoading}
-                        className="px-6 py-2.5 rounded-xl font-semibold shadow-md"
+                        className="px-8 py-3 rounded-xl font-rubik font-semibold shadow-lg shadow-primary3/20 cursor-pointer"
                       >
-                        {editLoading ? "Saving..." : "Save Changes"}
+                        {editLoading ? "Saving Changes..." : "Save Changes"}
                       </Button>
                     </div>
                   </form>
@@ -675,7 +490,7 @@ export default function ProfilePage() {
             )}
 
           {error && (
-            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-center animate-fade-in">
+            <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 font-rubik text-center animate-fade-in">
               {error}
             </div>
           )}
@@ -683,5 +498,51 @@ export default function ProfilePage() {
         <Footer />
       </div>
     </section>
+  );
+}
+
+// Helper Component for Modal Inputs
+interface InputFieldProps {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  type?: string;
+  ref?: any;
+  disabled?: boolean;
+  max?: string | number;
+  min?: string | number;
+}
+
+function InputField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  ref,
+  disabled,
+  max,
+  min,
+}: InputFieldProps) {
+  return (
+    <div>
+      <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+        {label}
+      </label>
+      <input
+        ref={ref}
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        max={max}
+        min={min}
+        className={`w-full font-rubik border border-gray-200 rounded-xl px-4 py-3.5 outline-none transition-all placeholder-gray-400
+          ${
+            disabled
+              ? "bg-gray-100 text-gray-500 cursor-not-allowed border-gray-100"
+              : "bg-slate-50 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 text-gray-800"
+          }`}
+      />
+    </div>
   );
 }

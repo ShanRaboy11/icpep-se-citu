@@ -8,6 +8,9 @@ import AdvisorsSection from "./sections/advisors";
 import StudentLeadersSection from "./sections/student-leaders";
 import FacultySection from "./sections/faculty";
 
+import { Home } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 import { FC } from "react";
 
 interface OfficerTerm {
@@ -62,6 +65,8 @@ const departmentFaculty: FacultyMember[] = [
 ];
 
 const AboutPage: FC = () => {
+  const router = useRouter();
+
   const pillText = "About Our Chapter";
   const title = "The ICpEP SE CIT-U Story";
   const subtitle =
@@ -74,6 +79,23 @@ const AboutPage: FC = () => {
         <Header />
         <div className="flex-grow">
           <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem]">
+            <div className="mb-8 flex justify-start">
+              <button
+                onClick={() => router.push("/")}
+                title="Back to Home"
+                className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
+                         rounded-full border-2 border-primary1 text-primary1 
+                         overflow-hidden transition-all duration-300 ease-in-out 
+                         active:scale-95 before:absolute before:inset-0 
+                         before:bg-gradient-to-r before:from-transparent 
+                         before:via-white/40 before:to-transparent 
+                         before:translate-x-[-100%] hover:before:translate-x-[100%] 
+                         before:transition-transform before:duration-700"
+              >
+                <Home className="h-6 w-6" />
+              </button>
+            </div>
+
             <div className="mb-20 text-center">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
                 <div className="h-2 w-2 rounded-full bg-primary1"></div>

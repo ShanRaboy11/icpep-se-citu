@@ -2,16 +2,57 @@
 
 import Header from "../components/header";
 import Footer from "../components/footer";
+import Grid from "../components/grid";
 import { FunctionComponent, useCallback, useState } from 'react';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
+import { ChevronLeft, ChevronRight, ArrowRight, LayoutGrid, List, Clock, Calendar, CalendarX } from "lucide-react";
+
+// Mock Data
+const upcomingMeetings = [
+  {
+    id: 1,
+    title: "General Assembly",
+    date: "Oct 15, 2025",
+    time: "1:00 PM - 3:00 PM",
+    duration: "2h",
+  },
+  {
+    id: 2,
+    title: "Committee Planning",
+    date: "Oct 18, 2025",
+    time: "4:00 PM - 5:30 PM",
+    duration: "1h 30m",
+  },
+  {
+    id: 3,
+    title: "Tech Talk Prep",
+    date: "Oct 22, 2025",
+    time: "2:00 PM - 3:00 PM",
+    duration: "1h",
+  },
+  {
+    id: 4,
+    title: "Officer Sync",
+    date: "Oct 25, 2025",
+    time: "5:00 PM - 6:00 PM",
+    duration: "1h",
+  },
+];
+
+// To test empty state, uncomment this line:
+// const upcomingMeetings: any[] = [];
 
 const CommeetPage: FunctionComponent = () => {
   const [selectedDates, setSelectedDates] = useState<Set<string>>(new Set());
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 9, 1)); 
+  
+  // UPDATED: Now initializes with the current real-time date
+  const [currentDate, setCurrentDate] = useState(new Date()); 
+  
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); 
   const router = useRouter(); 
 
   const onLetsMeetBtnClick = useCallback(() => {
-    router.push('/commeet/meetinfo'); 
+    router.push('/commeet/meet-information'); 
   }, [router]);
 
   const handleDateClick = (day: number) => {
@@ -24,19 +65,15 @@ const CommeetPage: FunctionComponent = () => {
 
     const dayIndex = day + firstDayOfMonth - 1;
 
-    if (dayIndex < firstDayOfMonth) { // Previous month's inactive days
-      return;
-    }
-    if (day > totalDaysInMonth) { // Next month's inactive days
-      return;
-    }
+    if (dayIndex < firstDayOfMonth) return; 
+    if (day > totalDaysInMonth) return; 
 
     setSelectedDates(prevSelectedDates => {
       const newSelectedDates = new Set(prevSelectedDates);
       if (newSelectedDates.has(dateKey)) {
-        newSelectedDates.delete(dateKey); // Deselect
+        newSelectedDates.delete(dateKey);
       } else {
-        newSelectedDates.add(dateKey); // Select
+        newSelectedDates.add(dateKey);
       }
       return newSelectedDates;
     });
@@ -49,29 +86,34 @@ const CommeetPage: FunctionComponent = () => {
     isSelected: boolean = false,
     onClick?: (day: number) => void 
   ) => {
-    const headerClasses = "font-extrabold text-white bg-sky-500 rounded-lg";
-    
-    const baseDayClasses = "flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 text-sm sm:text-base font-semibold";
-    
-    const inactiveClasses = "text-gray-400 bg-gray-100 rounded-lg";
-    const activeClasses = "text-gray-800 bg-white rounded-lg shadow-sm hover:bg-sky-100 cursor-pointer";
-    const selectedClasses = "bg-sky-400 text-white rounded-full shadow-md";
+    if (isHeader) {
+      return (
+        <div className="flex items-center justify-center h-10 w-full text-xs sm:text-sm font-bold text-primary3/60 font-raleway uppercase tracking-wider">
+          {day}
+        </div>
+      );
+    }
 
-    const finalClasses = isHeader
-      ? headerClasses
-      : isInactive
-        ? inactiveClasses
-        : isSelected
-          ? selectedClasses
-          : activeClasses;
+    const baseClasses = "flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 text-sm sm:text-base font-rubik font-medium rounded-xl transition-all duration-200 ease-out";
+    
+    let stateClasses = "";
+    if (isInactive) {
+      stateClasses = "text-gray-300 cursor-default";
+    } else if (isSelected) {
+      stateClasses = "bg-primary1 text-white shadow-lg shadow-primary1/30 scale-105 font-bold";
+    } else {
+      stateClasses = "text-gray-700 hover:bg-primary1/10 hover:text-primary1 cursor-pointer hover:scale-105 active:scale-95";
+    }
 
-    const clickableProps = (!isHeader && !isInactive && onClick && typeof day === 'number')
+    const clickableProps = (!isInactive && onClick && typeof day === 'number')
       ? { onClick: () => onClick(day) }
       : {};
 
     return (
-      <div className={`${baseDayClasses} ${finalClasses}`} {...clickableProps}>
-        {day}
+      <div className="flex justify-center items-center p-1">
+        <div className={`${baseClasses} ${stateClasses}`} {...clickableProps}>
+          {day}
+        </div>
       </div>
     );
   };
@@ -123,78 +165,199 @@ const CommeetPage: FunctionComponent = () => {
   const currentMonthName = currentDate.toLocaleString('default', { month: 'long' });
   const currentYear = currentDate.getFullYear();
 
+  const pillText = "Schedule";
+  const title = "ComMeet";
+  const subtitle = "Select the dates you are available to meet with the community.";
+
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden bg-gray-50">
-      <Header />
-      <div className="flex-1 flex flex-col items-center py-16 px-4 sm:px-6 lg:px-8">
-        {/* Main Content Area */}
-        <div className="max-w-7xl w-full flex flex-col lg:flex-row lg:justify-between items-start lg:items-start space-y-8 lg:space-y-0 lg:space-x-12">
-          <div className="flex-shrink-0 text-center lg:text-left">
-            <h1 className="text-5xl sm:text-6xl font-rubik leading-tight mt-8">
-              <span className="text-sky-500 font-bold">com</span>
-              <span className="text-gray-900 font-bold">meet</span>
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+      <Grid />
+
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
+
+        <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24">
+          
+          {/* Header Section */}
+          <div className="mb-12 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+              <div className="h-2 w-2 rounded-full bg-primary1"></div>
+              <span className="font-raleway text-sm font-semibold text-primary1">
+                {pillText}
+              </span>
+            </div>
+
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+              {title}
             </h1>
-            <p className="mt-6 text-xl sm:text-2xl font-raleway text-gray-700 max-w-lg whitespace-nowrap">
-              What days would you like to meet on?
+
+            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+              {subtitle}
             </p>
           </div>
 
-          <div className="flex-shrink-0 mt-8 lg:mt-24">
-            <button
-              className="px-6 py-3 border-2 border-sky-400 rounded-full font-raleway text-sky-400 font-semibold flex items-center justify-center space-x-2
-                         hover:bg-sky-200 hover:text-white hover:border-sky-400 active:bg-sky-600 active:border-sky-600 active:text-white transition-colors duration-200"
-              onClick={onLetsMeetBtnClick}
-            >
-              <span>Let&apos;s meet</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Calendar Section */}
-        <div className="relative mt-12 mb-12 w-full max-w-lg p-4 bg-white shadow-xl rounded-2xl border border-gray-200 transform transition-all duration-300">
-          
-          <div className="p-2 bg-sky-500 rounded-lg text-white text-center text-xl font-bold tracking-wide flex items-center justify-between">
-            <button onClick={handlePrevMonth} className="p-1 rounded-full hover:bg-sky-400 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <span>{currentMonthName} {currentYear}</span>
-            <button onClick={handleNextMonth} className="p-1 rounded-full hover:bg-sky-400 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Day of Week Headers - UPDATED: Reduced margin and gap */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-4">
-            {daysOfWeek.map(day => (
-              <div key={day}>
-                {renderDayCell(day, true)}
-              </div>
-            ))}
-          </div>
-
-          {/* Dates Grid - UPDATED: Reduced margin and gap */}
-          <div className="grid grid-cols-7 gap-1 sm:gap-2 mt-2">
-            {calendarDays.map((date, index) => {
-              const uniqueDateKey = `${currentYear}-${currentDate.getMonth() + 1}-${date.day}`;
-              const isSelected = selectedDates.has(uniqueDateKey);
-              return (
-                <div key={index}>
-                  {renderDayCell(date.day, false, date.inactive, isSelected, handleDateClick)}
+          {/* Main Layout */}
+          <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center">
+            
+            {/* --- LEFT COLUMN: Calendar --- */}
+            <div className="w-full lg:w-1/2 flex flex-col items-center">
+              
+              <div className="w-full bg-white rounded-[2rem] border border-gray-200 shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1 p-6 sm:p-8">
+                
+                {/* Calendar Controls */}
+                <div className="flex items-center justify-between mb-6">
+                  <button 
+                    onClick={handlePrevMonth} 
+                    className="p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-primary3 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  
+                  <h2 className="text-xl sm:text-2xl font-rubik font-bold text-primary3 text-center">
+                    {currentMonthName} <span className="text-primary1 font-light">{currentYear}</span>
+                  </h2>
+                  
+                  <button 
+                    onClick={handleNextMonth} 
+                    className="p-2 rounded-full hover:bg-gray-100 text-gray-600 hover:text-primary3 transition-all active:scale-95 cursor-pointer"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
                 </div>
-              );
-            })}
+
+                {/* Day Headers */}
+                <div className="grid grid-cols-7 mb-2 border-b border-gray-100 pb-2">
+                  {daysOfWeek.map(day => (
+                    <div key={day} className="text-center">
+                      {renderDayCell(day, true)}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Dates Grid */}
+                <div className="grid grid-cols-7 gap-y-1">
+                  {calendarDays.map((date, index) => {
+                    const uniqueDateKey = `${currentYear}-${currentDate.getMonth() + 1}-${date.day}`;
+                    const isSelected = selectedDates.has(uniqueDateKey);
+                    return (
+                      <div key={index} className="w-full">
+                        {renderDayCell(date.day, false, date.inactive, isSelected, handleDateClick)}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Let's Meet Button */}
+              <div className="mt-8 w-full">
+                <button
+                  onClick={onLetsMeetBtnClick}
+                  disabled={selectedDates.size === 0}
+                  className={`
+                    group w-full py-4 rounded-2xl font-rubik font-bold text-white shadow-lg flex items-center justify-center gap-3 transition-all duration-300
+                    ${selectedDates.size > 0 
+                      ? "bg-gradient-to-r from-primary3 to-primary1 hover:shadow-primary1/40 cursor-pointer" 
+                      : "bg-gray-300 cursor-not-allowed"}
+                  `}
+                >
+                  <span className="text-lg">Let&apos;s Meet</span>
+                  <ArrowRight className={`w-5 h-5 transition-transform duration-300 ${selectedDates.size > 0 ? 'group-hover:translate-x-1' : ''}`} />
+                </button>
+                <p className="text-center text-xs font-raleway text-gray-400 mt-3">
+                  {selectedDates.size === 0 
+                    ? "Select dates to proceed" 
+                    : `${selectedDates.size} date${selectedDates.size > 1 ? 's' : ''} selected`}
+                </p>
+              </div>
+            </div>
+
+            {/* --- RIGHT COLUMN: Upcoming Meetings --- */}
+            <div className="w-full lg:w-1/2 flex flex-col h-full">
+              
+              {/* Section Header */}
+              <div className="flex items-center justify-between mb-6 px-2">
+                <h3 className="font-rubik font-bold text-2xl text-primary3">Upcoming Meetings</h3>
+                
+                {/* Toggle (Only show if there are meetings) */}
+                {upcomingMeetings.length > 0 && (
+                  <div className="flex bg-gray-100 p-1 rounded-xl">
+                    <button 
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-primary1 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      <List className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-primary1 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      <LayoutGrid className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Meetings Content or Empty State */}
+              {upcomingMeetings.length > 0 ? (
+                <div className={`
+                  ${viewMode === 'grid' ? 'grid grid-cols-2 gap-3 sm:gap-4' : 'flex flex-col gap-2'}
+                `}>
+                  {upcomingMeetings.map((meeting) => (
+                    <div 
+                      key={meeting.id}
+                      className={`
+                        bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary1/30 p-4 group
+                        ${viewMode === 'list' ? 'flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4' : 'flex flex-col gap-3 h-full'}
+                      `}
+                    >
+                      {/* Date Badge */}
+                      <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-primary1/10 rounded-lg text-primary1 group-hover:bg-primary1 group-hover:text-white transition-colors duration-300 shrink-0">
+                          <Calendar className="w-4 h-4" />
+                        </div>
+                        <span className="font-raleway font-semibold text-gray-600 text-sm">{meeting.date}</span>
+                      </div>
+
+                      {/* Title */}
+                      <div className={`${viewMode === 'list' ? 'sm:flex-1 sm:px-2' : 'min-h-[3rem]'}`}>
+                        <h4 className="font-rubik font-bold text-base text-primary3 group-hover:text-primary1 transition-colors leading-tight">
+                          {meeting.title}
+                        </h4>
+                      </div>
+
+                      {/* Time */}
+                      <div className={`flex items-center gap-2 text-xs text-gray-500 font-raleway ${viewMode === 'list' ? 'justify-end' : ''}`}>
+                        <div className="flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
+                          <Clock className="w-3 h-3" />
+                          <span>{meeting.time}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                /* --- EMPTY STATE --- */
+                <div className="flex flex-col items-center justify-center h-full min-h-[300px] bg-gray-50/50 rounded-3xl border-2 border-dashed border-gray-200 text-center p-8">
+                  <div className="p-4 bg-white rounded-full shadow-sm mb-4">
+                    <CalendarX className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h4 className="font-rubik font-bold text-lg text-gray-600 mb-1">
+                    No Upcoming Meetings
+                  </h4>
+                  <p className="font-raleway text-sm text-gray-400 max-w-xs">
+                    There are no scheduled meetings at this time. Check back later!
+                  </p>
+                </div>
+              )}
+
+            </div>
+
           </div>
 
-        </div>
+        </main>
+
+        <Footer />
       </div>
-      <Footer />
     </div>
   );
 };

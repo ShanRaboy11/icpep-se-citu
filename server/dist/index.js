@@ -13,7 +13,7 @@ const cors_1 = __importDefault(require("cors"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
-const announcements_route_1 = __importDefault(require("../src/routes/announcements.route"));
+const announcements_route_1 = __importDefault(require("./routes/announcements.route"));
 const event_routes_1 = __importDefault(require("./routes/event.routes"));
 const scheduler_1 = __importDefault(require("./utils/scheduler"));
 // Global unhandled rejection handler to avoid process crash during development
@@ -29,26 +29,69 @@ app.use(express_1.default.json({ limit: '50mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '50mb' }));
 // 2. Cookie Parser
 app.use((0, cookie_parser_1.default)());
-// 3. CORS - Allow multiple origins
-const allowedOrigins = [
-    'http://localhost:3000',
-    'https://icpep-se-citu.vercel.app',
-    process.env.FRONTEND_URL,
-].filter(Boolean);
-console.log('🌐 Allowed CORS origins:', allowedOrigins);
+// 3. CORS - Allow multiple origins. Support comma-separated FRONTEND_URL(s)
+// and allow vercel subdomains by default (useful for preview deployments).
+const defaultOrigins = ['http://localhost:3000', 'https://icpep-se-citu.vercel.app'];
+const envFrontends = (process.env.FRONTEND_URL || process.env.FRONTEND_URLS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envFrontends]));
+const allowAllOrigins = String(process.env.ALLOW_ALL_ORIGINS || 'false').toLowerCase() === 'true';
+const allowVercelSubdomains = String(process.env.ALLOW_VERCEL_SUBDOMAINS ?? 'true').toLowerCase() === 'true';
+console.log('🌐 CORS configuration — allowedOrigins:', allowedOrigins, 'ALLOW_ALL_ORIGINS=', allowAllOrigins, 'ALLOW_VERCEL_SUBDOMAINS=', allowVercelSubdomains);
 app.use((0, cors_1.default)({
     origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps, Postman, etc.)
+        // Allow requests with no origin (like Postman or same-origin server requests)
         if (!origin)
             return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
-            console.log('✅ CORS allowed for:', origin);
-            callback(null, true);
+        if (allowAllOrigins) {
+            console.log('✅ CORS allow-all enabled — allowing origin:', origin);
+            return callback(null, true);
         }
-        else {
-            console.log('❌ CORS blocked for:', origin);
-            callback(new Error('Not allowed by CORS'));
+        try {
+            const originHost = new URL(origin).host;
+            // Allow vercel preview subdomains (e.g. *.vercel.app) when enabled
+            if (allowVercelSubdomains && originHost.endsWith('.vercel.app')) {
+                console.log('✅ CORS allowed vercel subdomain:', origin);
+                return callback(null, true);
+            }
+            // Direct match against configured allowed origins (may include protocol)
+            if (allowedOrigins.includes(origin)) {
+                console.log('✅ CORS allowed for (direct match):', origin);
+                return callback(null, true);
+            }
+            // Try matching by host (handles entries like https://example.com)
+            for (const allowed of allowedOrigins) {
+                try {
+                    const allowedHost = new URL(allowed).host;
+                    if (allowedHost === originHost) {
+                        console.log('✅ CORS allowed for (host match):', origin);
+                        return callback(null, true);
+                    }
+                }
+                catch {
+                    // ignore malformed allowed entries
+                }
+            }
+            // Support wildcard-like entries in allowedOrigins using '*' (e.g. *.example.com)
+            for (const allowed of allowedOrigins) {
+                if (allowed.includes('*')) {
+                    // Convert wildcard entry to regex: escape dots, replace '*' with '.*'
+                    const regexStr = allowed.replace(/[-/\\^$+?.()|[\]{}]/g, '\\$&').replace(/\\\*/g, '.*');
+                    const re = new RegExp(`^${regexStr}$`);
+                    if (re.test(origin)) {
+                        console.log('✅ CORS allowed by wildcard pattern:', origin, 'pattern:', allowed);
+                        return callback(null, true);
+                    }
+                }
+            }
         }
+        catch {
+            // If URL parsing fails, fall through to blocked log
+        }
+        console.log('❌ CORS blocked for:', origin);
+        callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
