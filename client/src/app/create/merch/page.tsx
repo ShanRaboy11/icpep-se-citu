@@ -7,7 +7,7 @@ import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import Link from "next/link";
-import { Pencil, Trash2, RefreshCw } from "lucide-react"; // Icons
+import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Icons
 
 // --- INTERFACES ---
 interface MerchItem {
@@ -32,6 +32,9 @@ export default function SponsorsPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // --- MANAGEMENT STATE ---
@@ -99,9 +102,22 @@ export default function SponsorsPage() {
   };
 
   // 4. HANDLE DELETE
-  const handleDelete = (id: string) => {
-    if (!confirm("Delete this item?")) return;
-    setMerchList((prev) => prev.filter((m) => m._id !== id));
+  const confirmDelete = (id: string) => {
+    setItemToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = () => {
+    if (!itemToDelete) return;
+    setMerchList((prev) => prev.filter((m) => m._id !== itemToDelete));
+    setShowDeleteModal(false);
+    setItemToDelete(null);
+
+    setSuccessMessage({
+      title: "Deleted Successfully!",
+      description: "The item has been permanently removed."
+    });
+    setShowSuccessModal(true);
   };
 
   // 5. PUBLISH / UPDATE LOGIC
@@ -141,9 +157,17 @@ export default function SponsorsPage() {
         setMerchList((prev) =>
           prev.map((item) => (item._id === editingId ? newItem : item))
         );
+        setSuccessMessage({
+          title: "Updated Successfully!",
+          description: "Your changes have been saved."
+        });
       } else {
         // Create Logic
         setMerchList((prev) => [newItem, ...prev]);
+        setSuccessMessage({
+          title: "Published Successfully!",
+          description: "The item has been added successfully."
+        });
       }
 
       handleCancelEdit(); // Reset form
@@ -268,7 +292,7 @@ export default function SponsorsPage() {
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {editingId ? "Updating..." : "Publishing..."}
+              {editingId ? "Updating Item..." : "Publishing Item..."}
             </p>
           </div>
         </div>
@@ -689,7 +713,7 @@ export default function SponsorsPage() {
                                   <Pencil size={18} />
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(item._id)}
+                                  onClick={() => confirmDelete(item._id)}
                                   className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
                                   title="Delete"
                                 >
@@ -711,23 +735,94 @@ export default function SponsorsPage() {
         <Footer />
       </div>
 
-      {/* Success Modal */}
-      {showSuccessModal && (
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowSuccessModal(false)}
+            onClick={() => setShowDeleteModal(false)}
           />
-          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center">
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
             <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
-              {editingId ? "Updated Successfully!" : "Published Successfully!"}
+              Confirm Deletion
             </h3>
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold mt-4"
-            >
-              Continue
-            </button>
+            <p className="text-gray-500 font-raleway mb-6">
+              Are you sure you want to delete this item? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => {
+              setShowSuccessModal(false);
+            }}
+          />
+
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
+            <div className="flex flex-col items-center gap-6">
+              {/* Success Icon with Animation */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
+                  <svg
+                    className="w-12 h-12 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl text-primary3 font-bold font-rubik">
+                  {successMessage.title}
+                </h3>
+                <p className="text-gray-600 font-raleway">
+                  {successMessage.description}
+                </p>
+              </div>
+
+              <div className="flex gap-3 mt-2 w-full">
+                <Button
+                  variant="primary3"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                  }}
+                  className="w-full"
+                >
+                  Continue
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
