@@ -1398,66 +1398,72 @@ export default function EventsPage() {
 
         {/* Success Modal */}
         {showSuccessModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => {
                 setShowSuccessModal(false);
                 setSubmitSuccess(false);
               }}
             />
 
-            <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl transform animate-in zoom-in-95 duration-300 border border-gray-100">
-              <div className="flex flex-col items-center gap-6 text-center">
-                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-2 animate-bounce">
-                  <svg
-                    className="w-10 h-10 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="3"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+            <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
+              <div className="flex flex-col items-center gap-6">
+                {/* Success Icon with Animation */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
+                    <svg
+                      className="w-12 h-12 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold text-gray-900 font-rubik">
+                <div className="text-center space-y-2">
+                  <h3 className="text-2xl text-primary3 font-bold font-rubik">
                     {editingId
                       ? "Updated Successfully!"
                       : "Published Successfully!"}
                   </h3>
-                  <p className="text-gray-500 font-raleway">
+                  <p className="text-gray-600 font-raleway">
                     {editingId
                       ? "Event details have been updated."
                       : "Your event has been successfully created and is now live."}
                   </p>
                 </div>
 
-                <div className="w-full pt-2 flex flex-col gap-3">
-                  <button
+                <div className="flex gap-3 mt-2 w-full">
+                  <Button
+                    variant="primary3"
                     onClick={() => {
                       setShowSuccessModal(false);
                       setSubmitSuccess(false);
                       router.push("/events");
                     }}
-                    className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all duration-300 shadow-lg shadow-gray-900/20"
+                    className="w-full"
                   >
                     View Events
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setShowSuccessModal(false);
                       setSubmitSuccess(false);
                     }}
-                    className="w-full py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all duration-300"
+                    className="w-full"
                   >
                     Close
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

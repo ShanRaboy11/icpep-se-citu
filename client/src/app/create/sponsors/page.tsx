@@ -644,24 +644,63 @@ export default function SponsorsPage() {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowSuccessModal(false)}
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => {
+              setShowSuccessModal(false);
+              setSubmitSuccess(false);
+            }}
           />
-          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center">
-            <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
-              {editingId ? "Updated Successfully!" : "Published Successfully!"}
-            </h3>
-            <p className="text-gray-500 font-raleway mb-6">
-              {editingId ? "Sponsor details updated." : "Sponsor is now live."}
-            </p>
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold"
-            >
-              Continue
-            </button>
+
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
+            <div className="flex flex-col items-center gap-6">
+              {/* Success Icon with Animation */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
+                  <svg
+                    className="w-12 h-12 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl text-primary3 font-bold font-rubik">
+                  {editingId
+                    ? "Updated Successfully!"
+                    : "Published Successfully!"}
+                </h3>
+                <p className="text-gray-600 font-raleway">
+                  {editingId
+                    ? "Sponsor details updated."
+                    : "Sponsor is now live."}
+                </p>
+              </div>
+
+              <div className="flex gap-3 mt-2 w-full">
+                <Button
+                  variant="primary3"
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSubmitSuccess(false);
+                  }}
+                  className="w-full"
+                >
+                  Continue
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

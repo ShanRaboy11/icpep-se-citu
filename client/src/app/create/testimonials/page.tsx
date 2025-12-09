@@ -59,10 +59,10 @@ export default function TestimonialsPage() {
   const fetchTestimonials = async () => {
     try {
       setIsLoadingList(true);
-      //const response = await testimonialService.getAllTestimonials();
+      const response = await testimonialService.getTestimonials();
       // Handle response structure depending on your backend
-      //const data = Array.isArray(response) ? response : response.data || [];
-      //setTestimonials(data);
+      const data = Array.isArray(response) ? response : response.data || [];
+      setTestimonials(data);
     } catch (error) {
       console.error("Error fetching testimonials:", error);
     } finally {
@@ -105,7 +105,7 @@ export default function TestimonialsPage() {
   const handleDelete = async () => {
     if (!itemToDelete) return;
     try {
-      //await testimonialService.deleteTestimonial(itemToDelete);
+      await testimonialService.deleteTestimonial(itemToDelete);
       fetchTestimonials(); // Refresh list
       setShowDeleteModal(false);
       setItemToDelete(null);
@@ -143,7 +143,7 @@ export default function TestimonialsPage() {
 
       if (editingId) {
         // UPDATE MODE
-        //await testimonialService.updateTestimonial(editingId, payload);
+        await testimonialService.updateTestimonial(editingId, payload);
       } else {
         // CREATE MODE
         await testimonialService.createTestimonial(payload);
@@ -232,14 +232,11 @@ export default function TestimonialsPage() {
       <Grid />
       {/* Loading Overlay */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md transition-all animate-in fade-in duration-200">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in duration-300">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-blue-100 rounded-full" />
-              <div className="w-16 h-16 border-4 border-primary2 border-t-transparent rounded-full animate-spin absolute inset-0" />
-            </div>
-            <p className="text-gray-700 font-rubik text-base font-semibold">
-              {editingId ? "Updating..." : "Publishing..."}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all duration-300">
+          <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
+            <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
+            <p className="text-primary3 font-semibold font-rubik animate-pulse">
+              {editingId ? "Updating Testimonial..." : "Publishing Testimonial..."}
             </p>
           </div>
         </div>
