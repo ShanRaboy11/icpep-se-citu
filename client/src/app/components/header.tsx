@@ -24,18 +24,30 @@ const Header = () => {
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // --- NEW: Prevent Body Scroll when Menu is Open ---
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    // Cleanup ensures scroll is restored if component unmounts
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+  // -------------------------------------------------
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Check authentication status on component mount
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -56,13 +68,8 @@ const Header = () => {
     if (token && userRole) {
       setIsLoggedIn(true);
       setRole(userRole as UserRole);
-
       const storedUserName = localStorage.getItem("userName");
-      if (storedUserName) {
-        setUserName(storedUserName);
-      } else {
-        setUserName("ICPEP Member");
-      }
+      setUserName(storedUserName || "ICPEP Member");
     } else {
       setIsLoggedIn(false);
       setRole("guest");
@@ -140,7 +147,7 @@ const Header = () => {
             : "bg-[#fefeff]"
         }`}
     >
-      <div className="flex items-center justify-between py-3 px-4 md:max-w-[93%] md:mx-auto md:px-8 lg:px-16">
+      <div className="flex items-center justify-between py-3 px-4 md:max-w-[88%] md:mx-auto md:px-8 lg:px-10">
         {/* Logo Section */}
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Image
@@ -221,7 +228,7 @@ const Header = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 sm:gap-5">
+        <div className="flex items-center gap-1.5 sm:gap-5">
           {/* Guest View - Login Only */}
           {role === "guest" && (
             <>
@@ -244,7 +251,6 @@ const Header = () => {
           {/* Logged In View */}
           {isLoggedIn && (
             <div className="relative" ref={dropdownRef}>
-              {/* User Profile Picture - Clean No Border */}
               <div
                 className="cursor-pointer outline-none select-none tap-highlight-transparent p-1"
                 onClick={handleProfileClick}
@@ -258,10 +264,9 @@ const Header = () => {
                 />
               </div>
 
-              {/* STYLISH DROPDOWN */}
+              {/* DROPDOWN */}
               {profileDropdownOpen && (
                 <div className="absolute top-[125%] right-0 w-64 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 flex flex-col z-50 animate-in fade-in slide-in-from-top-3 duration-200 origin-top-right overflow-hidden">
-                  {/* User Info Header */}
                   <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
                     <p className="text-[#373d47] font-bold text-sm truncate font-rubik leading-tight">
                       {userName}
@@ -270,8 +275,6 @@ const Header = () => {
                       {role.replace("-", " ")}
                     </p>
                   </div>
-
-                  {/* Menu Links */}
                   <div className="py-2">
                     <DropdownItem
                       onClick={() => router.push("/profile")}
@@ -292,7 +295,6 @@ const Header = () => {
                         </svg>
                       }
                     />
-
                     <DropdownItem
                       onClick={() => router.push("/notifications")}
                       text="Notifications"
@@ -312,7 +314,6 @@ const Header = () => {
                         </svg>
                       }
                     />
-
                     <DropdownItem
                       onClick={() => router.push("/contact")}
                       text="Support"
@@ -332,11 +333,7 @@ const Header = () => {
                       }
                     />
                   </div>
-
-                  {/* Separator */}
                   <div className="h-px bg-gray-100 mx-3"></div>
-
-                  {/* Logout Section */}
                   <div className="py-2">
                     <DropdownItem
                       onClick={handleLogout}
@@ -365,26 +362,62 @@ const Header = () => {
             </div>
           )}
 
-          {/* Main Mobile Menu Toggle */}
+          {/* MENU TOGGLE WRAPPER */}
           <div
             aria-label="Open menu"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className={`grid grid-cols-3 gap-1 cursor-pointer transition-transform duration-500 ease-in-out hover:rotate-90 ${
-              open ? "rotate-[360deg]" : ""
-            }`}
+            className="cursor-pointer"
           >
-            {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="h-1.5 w-1.5 rounded-[3px] bg-[#00a7ee]" />
-            ))}
+            {/* DESKTOP TOGGLE (9 DOTS) */}
+            <div
+              className={`hidden md:grid grid-cols-3 gap-1 transition-transform duration-500 ease-in-out hover:rotate-90 ${
+                open ? "rotate-[360deg]" : ""
+              }`}
+            >
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-1.5 w-1.5 rounded-[3px] bg-[#00a7ee]"
+                />
+              ))}
+            </div>
+
+            {/* MOBILE TOGGLE */}
+            <div className="md:hidden flex flex-col items-end justify-center gap-[6px] w-9 h-9">
+              {/* Top Line */}
+              <div
+                className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${
+                  open ? "w-6" : "w-[26px]"
+                }`}
+              />
+
+              {/* Middle Line */}
+              <div
+                className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${
+                  open ? "w-[26px]" : "w-[19px]"
+                }`}
+              />
+
+              {/* Bottom Line */}
+              <div
+                className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${
+                  open ? "w-6" : "w-[26px]"
+                }`}
+              />
+            </div>
           </div>
         </div>
       </div>
 
+      {/* FULL SCREEN MENU OVERLAY */}
       <div
-        className={`fixed inset-0 z-50 transition-transform duration-700 ease-out ${
-          open ? "translate-y-0" : "-translate-y-[120vh]"
-        }`}
+        className={`fixed inset-0 z-50 overflow-y-auto transition-transform duration-700 ease-in-out 
+          ${
+            open
+              ? "translate-x-0 md:translate-y-0"
+              : "translate-x-full md:translate-x-0 md:-translate-y-full"
+          }`}
       >
         <Menu userRole={role} onExit={() => setOpen(false)} />
       </div>
