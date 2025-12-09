@@ -10,8 +10,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.get('/', getPartners);
 
 // Protected routes (require authentication and admin/officer role)
-router.post('/', authenticate, authorizeRoles('admin', 'officer'), upload.single('logo'), createPartner);
-router.put('/:id', authenticate, authorizeRoles('admin', 'officer'), upload.single('logo'), updatePartner);
-router.delete('/:id', authenticate, authorizeRoles('admin', 'officer'), deletePartner);
+router.post('/', authenticate, authorizeRoles('admin', 'council-officer'), upload.single('logo'), createPartner);
+router.put('/:id', authenticate, authorizeRoles('admin', 'council-officer'), upload.single('logo'), updatePartner);
+router.delete('/:id', authenticate, authorizeRoles('admin', 'council-officer'), deletePartner);
 
 export default router;
