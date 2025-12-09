@@ -619,7 +619,7 @@ export default function SponsorsPage() {
               <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
             <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
-              Delete Sponsor?
+              Confirm Deletion
             </h3>
             <p className="text-gray-500 font-raleway mb-6">
               Are you sure you want to delete this sponsor? This action cannot be undone.

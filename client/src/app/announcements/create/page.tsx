@@ -8,7 +8,7 @@ import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
-import { ChevronDown, Pencil, Trash2, RefreshCw } from "lucide-react"; // Added Icons
+import { ChevronDown, Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Added Icons
 import announcementService, {
   AnnouncementData,
 } from "../../services/announcement";
@@ -81,6 +81,8 @@ export default function AnnouncementsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -211,11 +213,18 @@ export default function AnnouncementsPage() {
   };
 
   // 4. DELETE
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this announcement?")) return;
+  const confirmDelete = (id: string) => {
+    setItemToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
     try {
-      await announcementService.deleteAnnouncement(id);
+      await announcementService.deleteAnnouncement(itemToDelete);
       fetchAnnouncements();
+      setShowDeleteModal(false);
+      setItemToDelete(null);
     } catch (error) {
       alert("Failed to delete announcement.");
     }
@@ -1536,7 +1545,7 @@ export default function AnnouncementsPage() {
                                   <Pencil size={18} />
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(item._id)}
+                                  onClick={() => confirmDelete(item._id)}
                                   className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
                                   title="Delete"
                                 >
@@ -1623,6 +1632,41 @@ export default function AnnouncementsPage() {
 
         <Footer />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowDeleteModal(false)}
+          />
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-500 font-raleway mb-6">
+              Are you sure you want to delete this announcement? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
