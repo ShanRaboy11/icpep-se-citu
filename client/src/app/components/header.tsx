@@ -1,12 +1,17 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Button from "./button";
 import Menu from "./menu";
 import { useRouter } from "next/navigation";
 
 // UserRole types
-type UserRole = "guest" | "student" | "council-officer" | "committee-officer" | "faculty";
+type UserRole =
+  | "guest"
+  | "student"
+  | "council-officer"
+  | "committee-officer"
+  | "faculty";
 
 const Header = () => {
   const [open, setOpen] = useState(false);
@@ -14,7 +19,10 @@ const Header = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
   const router = useRouter();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -27,19 +35,33 @@ const Header = () => {
     checkAuthStatus();
   }, []);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const checkAuthStatus = () => {
-    const token = localStorage.getItem('authToken');
-    const userRole = localStorage.getItem('userRole');
-    const userId = localStorage.getItem('userId');
+    const token = localStorage.getItem("authToken");
+    const userRole = localStorage.getItem("userRole");
 
     if (token && userRole) {
       setIsLoggedIn(true);
       setRole(userRole as UserRole);
-      
-      // Optionally fetch user details for display
-      const storedUserName = localStorage.getItem('userName');
+
+      const storedUserName = localStorage.getItem("userName");
       if (storedUserName) {
         setUserName(storedUserName);
+      } else {
+        setUserName("ICPEP Member");
       }
     } else {
       setIsLoggedIn(false);
@@ -48,34 +70,66 @@ const Header = () => {
   };
 
   const handleLogout = () => {
-    // Clear all auth data
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userId');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userName');
-    
-    // Update state
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userName");
+
     setIsLoggedIn(false);
     setRole("guest");
     setUserName("");
-    
-    // Redirect to home
-    router.push('/');
+    setProfileDropdownOpen(false);
+
+    router.push("/");
   };
 
   const handleLogin = () => {
     router.push("/login");
   };
 
-  const handleSignUp = () => {
-    // Navigate to sign up page or show sign up modal
-    router.push("/signup"); // You can change this to your signup route
+  const handleProfileClick = () => {
+    setProfileDropdownOpen(!profileDropdownOpen);
   };
 
-  const handleProfileClick = () => {
-    // Navigate to profile page
-    router.push("/profile"); // You can change this to your profile route
-  };
+  // Helper for Dropdown Items
+  const DropdownItem = ({
+    icon,
+    text,
+    onClick,
+    isDestructive = false,
+  }: {
+    icon: React.ReactNode;
+    text: string;
+    onClick: () => void;
+    isDestructive?: boolean;
+  }) => (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-4 px-5 py-3 text-left transition-all duration-200 group cursor-pointer
+        ${isDestructive ? "hover:bg-red-50" : "hover:bg-[#f0f9ff]"}`}
+    >
+      <div
+        className={`transition-colors duration-200 
+        ${
+          isDestructive
+            ? "text-[#64748b] group-hover:text-red-500"
+            : "text-[#64748b] group-hover:text-[#00a7ee]"
+        }`}
+      >
+        {icon}
+      </div>
+      <span
+        className={`text-sm font-medium font-rubik tracking-wide transition-colors duration-200
+        ${
+          isDestructive
+            ? "text-[#373d47] group-hover:text-red-500"
+            : "text-[#373d47] group-hover:text-[#00a7ee]"
+        }`}
+      >
+        {text}
+      </span>
+    </button>
+  );
 
   return (
     <header
@@ -83,10 +137,11 @@ const Header = () => {
         ${
           scrolled
             ? "bg-white/85 backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.05)]"
-            : "bg-white"
+            : "bg-[#fefeff]"
         }`}
     >
       <div className="flex items-center justify-between py-3 px-4 md:max-w-[93%] md:mx-auto md:px-8 lg:px-16">
+        {/* Logo Section */}
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Image
             src="/icpep logo.png"
@@ -157,36 +212,28 @@ const Header = () => {
             />
           </div>
           <div className="min-w-0 font-rubik -ml-2">
-            <div className="truncate text-[0px] sm:text-[22px] font-bold text-primary1 -mt-1 pt-1">
+            <div className="truncate text-[0px] sm:text-[22px] font-bold text-[#00a7ee] -mt-1 pt-1">
               Region 7
             </div>
-            <div className="truncate text-[0px] sm:text-[22px] font-bold text-primary1 -mt-1">
+            <div className="truncate text-[0px] sm:text-[22px] font-bold text-[#00a7ee] -mt-1">
               CIT-U Chapter
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-4 sm:gap-5">
-          {/* Guest View */}
+          {/* Guest View - Login Only */}
           {role === "guest" && (
             <>
               <Button
-                className="sm:block h-10.5 transition-all duration-300 ease-in-out 
-             hover:scale-105 hover:brightness-110 hover:shadow-[0_0_10px_rgba(0,167,238,0.5)] 
-             active:scale-95"
-                variant="secondary"
-                onClick={handleSignUp}
-              >
-                Sign Up
-              </Button>
-
-              <Button
-                className="sm:block border-2 relative overflow-hidden 
-             transition-all duration-300 ease-in-out active:scale-95 
-             before:absolute before:inset-0 before:bg-gradient-to-r 
-             before:from-transparent before:via-white/40 before:to-transparent 
-             before:translate-x-[-100%] hover:before:translate-x-[100%] 
-             before:transition-transform before:duration-700"
+                className="sm:block border-2 border-[#00a7ee] relative overflow-hidden 
+                outline-none focus:outline-none focus:ring-0 active:ring-0 ring-0
+                transition-all duration-300 ease-in-out active:scale-95 
+                before:absolute before:inset-0 before:bg-gradient-to-r 
+                before:from-transparent before:via-white/40 before:to-transparent 
+                before:translate-x-[-100%] hover:before:translate-x-[100%] 
+                before:transition-transform before:duration-700 
+                text-[#00a7ee] hover:bg-[#dbeeff]"
                 onClick={handleLogin}
               >
                 Log In
@@ -196,10 +243,10 @@ const Header = () => {
 
           {/* Logged In View */}
           {isLoggedIn && (
-            <div className="flex items-center gap-3">
-              {/* User Profile Picture */}
-              <div 
-                className="relative group cursor-pointer"
+            <div className="relative" ref={dropdownRef}>
+              {/* User Profile Picture - Clean No Border */}
+              <div
+                className="cursor-pointer outline-none select-none tap-highlight-transparent p-1"
                 onClick={handleProfileClick}
               >
                 <Image
@@ -207,33 +254,118 @@ const Header = () => {
                   alt="User Profile"
                   width={36}
                   height={36}
-                  className="h-11.5 w-11.5 transition-all duration-300 ease-in-out
-               hover:scale-105 hover:brightness-110 hover:drop-shadow-[0_0_10px_rgba(0,167,238,0.5)]
-               active:scale-95"
+                  className="h-10 w-10 sm:h-11 sm:w-11 transition-transform duration-200 ease-in-out hover:brightness-105 active:scale-95"
                 />
-                {/* Optional: Show user name on hover */}
-                {userName && (
-                  <div className="absolute top-full mt-2 right-0 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap font-raleway text-sm">
-                    {userName}
-                  </div>
-                )}
               </div>
 
-              {/* Log Out Button */}
-              <Button
-                className="sm:block border-2 relative overflow-hidden 
-             transition-all duration-300 ease-in-out active:scale-95 
-             before:absolute before:inset-0 before:bg-gradient-to-r 
-             before:from-transparent before:via-white/40 before:to-transparent 
-             before:translate-x-[-100%] hover:before:translate-x-[100%] 
-             before:transition-transform before:duration-700"
-                onClick={handleLogout}
-              >
-                Log Out
-              </Button>
+              {/* STYLISH DROPDOWN */}
+              {profileDropdownOpen && (
+                <div className="absolute top-[125%] right-0 w-64 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 flex flex-col z-50 animate-in fade-in slide-in-from-top-3 duration-200 origin-top-right overflow-hidden">
+                  {/* User Info Header */}
+                  <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <p className="text-[#373d47] font-bold text-sm truncate font-rubik leading-tight">
+                      {userName}
+                    </p>
+                    <p className="text-[#00a7ee] text-xs font-semibold font-raleway uppercase tracking-wider mt-1">
+                      {role.replace("-", " ")}
+                    </p>
+                  </div>
+
+                  {/* Menu Links */}
+                  <div className="py-2">
+                    <DropdownItem
+                      onClick={() => router.push("/profile")}
+                      text="My Profile"
+                      icon={
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                      }
+                    />
+
+                    <DropdownItem
+                      onClick={() => router.push("/notifications")}
+                      text="Notifications"
+                      icon={
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                      }
+                    />
+
+                    <DropdownItem
+                      onClick={() => router.push("/contact")}
+                      text="Support"
+                      icon={
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                      }
+                    />
+                  </div>
+
+                  {/* Separator */}
+                  <div className="h-px bg-gray-100 mx-3"></div>
+
+                  {/* Logout Section */}
+                  <div className="py-2">
+                    <DropdownItem
+                      onClick={handleLogout}
+                      text="Sign Out"
+                      isDestructive={true}
+                      icon={
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                          <polyline points="16 17 21 12 16 7"></polyline>
+                          <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                      }
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
+          {/* Main Mobile Menu Toggle */}
           <div
             aria-label="Open menu"
             aria-expanded={open}
@@ -243,7 +375,7 @@ const Header = () => {
             }`}
           >
             {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className="h-1.5 w-1.5 rounded-[3px] bg-primary1" />
+              <div key={i} className="h-1.5 w-1.5 rounded-[3px] bg-[#00a7ee]" />
             ))}
           </div>
         </div>
@@ -254,10 +386,7 @@ const Header = () => {
           open ? "translate-y-0" : "-translate-y-[120vh]"
         }`}
       >
-        <Menu
-          userRole={role}
-          onExit={() => setOpen(false)}
-        />
+        <Menu userRole={role} onExit={() => setOpen(false)} />
       </div>
     </header>
   );
