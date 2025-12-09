@@ -7,15 +7,8 @@ import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
-import { Pencil, Trash2, RefreshCw } from "lucide-react"; // Icons
-
-// --- INTERFACES ---
-interface Sponsor {
-  _id: string;
-  name: string;
-  type: string; // "Platinum Sponsor", "Gold Sponsor", etc.
-  imageUrl?: string;
-}
+import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Icons
+import partnerService, { Partner } from "@/app/services/partner";
 
 type FormErrors = {
   name: boolean;
@@ -25,6 +18,8 @@ export default function SponsorsPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [formData, setFormData] = useState({
@@ -44,33 +39,21 @@ export default function SponsorsPage() {
   const [activeTab, setActiveTab] = useState<string>(tabs[0]);
 
   // --- MANAGEMENT STATE ---
-  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [sponsors, setSponsors] = useState<Partner[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  // 1. FETCH SPONSORS (Simulation or API)
+  // 1. FETCH SPONSORS
   const fetchSponsors = async () => {
     setIsLoadingList(true);
-    // Simulate API call - Replace with actual API: await sponsorService.getAll()
-    setTimeout(() => {
-      // Mock Data
-      const mockData: Sponsor[] = [
-        {
-          _id: "1",
-          name: "Tech Corp",
-          type: "Platinum Sponsor",
-          imageUrl: "/icpep logo.png",
-        },
-        {
-          _id: "2",
-          name: "Local Bakery",
-          type: "Bronze Sponsor",
-          imageUrl: "/icpep logo.png",
-        },
-      ];
-      setSponsors(mockData);
+    try {
+      const data = await partnerService.getAll('sponsor');
+      setSponsors(data);
+    } catch (error) {
+      console.error("Failed to fetch sponsors:", error);
+    } finally {
       setIsLoadingList(false);
-    }, 1000);
+    }
   };
 
   useEffect(() => {
@@ -78,11 +61,16 @@ export default function SponsorsPage() {
   }, []);
 
   // 2. HANDLE EDIT CLICK
-  const handleEditClick = (item: Sponsor) => {
+  const handleEditClick = (item: Partner) => {
     setEditingId(item._id);
     setFormData({ name: item.name });
-    setActiveTab(item.type);
-    setPreview(item.imageUrl || null);
+    // Map description back to tab if it matches, otherwise default
+    if (item.description && tabs.includes(item.description)) {
+      setActiveTab(item.description);
+    } else {
+      setActiveTab(tabs[0]);
+    }
+    setPreview(item.logo || null);
     setCover(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -97,11 +85,24 @@ export default function SponsorsPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // 4. HANDLE DELETE
-  const handleDelete = (id: string) => {
-    if (!confirm("Delete this sponsor?")) return;
-    // Simulate Delete
-    setSponsors((prev) => prev.filter((s) => s._id !== id));
+  // 4. HANDLE DELETE CONFIRMATION
+  const confirmDelete = (id: string) => {
+    setItemToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+    
+    try {
+      await partnerService.delete(itemToDelete);
+      setSponsors((prev) => prev.filter((s) => s._id !== itemToDelete));
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete sponsor:", error);
+      alert("Failed to delete sponsor. Please try again.");
+    }
   };
 
   // 5. PUBLISH / UPDATE LOGIC
@@ -115,7 +116,7 @@ export default function SponsorsPage() {
     if (
       Object.values(newErrors).some(Boolean) ||
       !activeTab ||
-      (!cover && !editingId)
+      (!cover && !editingId && !preview)
     ) {
       setShowGlobalError(true);
       return;
@@ -124,42 +125,45 @@ export default function SponsorsPage() {
     setShowGlobalError(false);
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      // In real app: check if editingId exists to call update() or create()
+    try {
       if (editingId) {
-        console.log("Updated Sponsor:", editingId, formData);
-        // Optimistic Update for Mock
+        // Update
+        const updated = await partnerService.update(editingId, {
+          name: formData.name,
+          description: activeTab, // Storing Tier in description
+          logo: cover || undefined,
+        });
+        
         setSponsors((prev) =>
-          prev.map((s) =>
-            s._id === editingId
-              ? {
-                  ...s,
-                  name: formData.name,
-                  type: activeTab,
-                  imageUrl: preview || s.imageUrl,
-                }
-              : s
-          )
+          prev.map((s) => (s._id === editingId ? updated : s))
         );
       } else {
-        console.log("Created Sponsor:", formData);
-        // Optimistic Create for Mock
-        const newSponsor: Sponsor = {
-          _id: Date.now().toString(),
+        // Create
+        if (!cover) throw new Error("Image is required for new sponsors");
+        
+        const created = await partnerService.create({
           name: formData.name,
-          type: activeTab,
-          imageUrl: preview || "",
-        };
-        setSponsors((prev) => [newSponsor, ...prev]);
+          type: 'sponsor',
+          description: activeTab, // Storing Tier in description
+          logo: cover,
+        });
+        
+        setSponsors((prev) => [created, ...prev]);
       }
 
       // Reset form
       handleCancelEdit();
-      setIsSubmitting(false);
+      setSubmitSuccess(true);
       setShowSuccessModal(true);
-    }, 1500);
+    } catch (error) {
+      console.error("Error saving sponsor:", error);
+      alert("Failed to save sponsor. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -540,9 +544,9 @@ export default function SponsorsPage() {
                           >
                             <td className="px-6 py-4">
                               <div className="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200">
-                                {item.imageUrl ? (
+                                {item.logo ? (
                                   <img
-                                    src={item.imageUrl}
+                                    src={item.logo}
                                     alt={item.name}
                                     className="w-full h-full object-contain p-1"
                                   />
@@ -559,16 +563,16 @@ export default function SponsorsPage() {
                             <td className="px-6 py-4">
                               <span
                                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  item.type.includes("Platinum")
+                                  item.description?.includes("Platinum")
                                     ? "bg-slate-100 text-slate-700 border border-slate-300"
-                                    : item.type.includes("Gold")
+                                    : item.description?.includes("Gold")
                                     ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                                    : item.type.includes("Silver")
+                                    : item.description?.includes("Silver")
                                     ? "bg-gray-100 text-gray-600 border border-gray-200"
                                     : "bg-orange-50 text-orange-700 border border-orange-200"
                                 }`}
                               >
-                                {item.type}
+                                {item.description || item.type}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">
@@ -581,7 +585,7 @@ export default function SponsorsPage() {
                                   <Pencil size={18} />
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(item._id)}
+                                  onClick={() => confirmDelete(item._id)}
                                   className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
                                   title="Delete"
                                 >
@@ -602,6 +606,41 @@ export default function SponsorsPage() {
 
         <Footer />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowDeleteModal(false)}
+          />
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
+              Delete Sponsor?
+            </h3>
+            <p className="text-gray-500 font-raleway mb-6">
+              Are you sure you want to delete this sponsor? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Success Modal */}
       {showSuccessModal && (
