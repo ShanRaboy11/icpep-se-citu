@@ -81,6 +81,7 @@ export default function AnnouncementsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const router = useRouter();
@@ -225,6 +226,12 @@ export default function AnnouncementsPage() {
       fetchAnnouncements();
       setShowDeleteModal(false);
       setItemToDelete(null);
+
+      setSuccessMessage({
+        title: "Deleted Successfully!",
+        description: "The announcement has been permanently removed."
+      });
+      setShowSuccessModal(true);
     } catch (error) {
       alert("Failed to delete announcement.");
     }
@@ -327,12 +334,20 @@ export default function AnnouncementsPage() {
           announcementData,
           images.length > 0 ? images : undefined
         );
+        setSuccessMessage({
+          title: "Updated Successfully!",
+          description: "Changes have been saved."
+        });
       } else {
         // CREATE
         await announcementService.createAnnouncement(
           announcementData,
           images.length > 0 ? images : undefined
         );
+        setSuccessMessage({
+          title: "Published Successfully!",
+          description: "Announcement is now live."
+        });
       }
 
       setSubmitSuccess(true);
@@ -1610,14 +1625,10 @@ export default function AnnouncementsPage() {
 
                 <div className="text-center space-y-2">
                   <h3 className="text-2xl text-primary3 font-bold font-rubik">
-                    {editingId
-                      ? "Updated Successfully!"
-                      : "Published Successfully!"}
+                    {successMessage.title}
                   </h3>
                   <p className="text-gray-600 font-raleway">
-                    {editingId
-                      ? "Changes have been saved."
-                      : "Announcement is now live."}
+                    {successMessage.description}
                   </p>
                 </div>
 

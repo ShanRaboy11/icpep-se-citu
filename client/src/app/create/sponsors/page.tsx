@@ -18,6 +18,7 @@ export default function SponsorsPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -99,6 +100,12 @@ export default function SponsorsPage() {
       setSponsors((prev) => prev.filter((s) => s._id !== itemToDelete));
       setShowDeleteModal(false);
       setItemToDelete(null);
+
+      setSuccessMessage({
+        title: "Deleted Successfully!",
+        description: "The sponsor has been permanently removed."
+      });
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("Failed to delete sponsor:", error);
       alert("Failed to delete sponsor. Please try again.");
@@ -137,6 +144,10 @@ export default function SponsorsPage() {
         setSponsors((prev) =>
           prev.map((s) => (s._id === editingId ? updated : s))
         );
+        setSuccessMessage({
+          title: "Updated Successfully!",
+          description: "Your changes have been saved."
+        });
       } else {
         // Create
         if (!cover) throw new Error("Image is required for new sponsors");
@@ -149,6 +160,10 @@ export default function SponsorsPage() {
         });
         
         setSponsors((prev) => [created, ...prev]);
+        setSuccessMessage({
+          title: "Published Successfully!",
+          description: "The sponsor has been added successfully."
+        });
       }
 
       // Reset form
@@ -677,14 +692,10 @@ export default function SponsorsPage() {
 
               <div className="text-center space-y-2">
                 <h3 className="text-2xl text-primary3 font-bold font-rubik">
-                  {editingId
-                    ? "Updated Successfully!"
-                    : "Published Successfully!"}
+                  {successMessage.title}
                 </h3>
                 <p className="text-gray-600 font-raleway">
-                  {editingId
-                    ? "Sponsor details updated."
-                    : "Sponsor is now live."}
+                  {successMessage.description}
                 </p>
               </div>
 

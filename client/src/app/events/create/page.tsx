@@ -51,6 +51,7 @@ export default function EventsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const router = useRouter();
@@ -208,6 +209,12 @@ export default function EventsPage() {
       fetchEvents();
       setShowDeleteModal(false);
       setItemToDelete(null);
+
+      setSuccessMessage({
+        title: "Deleted Successfully!",
+        description: "The event has been permanently removed."
+      });
+      setShowSuccessModal(true);
     } catch (error) {
       alert("Failed to delete event");
     }
@@ -279,6 +286,10 @@ export default function EventsPage() {
           images.length > 0 ? images : undefined
         );
         console.log("✅ Event updated successfully");
+        setSuccessMessage({
+          title: "Updated Successfully!",
+          description: "Event details have been updated."
+        });
       } else {
         // CREATE MODE
         await eventService.createEvent(
@@ -286,6 +297,10 @@ export default function EventsPage() {
           images.length > 0 ? images : undefined
         );
         console.log("✅ Event created successfully");
+        setSuccessMessage({
+          title: "Published Successfully!",
+          description: "Your event has been successfully created and is now live."
+        });
       }
 
       setSubmitSuccess(true);
@@ -1431,14 +1446,10 @@ export default function EventsPage() {
 
                 <div className="text-center space-y-2">
                   <h3 className="text-2xl text-primary3 font-bold font-rubik">
-                    {editingId
-                      ? "Updated Successfully!"
-                      : "Published Successfully!"}
+                    {successMessage.title}
                   </h3>
                   <p className="text-gray-600 font-raleway">
-                    {editingId
-                      ? "Event details have been updated."
-                      : "Your event has been successfully created and is now live."}
+                    {successMessage.description}
                   </p>
                 </div>
 
