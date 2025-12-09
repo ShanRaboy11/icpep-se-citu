@@ -777,7 +777,6 @@ export default function SponsorsPage() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => {
               setShowSuccessModal(false);
-              setSubmitSuccess(false);
             }}
           />
 
@@ -817,7 +816,6 @@ export default function SponsorsPage() {
                   variant="primary3"
                   onClick={() => {
                     setShowSuccessModal(false);
-                    setSubmitSuccess(false);
                   }}
                   className="w-full"
                 >
