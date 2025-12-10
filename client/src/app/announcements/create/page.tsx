@@ -81,6 +81,8 @@ export default function AnnouncementsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
+  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
   const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit");
@@ -303,6 +305,7 @@ export default function AnnouncementsPage() {
     }
 
     setIsSubmitting(true);
+    setLoadingAction("publishing");
     setShowGlobalError(false);
 
     try {
@@ -333,7 +336,7 @@ export default function AnnouncementsPage() {
         content: formData.body,
         type: typeMap[activeTab],
         targetAudience: audienceMap[formData.visibility] || ["all"],
-        isPublished: showSchedule && scheduleDate ? false : true,
+        isPublished: true, // Always true for publish
         publishDate:
           showSchedule && scheduleDate
             ? new Date(
@@ -371,6 +374,10 @@ export default function AnnouncementsPage() {
       }
 
       setSubmitSuccess(true);
+      setSuccessMessage({
+        title: editingId && !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
+        description: editingId && !isEditingDraft ? "Changes have been saved." : "Announcement is now live."
+      });
       setShowSuccessModal(true);
       handleCancelEdit(); // Reset form
       fetchAnnouncements(); // Refresh List
@@ -379,11 +386,13 @@ export default function AnnouncementsPage() {
       alert("Failed to process announcement.");
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
   const handleSaveDraft = async () => {
     setIsSubmitting(true);
+    setLoadingAction("saving");
 
     try {
       const typeMap: Record<ActiveTab, AnnouncementData["type"]> = {
@@ -429,13 +438,29 @@ export default function AnnouncementsPage() {
         date: formData.date || undefined,
       };
 
-      const response = await announcementService.createAnnouncement(
-        announcementData,
-        images.length > 0 ? images : undefined
-      );
+      if (editingId) {
+        // UPDATE DRAFT
+        await announcementService.updateAnnouncement(
+          editingId,
+          announcementData,
+          images.length > 0 ? images : undefined
+        );
+      } else {
+        // CREATE DRAFT
+        await announcementService.createAnnouncement(
+          announcementData,
+          images.length > 0 ? images : undefined
+        );
+      }
 
-      console.log("✅ Draft saved successfully:", response);
-      alert("Draft saved successfully!");
+      setSubmitSuccess(true);
+      setSuccessMessage({
+        title: editingId ? "Draft Updated!" : "Draft Saved!",
+        description: editingId ? "Draft changes have been saved." : "Draft has been saved successfully."
+      });
+      setShowSuccessModal(true);
+      handleCancelEdit(); // Reset form
+      fetchAnnouncements(); // Refresh List
     } catch (error) {
       console.error("❌ Error saving draft:", error);
       const errorMessage =
@@ -445,6 +470,7 @@ export default function AnnouncementsPage() {
       alert(errorMessage);
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
@@ -622,7 +648,7 @@ export default function AnnouncementsPage() {
               <div className="w-16 h-16 border-4 border-primary2 border-t-transparent rounded-full animate-spin absolute inset-0" />
             </div>
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {editingId ? "Updating Announcement..." : "Publishing..."}
+              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating Announcement..." : "Publishing..."}
             </p>
           </div>
         </div>
@@ -1621,14 +1647,10 @@ export default function AnnouncementsPage() {
 
                 <div className="space-y-2">
                   <h3 className="text-2xl font-bold text-gray-900 font-rubik">
-                    {editingId
-                      ? "Updated Successfully!"
-                      : "Published Successfully!"}
+                    {successMessage.title}
                   </h3>
                   <p className="text-gray-500 font-raleway mb-6">
-                    {editingId
-                      ? "Changes have been saved."
-                      : "Announcement is now live."}
+                    {successMessage.description}
                   </p>
                 </div>
 

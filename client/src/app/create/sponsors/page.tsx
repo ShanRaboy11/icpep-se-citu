@@ -32,6 +32,8 @@ export default function SponsorsPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
+  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [formData, setFormData] = useState({
@@ -139,6 +141,7 @@ export default function SponsorsPage() {
 
     setShowGlobalError(false);
     setIsSubmitting(true);
+    setLoadingAction("publishing");
 
     try {
       const data: SponsorData = {
@@ -162,6 +165,10 @@ export default function SponsorsPage() {
         setSponsors((prev) => [res.data, ...prev]);
       }
 
+      setSuccessMessage({
+        title: editingId && !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
+        description: editingId && !isEditingDraft ? "Changes have been saved." : "Sponsor is now live."
+      });
       setShowSuccessModal(true);
       handleCancelEdit();
     } catch (error) {
@@ -169,12 +176,14 @@ export default function SponsorsPage() {
       alert("Failed to save sponsor");
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
   // 6. HANDLE SAVE DRAFT
   const handleSaveDraft = async () => {
     setIsSubmitting(true);
+    setLoadingAction("saving");
     setShowGlobalError(false);
 
     // Validation for draft (minimal)
@@ -182,6 +191,7 @@ export default function SponsorsPage() {
       setErrors({ ...errors, name: true });
       setShowGlobalError(true);
       setIsSubmitting(false);
+      setLoadingAction(null);
       return;
     }
 
@@ -207,6 +217,10 @@ export default function SponsorsPage() {
         setSponsors((prev) => [res.data, ...prev]);
       }
 
+      setSuccessMessage({
+        title: editingId ? "Draft Updated!" : "Draft Saved!",
+        description: editingId ? "Draft changes have been saved." : "Draft has been saved successfully."
+      });
       setShowSuccessModal(true);
       handleCancelEdit();
     } catch (error) {
@@ -214,6 +228,7 @@ export default function SponsorsPage() {
       alert("Failed to save draft");
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
@@ -288,7 +303,7 @@ export default function SponsorsPage() {
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {editingId ? "Updating Sponsor..." : "Publishing Sponsor..."}
+              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating Sponsor..." : "Publishing Sponsor..."}
             </p>
           </div>
         </div>
@@ -662,10 +677,10 @@ export default function SponsorsPage() {
           />
           <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center">
             <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
-              {editingId ? "Updated Successfully!" : "Published Successfully!"}
+              {successMessage.title}
             </h3>
             <p className="text-gray-500 font-raleway mb-6">
-              {editingId ? "Sponsor details updated." : "Sponsor is now live."}
+              {successMessage.description}
             </p>
             <button
               onClick={() => setShowSuccessModal(false)}

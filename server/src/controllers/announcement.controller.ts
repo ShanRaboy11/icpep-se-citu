@@ -191,13 +191,20 @@ export const createAnnouncement = async (
         };
 
         // If a publishDate exists and it's in the future, ensure announcement remains unpublished until scheduler runs
-        if (parsedPublishDate && parsedPublishDate > now) {
+        // BUT if the user explicitly set isPublished=false (draft), respect that regardless of date.
+        // The logic below ensures that if it's a draft, it stays a draft.
+        // If it's meant to be published, we check if it's scheduled for the future.
+        if (announcementData.isPublished && parsedPublishDate && parsedPublishDate > now) {
             announcementData.isPublished = false;
+            announcementData.scheduled = true;
+        } else if (!announcementData.isPublished) {
+            announcementData.scheduled = false;
         }
 
         console.log('📝 Final announcement data (publishDate/isPublished):', {
             publishDate: announcementData.publishDate,
             isPublished: announcementData.isPublished,
+            scheduled: announcementData.scheduled,
         });
 
         // Enforce that published announcements must have at least one featured image
@@ -402,11 +409,16 @@ export const updateAnnouncement = async (
         // If the request is attempting to publish the announcement, ensure at least one image exists
         // But if the incoming publishDate is in the future, treat as scheduling (do not publish now)
         const incomingPublishDate = req.body.publishDate ? new Date(req.body.publishDate) : null;
-        if (incomingPublishDate && incomingPublishDate > new Date()) {
-            // ensure we don't publish immediately
-            req.body.isPublished = false;
-        }
         const requestWantsPublish = req.body.isPublished === 'true' || req.body.isPublished === true;
+
+        if (requestWantsPublish && incomingPublishDate && incomingPublishDate > new Date()) {
+            // ensure we don't publish immediately if scheduled for future
+            req.body.isPublished = false;
+            req.body.scheduled = true;
+        } else if (!requestWantsPublish) {
+            req.body.scheduled = false;
+        }
+        
         const existingHasImage = (announcement.imageUrl && announcement.imageUrl.length > 0) || (announcement.galleryImages && announcement.galleryImages.length > 0);
         const incomingHasImage = (req.body.imageUrl && String(req.body.imageUrl).length > 0) || (req.body.galleryImages && String(req.body.galleryImages).length > 0);
 

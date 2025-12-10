@@ -25,6 +25,7 @@ export default function MerchPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // --- MANAGEMENT STATE ---
@@ -133,6 +134,7 @@ export default function MerchPage() {
 
     setShowGlobalError(false);
     setIsSubmitting(true);
+    setLoadingAction(isDraft ? "saving" : "publishing");
     setPriceError(false);
 
     try {
@@ -152,10 +154,19 @@ export default function MerchPage() {
         setMerchList((prev) =>
           prev.map((item) => (item._id === editingId ? updated : item))
         );
-        setSuccessMessage({
-          title: isDraft ? "Draft Saved!" : "Updated Successfully!",
-          description: isDraft ? "Your item has been saved as a draft." : "Item details have been updated."
-        });
+        
+        if (isDraft) {
+             setSuccessMessage({
+                title: "Draft Updated!",
+                description: "Draft changes have been saved."
+             });
+        } else {
+             setSuccessMessage({
+                title: !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
+                description: !isEditingDraft ? "Item details have been updated." : "Item is now live."
+             });
+        }
+
       } else {
         // Create Logic
         if (!cover) throw new Error("Image is required for new items");
@@ -169,10 +180,18 @@ export default function MerchPage() {
         }, cover);
 
         setMerchList((prev) => [created, ...prev]);
-        setSuccessMessage({
-          title: isDraft ? "Draft Saved!" : "Published Successfully!",
-          description: isDraft ? "Your item has been saved as a draft." : "Your item has been successfully created and is now live."
-        });
+        
+        if (isDraft) {
+             setSuccessMessage({
+                title: "Draft Saved!",
+                description: "Your item has been saved as a draft."
+             });
+        } else {
+             setSuccessMessage({
+                title: "Published Successfully!",
+                description: "Your item has been successfully created and is now live."
+             });
+        }
       }
 
       handleCancelEdit(); // Reset form
@@ -182,6 +201,7 @@ export default function MerchPage() {
       alert("Failed to save item. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
@@ -298,7 +318,7 @@ export default function MerchPage() {
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {editingId ? "Updating..." : "Publishing..."}
+              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating..." : "Publishing..."}
             </p>
           </div>
         </div>
@@ -808,7 +828,7 @@ export default function MerchPage() {
 
               <div className="text-center space-y-2">
                 <h3 className="text-2xl text-primary3 font-bold font-rubik">
-                  {successMessage.title || (editingId ? "Updated Successfully!" : "Published Successfully!")}
+                  {successMessage.title}
                 </h3>
                 <p className="text-gray-600 font-raleway">
                   {successMessage.description}

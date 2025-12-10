@@ -201,7 +201,7 @@ export const createEvent = async (
             return;
         }
 
-        const eventData = {
+        const eventData: any = {
             title,
             description,
             content,
@@ -227,6 +227,13 @@ export const createEvent = async (
             galleryImages,
             details: parsedDetails,
         };
+
+        // If a publishDate exists and it's in the future, ensure event remains unpublished until scheduler runs
+        // BUT if the user explicitly set isPublished=false (draft), respect that regardless of date.
+        const parsedPublishDate = publishDate ? new Date(publishDate) : undefined;
+        if (eventData.isPublished && parsedPublishDate && parsedPublishDate > new Date()) {
+            eventData.isPublished = false;
+        }
 
         console.log('💾 Saving to database...');
         const event = await Event.create(eventData);
@@ -441,6 +448,16 @@ export const updateEvent = async (
         if (req.body.eventDate) req.body.eventDate = new Date(req.body.eventDate);
         if (req.body.registrationStart) req.body.registrationStart = new Date(req.body.registrationStart);
         if (req.body.registrationEnd) req.body.registrationEnd = new Date(req.body.registrationEnd);
+
+        // If the request is attempting to publish the event, ensure at least one image exists
+        // But if the incoming publishDate is in the future, treat as scheduling (do not publish now)
+        const incomingPublishDate = req.body.publishDate ? new Date(req.body.publishDate) : null;
+        const requestWantsPublish = req.body.isPublished === 'true' || req.body.isPublished === true;
+
+        if (requestWantsPublish && incomingPublishDate && incomingPublishDate > new Date()) {
+            // ensure we don't publish immediately if scheduled for future
+            req.body.isPublished = false;
+        }
 
         const updatedEvent = await Event.findByIdAndUpdate(
             id,

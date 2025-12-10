@@ -130,17 +130,11 @@ export default function DraftsPage() {
                         {it.type}
                       </span>
                     )}
-                    <span
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-                        scheduled
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {scheduled
-                        ? `Scheduled: ${new Date(it.publishDate!).toLocaleDateString()}`
-                        : "Draft"}
-                    </span>
+                    {scheduled ? (
+                      <span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-100 text-blue-700">
+                        Scheduled: {new Date(it.publishDate!).toLocaleDateString()}
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -206,9 +200,6 @@ export default function DraftsPage() {
                     {item.description}
                   </p>
                   <div className="mt-2 flex gap-2">
-                    <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold">
-                      Draft
-                    </span>
                     <span className="px-2.5 py-1 bg-primary2/10 text-primary2 rounded-lg text-xs font-bold">
                       {item.prices.length} Price Options
                     </span>
@@ -281,11 +272,6 @@ export default function DraftsPage() {
                   <p className="text-sm text-gray-500 font-raleway line-clamp-1 italic">
                     "{item.quote}"
                   </p>
-                  <div className="mt-2">
-                    <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold">
-                      Draft
-                    </span>
-                  </div>
                 </div>
               </div>
               
@@ -350,11 +336,6 @@ export default function DraftsPage() {
                   <p className="text-sm text-primary1 font-bold font-raleway mb-1">
                     {item.type}
                   </p>
-                  <div className="mt-2">
-                    <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold">
-                      Draft
-                    </span>
-                  </div>
                 </div>
               </div>
               

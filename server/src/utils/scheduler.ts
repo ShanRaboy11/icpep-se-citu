@@ -14,6 +14,7 @@ export function startAnnouncementScheduler(intervalMs = 30_000) {
             // Find announcements scheduled for publish at or before now that are not published
             const due = await Announcement.find({
                 isPublished: false,
+                scheduled: true,
                 publishDate: { $lte: now },
             });
 
@@ -28,6 +29,7 @@ export function startAnnouncementScheduler(intervalMs = 30_000) {
                     }
 
                     ann.isPublished = true;
+                    ann.scheduled = false;
                     // If publishDate was missing, set it to now (but normally it will be set)
                     if (!ann.publishDate) ann.publishDate = new Date();
                     await ann.save();

@@ -51,6 +51,8 @@ export default function EventsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
+  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
   const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit");
@@ -269,6 +271,7 @@ export default function EventsPage() {
     }
 
     setIsSubmitting(true);
+    setLoadingAction("publishing");
     setShowGlobalError(false);
 
     try {
@@ -328,6 +331,10 @@ export default function EventsPage() {
       }
 
       setSubmitSuccess(true);
+      setSuccessMessage({
+        title: editingId && !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
+        description: editingId && !isEditingDraft ? "Changes have been saved." : "Event is now live."
+      });
       setShowSuccessModal(true);
       handleCancelEdit(); // Reset form
       fetchEvents(); // Refresh list
@@ -336,11 +343,13 @@ export default function EventsPage() {
       alert("Failed to save event. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
   const handleSaveDraft = async () => {
     setIsSubmitting(true);
+    setLoadingAction("saving");
 
     try {
       const audienceMap: Record<string, string[]> = {
@@ -382,22 +391,35 @@ export default function EventsPage() {
           .filter((d) => d.title || d.items.length > 0),
       };
 
-      const response = await eventService.createEvent(
-        eventData,
-        images.length > 0 ? images : undefined
-      );
+      if (editingId) {
+        // UPDATE DRAFT
+        await eventService.updateEvent(
+          editingId,
+          eventData,
+          images.length > 0 ? images : undefined
+        );
+      } else {
+        // CREATE DRAFT
+        await eventService.createEvent(
+          eventData,
+          images.length > 0 ? images : undefined
+        );
+      }
 
-      console.log("✅ Draft saved successfully:", response);
-      alert("Draft saved successfully!");
+      setSubmitSuccess(true);
+      setSuccessMessage({
+        title: editingId ? "Draft Updated!" : "Draft Saved!",
+        description: editingId ? "Draft changes have been saved." : "Draft has been saved successfully."
+      });
+      setShowSuccessModal(true);
+      handleCancelEdit(); // Reset form
+      fetchEvents(); // Refresh list
     } catch (error) {
       console.error("❌ Error saving draft:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to save draft. Please try again.";
-      alert(errorMessage);
+      alert("Failed to save draft. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
@@ -513,7 +535,7 @@ export default function EventsPage() {
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {editingId ? "Updating Event..." : "Publishing Event..."}
+              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating Event..." : "Publishing Event..."}
             </p>
           </div>
         </div>
@@ -1459,14 +1481,10 @@ export default function EventsPage() {
 
                 <div className="space-y-2">
                   <h3 className="text-2xl font-bold text-gray-900 font-rubik">
-                    {editingId
-                      ? "Updated Successfully!"
-                      : "Published Successfully!"}
+                    {successMessage.title}
                   </h3>
                   <p className="text-gray-500 font-raleway">
-                    {editingId
-                      ? "Event details have been updated."
-                      : "Your event has been successfully created and is now live."}
+                    {successMessage.description}
                   </p>
                 </div>
 
