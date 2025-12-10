@@ -21,8 +21,7 @@ type FormErrors = {
   prices: boolean;
 };
 
-export default function SponsorsPage() {
-  // Note: Function name should ideally be MerchPage based on context, but keeping as requested
+export default function MerchPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -32,6 +31,7 @@ export default function SponsorsPage() {
   const [merchList, setMerchList] = useState<MerchItem[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
@@ -65,6 +65,7 @@ export default function SponsorsPage() {
   // 2. HANDLE EDIT CLICK
   const handleEditClick = (item: MerchItem) => {
     setEditingId(item._id);
+    setIsEditingDraft(!item.isActive);
     setFormData({
       name: item.name,
       descrip: item.description,
@@ -79,6 +80,7 @@ export default function SponsorsPage() {
   // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
+    setIsEditingDraft(false);
     setFormData({ name: "", descrip: "", orderlink: "" });
     setPrices([]);
     setPreview(null);
@@ -583,20 +585,20 @@ export default function SponsorsPage() {
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-500 hover:bg-red-500 "
                         >
                           Cancel Edit
                         </Button>
                       )}
 
-                      {!editingId && (
-                        <Button 
+                      {(!editingId || isEditingDraft) && (
+                        <Button
                           variant="outline"
                           type="button"
                           onClick={() => handleSubmit(true)}
                           disabled={isSubmitting}
                         >
-                          Save Draft
+                          {editingId ? "Update" : "Save Draft"}
                         </Button>
                       )}
 
@@ -605,9 +607,9 @@ export default function SponsorsPage() {
                         type="button"
                         onClick={() => handleSubmit(false)}
                         disabled={isSubmitting}
-                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50"
+                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {editingId ? "Update Merch" : "Publish"}
+                        {editingId && !isEditingDraft ? "Update Merch" : "Publish"}
                       </Button>
                     </div>
                   </div>

@@ -54,6 +54,7 @@ export default function TestimonialsPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
 
   // 1. Fetch List on Load
   const fetchTestimonials = async () => {
@@ -84,6 +85,7 @@ export default function TestimonialsPage() {
   // 2. Handle Edit Click (Populate Form)
   const handleEditClick = (item: Testimonial) => {
     setEditingId(item._id);
+    setIsEditingDraft(!item.isActive);
     setFormData({
       name: item.name,
       position: item.role,
@@ -97,6 +99,7 @@ export default function TestimonialsPage() {
   // 3. Handle Cancel Edit
   const handleCancelEdit = () => {
     setEditingId(null);
+    setIsEditingDraft(false);
     setFormData({ name: "", position: "", message: "" });
     setPreview(null);
     setCover(null);
@@ -114,7 +117,55 @@ export default function TestimonialsPage() {
     }
   };
 
-  // 5. Updated Publish Logic
+  // 5. Handle Save Draft
+  const handleSaveDraft = async () => {
+    const newErrors = {
+      name: !formData.name.trim(),
+      position: !formData.position.trim(),
+      message: !formData.message.trim(),
+    };
+
+    setErrors(newErrors);
+
+    if (Object.values(newErrors).some(Boolean)) {
+      setShowGlobalError(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setShowGlobalError(false);
+
+    try {
+      const payload = {
+        name: formData.name,
+        role: formData.position,
+        quote: formData.message,
+        image: cover || undefined,
+        isActive: false, // Draft
+      };
+
+      if (editingId) {
+        // UPDATE MODE
+        //await testimonialService.updateTestimonial(editingId, payload);
+      } else {
+        // CREATE MODE
+        await testimonialService.createTestimonial(payload);
+      }
+
+      // Reset form & Refresh list
+      handleCancelEdit();
+      setSubmitSuccess(true);
+      setShowSuccessModal(true);
+      fetchTestimonials();
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      alert("Failed to save draft. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // 6. Updated Publish Logic
   const handlePublish = async () => {
     const newErrors = {
       name: !formData.name.trim(),
@@ -598,18 +649,19 @@ export default function TestimonialsPage() {
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-500"
                         >
                           Cancel Edit
                         </Button>
                       )}
 
-                      {!editingId && (
+                      {(!editingId || isEditingDraft) && (
                         <Button
                           variant="outline"
                           className="flex-1 sm:flex-none"
+                          onClick={handleSaveDraft}
                         >
-                          Save Draft
+                          {editingId ? "Update" : "Save Draft"}
                         </Button>
                       )}
 
@@ -621,7 +673,7 @@ export default function TestimonialsPage() {
                         className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <span className="flex items-center gap-2">
-                          {editingId ? "Update Testimonial" : "Publish"}
+                          {editingId && !isEditingDraft ? "Update Testimonial" : "Publish"}
                         </span>
                       </Button>
                     </div>

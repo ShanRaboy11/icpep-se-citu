@@ -514,7 +514,7 @@ export default function SponsorsPage() {
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-500"
                         >
                           Cancel Edit
                         </Button>
@@ -531,7 +531,7 @@ export default function SponsorsPage() {
                         type="button"
                         onClick={handlePublish}
                         disabled={isSubmitting}
-                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50"
+                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {editingId && !isEditingDraft ? "Update Sponsor" : "Publish"}
                       </Button>

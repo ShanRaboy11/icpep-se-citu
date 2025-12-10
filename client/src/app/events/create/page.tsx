@@ -173,6 +173,7 @@ export default function EventsPage() {
   // 2. HANDLE EDIT CLICK (Populate All Fields)
   const handleEditClick = (item: EventItem) => {
     setEditingId(item._id);
+    setIsEditingDraft(!item.isPublished);
 
     // Basic Fields
     setFormData({
@@ -1294,7 +1295,7 @@ export default function EventsPage() {
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-500"
                         >
                           Cancel Edit
                         </Button>
