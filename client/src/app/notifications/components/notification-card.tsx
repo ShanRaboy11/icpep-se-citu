@@ -1,11 +1,20 @@
-import { Bell, Calendar, Megaphone, BadgeCheck } from "lucide-react";
+"use client";
+
+import {
+  Bell,
+  Calendar,
+  Megaphone,
+  BadgeCheck,
+  AlertCircle, // Imported for Action Required
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export type NotificationType =
   | "notification"
   | "calendar"
   | "megaphone"
-  | "member";
+  | "member"
+  | "action"; // Added new type
 
 export interface NotificationItem {
   id: string;
@@ -27,16 +36,24 @@ export default function NotificationCard({
 }: NotificationCardProps) {
   const router = useRouter();
 
+  // Helper to determine Icon styling
   const getIcon = () => {
+    // Icons bigger (w-6 h-6)
+    const iconClass = `w-6 h-6 ${
+      item.read ? "text-gray-400" : "text-primary1"
+    }`;
+
     switch (item.type) {
       case "calendar":
-        return <Calendar className="w-6 h-6 text-primary2" />;
+        return <Calendar className={iconClass} />;
       case "megaphone":
-        return <Megaphone className="w-6 h-6 text-primary2" />;
+        return <Megaphone className={iconClass} />;
       case "member":
-        return <BadgeCheck className="w-6 h-6 text-primary2" />;
+        return <BadgeCheck className={iconClass} />;
+      case "action": // Action Required Case
+        return <AlertCircle className={iconClass} />;
       default:
-        return <Bell className="w-6 h-6 text-primary2" />;
+        return <Bell className={iconClass} />;
     }
   };
 
@@ -48,25 +65,41 @@ export default function NotificationCard({
   return (
     <button
       onClick={handleClick}
-      className={`w-full flex items-start gap-4 rounded-xl p-4  px-8 mb-3 text-left transition border
-      ${
-        item.read
-          ? "bg-white border-gray-200"
-          : "bg-primary1/10 border-primary1/30"
-      }
-      hover:bg-primary1/20`}
+      className={`
+        group w-full flex items-center gap-4 rounded-2xl py-4 px-5 mb-2 text-left transition-all duration-200 border cursor-pointer
+        ${
+          item.read
+            ? "bg-white border-gray-100 shadow-sm hover:border-gray-200 hover:shadow-md"
+            : "bg-primary1/10 border-primary1/20 hover:border-primary1/40 hover:bg-primary1/20"
+        }
+      `}
     >
-      <div className="flex-shrink-0 mt-2">{getIcon()}</div>
+      {/* Icon - Vertically Centered */}
+      <div className="flex-shrink-0">{getIcon()}</div>
 
-      <div className="flex flex-col flex-1 ml-2">
-        <p className="font-rubik text-gray-800">{item.message}</p>
-        <span className="text-xs text-gray-500 font-raleway mt-1">
+      {/* Content */}
+      <div className="flex flex-col flex-1">
+        <p
+          className={`font-rubik text-sm sm:text-base leading-tight ${
+            item.read
+              ? "text-gray-600 font-normal"
+              : "text-gray-900 font-medium"
+          }`}
+        >
+          {item.message}
+        </p>
+        <span
+          className={`text-xs font-raleway mt-1 ${
+            item.read ? "text-gray-400" : "text-gray-500 font-semibold"
+          }`}
+        >
           {item.date}
         </span>
       </div>
 
+      {/* Unread Indicator Dot - Vertically Centered */}
       {!item.read && (
-        <span className="w-2 h-2 rounded-full bg-primary3 mt-5"></span>
+        <span className="w-2.5 h-2.5 rounded-full bg-primary1 flex-shrink-0 animate-pulse"></span>
       )}
     </button>
   );

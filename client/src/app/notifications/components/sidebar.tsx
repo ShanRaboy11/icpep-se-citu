@@ -1,104 +1,103 @@
 "use client";
 
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import {
-  Megaphone,
-  Bell,
-  BadgeCheck,
-  Calendar,
-  Menu,
-  X,
-  SquareMenu,
-} from "lucide-react";
+import { Megaphone, Bell, Calendar, LayoutGrid, Menu, X } from "lucide-react";
 import { useState } from "react";
 import clsx from "clsx";
 
-const Sidebar = () => {
-  const searchParams = useSearchParams();
-  const activeType = searchParams.get("type");
+// Simplified filter types
+export type FilterType = "all" | "announcement" | "event" | "others";
+
+interface SidebarProps {
+  activeTab: FilterType;
+  onTabChange: (tab: FilterType) => void;
+}
+
+const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
   const [open, setOpen] = useState(false);
 
   const links = [
     {
-      name: "All",
-      href: "/notification",
-      icon: <SquareMenu size={20} />,
+      name: "All Updates",
+      value: "all",
+      icon: <LayoutGrid size={18} />,
     },
     {
       name: "Announcements",
-      href: "/notification?type=megaphone",
-      icon: <Megaphone size={20} />,
-    },
-    {
-      name: "Approval",
-      href: "/notification?type=member",
-      icon: <BadgeCheck size={20} />,
+      value: "announcement",
+      icon: <Megaphone size={18} />,
     },
     {
       name: "Events",
-      href: "/notification?type=calendar",
-      icon: <Calendar size={20} />,
+      value: "event",
+      icon: <Calendar size={18} />,
     },
     {
-      name: "Reminders",
-      href: "/notification?type=notification",
-      icon: <Bell size={20} />,
+      name: "Others",
+      value: "others",
+      icon: <Bell size={18} />,
     },
   ];
 
   return (
     <>
-      {/* Mobile Header */}
-      <div className="sm:hidden flex items-center justify-between w-full px-4 py-3 border-b border-gray-200 bg-white sticky top-0 z-20">
-        <h1 className="text-lg font-semibold text-primary1">Filters</h1>
+      {/* Mobile Filter Toggle */}
+      <div className="lg:hidden flex items-center justify-between w-full px-4 py-3 mb-6 border border-gray-200 rounded-2xl bg-white shadow-sm">
+        <span className="font-rubik text-sm font-medium text-gray-600">
+          Filter:{" "}
+          <span className="text-primary1 capitalize font-bold">
+            {activeTab}
+          </span>
+        </span>
         <button
           onClick={() => setOpen(!open)}
-          className="p-2 rounded-md hover:bg-gray-200 transition-colors"
+          className="p-2 -mr-2 text-gray-500 hover:text-primary1 transition-colors"
         >
-          {open ? (
-            <X size={22} className="text-gray-500" />
-          ) : (
-            <Menu size={22} className="text-gray-500" />
-          )}
+          {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
       {/* Sidebar Container */}
       <aside
         className={clsx(
-          "bg-white flex flex-col sm:w-60 w-full sm:h-[calc(100vh-100px)]  transition-all duration-300",
-          open
-            ? "max-h-[300px] sm:max-h-full overflow-y-auto"
-            : "max-h-0 sm:max-h-full overflow-hidden sm:overflow-visible"
+          // Layout
+          "w-full lg:w-64 flex-shrink-0 lg:block overflow-hidden",
+          open ? "block mb-8" : "hidden",
+
+          // CONTAINER STYLES (Matched to Search/Action Bar)
+          "bg-white rounded-2xl border border-gray-100 shadow-sm",
+          "transition-all duration-300",
+          "hover:shadow-md hover:border-primary1/30",
+
+          // Tight Padding
+          "p-3"
         )}
       >
-        {/* Sidebar Header (Desktop Only) */}
-        <div className="hidden sm:block px-4 pt-6 pb-2">
-          <h1 className="text-md font-light font-rubik text-gray-500">
-            Filters
-          </h1>
-        </div>
+        <div className="flex flex-col h-full">
+          <h3 className="px-4 pb-2 pt-2 font-raleway text-xs font-bold text-gray-400 uppercase tracking-widest">
+            Categories
+          </h3>
 
-        {/* Navigation Links */}
-        <nav className="flex flex-col gap-1 sm:gap-2 px-4 py-2 sm:py-0">
-          {links.map((link) => (
-            <Link
-              key={link.name}
-              href={link.href}
-              className={clsx(
-                "flex items-center gap-2 px-4 py-3 rounded-lg font-rubik font-normal transition-all text-sm",
-                activeType === link.href.split("=")[1]
-                  ? "bg-primary1 text-white"
-                  : "hover:bg-gray-100 text-gray-800"
-              )}
-              onClick={() => setOpen(false)} // Close on mobile tap
-            >
-              {link.icon}
-              {link.name}
-            </Link>
-          ))}
-        </nav>
+          <nav className="flex flex-col gap-1">
+            {links.map((link) => (
+              <button
+                key={link.value}
+                onClick={() => {
+                  onTabChange(link.value as FilterType);
+                  setOpen(false);
+                }}
+                className={clsx(
+                  "flex items-center gap-3 px-4 py-2.5 rounded-xl font-rubik text-sm transition-all duration-200 text-left w-full cursor-pointer",
+                  activeTab === link.value
+                    ? "bg-primary1 text-white shadow-md shadow-primary1/25 font-semibold"
+                    : "text-gray-600 hover:bg-primary1/5 hover:text-primary1 hover:translate-x-1"
+                )}
+              >
+                {link.icon}
+                {link.name}
+              </button>
+            ))}
+          </nav>
+        </div>
       </aside>
     </>
   );
