@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
@@ -82,16 +82,58 @@ export default function AnnouncementsPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editIdParam = searchParams.get("edit");
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (editIdParam) {
+      const fetchAnnouncement = async () => {
+        try {
+          const response = await announcementService.getAnnouncementById(editIdParam);
+          const data = response.data as any; // Assuming response structure
+          if (data) {
+            setEditingId(data._id);
+            setIsEditingDraft(!data.isPublished);
+            setFormData({
+              title: data.title,
+              summary: data.description,
+              body: data.content,
+              visibility: "Public", // Default or map from data
+              date: data.date || "",
+              time: data.time || "",
+              location: data.location || "",
+              attendanceLink: "", // Map if available
+            });
+            setActiveTab(data.type as ActiveTab);
+            // Populate other fields as needed (images, agenda, etc.)
+            if (data.agenda) setAgenda(data.agenda);
+            if (data.awardees) setAwardees(data.awardees);
+            if (data.organizer) {
+                setOrganizer(data.organizer);
+                setShowOrganizerInput(true);
+            }
+            if (data.imageUrl) {
+                setPreviews([data.imageUrl]);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch announcement for edit:", error);
+        }
+      };
+      fetchAnnouncement();
+    }
+  }, [editIdParam]);
 
   const [formData, setFormData] = useState({
     title: "",
     summary: "",
     body: "",
     visibility: "",
+    attendanceLink: "",
     date: "",
     time: "",
     location: "",
-    attendanceLink: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({
@@ -111,7 +153,7 @@ export default function AnnouncementsPage() {
     []
   );
   const [isLoadingList, setIsLoadingList] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
 
   // 1. FETCH ANNOUNCEMENTS
   const fetchAnnouncements = async () => {
@@ -137,6 +179,7 @@ export default function AnnouncementsPage() {
   // 2. HANDLE EDIT CLICK (Populates Form)
   const handleEditClick = (item: AnnouncementItem) => {
     setEditingId(item._id);
+    setIsEditingDraft(!item.isPublished);
 
     // Basic Fields
     setFormData({
@@ -206,6 +249,7 @@ export default function AnnouncementsPage() {
   // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
+    setIsEditingDraft(false);
     resetForm();
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -1400,12 +1444,12 @@ export default function AnnouncementsPage() {
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
                         >
                           Cancel Edit
                         </Button>
                       )}
-                      {!editingId && (
+                      {(!editingId || isEditingDraft) && (
                         <Button
                           variant="outline"
                           type="button"
@@ -1413,7 +1457,7 @@ export default function AnnouncementsPage() {
                           disabled={isSubmitting}
                           className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300"
                         >
-                          Save Draft
+                          {editingId ? "Update" : "Save Draft"}
                         </Button>
                       )}
                       <Button
@@ -1425,7 +1469,7 @@ export default function AnnouncementsPage() {
                       >
                         {isSubmitting
                           ? "Processing..."
-                          : editingId
+                          : editingId && !isEditingDraft
                           ? "Update Announcement"
                           : "Publish"}
                       </Button>

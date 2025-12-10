@@ -2,19 +2,22 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import Sidebar from "@/app/components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import { Pencil, Trash2, RefreshCw } from "lucide-react"; // Icons
+import sponsorService, { SponsorData } from "@/app/services/sponsor";
 
 // --- INTERFACES ---
 interface Sponsor {
   _id: string;
   name: string;
   type: string; // "Platinum Sponsor", "Gold Sponsor", etc.
-  imageUrl?: string;
+  image?: string;
+  isActive: boolean;
 }
 
 type FormErrors = {
@@ -22,6 +25,10 @@ type FormErrors = {
 };
 
 export default function SponsorsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const editIdParam = searchParams.get("edit");
+
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -47,42 +54,43 @@ export default function SponsorsPage() {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [cover, setCover] = useState<File | null>(null);
 
-  // 1. FETCH SPONSORS (Simulation or API)
+  // 1. FETCH SPONSORS
   const fetchSponsors = async () => {
     setIsLoadingList(true);
-    // Simulate API call - Replace with actual API: await sponsorService.getAll()
-    setTimeout(() => {
-      // Mock Data
-      const mockData: Sponsor[] = [
-        {
-          _id: "1",
-          name: "Tech Corp",
-          type: "Platinum Sponsor",
-          imageUrl: "/icpep logo.png",
-        },
-        {
-          _id: "2",
-          name: "Local Bakery",
-          type: "Bronze Sponsor",
-          imageUrl: "/icpep logo.png",
-        },
-      ];
-      setSponsors(mockData);
+    try {
+      const response = await sponsorService.getAllSponsors();
+      const data = Array.isArray(response.data) ? response.data : (Array.isArray(response) ? response : []);
+      setSponsors(data);
+      
+      // Handle edit param if present
+      if (editIdParam) {
+        const itemToEdit = data.find((s: Sponsor) => s._id === editIdParam);
+        if (itemToEdit) {
+          handleEditClick(itemToEdit);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch sponsors:", error);
+    } finally {
       setIsLoadingList(false);
-    }, 1000);
+    }
   };
 
   useEffect(() => {
     fetchSponsors();
-  }, []);
+  }, [editIdParam]);
 
   // 2. HANDLE EDIT CLICK
   const handleEditClick = (item: Sponsor) => {
     setEditingId(item._id);
+    setIsEditingDraft(!item.isActive);
     setFormData({ name: item.name });
     setActiveTab(item.type);
-    setPreview(item.imageUrl || null);
+    setPreview(item.image || null);
     setCover(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -90,18 +98,26 @@ export default function SponsorsPage() {
   // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
+    setIsEditingDraft(false);
     setFormData({ name: "" });
     setPreview(null);
     setCover(null);
     setActiveTab(tabs[0]);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    router.push("/create/sponsors");
   };
 
+
   // 4. HANDLE DELETE
-  const handleDelete = (id: string) => {
-    if (!confirm("Delete this sponsor?")) return;
-    // Simulate Delete
-    setSponsors((prev) => prev.filter((s) => s._id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this sponsor?")) return;
+    try {
+      await sponsorService.deleteSponsor(id);
+      setSponsors((prev) => prev.filter((s) => s._id !== id));
+    } catch (error) {
+      console.error("Failed to delete sponsor:", error);
+      alert("Failed to delete sponsor");
+    }
   };
 
   // 5. PUBLISH / UPDATE LOGIC
@@ -115,7 +131,7 @@ export default function SponsorsPage() {
     if (
       Object.values(newErrors).some(Boolean) ||
       !activeTab ||
-      (!cover && !editingId)
+      (!cover && !editingId && !preview)
     ) {
       setShowGlobalError(true);
       return;
@@ -124,42 +140,84 @@ export default function SponsorsPage() {
     setShowGlobalError(false);
     setIsSubmitting(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      // In real app: check if editingId exists to call update() or create()
+    try {
+      const data: SponsorData = {
+        name: formData.name,
+        type: activeTab,
+        image: cover || undefined,
+        isActive: true, // Publish
+      };
+
       if (editingId) {
-        console.log("Updated Sponsor:", editingId, formData);
-        // Optimistic Update for Mock
+        await sponsorService.updateSponsor(editingId, data);
         setSponsors((prev) =>
           prev.map((s) =>
             s._id === editingId
-              ? {
-                  ...s,
-                  name: formData.name,
-                  type: activeTab,
-                  imageUrl: preview || s.imageUrl,
-                }
+              ? { ...s, name: data.name, type: data.type, image: preview || s.image, isActive: true }
               : s
           )
         );
       } else {
-        console.log("Created Sponsor:", formData);
-        // Optimistic Create for Mock
-        const newSponsor: Sponsor = {
-          _id: Date.now().toString(),
-          name: formData.name,
-          type: activeTab,
-          imageUrl: preview || "",
-        };
-        setSponsors((prev) => [newSponsor, ...prev]);
+        const res = await sponsorService.createSponsor(data);
+        setSponsors((prev) => [res.data, ...prev]);
       }
 
-      // Reset form
-      handleCancelEdit();
-      setIsSubmitting(false);
       setShowSuccessModal(true);
-    }, 1500);
+      handleCancelEdit();
+    } catch (error) {
+      console.error("Failed to save sponsor:", error);
+      alert("Failed to save sponsor");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  // 6. HANDLE SAVE DRAFT
+  const handleSaveDraft = async () => {
+    setIsSubmitting(true);
+    setShowGlobalError(false);
+
+    // Validation for draft (minimal)
+    if (!formData.name.trim()) {
+      setErrors({ ...errors, name: true });
+      setShowGlobalError(true);
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const data: SponsorData = {
+        name: formData.name,
+        type: activeTab,
+        image: cover || undefined,
+        isActive: false, // Draft
+      };
+
+      if (editingId) {
+        await sponsorService.updateSponsor(editingId, data);
+        setSponsors((prev) =>
+          prev.map((s) =>
+            s._id === editingId
+              ? { ...s, name: data.name, type: data.type, image: preview || s.image, isActive: false }
+              : s
+          )
+        );
+      } else {
+        const res = await sponsorService.createSponsor(data);
+        setSponsors((prev) => [res.data, ...prev]);
+      }
+
+      setShowSuccessModal(true);
+      handleCancelEdit();
+    } catch (error) {
+      console.error("Failed to save draft:", error);
+      alert("Failed to save draft");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -172,9 +230,6 @@ export default function SponsorsPage() {
       setErrors((prev) => ({ ...prev, [name]: false }));
     }
   };
-
-  const [cover, setCover] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
 
   const resizeImage = (file: File, maxWidth = 1200): Promise<File> => {
     return new Promise((resolve) => {
@@ -459,14 +514,16 @@ export default function SponsorsPage() {
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
                         >
                           Cancel Edit
                         </Button>
                       )}
 
-                      {!editingId && (
-                        <Button variant="outline">Save Draft</Button>
+                      {(!editingId || isEditingDraft) && (
+                        <Button variant="outline" onClick={handleSaveDraft}>
+                          {editingId ? "Update" : "Save Draft"}
+                        </Button>
                       )}
 
                       <Button
@@ -476,7 +533,7 @@ export default function SponsorsPage() {
                         disabled={isSubmitting}
                         className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50"
                       >
-                        {editingId ? "Update Sponsor" : "Publish"}
+                        {editingId && !isEditingDraft ? "Update Sponsor" : "Publish"}
                       </Button>
                     </div>
                   </div>
@@ -533,9 +590,9 @@ export default function SponsorsPage() {
                           >
                             <td className="px-6 py-4">
                               <div className="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200">
-                                {item.imageUrl ? (
+                                {item.image ? (
                                   <img
-                                    src={item.imageUrl}
+                                    src={item.image}
                                     alt={item.name}
                                     className="w-full h-full object-contain p-1"
                                   />

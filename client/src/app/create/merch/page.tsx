@@ -7,6 +7,7 @@ import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Icons
 import merchService, { MerchItem } from "@/app/services/merch";
 
@@ -34,6 +35,8 @@ export default function SponsorsPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
+  const searchParams = useSearchParams();
+  const editIdParam = searchParams.get("edit");
 
   // 1. FETCH MERCH
   const fetchMerch = async () => {
@@ -41,6 +44,13 @@ export default function SponsorsPage() {
     try {
       const data = await merchService.getAll();
       setMerchList(data);
+      
+      if (editIdParam) {
+        const itemToEdit = data.find((m: MerchItem) => m._id === editIdParam);
+        if (itemToEdit) {
+          handleEditClick(itemToEdit);
+        }
+      }
     } catch (error) {
       console.error("Failed to fetch merch:", error);
     } finally {
@@ -50,7 +60,7 @@ export default function SponsorsPage() {
 
   useEffect(() => {
     fetchMerch();
-  }, []);
+  }, [editIdParam]);
 
   // 2. HANDLE EDIT CLICK
   const handleEditClick = (item: MerchItem) => {

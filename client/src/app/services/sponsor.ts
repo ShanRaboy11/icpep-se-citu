@@ -79,6 +79,33 @@ const sponsorService = {
         } catch (error) {
             throw error;
         }
+    },
+
+    updateSponsor: async (id: string, data: SponsorData) => {
+        try {
+            const formData = new FormData();
+            if (data.name) formData.append('name', data.name);
+            if (data.type) formData.append('type', data.type);
+            if (data.image instanceof File) {
+                formData.append('image', data.image);
+            }
+            if (data.isActive !== undefined) formData.append('isActive', String(data.isActive));
+            if (data.displayOrder !== undefined) formData.append('displayOrder', String(data.displayOrder));
+
+            const response = await api.put(`/sponsors/${id}`, formData);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    deleteSponsor: async (id: string) => {
+        try {
+            const response = await api.delete(`/sponsors/${id}`);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     }
 };
 

@@ -147,7 +147,7 @@ export default function DraftsPage() {
                   <Link
                     href={`/${
                       type === "announcement" ? "announcements" : "events"
-                    }/${it._id}`}
+                    }/create?edit=${it._id}`}
                   >
                     <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
                       <Pencil size={18} />

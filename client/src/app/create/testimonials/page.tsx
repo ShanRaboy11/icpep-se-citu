@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "@/app/components/sidebar";
 import Button from "@/app/components/button";
@@ -46,6 +46,8 @@ export default function TestimonialsPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editIdParam = searchParams.get("edit");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // --- NEW STATE FOR MANAGEMENT ---
@@ -57,10 +59,17 @@ export default function TestimonialsPage() {
   const fetchTestimonials = async () => {
     try {
       setIsLoadingList(true);
-      //const response = await testimonialService.getAllTestimonials();
+      const response = await testimonialService.getAllTestimonials();
       // Handle response structure depending on your backend
-      //const data = Array.isArray(response) ? response : response.data || [];
-      //setTestimonials(data);
+      const data = Array.isArray(response.data) ? response.data : (Array.isArray(response) ? response : []);
+      setTestimonials(data);
+
+      if (editIdParam) {
+        const itemToEdit = data.find((t: Testimonial) => t._id === editIdParam);
+        if (itemToEdit) {
+          handleEditClick(itemToEdit);
+        }
+      }
     } catch (error) {
       console.error("Error fetching testimonials:", error);
     } finally {
@@ -70,7 +79,7 @@ export default function TestimonialsPage() {
 
   useEffect(() => {
     fetchTestimonials();
-  }, []);
+  }, [editIdParam]);
 
   // 2. Handle Edit Click (Populate Form)
   const handleEditClick = (item: Testimonial) => {

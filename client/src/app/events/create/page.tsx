@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
@@ -52,11 +52,57 @@ export default function EventsPage() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editIdParam = searchParams.get("edit");
 
   // --- MANAGEMENT STATE ---
   const [eventList, setEventList] = useState<EventItem[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
+
+  useEffect(() => {
+    if (editIdParam) {
+      const fetchEvent = async () => {
+        try {
+          const response = await eventService.getEventById(editIdParam);
+          const data = response.data as any;
+          if (data) {
+            setEditingId(data._id);
+            setIsEditingDraft(!data.isPublished);
+            setFormData({
+              date: data.eventDate ? new Date(data.eventDate).toISOString().split('T')[0] : "",
+              time: data.time || "",
+              title: data.title,
+              description: data.description,
+              body: data.content,
+              rsvp: data.rsvpLink || "",
+              contact: data.contact || "",
+              location: data.location || "",
+              visibility: "Public",
+            });
+            setMode(data.mode);
+            if (data.tags) setTags(data.tags);
+            if (data.admissions) {
+                setAdmissions(data.admissions.map((a: any) => ({ category: a.category, price: String(a.price) })));
+                setShowAdmissionInput(true);
+            }
+            if (data.details) setDetails(data.details);
+            if (data.coverImage) setPreviews([data.coverImage]);
+            if (data.organizer) {
+                setOrganizer(typeof data.organizer === 'string' ? data.organizer : data.organizer.name);
+            }
+            if (data.registrationRequired) setRegistrationRequired(data.registrationRequired);
+            if (data.registrationStart) setRegistrationStart(new Date(data.registrationStart).toISOString().split('T')[0]);
+            if (data.registrationEnd) setRegistrationEnd(new Date(data.registrationEnd).toISOString().split('T')[0]);
+          }
+        } catch (error) {
+          console.error("Failed to fetch event for edit:", error);
+        }
+      };
+      fetchEvent();
+    }
+  }, [editIdParam]);
 
   const [formData, setFormData] = useState({
     date: "",
@@ -189,6 +235,7 @@ export default function EventsPage() {
   // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
+    setIsEditingDraft(false);
     resetForm();
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -1247,13 +1294,13 @@ export default function EventsPage() {
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
                         >
                           Cancel Edit
                         </Button>
                       )}
 
-                      {!editingId && (
+                      {(!editingId || isEditingDraft) && (
                         <Button
                           variant="outline"
                           type="button"
@@ -1261,7 +1308,7 @@ export default function EventsPage() {
                           disabled={isSubmitting}
                           className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300"
                         >
-                          Save Draft
+                          {editingId ? "Update" : "Save Draft"}
                         </Button>
                       )}
 
@@ -1272,7 +1319,7 @@ export default function EventsPage() {
                         disabled={isSubmitting}
                         className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {editingId ? "Update Event" : "Publish"}
+                        {editingId && !isEditingDraft ? "Update Event" : "Publish"}
                       </Button>
                     </div>
                   </div>
