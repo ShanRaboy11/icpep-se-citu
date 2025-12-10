@@ -186,7 +186,7 @@ export const createEvent = async (
             title,
             author,
             eventDate,
-            isPublished: isPublished === 'true' || isPublished === true,
+            isPublished: String(isPublished) === 'true',
             targetAudience: parsedTargetAudience,
             hasCoverImage: !!coverImage,
         });
@@ -209,7 +209,7 @@ export const createEvent = async (
             tags: parsedTags,
             priority,
             targetAudience: parsedTargetAudience,
-            isPublished: isPublished === 'true' || isPublished === true,
+            isPublished: String(isPublished) === 'true',
             publishDate: publishDate || Date.now(),
             expiryDate,
             eventDate: new Date(eventDate),
@@ -233,6 +233,9 @@ export const createEvent = async (
         const parsedPublishDate = publishDate ? new Date(publishDate) : undefined;
         if (eventData.isPublished && parsedPublishDate && parsedPublishDate > new Date()) {
             eventData.isPublished = false;
+            eventData.scheduled = true;
+        } else if (!eventData.isPublished) {
+            eventData.scheduled = false;
         }
 
         console.log('💾 Saving to database...');
@@ -452,16 +455,39 @@ export const updateEvent = async (
         // If the request is attempting to publish the event, ensure at least one image exists
         // But if the incoming publishDate is in the future, treat as scheduling (do not publish now)
         const incomingPublishDate = req.body.publishDate ? new Date(req.body.publishDate) : null;
-        const requestWantsPublish = req.body.isPublished === 'true' || req.body.isPublished === true;
+        const requestWantsPublish = String(req.body.isPublished) === 'true';
+
+        // Create a clean update object
+        const updateData: any = { ...req.body };
 
         if (requestWantsPublish && incomingPublishDate && incomingPublishDate > new Date()) {
             // ensure we don't publish immediately if scheduled for future
-            req.body.isPublished = false;
+            updateData.isPublished = false;
+            updateData.scheduled = true;
+        } else if (!requestWantsPublish) {
+            updateData.scheduled = false;
+            // Explicitly set isPublished to false if it was sent as "false" string or boolean false
+            if (req.body.isPublished !== undefined) {
+                updateData.isPublished = false;
+            }
+        } else {
+            // Publishing now
+            updateData.isPublished = true;
+            updateData.scheduled = false;
+        }
+
+        // Ensure galleryImages is an array if it was stringified
+        if (updateData.galleryImages && typeof updateData.galleryImages === 'string') {
+            try {
+                updateData.galleryImages = JSON.parse(updateData.galleryImages);
+            } catch (e) {
+                // ignore
+            }
         }
 
         const updatedEvent = await Event.findByIdAndUpdate(
             id,
-            req.body,
+            updateData,
             { new: true, runValidators: true }
         ).populate('author', 'firstName lastName studentNumber');
 
