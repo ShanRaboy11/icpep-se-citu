@@ -8,7 +8,7 @@ import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Icons
+import { Pencil, Trash2, RefreshCw, AlertTriangle, Eye, EyeOff } from "lucide-react"; // Icons
 import merchService, { MerchItem } from "@/app/services/merch";
 
 // --- INTERFACES ---
@@ -125,7 +125,7 @@ export default function MerchPage() {
     };
 
     setErrors(newErrors);
-    setPriceError(prices.length === 0); // Trigger price error only if empty
+    setPriceError(prices.length === 0);
 
     if (Object.values(newErrors).some(Boolean) || (!cover && !editingId && !preview)) {
       setShowGlobalError(true);
@@ -163,7 +163,7 @@ export default function MerchPage() {
         } else {
              setSuccessMessage({
                 title: !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
-                description: !isEditingDraft ? "Item details have been updated." : "Item is now live."
+                description: !isEditingDraft ? "Item details have been updated." : "Item is now live and visible to everyone."
              });
         }
 
@@ -184,7 +184,7 @@ export default function MerchPage() {
         if (isDraft) {
              setSuccessMessage({
                 title: "Draft Saved!",
-                description: "Your item has been saved as a draft."
+                description: "Your item has been saved as a draft and is not yet visible to the public."
              });
         } else {
              setSuccessMessage({
@@ -194,7 +194,7 @@ export default function MerchPage() {
         }
       }
 
-      handleCancelEdit(); // Reset form
+      handleCancelEdit();
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error saving merch:", error);
@@ -308,6 +308,10 @@ export default function MerchPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // Separate published and draft items
+  const publishedItems = merchList.filter(item => item.isActive);
+  const draftItems = merchList.filter(item => !item.isActive);
+
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
       <Grid />
@@ -390,7 +394,6 @@ export default function MerchPage() {
                   {/* Upload Image Section */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 mb-4">
-                      {/* Icon */}
                       <label className="text-lg font-semibold text-primary3 font-rubik">
                         Merchandise Image{" "}
                         <span className="text-red-500 ml-1">*</span>
@@ -598,8 +601,6 @@ export default function MerchPage() {
                     )}
 
                     <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-
-
                       {editingId && (
                         <Button
                           variant="outline"
@@ -618,7 +619,7 @@ export default function MerchPage() {
                           onClick={() => handleSubmit(true)}
                           disabled={isSubmitting}
                         >
-                          {editingId ? "Update" : "Save Draft"}
+                          {editingId ? "Update Draft" : "Save Draft"}
                         </Button>
                       )}
 
@@ -627,7 +628,7 @@ export default function MerchPage() {
                         type="button"
                         onClick={() => handleSubmit(false)}
                         disabled={isSubmitting}
-                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300"
                       >
                         {editingId && !isEditingDraft ? "Update Merch" : "Publish"}
                       </Button>
@@ -636,33 +637,33 @@ export default function MerchPage() {
                 </div>
               </div>
 
-              {/* 2. MANAGE MERCH LIST */}
+              {/* 2. MANAGE PUBLISHED MERCH LIST */}
               <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
                 <div className="p-8 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-primary3 font-rubik">
+                    <h2 className="text-2xl font-bold text-primary3 font-rubik flex items-center gap-2">
                       Manage Merchandise
                     </h2>
                     <p className="text-gray-500 font-raleway text-sm mt-1">
-                      Total: {merchList.length} items
+                      Total: {publishedItems.length} items
                     </p>
                   </div>
                   <button
                     onClick={fetchMerch}
                     className="flex items-center gap-2 text-sm text-primary1 font-bold hover:bg-primary1/10 px-4 py-2 rounded-lg"
                   >
-                    <RefreshCw size={16} /> Refresh List
+                    <RefreshCw size={16} /> Refresh
                   </button>
                 </div>
 
                 <div className="overflow-x-auto">
                   {isLoadingList ? (
                     <div className="p-12 text-center text-gray-500 font-raleway">
-                      Loading existing merchandise...
+                      Loading merchandise...
                     </div>
-                  ) : merchList.length === 0 ? (
+                  ) : publishedItems.length === 0 ? (
                     <div className="p-12 text-center text-gray-400 font-raleway">
-                      No items found. Create one above!
+                      No published items yet. Create and publish one above!
                     </div>
                   ) : (
                     <table className="w-full text-left border-collapse min-w-[700px]">
@@ -676,7 +677,7 @@ export default function MerchPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 font-raleway">
-                        {merchList.map((item) => (
+                        {publishedItems.map((item) => (
                           <tr
                             key={item._id}
                             className={`hover:bg-blue-50/40 transition-colors group ${
@@ -754,6 +755,8 @@ export default function MerchPage() {
                   )}
                 </div>
               </div>
+
+
             </div>
           </div>
         </main>

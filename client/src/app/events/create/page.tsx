@@ -533,6 +533,8 @@ export default function EventsPage() {
     }
   };
 
+  const publishedItems = eventList.filter((item) => item.isPublished);
+
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
       {/* Background Grid */}
@@ -542,12 +544,9 @@ export default function EventsPage() {
 
       {/* Loading Overlay */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md transition-all animate-in fade-in duration-200">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in duration-300">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-blue-100 rounded-full" />
-              <div className="w-16 h-16 border-4 border-primary2 border-t-transparent rounded-full animate-spin absolute inset-0" />
-            </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all duration-300">
+          <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
+            <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
               {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating Event..." : "Publishing Event..."}
             </p>
@@ -1331,7 +1330,7 @@ export default function EventsPage() {
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-500"
+                          className="text-red-500 border-red-200 hover:bg-red-500 hover:text-red-500"
                         >
                           Cancel Edit
                         </Button>
@@ -1370,7 +1369,7 @@ export default function EventsPage() {
                       Manage Events
                     </h2>
                     <p className="text-gray-500 font-raleway text-sm mt-1">
-                      Total: {eventList.length} events
+                      Total: {publishedItems.length} events
                     </p>
                   </div>
                   <button
@@ -1386,7 +1385,7 @@ export default function EventsPage() {
                     <div className="p-12 text-center text-gray-500 font-raleway">
                       Loading existing events...
                     </div>
-                  ) : eventList.length === 0 ? (
+                  ) : publishedItems.length === 0 ? (
                     <div className="p-12 text-center text-gray-400 font-raleway">
                       No events found. Create one above!
                     </div>
@@ -1401,7 +1400,7 @@ export default function EventsPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 font-raleway">
-                        {eventList.map((item) => (
+                        {publishedItems.map((item) => (
                           <tr
                             key={item._id}
                             className={`hover:bg-blue-50/40 transition-colors group ${
