@@ -25,14 +25,11 @@ const Footer = () => {
         === FIXED FOOTER CONTENT ===
       */}
       <div className="fixed bottom-0 left-0 right-0 h-[520px] md:h-[380px] w-full -z-10 bg-[#00609c] text-white overflow-hidden flex flex-col justify-between font-raleway">
-        
         {/* 
            Middle Section Wrapper 
         */}
         <div className="max-w-7xl mx-auto w-full px-6 flex-grow flex flex-col justify-start pt-16 md:pt-20 gap-8">
-          
           <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-0">
-            
             {/* Left Logo + Info */}
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <Image
@@ -45,35 +42,75 @@ const Footer = () => {
               />
 
               <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-3">
-                
                 {/* Top Row: Vector Letters + Region 7 Text */}
                 <div className="flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-start">
-                  
                   {/* Vector Letters (Height 50px) */}
-                  <div 
-                    className="flex items-end gap-0.5 cursor-pointer h-[50px]" 
+                  <div
+                    className="flex items-end gap-0.5 cursor-pointer h-[50px]"
                     onClick={scrollToTop}
                   >
-                    <Image src="/Vector-ifooter.svg" alt="I" width={0} height={50} className="h-full w-auto" />
-                    <Image src="/Vector-cfooter.svg" alt="C" width={0} height={50} className="h-full w-auto" />
-                    <Image src="/Vector-p1footer.svg" alt="P" width={0} height={50} className="h-full w-auto" />
-                    <Image src="/Vector-e1footer.svg" alt="E" width={0} height={50} className="h-full w-auto" />
-                    <Image src="/Vector-p2footer.svg" alt="P" width={0} height={50} className="h-full w-auto" />
-                    
+                    <Image
+                      src="/Vector-ifooter.svg"
+                      alt="I"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                    <Image
+                      src="/Vector-cfooter.svg"
+                      alt="C"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                    <Image
+                      src="/Vector-p1footer.svg"
+                      alt="P"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                    <Image
+                      src="/Vector-e1footer.svg"
+                      alt="E"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                    <Image
+                      src="/Vector-p2footer.svg"
+                      alt="P"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+
                     {/* 
                       Dot Placement:
                       Left adjusted (ml-[-5px]), Flush bottom.
                     */}
-                    <Image 
-                      src="/Vector-dotfooter.svg" 
-                      alt="." 
-                      width={0} 
-                      height={16} 
-                      className="h-[30%] w-auto ml-[-5px] mr-[1px]" 
+                    <Image
+                      src="/Vector-dotfooter.svg"
+                      alt="."
+                      width={0}
+                      height={16}
+                      className="h-[30%] w-auto ml-[-5px] mr-[1px]"
                     />
 
-                    <Image src="/Vector-sfooter.svg" alt="S" width={0} height={50} className="h-full w-auto" />
-                    <Image src="/Vector-e2footer.svg" alt="E" width={0} height={50} className="h-full w-auto" />
+                    <Image
+                      src="/Vector-sfooter.svg"
+                      alt="S"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                    <Image
+                      src="/Vector-e2footer.svg"
+                      alt="E"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
                   </div>
 
                   {/* 
@@ -100,7 +137,8 @@ const Footer = () => {
                     collaboration, and leadership.
                   </p>
                   <p className="text-xs text-sky-200 mt-2">
-                    © 2025 ICpEP Student Edition R7 CIT-U Chapter. All rights reserved.
+                    © 2025 ICpEP Student Edition R7 CIT-U Chapter. All rights
+                    reserved.
                   </p>
                 </div>
               </div>
@@ -121,23 +159,13 @@ const Footer = () => {
                   rel="noopener noreferrer"
                   className="flex hover:scale-110 transition-transform duration-300"
                 >
-                  <Image
-                    src="/fb.svg"
-                    alt="Facebook"
-                    width={28}
-                    height={28}
-                  />
+                  <Image src="/fb.svg" alt="Facebook" width={28} height={28} />
                 </a>
-                <a 
-                  href="mailto:icpep.seofficial2526@gmail.com" 
+                <a
+                  href="mailto:icpep.seofficial2526@gmail.com"
                   className="flex hover:scale-110 transition-transform duration-300"
                 >
-                  <Image
-                    src="/email.svg"
-                    alt="Email"
-                    width={28}
-                    height={28}
-                  />
+                  <Image src="/email.svg" alt="Email" width={28} height={28} />
                 </a>
               </div>
             </div>
@@ -154,7 +182,6 @@ const Footer = () => {
             ICPEP SE CIT-UNIVERSITY
           </div>
         </div>
-
       </div>
     </div>
   );
