@@ -57,24 +57,32 @@ export const getTestimonials = async (req: Request, res: Response): Promise<void
   }
 };
 
+export const getAllTestimonials = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const testimonials = await Testimonial.find({}).sort({ displayOrder: 1, createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      data: testimonials,
+    });
+  } catch (error) {
+    console.error('Error fetching all testimonials:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch testimonials',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};
+
 export const updateTestimonial = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     const { name, role, quote, year, isActive, displayOrder } = req.body;
 
     const testimonial = await Testimonial.findById(id);
-
     if (!testimonial) {
-      res.status(404).json({
-        success: false,
-        message: 'Testimonial not found',
-      });
+      res.status(404).json({ success: false, message: 'Testimonial not found' });
       return;
-    }
-
-    if (req.file) {
-      const uploadResult = await uploadToCloudinary(req.file.buffer, 'testimonials');
-      testimonial.image = uploadResult.secure_url;
     }
 
     if (name) testimonial.name = name;
@@ -83,6 +91,11 @@ export const updateTestimonial = async (req: Request, res: Response): Promise<vo
     if (year) testimonial.year = year;
     if (isActive !== undefined) testimonial.isActive = isActive;
     if (displayOrder !== undefined) testimonial.displayOrder = displayOrder;
+
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file.buffer, 'testimonials');
+      testimonial.image = uploadResult.secure_url;
+    }
 
     const updatedTestimonial = await testimonial.save();
 
@@ -107,10 +120,7 @@ export const deleteTestimonial = async (req: Request, res: Response): Promise<vo
     const deletedTestimonial = await Testimonial.findByIdAndDelete(id);
 
     if (!deletedTestimonial) {
-      res.status(404).json({
-        success: false,
-        message: 'Testimonial not found',
-      });
+      res.status(404).json({ success: false, message: 'Testimonial not found' });
       return;
     }
 

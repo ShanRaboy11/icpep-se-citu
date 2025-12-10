@@ -2,22 +2,37 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import Sidebar from "@/app/components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Icons
-import partnerService, { Partner } from "@/app/services/partner";
+import sponsorService, { SponsorData } from "@/app/services/sponsor";
+
+// --- INTERFACES ---
+interface Sponsor {
+  _id: string;
+  name: string;
+  type: string; // "Platinum Sponsor", "Gold Sponsor", etc.
+  image?: string;
+  isActive: boolean;
+}
 
 type FormErrors = {
   name: boolean;
 };
 
 export default function SponsorsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const editIdParam = searchParams.get("edit");
+
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
   const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
@@ -40,16 +55,28 @@ export default function SponsorsPage() {
   const [activeTab, setActiveTab] = useState<string>(tabs[0]);
 
   // --- MANAGEMENT STATE ---
-  const [sponsors, setSponsors] = useState<Partner[]>([]);
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [cover, setCover] = useState<File | null>(null);
 
   // 1. FETCH SPONSORS
   const fetchSponsors = async () => {
     setIsLoadingList(true);
     try {
-      const data = await partnerService.getAll('sponsor');
+      const response = await sponsorService.getAllSponsors();
+      const data = Array.isArray(response.data) ? response.data : (Array.isArray(response) ? response : []);
       setSponsors(data);
+      
+      // Handle edit param if present
+      if (editIdParam) {
+        const itemToEdit = data.find((s: Sponsor) => s._id === editIdParam);
+        if (itemToEdit) {
+          handleEditClick(itemToEdit);
+        }
+      }
     } catch (error) {
       console.error("Failed to fetch sponsors:", error);
     } finally {
@@ -59,19 +86,15 @@ export default function SponsorsPage() {
 
   useEffect(() => {
     fetchSponsors();
-  }, []);
+  }, [editIdParam]);
 
   // 2. HANDLE EDIT CLICK
-  const handleEditClick = (item: Partner) => {
+  const handleEditClick = (item: Sponsor) => {
     setEditingId(item._id);
+    setIsEditingDraft(!item.isActive);
     setFormData({ name: item.name });
-    // Map description back to tab if it matches, otherwise default
-    if (item.description && tabs.includes(item.description)) {
-      setActiveTab(item.description);
-    } else {
-      setActiveTab(tabs[0]);
-    }
-    setPreview(item.logo || null);
+    setActiveTab(item.type);
+    setPreview(item.image || null);
     setCover(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -79,14 +102,17 @@ export default function SponsorsPage() {
   // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
+    setIsEditingDraft(false);
     setFormData({ name: "" });
     setPreview(null);
     setCover(null);
     setActiveTab(tabs[0]);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    router.push("/create/sponsors");
   };
 
-  // 4. HANDLE DELETE CONFIRMATION
+
+  // 4. HANDLE DELETE
   const confirmDelete = (id: string) => {
     setItemToDelete(id);
     setShowDeleteModal(true);
@@ -96,7 +122,7 @@ export default function SponsorsPage() {
     if (!itemToDelete) return;
     
     try {
-      await partnerService.delete(itemToDelete);
+      await sponsorService.deleteSponsor(itemToDelete);
       setSponsors((prev) => prev.filter((s) => s._id !== itemToDelete));
       setShowDeleteModal(false);
       setItemToDelete(null);
@@ -108,7 +134,7 @@ export default function SponsorsPage() {
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Failed to delete sponsor:", error);
-      alert("Failed to delete sponsor. Please try again.");
+      alert("Failed to delete sponsor");
     }
   };
 
@@ -131,54 +157,98 @@ export default function SponsorsPage() {
 
     setShowGlobalError(false);
     setIsSubmitting(true);
+    setLoadingAction("publishing");
 
     try {
+      const data: SponsorData = {
+        name: formData.name,
+        type: activeTab,
+        image: cover || undefined,
+        isActive: true, // Publish
+      };
+
       if (editingId) {
-        // Update
-        const updated = await partnerService.update(editingId, {
-          name: formData.name,
-          description: activeTab, // Storing Tier in description
-          logo: cover || undefined,
-        });
-        
+        await sponsorService.updateSponsor(editingId, data);
         setSponsors((prev) =>
-          prev.map((s) => (s._id === editingId ? updated : s))
+          prev.map((s) =>
+            s._id === editingId
+              ? { ...s, name: data.name, type: data.type, image: preview || s.image, isActive: true }
+              : s
+          )
         );
-        setSuccessMessage({
-          title: "Updated Successfully!",
-          description: "Your changes have been saved."
-        });
       } else {
-        // Create
-        if (!cover) throw new Error("Image is required for new sponsors");
-        
-        const created = await partnerService.create({
-          name: formData.name,
-          type: 'sponsor',
-          description: activeTab, // Storing Tier in description
-          logo: cover,
-        });
-        
-        setSponsors((prev) => [created, ...prev]);
-        setSuccessMessage({
-          title: "Published Successfully!",
-          description: "The sponsor has been added successfully."
-        });
+        const res = await sponsorService.createSponsor(data);
+        setSponsors((prev) => [res.data, ...prev]);
       }
 
-      // Reset form
-      handleCancelEdit();
-      setSubmitSuccess(true);
+      setSuccessMessage({
+        title: editingId && !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
+        description: editingId && !isEditingDraft ? "Changes have been saved." : "Sponsor is now live."
+      });
       setShowSuccessModal(true);
+      handleCancelEdit();
     } catch (error) {
-      console.error("Error saving sponsor:", error);
-      alert("Failed to save sponsor. Please try again.");
+      console.error("Failed to save sponsor:", error);
+      alert("Failed to save sponsor");
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  // 6. HANDLE SAVE DRAFT
+  const handleSaveDraft = async () => {
+    setIsSubmitting(true);
+    setLoadingAction("saving");
+    setShowGlobalError(false);
+
+    // Validation for draft (minimal)
+    if (!formData.name.trim()) {
+      setErrors({ ...errors, name: true });
+      setShowGlobalError(true);
+      setIsSubmitting(false);
+      setLoadingAction(null);
+      return;
+    }
+
+    try {
+      const data: SponsorData = {
+        name: formData.name,
+        type: activeTab,
+        image: cover || undefined,
+        isActive: false, // Draft
+      };
+
+      if (editingId) {
+        await sponsorService.updateSponsor(editingId, data);
+        setSponsors((prev) =>
+          prev.map((s) =>
+            s._id === editingId
+              ? { ...s, name: data.name, type: data.type, image: preview || s.image, isActive: false }
+              : s
+          )
+        );
+      } else {
+        const res = await sponsorService.createSponsor(data);
+        setSponsors((prev) => [res.data, ...prev]);
+      }
+
+      setSuccessMessage({
+        title: editingId ? "Draft Updated!" : "Draft Saved!",
+        description: editingId ? "Draft changes have been saved." : "Draft has been saved successfully."
+      });
+      setShowSuccessModal(true);
+      handleCancelEdit();
+    } catch (error) {
+      console.error("Failed to save draft:", error);
+      alert("Failed to save draft");
+    } finally {
+      setIsSubmitting(false);
+      setLoadingAction(null);
+    }
+  };
+
+
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -191,9 +261,6 @@ export default function SponsorsPage() {
       setErrors((prev) => ({ ...prev, [name]: false }));
     }
   };
-
-  const [cover, setCover] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
 
   const resizeImage = (file: File, maxWidth = 1200): Promise<File> => {
     return new Promise((resolve) => {
@@ -236,11 +303,17 @@ export default function SponsorsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const resized = await resizeImage(file);
-    setCover(resized);
-    setPreview(URL.createObjectURL(resized));
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    try {
+      const resized = await resizeImage(file);
+      setCover(resized);
+      setPreview(URL.createObjectURL(resized));
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch (err) {
+      console.error("Error resizing image", err);
+    }
   };
+
+  const publishedItems = sponsors.filter((item) => item.isActive);
 
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
@@ -252,7 +325,7 @@ export default function SponsorsPage() {
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {editingId ? "Updating Sponsor..." : "Publishing Sponsor..."}
+              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating Sponsor..." : "Publishing Sponsor..."}
             </p>
           </div>
         </div>
@@ -471,28 +544,23 @@ export default function SponsorsPage() {
                     )}
 
                     <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-                      {!editingId && (
-                        <Link
-                          href="/drafts"
-                          className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 text-center"
-                        >
-                          View drafts
-                        </Link>
-                      )}
+
 
                       {editingId && (
                         <Button
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-200 hover:bg-red-500 hover:text-red-500"
                         >
                           Cancel Edit
                         </Button>
                       )}
 
-                      {!editingId && (
-                        <Button variant="outline">Save Draft</Button>
+                      {(!editingId || isEditingDraft) && (
+                        <Button variant="outline" onClick={handleSaveDraft}>
+                          {editingId ? "Update" : "Save Draft"}
+                        </Button>
                       )}
 
                       <Button
@@ -500,9 +568,9 @@ export default function SponsorsPage() {
                         type="button"
                         onClick={handlePublish}
                         disabled={isSubmitting}
-                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50"
+                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {editingId ? "Update Sponsor" : "Publish"}
+                        {editingId && !isEditingDraft ? "Update Sponsor" : "Publish"}
                       </Button>
                     </div>
                   </div>
@@ -517,7 +585,7 @@ export default function SponsorsPage() {
                       Manage Sponsors
                     </h2>
                     <p className="text-gray-500 font-raleway text-sm mt-1">
-                      Total: {sponsors.length} sponsors
+                      Total: {publishedItems.length} sponsors
                     </p>
                   </div>
                   <button
@@ -533,7 +601,7 @@ export default function SponsorsPage() {
                     <div className="p-12 text-center text-gray-500 font-raleway">
                       Loading existing sponsors...
                     </div>
-                  ) : sponsors.length === 0 ? (
+                  ) : publishedItems.length === 0 ? (
                     <div className="p-12 text-center text-gray-400 font-raleway">
                       No sponsors found. Create one above!
                     </div>
@@ -548,7 +616,7 @@ export default function SponsorsPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 font-raleway">
-                        {sponsors.map((item) => (
+                        {publishedItems.map((item) => (
                           <tr
                             key={item._id}
                             className={`hover:bg-blue-50/40 transition-colors group ${
@@ -559,9 +627,9 @@ export default function SponsorsPage() {
                           >
                             <td className="px-6 py-4">
                               <div className="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200">
-                                {item.logo ? (
+                                {item.image ? (
                                   <img
-                                    src={item.logo}
+                                    src={item.image}
                                     alt={item.name}
                                     className="w-full h-full object-contain p-1"
                                   />
@@ -578,16 +646,16 @@ export default function SponsorsPage() {
                             <td className="px-6 py-4">
                               <span
                                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  item.description?.includes("Platinum")
+                                  item.type.includes("Platinum")
                                     ? "bg-slate-100 text-slate-700 border border-slate-300"
-                                    : item.description?.includes("Gold")
+                                    : item.type.includes("Gold")
                                     ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                                    : item.description?.includes("Silver")
+                                    : item.type.includes("Silver")
                                     ? "bg-gray-100 text-gray-600 border border-gray-200"
                                     : "bg-orange-50 text-orange-700 border border-orange-200"
                                 }`}
                               >
-                                {item.description || item.type}
+                                {item.type}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">
@@ -637,7 +705,7 @@ export default function SponsorsPage() {
               Confirm Deletion
             </h3>
             <p className="text-gray-500 font-raleway mb-6">
-              Are you sure you want to delete this sponsor? This action cannot be undone.
+              Are you sure you want to delete this item? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
@@ -662,10 +730,7 @@ export default function SponsorsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => {
-              setShowSuccessModal(false);
-              setSubmitSuccess(false);
-            }}
+            onClick={() => setShowSuccessModal(false)}
           />
 
           <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
@@ -702,10 +767,7 @@ export default function SponsorsPage() {
               <div className="flex gap-3 mt-2 w-full">
                 <Button
                   variant="primary3"
-                  onClick={() => {
-                    setShowSuccessModal(false);
-                    setSubmitSuccess(false);
-                  }}
+                  onClick={() => setShowSuccessModal(false)}
                   className="w-full"
                 >
                   Continue

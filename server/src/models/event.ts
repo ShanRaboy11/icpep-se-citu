@@ -21,6 +21,7 @@ export interface IEvent extends Document {
     priority?: 'normal' | 'important' | 'urgent';
     targetAudience?: ('all' | 'members' | 'officers' | 'faculty')[];
     isPublished?: boolean;
+    scheduled?: boolean;
     publishDate?: Date;
     expiryDate?: Date;
     // Event specific fields
@@ -82,6 +83,10 @@ const eventSchema = new Schema<IEvent>({
         },
     ],
     isPublished: {
+        type: Boolean,
+        default: false,
+    },
+    scheduled: {
         type: Boolean,
         default: false,
     },
