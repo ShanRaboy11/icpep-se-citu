@@ -10,7 +10,7 @@ interface FAQ {
 }
 
 export function FAQSection() {
-  const router = useRouter(); 
+  const router = useRouter();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs: FAQ[] = [
@@ -89,12 +89,12 @@ export function FAQSection() {
             <button className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer">
               Contact Us
             </button>
-            <button 
-        onClick={() => router.push('./faq')}
-        className="bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-buttonbg1 hover:border-primary1 hover:text-primary1 font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 cursor-pointer"
-      >
-        More FAQs
-      </button>
+            <button
+              onClick={() => router.push("./faq")}
+              className="bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-buttonbg1 hover:border-primary1 hover:text-primary1 font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 cursor-pointer"
+            >
+              More FAQs
+            </button>
           </div>
         </div>
 
