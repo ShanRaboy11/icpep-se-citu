@@ -55,14 +55,13 @@ export default function SponsorsPage() {
   const [activeTab, setActiveTab] = useState<string>(tabs[0]);
 
   // --- MANAGEMENT STATE ---
-  const [sponsors, setSponsors] = useState<Partner[]>([]);
+  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [cover, setCover] = useState<File | null>(null);
 
-  // 1. FETCH SPONSORS
   // 1. FETCH SPONSORS
   const fetchSponsors = async () => {
     setIsLoadingList(true);
@@ -83,7 +82,6 @@ export default function SponsorsPage() {
     } finally {
       setIsLoadingList(false);
     }
-    }
   };
 
   useEffect(() => {
@@ -91,7 +89,7 @@ export default function SponsorsPage() {
   }, [editIdParam]);
 
   // 2. HANDLE EDIT CLICK
-  const handleEditClick = (item: Partner) => {
+  const handleEditClick = (item: Sponsor) => {
     setEditingId(item._id);
     setIsEditingDraft(!item.isActive);
     setFormData({ name: item.name });
@@ -151,7 +149,6 @@ export default function SponsorsPage() {
     if (
       Object.values(newErrors).some(Boolean) ||
       !activeTab ||
-      (!cover && !editingId && !preview)
       (!cover && !editingId && !preview)
     ) {
       setShowGlobalError(true);
@@ -649,16 +646,16 @@ export default function SponsorsPage() {
                             <td className="px-6 py-4">
                               <span
                                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  item.description?.includes("Platinum")
+                                  item.type.includes("Platinum")
                                     ? "bg-slate-100 text-slate-700 border border-slate-300"
-                                    : item.description?.includes("Gold")
+                                    : item.type.includes("Gold")
                                     ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                                    : item.description?.includes("Silver")
+                                    : item.type.includes("Silver")
                                     ? "bg-gray-100 text-gray-600 border border-gray-200"
                                     : "bg-orange-50 text-orange-700 border border-orange-200"
                                 }`}
                               >
-                                {item.description || item.type}
+                                {item.type}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">
@@ -671,7 +668,6 @@ export default function SponsorsPage() {
                                   <Pencil size={18} />
                                 </button>
                                 <button
-                                  onClick={() => confirmDelete(item._id)}
                                   onClick={() => confirmDelete(item._id)}
                                   className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
                                   title="Delete"
@@ -696,24 +692,16 @@ export default function SponsorsPage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowDeleteModal(false)}
             onClick={() => setShowDeleteModal(false)}
           />
           <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
-          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
-            </div>
             <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
-              Confirm Deletion
               Confirm Deletion
             </h3>
             <p className="text-gray-500 font-raleway mb-6">

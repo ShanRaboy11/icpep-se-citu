@@ -741,7 +741,6 @@ export default function MerchPage() {
                                 </button>
                                 <button
                                   onClick={() => confirmDelete(item._id)}
-                                  onClick={() => confirmDelete(item._id)}
                                   className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
                                   title="Delete"
                                 >
@@ -767,24 +766,16 @@ export default function MerchPage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowDeleteModal(false)}
             onClick={() => setShowDeleteModal(false)}
           />
           <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <AlertTriangle className="w-8 h-8 text-red-600" />
             </div>
-          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
-            </div>
             <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
-              Confirm Deletion
               Confirm Deletion
             </h3>
             <p className="text-gray-500 font-raleway mb-6">

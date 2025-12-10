@@ -9,7 +9,6 @@ import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import { ChevronDown, Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Added Icons
-import { ChevronDown, Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Added Icons
 import announcementService, {
   AnnouncementData,
 } from "../../services/announcement";

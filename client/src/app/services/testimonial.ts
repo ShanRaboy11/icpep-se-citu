@@ -82,6 +82,33 @@ const testimonialService = {
         } catch (error) {
             throw error;
         }
+    },
+
+    updateTestimonial: async (id: string, data: Partial<TestimonialData>) => {
+        try {
+            const formData = new FormData();
+            if (data.name) formData.append('name', data.name);
+            if (data.role) formData.append('role', data.role);
+            if (data.quote) formData.append('quote', data.quote);
+            if (data.image) formData.append('image', data.image);
+            if (data.year) formData.append('year', data.year);
+            if (data.isActive !== undefined) formData.append('isActive', String(data.isActive));
+            if (data.displayOrder !== undefined) formData.append('displayOrder', String(data.displayOrder));
+
+            const response = await api.put(`/testimonials/${id}`, formData);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    deleteTestimonial: async (id: string) => {
+        try {
+            const response = await api.delete(`/testimonials/${id}`);
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     }
 };
 
