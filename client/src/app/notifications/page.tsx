@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import Sidebar, { FilterType } from "./components/sidebar";
+import Sidebar, { FilterType, FILTER_OPTIONS } from "./components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
-import { Search, CheckCheck } from "lucide-react";
+import { Search, CheckCheck, SlidersHorizontal, X } from "lucide-react";
 import NotificationCard, {
   NotificationItem,
 } from "./components/notification-card";
@@ -14,13 +14,14 @@ import NotificationCard, {
 export default function AnnouncementsPage() {
   const [activeTab, setActiveTab] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([
     {
-      id: "0", // High Priority
+      id: "0",
       message: "Action Required: Submit Availability for Executive Meeting",
       date: "Nov 01, 2025",
-      type: "action", // This triggers the AlertCircle icon
+      type: "action",
       link: "/commeet",
       read: false,
     },
@@ -68,25 +69,18 @@ export default function AnnouncementsPage() {
 
   // Filtering Logic
   const filtered = notifications.filter((n) => {
-    // 1. Search Filter
     if (!n.message.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
-
-    // 2. Tab Category Filter
     if (activeTab === "all") return true;
-
     if (activeTab === "event" && n.type === "calendar") return true;
     if (activeTab === "announcement" && n.type === "megaphone") return true;
-
-    // "Others" now includes Member, Notification, AND Action Required
     if (
       activeTab === "others" &&
       (n.type === "member" || n.type === "notification" || n.type === "action")
     ) {
       return true;
     }
-
     return false;
   });
 
@@ -131,15 +125,20 @@ export default function AnnouncementsPage() {
             </p>
           </div>
 
-          {/* Sidebar + Main Content Layout */}
+          {/* Layout Container */}
           <div className="flex flex-col lg:flex-row gap-8 items-start">
-            {/* Sidebar Filter */}
-            <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+            {/* DESKTOP Sidebar (Hidden on Mobile) */}
+            <Sidebar
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              className="hidden lg:block"
+            />
 
             {/* Content Area */}
             <div className="flex-1 w-full">
-              {/* Search & Actions Bar - STYLED LIKE MEETING CARD */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-6 sticky top-24 z-20 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary1/30 p-4">
+              {/* --- SEARCH & ACTIONS BAR --- */}
+              <div className="flex flex-row gap-2 sm:gap-4 mb-4 sticky top-24 z-20 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:border-primary1/30 p-2 sm:p-4">
+                {/* Search Input */}
                 <div className="relative flex-1 group">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 group-focus-within:text-primary1 transition-colors" />
                   <input
@@ -150,17 +149,75 @@ export default function AnnouncementsPage() {
                     className="w-full pl-11 pr-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-rubik text-gray-700 placeholder-gray-400 focus:bg-white focus:border-primary1/50 focus:ring-4 focus:ring-primary1/10 outline-none transition-all duration-300"
                   />
                 </div>
+
+                {/* Mobile Filter Toggle Button */}
+                <button
+                  onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+                  className={`
+                    lg:hidden flex items-center justify-center w-12 rounded-xl border transition-all duration-300 shadow-none cursor-pointer
+                    ${
+                      isMobileFilterOpen
+                        ? "bg-primary1 text-white border-primary1" // Active: Flat Blue, No Shadow
+                        : "bg-white border-gray-200 text-gray-500 hover:text-primary1 hover:border-primary1/50 hover:bg-primary1/5" // Inactive: Standard
+                    }
+                  `}
+                >
+                  {isMobileFilterOpen ? (
+                    <X className="w-5 h-5" />
+                  ) : (
+                    <SlidersHorizontal className="w-5 h-5" />
+                  )}
+                </button>
+
+                {/* Mark All Read Button */}
                 <Button
                   variant="secondary"
-                  className="flex items-center justify-center gap-2 px-6 py-3 h-auto text-sm font-rubik font-medium whitespace-nowrap bg-white border border-gray-200 text-gray-500 hover:text-primary1 hover:border-primary1/50 hover:bg-primary1/5 transition-all duration-300 rounded-xl shadow-none"
+                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 h-auto text-sm font-rubik font-medium whitespace-nowrap bg-white border border-gray-200 text-gray-500 hover:text-primary1 hover:border-primary1/50 hover:bg-primary1/5 transition-all duration-300 rounded-xl shadow-none"
                   onClick={handleMarkAllRead}
                 >
-                  <CheckCheck className="w-4 h-4" />
-                  Mark All Read
+                  <CheckCheck className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Mark All Read</span>
                 </Button>
               </div>
 
-              {/* Notification List */}
+              {/* --- MOBILE FILTER SECTION (Below Search) --- */}
+              <div
+                className={`
+                  lg:hidden overflow-hidden transition-all duration-300 ease-in-out
+                  ${
+                    isMobileFilterOpen
+                      ? "max-h-96 opacity-100 mb-6"
+                      : "max-h-0 opacity-0 mb-0"
+                  }
+                `}
+              >
+                <div className="grid grid-cols-2 gap-2 bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
+                  {FILTER_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => {
+                        setActiveTab(opt.value as FilterType);
+                      }}
+                      className={`
+                        flex items-center gap-2 justify-center py-2.5 px-3 rounded-xl text-sm font-rubik font-medium transition-all duration-200
+                        ${
+                          activeTab === opt.value
+                            ? "bg-primary1 text-white shadow-md shadow-primary1/20"
+                            : "bg-white text-gray-600 border border-gray-200 hover:border-primary1/30 hover:text-primary1"
+                        }
+                      `}
+                    >
+                      {/* FIX APPLIED HERE: Added <any> cast */}
+                      {React.cloneElement(opt.icon as React.ReactElement<any>, {
+                        size: 16,
+                      })}
+                      <span>{opt.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* --- NOTIFICATION LIST --- */}
               <div className="flex flex-col gap-3 min-h-[400px]">
                 {filtered.length > 0 ? (
                   filtered.map((notification) => (
