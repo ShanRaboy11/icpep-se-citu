@@ -10,7 +10,7 @@ import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import testimonialService from "@/app/services/testimonial";
 // Added icons for the management list
-import { Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react";
 
 // Define interface for data
 interface Testimonial {
@@ -45,6 +45,9 @@ export default function TestimonialsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -57,10 +60,10 @@ export default function TestimonialsPage() {
   const fetchTestimonials = async () => {
     try {
       setIsLoadingList(true);
-      //const response = await testimonialService.getAllTestimonials();
+      const response = await testimonialService.getTestimonials();
       // Handle response structure depending on your backend
-      //const data = Array.isArray(response) ? response : response.data || [];
-      //setTestimonials(data);
+      const data = Array.isArray(response) ? response : response.data || [];
+      setTestimonials(data);
     } catch (error) {
       console.error("Error fetching testimonials:", error);
     } finally {
@@ -95,11 +98,24 @@ export default function TestimonialsPage() {
   };
 
   // 4. Handle Delete
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this testimonial?")) return;
+  const confirmDelete = (id: string) => {
+    setItemToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
     try {
-      //await testimonialService.deleteTestimonial(id);
+      await testimonialService.deleteTestimonial(itemToDelete);
       fetchTestimonials(); // Refresh list
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+      
+      setSuccessMessage({
+        title: "Deleted Successfully!",
+        description: "The testimonial has been permanently removed."
+      });
+      setShowSuccessModal(true);
     } catch (error) {
       alert("Failed to delete testimonial");
     }
@@ -134,10 +150,18 @@ export default function TestimonialsPage() {
 
       if (editingId) {
         // UPDATE MODE
-        //await testimonialService.updateTestimonial(editingId, payload);
+        await testimonialService.updateTestimonial(editingId, payload);
+        setSuccessMessage({
+          title: "Updated Successfully!",
+          description: "Your changes have been saved."
+        });
       } else {
         // CREATE MODE
         await testimonialService.createTestimonial(payload);
+        setSuccessMessage({
+          title: "Published Successfully!",
+          description: "Your testimonial has been published and is now live."
+        });
       }
 
       // Reset form & Refresh list
@@ -223,14 +247,11 @@ export default function TestimonialsPage() {
       <Grid />
       {/* Loading Overlay */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md transition-all animate-in fade-in duration-200">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in duration-300">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-blue-100 rounded-full" />
-              <div className="w-16 h-16 border-4 border-primary2 border-t-transparent rounded-full animate-spin absolute inset-0" />
-            </div>
-            <p className="text-gray-700 font-rubik text-base font-semibold">
-              {editingId ? "Updating..." : "Publishing..."}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all duration-300">
+          <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
+            <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
+            <p className="text-primary3 font-semibold font-rubik animate-pulse">
+              {editingId ? "Updating Testimonial..." : "Publishing Testimonial..."}
             </p>
           </div>
         </div>
@@ -715,8 +736,8 @@ export default function TestimonialsPage() {
                                   <Pencil size={18} />
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(item._id)}
-                                  className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
+                                  onClick={() => confirmDelete(item._id)}
+                                  className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
                                   title="Delete"
                                 >
                                   <Trash2 size={18} />
@@ -769,14 +790,10 @@ export default function TestimonialsPage() {
 
                 <div className="text-center space-y-2">
                   <h3 className="text-2xl text-primary3 font-bold font-rubik">
-                    {editingId
-                      ? "Updated Successfully!"
-                      : "Published Successfully!"}
+                    {successMessage.title}
                   </h3>
                   <p className="text-gray-600 font-raleway">
-                    {editingId
-                      ? "Your changes have been saved."
-                      : "Your testimonial has been published and is now live."}
+                    {successMessage.description}
                   </p>
                 </div>
 
@@ -800,6 +817,41 @@ export default function TestimonialsPage() {
 
         <Footer />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowDeleteModal(false)}
+          />
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-500 font-raleway mb-6">
+              Are you sure you want to delete this testimonial? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
