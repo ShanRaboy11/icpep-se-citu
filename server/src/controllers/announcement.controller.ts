@@ -144,7 +144,7 @@ export const createAnnouncement = async (
             title,
             type,
             author,
-            isPublished: isPublished === 'true' || isPublished === true,
+            isPublished: String(isPublished) === 'true',
             targetAudience: parsedTargetAudience,
             hasImage: !!imageUrl,
         });
@@ -176,7 +176,7 @@ export const createAnnouncement = async (
             publishDate: parsedPublishDate ?? new Date(),
             date: parsedDate ?? undefined,
             // initial isPublished flag based on incoming value; may be overridden below if scheduling
-            isPublished: (isPublished === 'true' || isPublished === true),
+            isPublished: String(isPublished) === 'true',
             expiryDate,
             time,
             location,
@@ -191,13 +191,20 @@ export const createAnnouncement = async (
         };
 
         // If a publishDate exists and it's in the future, ensure announcement remains unpublished until scheduler runs
-        if (parsedPublishDate && parsedPublishDate > now) {
+        // BUT if the user explicitly set isPublished=false (draft), respect that regardless of date.
+        // The logic below ensures that if it's a draft, it stays a draft.
+        // If it's meant to be published, we check if it's scheduled for the future.
+        if (announcementData.isPublished && parsedPublishDate && parsedPublishDate > now) {
             announcementData.isPublished = false;
+            announcementData.scheduled = true;
+        } else if (!announcementData.isPublished) {
+            announcementData.scheduled = false;
         }
 
         console.log('📝 Final announcement data (publishDate/isPublished):', {
             publishDate: announcementData.publishDate,
             isPublished: announcementData.isPublished,
+            scheduled: announcementData.scheduled,
         });
 
         // Enforce that published announcements must have at least one featured image
@@ -402,13 +409,29 @@ export const updateAnnouncement = async (
         // If the request is attempting to publish the announcement, ensure at least one image exists
         // But if the incoming publishDate is in the future, treat as scheduling (do not publish now)
         const incomingPublishDate = req.body.publishDate ? new Date(req.body.publishDate) : null;
-        if (incomingPublishDate && incomingPublishDate > new Date()) {
-            // ensure we don't publish immediately
-            req.body.isPublished = false;
+        const requestWantsPublish = String(req.body.isPublished) === 'true';
+
+        // Create a clean update object
+        const updateData: any = { ...req.body };
+
+        if (requestWantsPublish && incomingPublishDate && incomingPublishDate > new Date()) {
+            // ensure we don't publish immediately if scheduled for future
+            updateData.isPublished = false;
+            updateData.scheduled = true;
+        } else if (!requestWantsPublish) {
+            updateData.scheduled = false;
+            // Explicitly set isPublished to false if it was sent as "false" string or boolean false
+            if (req.body.isPublished !== undefined) {
+                updateData.isPublished = false;
+            }
+        } else {
+            // Publishing now
+            updateData.isPublished = true;
+            updateData.scheduled = false;
         }
-        const requestWantsPublish = req.body.isPublished === 'true' || req.body.isPublished === true;
+        
         const existingHasImage = (announcement.imageUrl && announcement.imageUrl.length > 0) || (announcement.galleryImages && announcement.galleryImages.length > 0);
-        const incomingHasImage = (req.body.imageUrl && String(req.body.imageUrl).length > 0) || (req.body.galleryImages && String(req.body.galleryImages).length > 0);
+        const incomingHasImage = (updateData.imageUrl && String(updateData.imageUrl).length > 0) || (updateData.galleryImages && String(updateData.galleryImages).length > 0);
 
         if (requestWantsPublish && !existingHasImage && !incomingHasImage) {
             res.status(400).json({ success: false, message: 'A featured image is required to publish an announcement.' });
@@ -416,30 +439,38 @@ export const updateAnnouncement = async (
         }
 
         // Parse arrays if they are strings
-        if (req.body.agenda && typeof req.body.agenda === 'string') {
-            req.body.agenda = JSON.parse(req.body.agenda);
+        if (updateData.agenda && typeof updateData.agenda === 'string') {
+            updateData.agenda = JSON.parse(updateData.agenda);
         }
-        if (req.body.awardees && typeof req.body.awardees === 'string') {
-            req.body.awardees = JSON.parse(req.body.awardees);
+        if (updateData.awardees && typeof updateData.awardees === 'string') {
+            updateData.awardees = JSON.parse(updateData.awardees);
         }
-        if (req.body.attachments && typeof req.body.attachments === 'string') {
-            req.body.attachments = JSON.parse(req.body.attachments);
+        if (updateData.attachments && typeof updateData.attachments === 'string') {
+            updateData.attachments = JSON.parse(updateData.attachments);
         }
-        if (req.body.targetAudience && typeof req.body.targetAudience === 'string') {
-            req.body.targetAudience = JSON.parse(req.body.targetAudience);
+        if (updateData.targetAudience && typeof updateData.targetAudience === 'string') {
+            updateData.targetAudience = JSON.parse(updateData.targetAudience);
         }
         // Parse date string into Date for updates
-        if (req.body.date && typeof req.body.date === 'string') {
+        if (updateData.date && typeof updateData.date === 'string') {
             try {
-                req.body.date = new Date(req.body.date);
+                updateData.date = new Date(updateData.date);
             } catch (e) {
                 // leave as-is if parsing fails; validation will catch it
+            }
+        }
+        // Ensure galleryImages is an array if it was stringified
+        if (updateData.galleryImages && typeof updateData.galleryImages === 'string') {
+            try {
+                updateData.galleryImages = JSON.parse(updateData.galleryImages);
+            } catch (e) {
+                // ignore
             }
         }
 
         const updatedAnnouncement = await Announcement.findByIdAndUpdate(
             id,
-            req.body,
+            updateData,
             { new: true, runValidators: true }
         ).populate('author', 'firstName lastName studentNumber');
 

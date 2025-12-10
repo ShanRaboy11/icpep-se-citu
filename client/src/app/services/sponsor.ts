@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 const _RAW_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 const API_URL = (() => {
@@ -35,76 +35,73 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-export interface TestimonialData {
+export interface SponsorData {
+    _id?: string;
     name: string;
-    role: string;
-    quote: string;
-    image?: File;
-    year?: string;
+    type: string;
+    image?: File | string;
     isActive?: boolean;
     displayOrder?: number;
 }
 
-const testimonialService = {
-    createTestimonial: async (data: TestimonialData) => {
+const sponsorService = {
+    createSponsor: async (data: SponsorData) => {
         try {
             const formData = new FormData();
             formData.append('name', data.name);
-            formData.append('role', data.role);
-            formData.append('quote', data.quote);
-            if (data.image) {
+            formData.append('type', data.type);
+            if (data.image instanceof File) {
                 formData.append('image', data.image);
             }
-            if (data.year) formData.append('year', data.year);
             if (data.isActive !== undefined) formData.append('isActive', String(data.isActive));
             if (data.displayOrder !== undefined) formData.append('displayOrder', String(data.displayOrder));
 
-            const response = await api.post('/testimonials', formData);
+            const response = await api.post('/sponsors', formData);
             return response.data;
         } catch (error) {
             throw error;
         }
     },
     
-    getTestimonials: async () => {
+    getSponsors: async () => {
         try {
-            const response = await api.get('/testimonials');
+            const response = await api.get('/sponsors');
             return response.data;
         } catch (error) {
             throw error;
         }
     },
 
-    getAllTestimonials: async () => {
+    getAllSponsors: async () => {
         try {
-            const response = await api.get('/testimonials/admin');
+            const response = await api.get('/sponsors/admin');
             return response.data;
         } catch (error) {
             throw error;
         }
     },
 
-    updateTestimonial: async (id: string, data: Partial<TestimonialData>) => {
+    updateSponsor: async (id: string, data: SponsorData) => {
         try {
             const formData = new FormData();
             if (data.name) formData.append('name', data.name);
-            if (data.role) formData.append('role', data.role);
-            if (data.quote) formData.append('quote', data.quote);
-            if (data.image) formData.append('image', data.image);
-            if (data.year) formData.append('year', data.year);
+            if (data.type) formData.append('type', data.type);
+            if (data.image instanceof File) {
+                formData.append('image', data.image);
+            }
             if (data.isActive !== undefined) formData.append('isActive', String(data.isActive));
             if (data.displayOrder !== undefined) formData.append('displayOrder', String(data.displayOrder));
 
-            const response = await api.put(`/testimonials/${id}`, formData);
+            const response = await api.put(`/sponsors/${id}`, formData);
             return response.data;
         } catch (error) {
             throw error;
         }
     },
 
-    deleteTestimonial: async (id: string) => {
+    deleteSponsor: async (id: string) => {
         try {
-            const response = await api.delete(`/testimonials/${id}`);
+            const response = await api.delete(`/sponsors/${id}`);
             return response.data;
         } catch (error) {
             throw error;
@@ -112,4 +109,4 @@ const testimonialService = {
     }
 };
 
-export default testimonialService;
+export default sponsorService;

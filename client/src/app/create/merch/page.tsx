@@ -7,18 +7,12 @@ import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import Link from "next/link";
-import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Icons
+import { useSearchParams } from "next/navigation";
+import { Pencil, Trash2, RefreshCw, AlertTriangle, Eye, EyeOff } from "lucide-react"; // Icons
+import merchService, { MerchItem } from "@/app/services/merch";
 
 // --- INTERFACES ---
-interface MerchItem {
-  _id: string;
-  name: string;
-  description: string;
-  orderLink: string;
-  image?: string;
-  prices: { category: string; price: string }[];
-  isActive?: boolean;
-}
+// MerchItem is imported from service
 
 type FormErrors = {
   name: boolean;
@@ -27,65 +21,58 @@ type FormErrors = {
   prices: boolean;
 };
 
-export default function SponsorsPage() {
-  // Note: Function name should ideally be MerchPage based on context, but keeping as requested
+export default function MerchPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // --- MANAGEMENT STATE ---
   const [merchList, setMerchList] = useState<MerchItem[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
+  const searchParams = useSearchParams();
+  const editIdParam = searchParams.get("edit");
 
-  // 1. FETCH MERCH (Simulated)
+  // 1. FETCH MERCH
   const fetchMerch = async () => {
     setIsLoadingList(true);
-    // Simulate API Call: await merchService.getAll()
-    setTimeout(() => {
-      const mockData: MerchItem[] = [
-        {
-          _id: "1",
-          name: "ICPEP.SE Lanyard",
-          description: "Official Lanyard 2024",
-          orderLink: "https://forms.gle/...",
-          image: "/gle.png",
-          prices: [
-            { category: "Member", price: "150" },
-            { category: "Non-Member", price: "180" },
-          ],
-        },
-        {
-          _id: "2",
-          name: "Varsity Jacket",
-          description: "Limited Edition Jacket",
-          orderLink: "https://forms.gle/...",
-          image: "/gle.png",
-          prices: [{ category: "Regular", price: "1200" }],
-        },
-      ];
-      setMerchList(mockData);
+    try {
+      const data = await merchService.getAll();
+      setMerchList(data);
+      
+      if (editIdParam) {
+        const itemToEdit = data.find((m: MerchItem) => m._id === editIdParam);
+        if (itemToEdit) {
+          handleEditClick(itemToEdit);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch merch:", error);
+    } finally {
       setIsLoadingList(false);
-    }, 1000);
+    }
   };
 
   useEffect(() => {
     fetchMerch();
-  }, []);
+  }, [editIdParam]);
 
   // 2. HANDLE EDIT CLICK
   const handleEditClick = (item: MerchItem) => {
     setEditingId(item._id);
+    setIsEditingDraft(!item.isActive);
     setFormData({
       name: item.name,
       descrip: item.description,
       orderlink: item.orderLink,
     });
-    setPrices(item.prices); // Populate prices array
+    setPrices(item.prices.map(p => ({ category: p.category, price: String(p.price) })));
     setPreview(item.image || null);
     setCover(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -94,6 +81,7 @@ export default function SponsorsPage() {
   // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
+    setIsEditingDraft(false);
     setFormData({ name: "", descrip: "", orderlink: "" });
     setPrices([]);
     setPreview(null);
@@ -107,21 +95,28 @@ export default function SponsorsPage() {
     setShowDeleteModal(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!itemToDelete) return;
-    setMerchList((prev) => prev.filter((m) => m._id !== itemToDelete));
-    setShowDeleteModal(false);
-    setItemToDelete(null);
+    
+    try {
+      await merchService.delete(itemToDelete);
+      setMerchList((prev) => prev.filter((m) => m._id !== itemToDelete));
+      setShowDeleteModal(false);
+      setItemToDelete(null);
 
-    setSuccessMessage({
-      title: "Deleted Successfully!",
-      description: "The item has been permanently removed."
-    });
-    setShowSuccessModal(true);
+      setSuccessMessage({
+        title: "Deleted Successfully!",
+        description: "The item has been permanently removed."
+      });
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Failed to delete merch:", error);
+      alert("Failed to delete item. Please try again.");
+    }
   };
 
   // 5. PUBLISH / UPDATE LOGIC
-  const handlePublish = async () => {
+  const handleSubmit = async (isDraft: boolean = false) => {
     const newErrors = {
       name: !formData.name.trim(),
       descrip: !formData.descrip.trim(),
@@ -130,59 +125,90 @@ export default function SponsorsPage() {
     };
 
     setErrors(newErrors);
-    setPriceError(prices.length === 0); // Trigger price error only if empty
+    setPriceError(prices.length === 0);
 
-    if (Object.values(newErrors).some(Boolean) || (!cover && !editingId)) {
+    if (Object.values(newErrors).some(Boolean) || (!cover && !editingId && !preview)) {
       setShowGlobalError(true);
       return;
     }
 
     setShowGlobalError(false);
     setIsSubmitting(true);
+    setLoadingAction(isDraft ? "saving" : "publishing");
     setPriceError(false);
 
-    // Simulate API Call
-    setTimeout(() => {
-      const newItem: MerchItem = {
-        _id: editingId || Date.now().toString(),
-        name: formData.name,
-        description: formData.descrip,
-        orderLink: formData.orderlink,
-        image: preview || undefined,
-        prices: prices,
-      };
+    try {
+      const pricesPayload = prices.map(p => ({ category: p.category, price: Number(p.price) }));
+      const isActive = !isDraft;
 
       if (editingId) {
         // Update Logic
+        const updated = await merchService.update(editingId, {
+          name: formData.name,
+          description: formData.descrip,
+          orderLink: formData.orderlink,
+          prices: pricesPayload,
+          isActive: isActive,
+        }, cover || undefined);
+
         setMerchList((prev) =>
-          prev.map((item) => (item._id === editingId ? newItem : item))
+          prev.map((item) => (item._id === editingId ? updated : item))
         );
-        setSuccessMessage({
-          title: "Updated Successfully!",
-          description: "Your changes have been saved."
-        });
+        
+        if (isDraft) {
+             setSuccessMessage({
+                title: "Draft Updated!",
+                description: "Draft changes have been saved."
+             });
+        } else {
+             setSuccessMessage({
+                title: !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
+                description: !isEditingDraft ? "Item details have been updated." : "Item is now live and visible to everyone."
+             });
+        }
+
       } else {
         // Create Logic
-        setMerchList((prev) => [newItem, ...prev]);
-        setSuccessMessage({
-          title: "Published Successfully!",
-          description: "The item has been added successfully."
-        });
+        if (!cover) throw new Error("Image is required for new items");
+
+        const created = await merchService.create({
+          name: formData.name,
+          description: formData.descrip,
+          orderLink: formData.orderlink,
+          prices: pricesPayload,
+          isActive: isActive,
+        }, cover);
+
+        setMerchList((prev) => [created, ...prev]);
+        
+        if (isDraft) {
+             setSuccessMessage({
+                title: "Draft Saved!",
+                description: "Your item has been saved as a draft and is not yet visible to the public."
+             });
+        } else {
+             setSuccessMessage({
+                title: "Published Successfully!",
+                description: "Your item has been successfully created and is now live."
+             });
+        }
       }
 
-      handleCancelEdit(); // Reset form
-      setIsSubmitting(false);
+      handleCancelEdit();
       setShowSuccessModal(true);
-    }, 1500);
+    } catch (error) {
+      console.error("Error saving merch:", error);
+      alert("Failed to save item. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+      setLoadingAction(null);
+    }
   };
 
-  const [prices, setPrices] = useState<{ category: string; price: string }[]>(
-    []
-  );
-
+  // --- DYNAMIC PRICES STATE ---
+  const [prices, setPrices] = useState<{ category: string; price: string }[]>([]);
   const [priceCategory, setPriceCategory] = useState("");
   const [priceValue, setPriceValue] = useState("");
-
   const [priceError, setPriceError] = useState(false);
 
   const handleAddPrice = () => {
@@ -282,6 +308,10 @@ export default function SponsorsPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // Separate published and draft items
+  const publishedItems = merchList.filter(item => item.isActive);
+  const draftItems = merchList.filter(item => !item.isActive);
+
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
       <Grid />
@@ -292,7 +322,7 @@ export default function SponsorsPage() {
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {editingId ? "Updating Item..." : "Publishing Item..."}
+              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating..." : "Publishing..."}
             </p>
           </div>
         </div>
@@ -364,7 +394,6 @@ export default function SponsorsPage() {
                   {/* Upload Image Section */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 mb-4">
-                      {/* Icon */}
                       <label className="text-lg font-semibold text-primary3 font-rubik">
                         Merchandise Image{" "}
                         <span className="text-red-500 ml-1">*</span>
@@ -519,7 +548,7 @@ export default function SponsorsPage() {
                     >
                       <input
                         type="text"
-                        placeholder="Category (e.g., General)"
+                        placeholder="Category (e.g., Member)"
                         value={priceCategory}
                         onChange={(e) => setPriceCategory(e.target.value)}
                         className="flex-1 rounded-xl px-4 py-3 font-rubik border-2 border-white bg-white focus:border-primary2 outline-none"
@@ -572,71 +601,69 @@ export default function SponsorsPage() {
                     )}
 
                     <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-                      {!editingId && (
-                        <Link
-                          href="/drafts"
-                          className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 text-center"
-                        >
-                          View drafts
-                        </Link>
-                      )}
-
                       {editingId && (
                         <Button
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-500 hover:bg-red-500 "
                         >
                           Cancel Edit
                         </Button>
                       )}
 
-                      {!editingId && (
-                        <Button variant="outline">Save Draft</Button>
+                      {(!editingId || isEditingDraft) && (
+                        <Button
+                          variant="outline"
+                          type="button"
+                          onClick={() => handleSubmit(true)}
+                          disabled={isSubmitting}
+                        >
+                          {editingId ? "Update Draft" : "Save Draft"}
+                        </Button>
                       )}
 
                       <Button
                         variant="primary3"
                         type="button"
-                        onClick={handlePublish}
+                        onClick={() => handleSubmit(false)}
                         disabled={isSubmitting}
-                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50"
+                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300"
                       >
-                        {editingId ? "Update Merch" : "Publish"}
+                        {editingId && !isEditingDraft ? "Update Merch" : "Publish"}
                       </Button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 2. MANAGE MERCH LIST */}
+              {/* 2. MANAGE PUBLISHED MERCH LIST */}
               <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
                 <div className="p-8 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                   <div>
-                    <h2 className="text-2xl font-bold text-primary3 font-rubik">
+                    <h2 className="text-2xl font-bold text-primary3 font-rubik flex items-center gap-2">
                       Manage Merchandise
                     </h2>
                     <p className="text-gray-500 font-raleway text-sm mt-1">
-                      Total: {merchList.length} items
+                      Total: {publishedItems.length} items
                     </p>
                   </div>
                   <button
                     onClick={fetchMerch}
                     className="flex items-center gap-2 text-sm text-primary1 font-bold hover:bg-primary1/10 px-4 py-2 rounded-lg"
                   >
-                    <RefreshCw size={16} /> Refresh List
+                    <RefreshCw size={16} /> Refresh
                   </button>
                 </div>
 
                 <div className="overflow-x-auto">
                   {isLoadingList ? (
                     <div className="p-12 text-center text-gray-500 font-raleway">
-                      Loading existing merchandise...
+                      Loading merchandise...
                     </div>
-                  ) : merchList.length === 0 ? (
+                  ) : publishedItems.length === 0 ? (
                     <div className="p-12 text-center text-gray-400 font-raleway">
-                      No items found. Create one above!
+                      No published items yet. Create and publish one above!
                     </div>
                   ) : (
                     <table className="w-full text-left border-collapse min-w-[700px]">
@@ -650,7 +677,7 @@ export default function SponsorsPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 font-raleway">
-                        {merchList.map((item) => (
+                        {publishedItems.map((item) => (
                           <tr
                             key={item._id}
                             className={`hover:bg-blue-50/40 transition-colors group ${
@@ -728,6 +755,8 @@ export default function SponsorsPage() {
                   )}
                 </div>
               </div>
+
+
             </div>
           </div>
         </main>
@@ -775,9 +804,7 @@ export default function SponsorsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => {
-              setShowSuccessModal(false);
-            }}
+            onClick={() => setShowSuccessModal(false)}
           />
 
           <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
@@ -814,9 +841,7 @@ export default function SponsorsPage() {
               <div className="flex gap-3 mt-2 w-full">
                 <Button
                   variant="primary3"
-                  onClick={() => {
-                    setShowSuccessModal(false);
-                  }}
+                  onClick={() => setShowSuccessModal(false)}
                   className="w-full"
                 >
                   Continue
