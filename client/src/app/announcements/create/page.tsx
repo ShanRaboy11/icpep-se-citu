@@ -1716,12 +1716,7 @@ export default function AnnouncementsPage() {
                 <div className="text-center space-y-2">
                   <h3 className="text-2xl text-primary3 font-bold font-rubik">
                     {successMessage.title}
-                <div className="text-center space-y-2">
-                  <h3 className="text-2xl text-primary3 font-bold font-rubik">
-                    {successMessage.title}
                   </h3>
-                  <p className="text-gray-600 font-raleway">
-                    {successMessage.description}
                   <p className="text-gray-600 font-raleway">
                     {successMessage.description}
                   </p>
@@ -1730,17 +1725,15 @@ export default function AnnouncementsPage() {
                 <div className="flex gap-3 mt-2 w-full">
                   <Button
                     variant="primary3"
-                <div className="flex gap-3 mt-2 w-full">
-                  <Button
-                    variant="primary3"
                     onClick={() => {
                       setShowSuccessModal(false);
                       setSubmitSuccess(false);
                     }}
                     className="w-full"
-                    className="w-full"
                   >
                     Continue
+                  </Button>
+                </div>
                   </Button>
                 </div>
               </div>
