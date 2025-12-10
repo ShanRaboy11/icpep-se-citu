@@ -17,8 +17,7 @@ type FormErrors = {
   name: boolean;
   descrip: boolean;
   orderlink: boolean;
-  memberPrice: boolean;
-  nonMemberPrice: boolean;
+  prices: boolean;
 };
 
 export default function SponsorsPage() {
@@ -56,18 +55,12 @@ export default function SponsorsPage() {
   // 2. HANDLE EDIT CLICK
   const handleEditClick = (item: MerchItem) => {
     setEditingId(item._id);
-    
-    const memberPrice = item.prices.find(p => p.category === "Member")?.price || "";
-    const nonMemberPrice = item.prices.find(p => p.category === "Non-Member")?.price || "";
-
     setFormData({
       name: item.name,
       descrip: item.description,
       orderlink: item.orderLink,
-      memberPrice: String(memberPrice),
-      nonMemberPrice: String(nonMemberPrice),
     });
-    
+    setPrices(item.prices.map(p => ({ category: p.category, price: String(p.price) })));
     setPreview(item.image || null);
     setCover(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -76,13 +69,8 @@ export default function SponsorsPage() {
   // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
-    setFormData({ 
-      name: "", 
-      descrip: "", 
-      orderlink: "",
-      memberPrice: "",
-      nonMemberPrice: ""
-    });
+    setFormData({ name: "", descrip: "", orderlink: "" });
+    setPrices([]);
     setPreview(null);
     setCover(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -120,11 +108,11 @@ export default function SponsorsPage() {
       name: !formData.name.trim(),
       descrip: !formData.descrip.trim(),
       orderlink: !formData.orderlink.trim(),
-      memberPrice: !formData.memberPrice.trim(),
-      nonMemberPrice: !formData.nonMemberPrice.trim(),
+      prices: prices.length === 0,
     };
 
     setErrors(newErrors);
+    setPriceError(prices.length === 0); // Trigger price error only if empty
 
     if (Object.values(newErrors).some(Boolean) || (!cover && !editingId && !preview)) {
       setShowGlobalError(true);
@@ -133,12 +121,10 @@ export default function SponsorsPage() {
 
     setShowGlobalError(false);
     setIsSubmitting(true);
+    setPriceError(false);
 
     try {
-      const pricesPayload = [
-        { category: "Member", price: Number(formData.memberPrice) },
-        { category: "Non-Member", price: Number(formData.nonMemberPrice) }
-      ];
+      const pricesPayload = prices.map(p => ({ category: p.category, price: Number(p.price) }));
 
       if (editingId) {
         // Update Logic
@@ -184,20 +170,43 @@ export default function SponsorsPage() {
     }
   };
 
+  // --- DYNAMIC PRICES STATE ---
+  const [prices, setPrices] = useState<{ category: string; price: string }[]>([]);
+  const [priceCategory, setPriceCategory] = useState("");
+  const [priceValue, setPriceValue] = useState("");
+  const [priceError, setPriceError] = useState(false);
+
+  const handleAddPrice = () => {
+    if (!priceCategory.trim() || !priceValue.trim()) {
+      setPriceError(true);
+      return;
+    }
+
+    setPrices((prev) => [
+      ...prev,
+      { category: priceCategory, price: priceValue },
+    ]);
+
+    setPriceCategory("");
+    setPriceValue("");
+    setPriceError(false);
+  };
+
+  const handleDeletePrice = (index: number) => {
+    setPrices((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     descrip: "",
     orderlink: "",
-    memberPrice: "",
-    nonMemberPrice: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({
     name: false,
     descrip: false,
     orderlink: false,
-    memberPrice: false,
-    nonMemberPrice: false,
+    prices: false,
   });
 
   const handleInputChange = (
@@ -488,37 +497,60 @@ export default function SponsorsPage() {
                   </div>
 
                   {/* Prices Section */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-primary3 font-raleway">
-                        Member Price (₱) <span className="text-red-500">*</span>
-                      </label>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-primary3 font-raleway">
+                      Merchandise Prices <span className="text-red-500">*</span>
+                    </label>
+                    <div
+                      className={`flex flex-col sm:flex-row gap-3 p-4 rounded-2xl transition-all ${
+                        priceError
+                          ? "border-2 border-red-400 bg-red-50"
+                          : "border-2 border-primary2/20 bg-primary2/5"
+                      }`}
+                    >
                       <input
-                        type="number"
-                        name="memberPrice"
-                        value={formData.memberPrice}
-                        onChange={handleInputChange}
-                        placeholder="0.00"
-                        className={`w-full font-raleway rounded-xl px-4 py-3.5 border-2 ${
-                          errors.memberPrice ? "border-red-400" : "border-gray-200"
-                        } focus:border-primary2 outline-none`}
+                        type="text"
+                        placeholder="Category (e.g., Member)"
+                        value={priceCategory}
+                        onChange={(e) => setPriceCategory(e.target.value)}
+                        className="flex-1 rounded-xl px-4 py-3 font-rubik border-2 border-white bg-white focus:border-primary2 outline-none"
                       />
+                      <input
+                        type="text"
+                        placeholder="Price (₱)"
+                        value={priceValue}
+                        onChange={(e) => setPriceValue(e.target.value)}
+                        className="w-full sm:w-32 rounded-xl px-4 py-3 font-rubik border-2 border-white bg-white focus:border-primary2 outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddPrice}
+                        className="px-6 py-2 bg-primary2 text-white rounded-xl font-bold hover:bg-primary3"
+                      >
+                        Add
+                      </button>
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-primary3 font-raleway">
-                        Non-Member Price (₱) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        name="nonMemberPrice"
-                        value={formData.nonMemberPrice}
-                        onChange={handleInputChange}
-                        placeholder="0.00"
-                        className={`w-full font-raleway rounded-xl px-4 py-3.5 border-2 ${
-                          errors.nonMemberPrice ? "border-red-400" : "border-gray-200"
-                        } focus:border-primary2 outline-none`}
-                      />
+                    {/* Display Prices */}
+                    <div className="flex flex-wrap gap-3 mt-4">
+                      {prices.map((p, index) => (
+                        <span
+                          key={index}
+                          className="flex items-center gap-3 bg-white border-2 border-primary2/20 text-primary3 font-bold font-rubik px-5 py-2 rounded-xl"
+                        >
+                          <span>{p.category}</span>
+                          <span className="text-primary2 bg-primary2/10 px-2 py-0.5 rounded-md text-sm">
+                            PHP {p.price}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePrice(index)}
+                            className="w-6 h-6 flex items-center justify-center rounded-full hover:text-red-500"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
                     </div>
                   </div>
 
@@ -731,24 +763,53 @@ export default function SponsorsPage() {
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowSuccessModal(false)}
           />
-          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center">
-            <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
-              {successMessage.title || (editingId ? "Updated Successfully!" : "Published Successfully!")}
-            </h3>
-            <p className="text-gray-500 font-raleway mb-4">
-              {successMessage.description}
-            </p>
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold mt-4"
-            >
-              Continue
-            </button>
+
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
+            <div className="flex flex-col items-center gap-6">
+              {/* Success Icon with Animation */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
+                  <svg
+                    className="w-12 h-12 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl text-primary3 font-bold font-rubik">
+                  {successMessage.title || (editingId ? "Updated Successfully!" : "Published Successfully!")}
+                </h3>
+                <p className="text-gray-600 font-raleway">
+                  {successMessage.description}
+                </p>
+              </div>
+
+              <div className="flex gap-3 mt-2 w-full">
+                <Button
+                  variant="primary3"
+                  onClick={() => setShowSuccessModal(false)}
+                  className="w-full"
+                >
+                  Continue
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
