@@ -36,8 +36,32 @@ const departments: Record<string, any> = {
     shadow: "shadow-emerald-500/20",
     officers: []
   }
-  // Advisers removed as requested
 };
+
+// --- CONSTANTS FOR DROPDOWNS (UPDATED) ---
+const EXECUTIVE_POSITIONS = [
+  "President",
+  "VP Internal",
+  "VP External",
+  "Secretary",
+  "Treasurer",
+  "Auditor",
+  "PIO",
+  "PRO",
+  "SSG Representative",
+  "Batch Representative"
+];
+
+const COMMITTEES_LIST = [
+  "Committee on Internal Affairs",
+  "Committee on External Affairs",
+  "Committee on Finance",
+  "Committee on Public Relations",
+  "Research and Development Committee",
+  "Training and Seminar Committee",
+  "Sports and Cultural Committee",
+  "Media and Documentation Committee"
+];
 
 // Define the Officer type
 type Officer = {
@@ -85,7 +109,16 @@ const OfficersPage = () => {
 
   const handleOpenAdd = () => {
     setEditingId(null);
-    setFormData({ name: "", role: "", position: "", image: "/faculty.png" });
+    // Reset form with smart defaults based on active tab
+    const defaultPosition = activeKey === 'executive' ? EXECUTIVE_POSITIONS[0] : "";
+    const defaultRole = activeKey === 'committee' ? COMMITTEES_LIST[0] : "";
+    
+    setFormData({ 
+      name: "", 
+      role: defaultRole, 
+      position: defaultPosition, 
+      image: "/faculty.png" 
+    });
     setIsModalOpen(true);
   };
 
@@ -109,16 +142,24 @@ const OfficersPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Clean up data before saving
+    let finalData = { ...formData };
+    
+    // Logic: If Executive and NOT Batch Rep, clear the Role (Year Level)
+    if (activeKey === 'executive' && finalData.position !== 'Batch Representative') {
+      finalData.role = ""; 
+    }
+
     if (editingId) {
       // Update existing
       setOfficers((prev) => 
-        prev.map((o) => (o.id === editingId ? { ...o, ...formData } : o))
+        prev.map((o) => (o.id === editingId ? { ...o, ...finalData } : o))
       );
     } else {
       // Create new
       const newOfficer = {
         id: Math.random().toString(36).substring(7),
-        ...formData
+        ...finalData
       };
       setOfficers((prev) => [...prev, newOfficer]);
     }
@@ -171,7 +212,6 @@ const OfficersPage = () => {
                   <select
                     value={activeKey}
                     onChange={handleDropdownChange}
-                    // Updated classes: appearance-none, outline-none, removed border, fixed width issue
                     className="appearance-none bg-transparent outline-none cursor-pointer pr-12 text-3xl sm:text-6xl font-bold font-rubik bg-gradient-to-r from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent w-full sm:w-auto hover:opacity-80 transition-opacity"
                   >
                     {departmentKeys.map((key) => (
@@ -181,7 +221,7 @@ const OfficersPage = () => {
                     ))}
                   </select>
                   
-                  {/* Chevron Icon - Updated color to primary3 to fit palette */}
+                  {/* Chevron Icon */}
                   <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none text-primary3">
                     <ChevronDown className="h-8 w-8 sm:h-10 sm:w-10 opacity-80 group-hover:opacity-100 transition-opacity" />
                   </div>
@@ -228,7 +268,7 @@ const OfficersPage = () => {
                 <span className="font-rubik">Add Officer</span>
               </button>
 
-              {/* Officers Container - Styled like Sponsors/Merch Page */}
+              {/* Officers Container */}
               <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
                 
                 {/* Container Header */}
@@ -352,6 +392,8 @@ const OfficersPage = () => {
               </div>
 
               <div className="grid grid-cols-1 gap-5">
+                
+                {/* 1. FULL NAME */}
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                     Full Name
@@ -366,33 +408,92 @@ const OfficersPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Role / Header
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    placeholder="e.g. 2nd Year"
-                    className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all font-rubik"
-                  />
-                </div>
+                {/* --- CONDITIONAL FIELDS BASED ON ACTIVE KEY --- */}
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    Position / Subtitle
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.position}
-                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                    placeholder="e.g. Batch Representative"
-                    className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all font-rubik"
-                  />
-                </div>
+                {activeKey === 'executive' ? (
+                  <>
+                    {/* EXECUTIVE: POSITION DROPDOWN */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Position / Subtitle
+                      </label>
+                      <div className="relative">
+                        <select
+                          required
+                          value={formData.position}
+                          onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                          className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all font-rubik appearance-none cursor-pointer"
+                        >
+                          <option value="" disabled>Select Position</option>
+                          {EXECUTIVE_POSITIONS.map((pos) => (
+                            <option key={pos} value={pos}>{pos}</option>
+                          ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                          <ChevronDown className="h-4 w-4" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* EXECUTIVE: ROLE INPUT (ONLY FOR BATCH REP) */}
+                    {formData.position === "Batch Representative" && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                          Role / Header (Year Level)
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.role}
+                          onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                          placeholder="e.g. 2nd Year"
+                          className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all font-rubik"
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {/* COMMITTEE: ROLE DROPDOWN (COMMITTEE NAME) */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Role / Header (Committee)
+                      </label>
+                      <div className="relative">
+                        <select
+                          required
+                          value={formData.role}
+                          onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                          className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all font-rubik appearance-none cursor-pointer"
+                        >
+                          <option value="" disabled>Select Committee</option>
+                          {COMMITTEES_LIST.map((comm) => (
+                            <option key={comm} value={comm}>{comm}</option>
+                          ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                          <ChevronDown className="h-4 w-4" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* COMMITTEE: POSITION INPUT (TEXT) */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        Position / Subtitle
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.position}
+                        onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                        placeholder="e.g. Committee Chairperson"
+                        className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary1 focus:ring-2 focus:ring-primary1/20 outline-none transition-all font-rubik"
+                      />
+                    </div>
+                  </>
+                )}
+
               </div>
 
               <div className="pt-4">
