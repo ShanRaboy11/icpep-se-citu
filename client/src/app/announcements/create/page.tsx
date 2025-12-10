@@ -9,6 +9,7 @@ import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import { ChevronDown, Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Added Icons
+import { ChevronDown, Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Added Icons
 import announcementService, {
   AnnouncementData,
 } from "../../services/announcement";
@@ -276,7 +277,16 @@ export default function AnnouncementsPage() {
     
     try {
       await announcementService.deleteAnnouncement(itemToDelete);
+      await announcementService.deleteAnnouncement(itemToDelete);
       fetchAnnouncements();
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+
+      setSuccessMessage({
+        title: "Deleted Successfully!",
+        description: "The announcement has been permanently removed."
+      });
+      setShowSuccessModal(true);
       setShowDeleteModal(false);
       setItemToDelete(null);
 
@@ -389,12 +399,20 @@ export default function AnnouncementsPage() {
           announcementData,
           images.length > 0 ? images : undefined
         );
+        setSuccessMessage({
+          title: "Updated Successfully!",
+          description: "Changes have been saved."
+        });
       } else {
         // CREATE
         await announcementService.createAnnouncement(
           announcementData,
           images.length > 0 ? images : undefined
         );
+        setSuccessMessage({
+          title: "Published Successfully!",
+          description: "Announcement is now live."
+        });
       }
 
       setSubmitSuccess(true);
@@ -1622,6 +1640,7 @@ export default function AnnouncementsPage() {
                                 </button>
                                 <button
                                   onClick={() => confirmDelete(item._id)}
+                                  onClick={() => confirmDelete(item._id)}
                                   className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
                                   title="Delete"
                                 >
@@ -1642,7 +1661,9 @@ export default function AnnouncementsPage() {
 
         {showSuccessModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => {
                 setShowSuccessModal(false);
@@ -1670,12 +1691,38 @@ export default function AnnouncementsPage() {
                       />
                     </svg>
                   </div>
+
+            <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
+              <div className="flex flex-col items-center gap-6">
+                {/* Success Icon with Animation */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
+                    <svg
+                      className="w-12 h-12 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
                 </div>
 
                 <div className="text-center space-y-2">
                   <h3 className="text-2xl text-primary3 font-bold font-rubik">
                     {successMessage.title}
+                <div className="text-center space-y-2">
+                  <h3 className="text-2xl text-primary3 font-bold font-rubik">
+                    {successMessage.title}
                   </h3>
+                  <p className="text-gray-600 font-raleway">
+                    {successMessage.description}
                   <p className="text-gray-600 font-raleway">
                     {successMessage.description}
                   </p>
@@ -1684,10 +1731,14 @@ export default function AnnouncementsPage() {
                 <div className="flex gap-3 mt-2 w-full">
                   <Button
                     variant="primary3"
+                <div className="flex gap-3 mt-2 w-full">
+                  <Button
+                    variant="primary3"
                     onClick={() => {
                       setShowSuccessModal(false);
                       setSubmitSuccess(false);
                     }}
+                    className="w-full"
                     className="w-full"
                   >
                     Continue

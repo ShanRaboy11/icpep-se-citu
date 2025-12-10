@@ -11,6 +11,7 @@ import Grid from "@/app/components/grid";
 import testimonialService from "@/app/services/testimonial";
 // Added icons for the management list
 import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react";
+import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react";
 
 // Define interface for data
 interface Testimonial {
@@ -230,6 +231,10 @@ export default function TestimonialsPage() {
       } else {
         // CREATE MODE
         await testimonialService.createTestimonial(payload);
+        setSuccessMessage({
+          title: "Published Successfully!",
+          description: "Your testimonial has been published and is now live."
+        });
       }
 
       // Reset form & Refresh list
@@ -863,8 +868,10 @@ export default function TestimonialsPage() {
                 <div className="text-center space-y-2">
                   <h3 className="text-2xl text-primary3 font-bold font-rubik">
                     {successMessage.title}
+                    {successMessage.title}
                   </h3>
                   <p className="text-gray-600 font-raleway">
+                    {successMessage.description}
                     {successMessage.description}
                   </p>
                 </div>
