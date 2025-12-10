@@ -103,7 +103,7 @@ export default function SponsorsPage() {
   };
 
   // 5. PUBLISH / UPDATE LOGIC
-  const handlePublish = async () => {
+  const handleSubmit = async (isDraft: boolean = false) => {
     const newErrors = {
       name: !formData.name.trim(),
       descrip: !formData.descrip.trim(),
@@ -125,6 +125,7 @@ export default function SponsorsPage() {
 
     try {
       const pricesPayload = prices.map(p => ({ category: p.category, price: Number(p.price) }));
+      const isActive = !isDraft;
 
       if (editingId) {
         // Update Logic
@@ -133,14 +134,15 @@ export default function SponsorsPage() {
           description: formData.descrip,
           orderLink: formData.orderlink,
           prices: pricesPayload,
+          isActive: isActive,
         }, cover || undefined);
 
         setMerchList((prev) =>
           prev.map((item) => (item._id === editingId ? updated : item))
         );
         setSuccessMessage({
-          title: "Updated Successfully!",
-          description: "Item details have been updated."
+          title: isDraft ? "Draft Saved!" : "Updated Successfully!",
+          description: isDraft ? "Your item has been saved as a draft." : "Item details have been updated."
         });
       } else {
         // Create Logic
@@ -151,12 +153,13 @@ export default function SponsorsPage() {
           description: formData.descrip,
           orderLink: formData.orderlink,
           prices: pricesPayload,
+          isActive: isActive,
         }, cover);
 
         setMerchList((prev) => [created, ...prev]);
         setSuccessMessage({
-          title: "Published Successfully!",
-          description: "Your item has been successfully created and is now live."
+          title: isDraft ? "Draft Saved!" : "Published Successfully!",
+          description: isDraft ? "Your item has been saved as a draft." : "Your item has been successfully created and is now live."
         });
       }
 
@@ -584,13 +587,20 @@ export default function SponsorsPage() {
                       )}
 
                       {!editingId && (
-                        <Button variant="outline">Save Draft</Button>
+                        <Button 
+                          variant="outline"
+                          type="button"
+                          onClick={() => handleSubmit(true)}
+                          disabled={isSubmitting}
+                        >
+                          Save Draft
+                        </Button>
                       )}
 
                       <Button
                         variant="primary3"
                         type="button"
-                        onClick={handlePublish}
+                        onClick={() => handleSubmit(false)}
                         disabled={isSubmitting}
                         className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg disabled:opacity-50"
                       >

@@ -56,3 +56,20 @@ export const getTestimonials = async (req: Request, res: Response): Promise<void
     });
   }
 };
+
+export const getAllTestimonials = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const testimonials = await Testimonial.find({}).sort({ displayOrder: 1, createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      data: testimonials,
+    });
+  } catch (error) {
+    console.error('Error fetching all testimonials:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch testimonials',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+};

@@ -1,13 +1,15 @@
 import express from 'express';
-import { createTestimonial, getTestimonials } from '../controllers/testimonial.controller';
+import { createTestimonial, getTestimonials, getAllTestimonials } from '../controllers/testimonial.controller';
 import { upload } from '../middleware/upload.middleware';
+import { authenticateToken } from '../middleware/auth.middleware';
 
 const router = express.Router();
 
 // Public routes
 router.get('/', getTestimonials);
 
-// Protected routes (add auth middleware if needed later)
+// Protected routes
+router.get('/admin', authenticateToken, getAllTestimonials);
 router.post('/', upload.single('image'), createTestimonial);
 
 export default router;

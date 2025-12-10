@@ -3,11 +3,14 @@
 import React, { useEffect, useState } from "react";
 import announcementService from "../services/announcement";
 import eventService from "../services/event";
+import merchService, { MerchItem } from "../services/merch";
+import testimonialService from "../services/testimonial";
 import Link from "next/link";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Button from "@/app/components/button";
-import DraftsSidebar from "@/app/components/drafts-sidebar";
+import Sidebar from "@/app/components/sidebar";
+import { Megaphone, CalendarDays, ShoppingBag, Pencil, Trash2, Quote } from "lucide-react";
 
 interface DraftItem {
   _id: string;
@@ -15,28 +18,47 @@ interface DraftItem {
   publishDate?: string;
   isPublished?: boolean;
   type?: string;
+  category?: "announcement" | "event" | "merch" | "testimonial";
 }
 
-type ViewType = "announcements" | "events";
+interface TestimonialItem {
+  _id: string;
+  name: string;
+  role: string;
+  quote: string;
+  image?: string;
+  isActive: boolean;
+}
+
+type TabType = "announcements" | "events" | "merch" | "testimonials";
 
 export default function DraftsPage() {
   const [announcements, setAnnouncements] = useState<DraftItem[]>([]);
   const [events, setEvents] = useState<DraftItem[]>([]);
+  const [merch, setMerch] = useState<MerchItem[]>([]);
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<ViewType>("announcements");
+  const [activeTab, setActiveTab] = useState<TabType>("announcements");
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const [annRes, evtRes] = await Promise.all([
+        const [annRes, evtRes, merchRes, testRes] = await Promise.all([
           announcementService.getMyAnnouncements({ page: 1, limit: 50 }),
           eventService.getMyEvents({ page: 1, limit: 50 }),
+          merchService.getAll(),
+          testimonialService.getAllTestimonials(),
         ]);
+
         const annData = Array.isArray(annRes.data) ? annRes.data : [];
         const evtData = Array.isArray(evtRes.data) ? evtRes.data : [];
+        const testData = Array.isArray(testRes) ? testRes : (testRes.data || []); // Handle potential response structure
+        
         setAnnouncements(annData as DraftItem[]);
         setEvents(evtData as DraftItem[]);
+        setMerch(merchRes);
+        setTestimonials(testData as TestimonialItem[]);
       } catch (err) {
         console.error("Failed to load drafts", err);
       } finally {
@@ -48,13 +70,14 @@ export default function DraftsPage() {
 
   const now = new Date();
 
-  const renderList = (items: DraftItem[], type: "announcement" | "event") => {
+  const renderAnnouncementsEvents = (items: DraftItem[], type: "announcement" | "event") => {
     const filtered = (items || []).filter((it) => !it.isPublished);
-    if (!filtered || filtered.length === 0) {
+
+    if (filtered.length === 0) {
       return (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-100">
           <p className="text-gray-500 font-raleway mb-4">
-            No drafts or scheduled {type}s yet
+            No drafts found for {type}s
           </p>
           <Link
             href={
@@ -72,162 +95,321 @@ export default function DraftsPage() {
     }
 
     return (
-      <ul className="space-y-3">
+      <div className="space-y-3">
         {filtered.map((it) => {
           const scheduled = it.publishDate
             ? new Date(it.publishDate) > now
             : false;
 
           return (
-            <li
+            <div
               key={it._id}
-              className="p-4 bg-white border border-primary1/20 rounded-xl hover:shadow-md transition-shadow duration-200"
+              className="p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 group"
             >
               <div className="flex justify-between items-start gap-4">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-primary3 font-rubik text-lg mb-1">
+                  <h3 className="font-bold text-primary3 font-rubik text-lg mb-2">
                     {it.title}
                   </h3>
                   <div className="flex items-center gap-2 text-sm text-gray-600 font-raleway">
                     {it.type && (
-                      <span className="px-2 py-0.5 bg-primary1/10 text-primary1 rounded-full text-xs font-medium">
+                      <span className="px-2.5 py-1 bg-primary1/10 text-primary1 rounded-lg text-xs font-bold">
                         {it.type}
                       </span>
                     )}
                     <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
                         scheduled
                           ? "bg-blue-100 text-blue-700"
-                          : "bg-gray-100 text-gray-700"
+                          : "bg-gray-100 text-gray-600"
                       }`}
                     >
                       {scheduled
-                        ? `Scheduled: ${new Date(
-                            it.publishDate!
-                          ).toLocaleDateString()} ${new Date(
-                            it.publishDate!
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}`
+                        ? `Scheduled: ${new Date(it.publishDate!).toLocaleDateString()}`
                         : "Draft"}
                     </span>
                   </div>
                 </div>
-                <Link
-                  href={`/${
-                    type === "announcement" ? "announcements" : "events"
-                  }/${it._id}`}
-                >
-                  <Button variant="outline" size="sm">
-                    View
-                  </Button>
-                </Link>
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Link
+                    href={`/${
+                      type === "announcement" ? "announcements" : "events"
+                    }/${it._id}`}
+                  >
+                    <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
+                      <Pencil size={18} />
+                    </button>
+                  </Link>
+                </div>
               </div>
-            </li>
+            </div>
           );
         })}
-      </ul>
+      </div>
+    );
+  };
+
+  const renderMerch = () => {
+    const filtered = merch.filter((m) => !m.isActive);
+
+    if (filtered.length === 0) {
+      return (
+        <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-100">
+          <p className="text-gray-500 font-raleway mb-4">
+            No merchandise drafts found
+          </p>
+          <Link href="/create/merch">
+            <Button variant="primary2" size="sm">
+              Create Merch
+            </Button>
+          </Link>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {filtered.map((item) => (
+          <div
+            key={item._id}
+            className="p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 group"
+          >
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex items-center gap-4">
+                {item.image && (
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-bold text-primary3 font-rubik text-lg mb-1">
+                    {item.name}
+                  </h3>
+                  <p className="text-sm text-gray-500 font-raleway line-clamp-1">
+                    {item.description}
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold">
+                      Draft
+                    </span>
+                    <span className="px-2.5 py-1 bg-primary2/10 text-primary2 rounded-lg text-xs font-bold">
+                      {item.prices.length} Price Options
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Link href={`/create/merch?edit=${item._id}`}>
+                  {/* Note: You might need to update the merch create page to handle ?edit= query param or use a different way to pass the ID */}
+                  <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
+                    <Pencil size={18} />
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderTestimonials = () => {
+    const filtered = testimonials.filter((t) => !t.isActive);
+
+    if (filtered.length === 0) {
+      return (
+        <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-100">
+          <p className="text-gray-500 font-raleway mb-4">
+            No testimonial drafts found
+          </p>
+          <Link href="/create/testimonials">
+            <Button variant="primary2" size="sm">
+              Create Testimonial
+            </Button>
+          </Link>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {filtered.map((item) => (
+          <div
+            key={item._id}
+            className="p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 group"
+          >
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex items-center gap-4">
+                {item.image ? (
+                  <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-primary1/10 flex items-center justify-center text-primary1 font-bold text-xl flex-shrink-0">
+                    {item.name.charAt(0)}
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-bold text-primary3 font-rubik text-lg mb-1">
+                    {item.name}
+                  </h3>
+                  <p className="text-sm text-primary1 font-bold font-raleway mb-1">
+                    {item.role}
+                  </p>
+                  <p className="text-sm text-gray-500 font-raleway line-clamp-1 italic">
+                    "{item.quote}"
+                  </p>
+                  <div className="mt-2">
+                    <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold">
+                      Draft
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Link href={`/create/testimonials?edit=${item._id}`}>
+                  <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
+                    <Pencil size={18} />
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     );
   };
 
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
-      <Header />
+      <div className="relative z-10 flex flex-col min-h-screen">
+        <Header />
 
-      <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12">
-        <div className="text-center sm:text-left mb-10">
-          <h1 className="text-2xl sm:text-5xl font-bold font-rubik text-primary3">
-            Drafts & Scheduled
-          </h1>
-          <div className="h-[3px] bg-primary1 w-24 sm:w-full mt-3 mx-auto rounded-full" />
-        </div>
-
-        <div className="flex flex-col lg:flex-row gap-8">
-          <aside className="w-full lg:w-64 flex-shrink-0">
-            {/* Use drafts-specific Sidebar component so it can show draft/scheduled counts and switch views */}
-            <DraftsSidebar
-              activeView={activeView}
-              onChangeView={(v) => setActiveView(v)}
-              announcements={announcements}
-              events={events}
-            />
-          </aside>
-
-          <div className="flex-1">
-            {loading ? (
-              <div className="border border-primary1 rounded-2xl p-6 bg-white">
-                {/* Skeleton Header */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex-1">
-                    <div className="h-8 bg-gray-200 rounded-lg w-48 mb-2 animate-pulse"></div>
-                    <div className="h-4 bg-gray-200 rounded-lg w-24 animate-pulse"></div>
-                  </div>
-                  <div className="h-9 bg-gray-200 rounded-lg w-28 animate-pulse"></div>
-                </div>
-
-                {/* Skeleton Items */}
-                <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div
-                      key={i}
-                      className="p-4 bg-gray-50 border border-gray-200 rounded-xl"
-                    >
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
-                          <div className="h-6 bg-gray-200 rounded-lg w-3/4 mb-2 animate-pulse"></div>
-                          <div className="flex items-center gap-2">
-                            <div className="h-5 bg-gray-200 rounded-full w-20 animate-pulse"></div>
-                            <div className="h-5 bg-gray-200 rounded-full w-32 animate-pulse"></div>
-                          </div>
-                        </div>
-                        <div className="h-9 bg-gray-200 rounded-lg w-16 animate-pulse"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="border border-primary1 rounded-2xl p-6 bg-white">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                      <h2 className="text-xl sm:text-2xl font-semibold text-primary1 font-rubik">
-                        {activeView === "announcements" ? "Announcements" : "Events"}
-                      </h2>
-                      <p className="text-sm text-gray-500 font-raleway mt-1">
-                        {activeView === "announcements"
-                          ? announcements.filter((a) => !a.isPublished).length
-                          : events.filter((e) => !e.isPublished).length}{" "}
-                        {(activeView === "announcements"
-                          ? announcements.filter((a) => !a.isPublished).length
-                          : events.filter((e) => !e.isPublished).length) === 1
-                          ? "item"
-                          : "items"}
-                      </p>
-                    </div>
-                  <Link
-                    href={
-                      activeView === "announcements"
-                        ? "/announcements/create"
-                        : "/events/create"
-                    }
-                  >
-                    <Button variant="outline" size="sm">
-                      + Create New
-                    </Button>
-                  </Link>
-                </div>
-
-                {activeView === "announcements"
-                  ? renderList(announcements, "announcement")
-                  : renderList(events, "event")}
-              </div>
-            )}
+        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
+          {/* Page Header with Gradient */}
+          <div className="mb-12 relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary1/10 to-primary2/10 rounded-3xl blur-3xl -z-10" />
+            <div className="text-center sm:text-left">
+              <h1 className="text-3xl sm:text-6xl font-bold font-rubik bg-gradient-to-r from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent mb-3">
+                Drafts & Scheduled
+              </h1>
+              <p className="text-gray-600 font-raleway text-lg">
+                Manage your unpublished content and scheduled posts
+              </p>
+            </div>
           </div>
-        </div>
-      </main>
 
-      <Footer />
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Sidebar */}
+            <aside className="w-full lg:w-72 flex-shrink-0">
+              <div className="sticky top-24">
+                <Sidebar />
+              </div>
+            </aside>
+
+            {/* Main Content */}
+            <div className="flex-1 space-y-8">
+              {/* Tabs */}
+              <div className="flex flex-wrap gap-2 p-1 bg-gray-100/50 rounded-2xl w-fit">
+                <button
+                  onClick={() => setActiveTab("announcements")}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                    activeTab === "announcements"
+                      ? "bg-white text-primary3 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <Megaphone size={16} />
+                  Announcements
+                  <span className={`ml-1 px-1.5 py-0.5 rounded-md text-xs ${
+                    activeTab === "announcements" ? "bg-primary1/10 text-primary1" : "bg-gray-200 text-gray-600"
+                  }`}>
+                    {announcements.filter(a => !a.isPublished).length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("events")}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                    activeTab === "events"
+                      ? "bg-white text-primary3 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <CalendarDays size={16} />
+                  Events
+                  <span className={`ml-1 px-1.5 py-0.5 rounded-md text-xs ${
+                    activeTab === "events" ? "bg-primary1/10 text-primary1" : "bg-gray-200 text-gray-600"
+                  }`}>
+                    {events.filter(e => !e.isPublished).length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("merch")}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                    activeTab === "merch"
+                      ? "bg-white text-primary3 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <ShoppingBag size={16} />
+                  Merch
+                  <span className={`ml-1 px-1.5 py-0.5 rounded-md text-xs ${
+                    activeTab === "merch" ? "bg-primary1/10 text-primary1" : "bg-gray-200 text-gray-600"
+                  }`}>
+                    {merch.filter(m => !m.isActive).length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("testimonials")}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                    activeTab === "testimonials"
+                      ? "bg-white text-primary3 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <Quote size={16} />
+                  Testimonials
+                  <span className={`ml-1 px-1.5 py-0.5 rounded-md text-xs ${
+                    activeTab === "testimonials" ? "bg-primary1/10 text-primary1" : "bg-gray-200 text-gray-600"
+                  }`}>
+                    {testimonials.filter(t => !t.isActive).length}
+                  </span>
+                </button>
+              </div>
+
+              {/* Content Area */}
+              <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 p-8 min-h-[400px]">
+                {loading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="h-24 bg-gray-50 rounded-2xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    {activeTab === "announcements" && renderAnnouncementsEvents(announcements, "announcement")}
+                    {activeTab === "events" && renderAnnouncementsEvents(events, "event")}
+                    {activeTab === "merch" && renderMerch()}
+                    {activeTab === "testimonials" && renderTestimonials()}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
     </section>
   );
 }

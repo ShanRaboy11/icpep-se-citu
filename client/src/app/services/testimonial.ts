@@ -73,6 +73,15 @@ const testimonialService = {
         } catch (error) {
             throw error;
         }
+    },
+
+    getAllTestimonials: async () => {
+        try {
+            const response = await api.get('/testimonials/admin');
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     }
 };
 
