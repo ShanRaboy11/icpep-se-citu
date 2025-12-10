@@ -581,15 +581,7 @@ export default function TestimonialsPage() {
                     )}
 
                     <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-                      {/* Only show "View drafts" if not editing */}
-                      {!editingId && (
-                        <Link
-                          href="/drafts"
-                          className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 text-center flex items-center justify-center"
-                        >
-                          View drafts
-                        </Link>
-                      )}
+
 
                       {/* Show Cancel if editing */}
                       {editingId && (

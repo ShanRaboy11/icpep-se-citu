@@ -1240,14 +1240,7 @@ export default function EventsPage() {
                     )}
 
                     <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-                      {!editingId && (
-                        <Link
-                          href="/drafts"
-                          className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 text-center"
-                        >
-                          View Drafts
-                        </Link>
-                      )}
+
 
                       {editingId && (
                         <Button

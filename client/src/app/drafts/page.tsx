@@ -5,12 +5,13 @@ import announcementService from "../services/announcement";
 import eventService from "../services/event";
 import merchService, { MerchItem } from "../services/merch";
 import testimonialService from "../services/testimonial";
+import sponsorService from "../services/sponsor";
 import Link from "next/link";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Button from "@/app/components/button";
 import Sidebar from "@/app/components/sidebar";
-import { Megaphone, CalendarDays, ShoppingBag, Pencil, Trash2, Quote } from "lucide-react";
+import { Megaphone, CalendarDays, ShoppingBag, Pencil, Trash2, Quote, Handshake } from "lucide-react";
 
 interface DraftItem {
   _id: string;
@@ -18,7 +19,7 @@ interface DraftItem {
   publishDate?: string;
   isPublished?: boolean;
   type?: string;
-  category?: "announcement" | "event" | "merch" | "testimonial";
+  category?: "announcement" | "event" | "merch" | "testimonial" | "sponsor";
 }
 
 interface TestimonialItem {
@@ -30,13 +31,22 @@ interface TestimonialItem {
   isActive: boolean;
 }
 
-type TabType = "announcements" | "events" | "merch" | "testimonials";
+interface SponsorItem {
+  _id: string;
+  name: string;
+  type: string;
+  image?: string;
+  isActive: boolean;
+}
+
+type TabType = "announcements" | "events" | "merch" | "testimonials" | "sponsors";
 
 export default function DraftsPage() {
   const [announcements, setAnnouncements] = useState<DraftItem[]>([]);
   const [events, setEvents] = useState<DraftItem[]>([]);
   const [merch, setMerch] = useState<MerchItem[]>([]);
   const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
+  const [sponsors, setSponsors] = useState<SponsorItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("announcements");
 
@@ -44,21 +54,24 @@ export default function DraftsPage() {
     const load = async () => {
       setLoading(true);
       try {
-        const [annRes, evtRes, merchRes, testRes] = await Promise.all([
+        const [annRes, evtRes, merchRes, testRes, sponsorRes] = await Promise.all([
           announcementService.getMyAnnouncements({ page: 1, limit: 50 }),
           eventService.getMyEvents({ page: 1, limit: 50 }),
           merchService.getAll(),
           testimonialService.getAllTestimonials(),
+          sponsorService.getAllSponsors(),
         ]);
 
         const annData = Array.isArray(annRes.data) ? annRes.data : [];
         const evtData = Array.isArray(evtRes.data) ? evtRes.data : [];
-        const testData = Array.isArray(testRes) ? testRes : (testRes.data || []); // Handle potential response structure
+        const testData = Array.isArray(testRes.data) ? testRes.data : (Array.isArray(testRes) ? testRes : []);
+        const sponsorData = Array.isArray(sponsorRes.data) ? sponsorRes.data : (Array.isArray(sponsorRes) ? sponsorRes : []);
         
         setAnnouncements(annData as DraftItem[]);
         setEvents(evtData as DraftItem[]);
         setMerch(merchRes);
         setTestimonials(testData as TestimonialItem[]);
+        setSponsors(sponsorData as SponsorItem[]);
       } catch (err) {
         console.error("Failed to load drafts", err);
       } finally {
@@ -290,6 +303,75 @@ export default function DraftsPage() {
     );
   };
 
+  const renderSponsors = () => {
+    const filtered = sponsors.filter((s) => !s.isActive);
+
+    if (filtered.length === 0) {
+      return (
+        <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-100">
+          <p className="text-gray-500 font-raleway mb-4">
+            No sponsor drafts found
+          </p>
+          <Link href="/create/sponsors">
+            <Button variant="primary2" size="sm">
+              Create Sponsor
+            </Button>
+          </Link>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {filtered.map((item) => (
+          <div
+            key={item._id}
+            className="p-5 bg-white border border-gray-100 rounded-2xl hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300 group"
+          >
+            <div className="flex justify-between items-start gap-4">
+              <div className="flex items-center gap-4">
+                {item.image ? (
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-16 h-16 rounded-xl bg-primary1/10 flex items-center justify-center text-primary1 font-bold text-xl flex-shrink-0">
+                    {item.name.charAt(0)}
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-bold text-primary3 font-rubik text-lg mb-1">
+                    {item.name}
+                  </h3>
+                  <p className="text-sm text-primary1 font-bold font-raleway mb-1">
+                    {item.type}
+                  </p>
+                  <div className="mt-2">
+                    <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-bold">
+                      Draft
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Link href={`/create/sponsors?edit=${item._id}`}>
+                  <button className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
+                    <Pencil size={18} />
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -325,14 +407,14 @@ export default function DraftsPage() {
                   onClick={() => setActiveTab("announcements")}
                   className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
                     activeTab === "announcements"
-                      ? "bg-white text-primary3 shadow-sm"
+                      ? "bg-primary3 text-white shadow-sm"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   <Megaphone size={16} />
                   Announcements
                   <span className={`ml-1 px-1.5 py-0.5 rounded-md text-xs ${
-                    activeTab === "announcements" ? "bg-primary1/10 text-primary1" : "bg-gray-200 text-gray-600"
+                    activeTab === "announcements" ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"
                   }`}>
                     {announcements.filter(a => !a.isPublished).length}
                   </span>
@@ -341,48 +423,64 @@ export default function DraftsPage() {
                   onClick={() => setActiveTab("events")}
                   className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
                     activeTab === "events"
-                      ? "bg-white text-primary3 shadow-sm"
+                      ? "bg-primary3 text-white shadow-sm"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   <CalendarDays size={16} />
                   Events
                   <span className={`ml-1 px-1.5 py-0.5 rounded-md text-xs ${
-                    activeTab === "events" ? "bg-primary1/10 text-primary1" : "bg-gray-200 text-gray-600"
+                    activeTab === "events" ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"
                   }`}>
                     {events.filter(e => !e.isPublished).length}
-                  </span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("merch")}
-                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
-                    activeTab === "merch"
-                      ? "bg-white text-primary3 shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  <ShoppingBag size={16} />
-                  Merch
-                  <span className={`ml-1 px-1.5 py-0.5 rounded-md text-xs ${
-                    activeTab === "merch" ? "bg-primary1/10 text-primary1" : "bg-gray-200 text-gray-600"
-                  }`}>
-                    {merch.filter(m => !m.isActive).length}
                   </span>
                 </button>
                 <button
                   onClick={() => setActiveTab("testimonials")}
                   className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
                     activeTab === "testimonials"
-                      ? "bg-white text-primary3 shadow-sm"
+                      ? "bg-primary3 text-white shadow-sm"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
                   <Quote size={16} />
                   Testimonials
                   <span className={`ml-1 px-1.5 py-0.5 rounded-md text-xs ${
-                    activeTab === "testimonials" ? "bg-primary1/10 text-primary1" : "bg-gray-200 text-gray-600"
+                    activeTab === "testimonials" ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"
                   }`}>
                     {testimonials.filter(t => !t.isActive).length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("sponsors")}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                    activeTab === "sponsors"
+                      ? "bg-primary3 text-white shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <Handshake size={16} />
+                  Sponsors
+                  <span className={`ml-1 px-1.5 py-0.5 rounded-md text-xs ${
+                    activeTab === "sponsors" ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"
+                  }`}>
+                    {sponsors.filter(s => !s.isActive).length}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("merch")}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-2 ${
+                    activeTab === "merch"
+                      ? "bg-primary3 text-white shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <ShoppingBag size={16} />
+                  Merch
+                  <span className={`ml-1 px-1.5 py-0.5 rounded-md text-xs ${
+                    activeTab === "merch" ? "bg-white/20 text-white" : "bg-gray-200 text-gray-600"
+                  }`}>
+                    {merch.filter(m => !m.isActive).length}
                   </span>
                 </button>
               </div>
@@ -399,8 +497,9 @@ export default function DraftsPage() {
                   <>
                     {activeTab === "announcements" && renderAnnouncementsEvents(announcements, "announcement")}
                     {activeTab === "events" && renderAnnouncementsEvents(events, "event")}
-                    {activeTab === "merch" && renderMerch()}
                     {activeTab === "testimonials" && renderTestimonials()}
+                    {activeTab === "sponsors" && renderSponsors()}
+                    {activeTab === "merch" && renderMerch()}
                   </>
                 )}
               </div>
