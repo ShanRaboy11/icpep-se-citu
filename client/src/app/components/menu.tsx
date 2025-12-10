@@ -76,6 +76,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     setActiveItem(null);
   };
 
+  // Helper to determine active children for Desktop Right Panel
   const activeChildren = activeItem
     ? navItems.find((item) => item.label === activeItem)?.children
     : undefined;
@@ -219,62 +220,77 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
           </h3>
 
           {navItems.map((item) => (
-            <div
-              key={item.label}
-              onMouseEnter={() => handleMouseEnter(item.label)}
-              onClick={() => {
-                setActiveItem(item.label);
-                if (!item.children) handleNavigate(item.href);
-              }}
-              className="group cursor-pointer flex items-center justify-between"
-            >
-              <span
-                className={`text-3xl md:text-4xl lg:text-5xl font-bold transition-all duration-300 ${
-                  activeItem === item.label
-                    ? "text-white translate-x-2 md:translate-x-4"
-                    : "text-white/40 hover:text-white/70"
-                }`}
-              >
-                {item.label}
-              </span>
+            <div key={item.label} className="flex flex-col">
+              {/* PARENT NAV ITEM */}
+              <div
+                onMouseEnter={() => handleMouseEnter(item.label)}
+                onClick={() => {
+                  if (activeItem === item.label) {
+                    // If already open, close it (Toggle)
+                    setActiveItem(null);
+                  } else {
+                    // If closed, open it
+                    setActiveItem(item.label);
+                  }
 
-              {/* Arrow for active state (Desktop only) */}
-              <span
-                className={`hidden md:block text-2xl transition-opacity duration-300 ${
-                  activeItem === item.label
-                    ? "opacity-100 text-[#00a7ee]"
-                    : "opacity-0"
-                }`}
+                  if (!item.children) handleNavigate(item.href);
+                }}
+                className="group cursor-pointer flex items-center justify-between py-1"
               >
-                &rarr;
-              </span>
-
-              {/* Mobile Expansion Indicator */}
-              {item.children && (
                 <span
-                  className={`md:hidden text-xl text-white/50 ${
-                    activeItem === item.label ? "rotate-90" : ""
-                  } transition-transform`}
+                  className={`text-3xl md:text-4xl lg:text-5xl font-bold transition-all duration-300 ${
+                    activeItem === item.label
+                      ? "text-white translate-x-2 md:translate-x-4"
+                      : "text-white/40 hover:text-white/70"
+                  }`}
                 >
-                  &#8250;
+                  {item.label}
                 </span>
+
+                {/* Arrow for active state (Desktop only) */}
+                <span
+                  className={`hidden md:block text-2xl transition-opacity duration-300 ${
+                    activeItem === item.label
+                      ? "opacity-100 text-[#00a7ee]"
+                      : "opacity-0"
+                  }`}
+                >
+                  &rarr;
+                </span>
+
+                {/* Mobile Expansion Indicator */}
+                {item.children && (
+                  <span
+                    className={`md:hidden text-xl text-white/50 ${
+                      activeItem === item.label
+                        ? "rotate-90 text-[#00a7ee]"
+                        : ""
+                    } transition-transform duration-300`}
+                  >
+                    &#8250;
+                  </span>
+                )}
+              </div>
+
+              {/* MOBILE ONLY: SUB-ITEMS (Directly below clicked item) */}
+              {activeItem === item.label && item.children && (
+                <div className="md:hidden flex flex-col pl-6 mt-2 mb-4 border-l-2 border-[#00a7ee]/30 animate-in slide-in-from-top-2 duration-200">
+                  {item.children.map((child) => (
+                    <div
+                      key={child.label}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNavigate(child.href);
+                      }}
+                      className="py-2 text-xl text-white/80 hover:text-[#00a7ee] cursor-pointer font-raleway"
+                    >
+                      {child.label}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           ))}
-
-          {/* Mobile Only: Render Children */}
-          <div className="md:hidden mt-6 pl-4 border-l-2 border-[#00a7ee]/30">
-            {activeChildren &&
-              activeChildren.map((child) => (
-                <div
-                  key={child.label}
-                  onClick={() => handleNavigate(child.href)}
-                  className="py-3 text-xl text-white/90 hover:text-[#00a7ee] cursor-pointer font-raleway"
-                >
-                  {child.label}
-                </div>
-              ))}
-          </div>
         </div>
 
         {/* Right Column: Submenus & Details (Desktop Only) */}
