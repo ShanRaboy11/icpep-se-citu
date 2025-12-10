@@ -63,13 +63,13 @@ export default function DeveloperCard({
             />
           </div>
 
-          <div className="relative w-[90%] ml-auto mt-1 sm:-mt-3 lg:-mt-5 -mr-8">
+          <div className="relative w-[90%] ml-auto mt-3 sm:mt-3 lg:mt-5 -mr-8">
             {imageSrc ? (
               <Image
                 src={imageSrc}
                 alt={`${name}`}
-                width={330}
-                height={330}
+                width={300}
+                height={300}
                 className="object-contain mx-auto"
               />
             ) : (
