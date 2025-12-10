@@ -8,7 +8,7 @@ import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
-import { ChevronDown, Pencil, Trash2, RefreshCw } from "lucide-react"; // Added Icons
+import { ChevronDown, Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Added Icons
 import announcementService, {
   AnnouncementData,
 } from "../../services/announcement";
@@ -83,6 +83,15 @@ export default function AnnouncementsPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
   const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  
+  const tabs: ActiveTab[] = ["General", "News", "Meeting", "Achievement"];
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit");
@@ -257,12 +266,27 @@ export default function AnnouncementsPage() {
   };
 
   // 4. DELETE
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this announcement?")) return;
+  const confirmDelete = (id: string) => {
+    setItemToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+    
     try {
-      await announcementService.deleteAnnouncement(id);
+      await announcementService.deleteAnnouncement(itemToDelete);
       fetchAnnouncements();
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+
+      setSuccessMessage({
+        title: "Deleted Successfully!",
+        description: "The announcement has been permanently removed."
+      });
+      setShowSuccessModal(true);
     } catch (error) {
+      console.error("Failed to delete announcement:", error);
       alert("Failed to delete announcement.");
     }
   };
@@ -623,18 +647,6 @@ export default function AnnouncementsPage() {
       });
     };
   }, [previews]);
-
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const tabs: ActiveTab[] = ["General", "News", "Meeting", "Achievement"];
-
-  useEffect(() => {
-    if (Object.values(errors).every((err) => err === false)) {
-      setShowGlobalError(false);
-    }
-  }, [errors]);
 
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
@@ -1182,8 +1194,14 @@ export default function AnnouncementsPage() {
 
                   {/* Visibility */}
                   <div className="space-y-2">
-                    <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
+                    <label
+                      htmlFor="visibility"
+                      className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                    >
                       Visibility
+                      {formData.visibility && (
+                        <span className="text-green-500 text-xs">✓</span>
+                      )}
                     </label>
                     <div className="relative w-full">
                       <select
@@ -1191,11 +1209,11 @@ export default function AnnouncementsPage() {
                         name="visibility"
                         value={formData.visibility}
                         onChange={handleInputChange}
-                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg appearance-none cursor-pointer transition-all duration-300 ${
+                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg appearance-none cursor-pointer focus:outline-none focus:ring-4 transition-all duration-300 ${
                           errors.visibility
                             ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
                             : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                        }`}
+                        } ${formData.visibility ? "text-gray-900" : "text-gray-400"}`}
                       >
                         <option value="" className="text-gray-500">
                           Select visibility
@@ -1208,6 +1226,11 @@ export default function AnnouncementsPage() {
                         <ChevronDown className="w-5 h-5" />
                       </span>
                     </div>
+                    {errors.visibility && (
+                      <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
+                        <span>•</span> Visibility is required.
+                      </p>
+                    )}
                   </div>
 
                   <div className="h-px bg-gray-100 w-full" />
@@ -1599,7 +1622,7 @@ export default function AnnouncementsPage() {
                                   <Pencil size={18} />
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(item._id)}
+                                  onClick={() => confirmDelete(item._id)}
                                   className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
                                   title="Delete"
                                 >
@@ -1619,61 +1642,57 @@ export default function AnnouncementsPage() {
         </main>
 
         {showSuccessModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => {
                 setShowSuccessModal(false);
                 setSubmitSuccess(false);
               }}
             />
-            <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl transform animate-in zoom-in-95 duration-300 border border-gray-100">
-              <div className="flex flex-col items-center gap-6 text-center">
-                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-2 animate-bounce">
-                  <svg
-                    className="w-10 h-10 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="3"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+
+            <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
+              <div className="flex flex-col items-center gap-6">
+                {/* Success Icon with Animation */}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
+                    <svg
+                      className="w-12 h-12 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-bold text-gray-900 font-rubik">
+                <div className="text-center space-y-2">
+                  <h3 className="text-2xl text-primary3 font-bold font-rubik">
                     {successMessage.title}
                   </h3>
-                  <p className="text-gray-500 font-raleway mb-6">
+                  <p className="text-gray-600 font-raleway">
                     {successMessage.description}
                   </p>
                 </div>
 
-                <div className="w-full pt-2 flex flex-col gap-3">
-                  <button
-                    onClick={() => {
-                      setShowSuccessModal(false);
-                      setSubmitSuccess(false);
-                      if (!editingId) router.push("/announcements");
-                    }}
-                    className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold"
-                  >
-                    View Announcements
-                  </button>
-                  <button
+                <div className="flex gap-3 mt-2 w-full">
+                  <Button
+                    variant="primary3"
                     onClick={() => {
                       setShowSuccessModal(false);
                       setSubmitSuccess(false);
                     }}
-                    className="w-full py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all duration-300"
+                    className="w-full"
                   >
-                    Close
-                  </button>
+                    Continue
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1682,6 +1701,41 @@ export default function AnnouncementsPage() {
 
         <Footer />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowDeleteModal(false)}
+          />
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-500 font-raleway mb-6">
+              Are you sure you want to delete this item? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

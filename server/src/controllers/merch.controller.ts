@@ -24,13 +24,24 @@ export const createMerch = async (req: Request, res: Response): Promise<void> =>
       }
     }
 
+    // ✅ FIX: Parse isActive properly from FormData
+    // FormData sends everything as strings, so "false" becomes string "false"
+    let parsedIsActive = true; // Default to true for new items
+    if (isActive !== undefined) {
+      if (typeof isActive === 'string') {
+        parsedIsActive = isActive === 'true';
+      } else {
+        parsedIsActive = Boolean(isActive);
+      }
+    }
+
     const newMerch = new Merch({
       name,
       description,
       orderLink,
       image: imageUrl,
       prices: parsedPrices,
-      isActive: isActive !== undefined ? isActive : true,
+      isActive: parsedIsActive,
     });
 
     const savedMerch = await newMerch.save();
@@ -94,7 +105,15 @@ export const updateMerch = async (req: Request, res: Response): Promise<void> =>
     if (name) merch.name = name;
     if (description) merch.description = description;
     if (orderLink) merch.orderLink = orderLink;
-    if (isActive !== undefined) merch.isActive = isActive;
+
+    // ✅ FIX: Parse isActive properly from FormData
+    if (isActive !== undefined) {
+      if (typeof isActive === 'string') {
+        merch.isActive = isActive === 'true';
+      } else {
+        merch.isActive = Boolean(isActive);
+      }
+    }
 
     if (prices) {
       let parsedPrices = prices;
