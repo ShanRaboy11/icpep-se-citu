@@ -38,6 +38,7 @@ export interface IAnnouncement extends Document {
     priority?: 'normal' | 'important' | 'urgent';
     targetAudience?: ('all' | 'members' | 'officers' | 'faculty')[];
     isPublished?: boolean;
+    scheduled?: boolean;
     publishDate?: Date;
     expiryDate?: Date;
     // Event/Meeting specific fields
@@ -101,6 +102,10 @@ const announcementSchema = new Schema<IAnnouncement>({
         },
     ],
     isPublished: {
+        type: Boolean,
+        default: false,
+    },
+    scheduled: {
         type: Boolean,
         default: false,
     },

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
@@ -81,20 +81,70 @@ export default function AnnouncementsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
   const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  
+  const tabs: ActiveTab[] = ["General", "News", "Meeting", "Achievement"];
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editIdParam = searchParams.get("edit");
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (editIdParam) {
+      const fetchAnnouncement = async () => {
+        try {
+          const response = await announcementService.getAnnouncementById(editIdParam);
+          const data = response.data as any; // Assuming response structure
+          if (data) {
+            setEditingId(data._id);
+            setIsEditingDraft(!data.isPublished);
+            setFormData({
+              title: data.title,
+              summary: data.description,
+              body: data.content,
+              visibility: "Public", // Default or map from data
+              date: data.date || "",
+              time: data.time || "",
+              location: data.location || "",
+              attendanceLink: "", // Map if available
+            });
+            setActiveTab(data.type as ActiveTab);
+            // Populate other fields as needed (images, agenda, etc.)
+            if (data.agenda) setAgenda(data.agenda);
+            if (data.awardees) setAwardees(data.awardees);
+            if (data.organizer) {
+                setOrganizer(data.organizer);
+                setShowOrganizerInput(true);
+            }
+            if (data.imageUrl) {
+                setPreviews([data.imageUrl]);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch announcement for edit:", error);
+        }
+      };
+      fetchAnnouncement();
+    }
+  }, [editIdParam]);
 
   const [formData, setFormData] = useState({
     title: "",
     summary: "",
     body: "",
     visibility: "",
+    attendanceLink: "",
     date: "",
     time: "",
     location: "",
-    attendanceLink: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({
@@ -114,7 +164,7 @@ export default function AnnouncementsPage() {
     []
   );
   const [isLoadingList, setIsLoadingList] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
 
   // 1. FETCH ANNOUNCEMENTS
   const fetchAnnouncements = async () => {
@@ -140,6 +190,7 @@ export default function AnnouncementsPage() {
   // 2. HANDLE EDIT CLICK (Populates Form)
   const handleEditClick = (item: AnnouncementItem) => {
     setEditingId(item._id);
+    setIsEditingDraft(!item.isPublished);
 
     // Basic Fields
     setFormData({
@@ -209,6 +260,7 @@ export default function AnnouncementsPage() {
   // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
+    setIsEditingDraft(false);
     resetForm();
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -221,7 +273,9 @@ export default function AnnouncementsPage() {
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
+    
     try {
+      await announcementService.deleteAnnouncement(itemToDelete);
       await announcementService.deleteAnnouncement(itemToDelete);
       fetchAnnouncements();
       setShowDeleteModal(false);
@@ -232,7 +286,16 @@ export default function AnnouncementsPage() {
         description: "The announcement has been permanently removed."
       });
       setShowSuccessModal(true);
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+
+      setSuccessMessage({
+        title: "Deleted Successfully!",
+        description: "The announcement has been permanently removed."
+      });
+      setShowSuccessModal(true);
     } catch (error) {
+      console.error("Failed to delete announcement:", error);
       alert("Failed to delete announcement.");
     }
   };
@@ -275,6 +338,7 @@ export default function AnnouncementsPage() {
     }
 
     setIsSubmitting(true);
+    setLoadingAction("publishing");
     setShowGlobalError(false);
 
     try {
@@ -305,7 +369,7 @@ export default function AnnouncementsPage() {
         content: formData.body,
         type: typeMap[activeTab],
         targetAudience: audienceMap[formData.visibility] || ["all"],
-        isPublished: showSchedule && scheduleDate ? false : true,
+        isPublished: true, // Always true for publish
         publishDate:
           showSchedule && scheduleDate
             ? new Date(
@@ -351,6 +415,10 @@ export default function AnnouncementsPage() {
       }
 
       setSubmitSuccess(true);
+      setSuccessMessage({
+        title: editingId && !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
+        description: editingId && !isEditingDraft ? "Changes have been saved." : "Announcement is now live."
+      });
       setShowSuccessModal(true);
       handleCancelEdit(); // Reset form
       fetchAnnouncements(); // Refresh List
@@ -359,11 +427,13 @@ export default function AnnouncementsPage() {
       alert("Failed to process announcement.");
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
   const handleSaveDraft = async () => {
     setIsSubmitting(true);
+    setLoadingAction("saving");
 
     try {
       const typeMap: Record<ActiveTab, AnnouncementData["type"]> = {
@@ -409,13 +479,29 @@ export default function AnnouncementsPage() {
         date: formData.date || undefined,
       };
 
-      const response = await announcementService.createAnnouncement(
-        announcementData,
-        images.length > 0 ? images : undefined
-      );
+      if (editingId) {
+        // UPDATE DRAFT
+        await announcementService.updateAnnouncement(
+          editingId,
+          announcementData,
+          images.length > 0 ? images : undefined
+        );
+      } else {
+        // CREATE DRAFT
+        await announcementService.createAnnouncement(
+          announcementData,
+          images.length > 0 ? images : undefined
+        );
+      }
 
-      console.log("✅ Draft saved successfully:", response);
-      alert("Draft saved successfully!");
+      setSubmitSuccess(true);
+      setSuccessMessage({
+        title: editingId ? "Draft Updated!" : "Draft Saved!",
+        description: editingId ? "Draft changes have been saved." : "Draft has been saved successfully."
+      });
+      setShowSuccessModal(true);
+      handleCancelEdit(); // Reset form
+      fetchAnnouncements(); // Refresh List
     } catch (error) {
       console.error("❌ Error saving draft:", error);
       const errorMessage =
@@ -425,6 +511,7 @@ export default function AnnouncementsPage() {
       alert(errorMessage);
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
@@ -578,43 +665,18 @@ export default function AnnouncementsPage() {
     };
   }, [previews]);
 
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const tabs: ActiveTab[] = ["General", "News", "Meeting", "Achievement"];
-
-  useEffect(() => {
-    if (Object.values(errors).every((err) => err === false)) {
-      setShowGlobalError(false);
-    }
-  }, [errors]);
+  const publishedItems = announcementList.filter((item) => item.isPublished);
 
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
       <Grid />
-
       {/* Loading Overlay */}
       {isSubmitting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all duration-300">
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {editingId ? "Updating Announcement..." : "Publishing Announcement..."}
-            </p>
-          </div>
-        </div>
-      )}
-      {/* Loading Overlay */}
-      {isSubmitting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md transition-all animate-in fade-in duration-200">
-          <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 animate-in zoom-in duration-300">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-blue-100 rounded-full" />
-              <div className="w-16 h-16 border-4 border-primary2 border-t-transparent rounded-full animate-spin absolute inset-0" />
-            </div>
-            <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {editingId ? "Updating Announcement..." : "Publishing..."}
+              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating Announcement..." : "Publishing..."}
             </p>
           </div>
         </div>
@@ -1148,8 +1210,14 @@ export default function AnnouncementsPage() {
 
                   {/* Visibility */}
                   <div className="space-y-2">
-                    <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
+                    <label
+                      htmlFor="visibility"
+                      className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                    >
                       Visibility
+                      {formData.visibility && (
+                        <span className="text-green-500 text-xs">✓</span>
+                      )}
                     </label>
                     <div className="relative w-full">
                       <select
@@ -1157,11 +1225,11 @@ export default function AnnouncementsPage() {
                         name="visibility"
                         value={formData.visibility}
                         onChange={handleInputChange}
-                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg appearance-none cursor-pointer transition-all duration-300 ${
+                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg appearance-none cursor-pointer focus:outline-none focus:ring-4 transition-all duration-300 ${
                           errors.visibility
                             ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
                             : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                        }`}
+                        } ${formData.visibility ? "text-gray-900" : "text-gray-400"}`}
                       >
                         <option value="" className="text-gray-500">
                           Select visibility
@@ -1174,6 +1242,11 @@ export default function AnnouncementsPage() {
                         <ChevronDown className="w-5 h-5" />
                       </span>
                     </div>
+                    {errors.visibility && (
+                      <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
+                        <span>•</span> Visibility is required.
+                      </p>
+                    )}
                   </div>
 
                   <div className="h-px bg-gray-100 w-full" />
@@ -1430,25 +1503,18 @@ export default function AnnouncementsPage() {
                       </p>
                     )}
                     <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-                      {!editingId && (
-                        <Link
-                          href="/drafts"
-                          className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 text-center"
-                        >
-                          View drafts
-                        </Link>
-                      )}
+
                       {editingId && (
                         <Button
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-200 hover:bg-red-500 hover:text-red-500"
                         >
                           Cancel Edit
                         </Button>
                       )}
-                      {!editingId && (
+                      {(!editingId || isEditingDraft) && (
                         <Button
                           variant="outline"
                           type="button"
@@ -1456,7 +1522,7 @@ export default function AnnouncementsPage() {
                           disabled={isSubmitting}
                           className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300"
                         >
-                          Save Draft
+                          {editingId ? "Update" : "Save Draft"}
                         </Button>
                       )}
                       <Button
@@ -1468,7 +1534,7 @@ export default function AnnouncementsPage() {
                       >
                         {isSubmitting
                           ? "Processing..."
-                          : editingId
+                          : editingId && !isEditingDraft
                           ? "Update Announcement"
                           : "Publish"}
                       </Button>
@@ -1485,7 +1551,7 @@ export default function AnnouncementsPage() {
                       Manage Announcements
                     </h2>
                     <p className="text-gray-500 font-raleway text-sm mt-1">
-                      Total: {announcementList.length} items
+                      Total: {publishedItems.length} items
                     </p>
                   </div>
                   <button
@@ -1501,7 +1567,7 @@ export default function AnnouncementsPage() {
                     <div className="p-12 text-center text-gray-500 font-raleway">
                       Loading existing announcements...
                     </div>
-                  ) : announcementList.length === 0 ? (
+                  ) : publishedItems.length === 0 ? (
                     <div className="p-12 text-center text-gray-400 font-raleway">
                       No announcements found. Create one above!
                     </div>
@@ -1517,7 +1583,7 @@ export default function AnnouncementsPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 font-raleway">
-                        {announcementList.map((item) => (
+                        {publishedItems.map((item) => (
                           <tr
                             key={item._id}
                             className={`hover:bg-blue-50/40 transition-colors group ${
@@ -1638,21 +1704,10 @@ export default function AnnouncementsPage() {
                     onClick={() => {
                       setShowSuccessModal(false);
                       setSubmitSuccess(false);
-                      if (!editingId) router.push("/announcements");
                     }}
                     className="w-full"
                   >
-                    View Announcements
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowSuccessModal(false);
-                      setSubmitSuccess(false);
-                    }}
-                    className="w-full"
-                  >
-                    Close
+                    Continue
                   </Button>
                 </div>
               </div>
@@ -1678,7 +1733,7 @@ export default function AnnouncementsPage() {
               Confirm Deletion
             </h3>
             <p className="text-gray-500 font-raleway mb-6">
-              Are you sure you want to delete this announcement? This action cannot be undone.
+              Are you sure you want to delete this item? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button

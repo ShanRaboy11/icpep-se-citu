@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "../../components/sidebar";
 import Button from "@/app/components/button";
@@ -51,15 +51,62 @@ export default function EventsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
   const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editIdParam = searchParams.get("edit");
 
   // --- MANAGEMENT STATE ---
   const [eventList, setEventList] = useState<EventItem[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
+
+  useEffect(() => {
+    if (editIdParam) {
+      const fetchEvent = async () => {
+        try {
+          const response = await eventService.getEventById(editIdParam);
+          const data = response.data as any;
+          if (data) {
+            setEditingId(data._id);
+            setIsEditingDraft(!data.isPublished);
+            setFormData({
+              date: data.eventDate ? new Date(data.eventDate).toISOString().split('T')[0] : "",
+              time: data.time || "",
+              title: data.title,
+              description: data.description,
+              body: data.content,
+              rsvp: data.rsvpLink || "",
+              contact: data.contact || "",
+              location: data.location || "",
+              visibility: "Public",
+            });
+            setMode(data.mode);
+            if (data.tags) setTags(data.tags);
+            if (data.admissions) {
+                setAdmissions(data.admissions.map((a: any) => ({ category: a.category, price: String(a.price) })));
+                setShowAdmissionInput(true);
+            }
+            if (data.details) setDetails(data.details);
+            if (data.coverImage) setPreviews([data.coverImage]);
+            if (data.organizer) {
+                setOrganizer(typeof data.organizer === 'string' ? data.organizer : data.organizer.name);
+            }
+            if (data.registrationRequired) setRegistrationRequired(data.registrationRequired);
+            if (data.registrationStart) setRegistrationStart(new Date(data.registrationStart).toISOString().split('T')[0]);
+            if (data.registrationEnd) setRegistrationEnd(new Date(data.registrationEnd).toISOString().split('T')[0]);
+          }
+        } catch (error) {
+          console.error("Failed to fetch event for edit:", error);
+        }
+      };
+      fetchEvent();
+    }
+  }, [editIdParam]);
 
   const [formData, setFormData] = useState({
     date: "",
@@ -130,6 +177,7 @@ export default function EventsPage() {
   // 2. HANDLE EDIT CLICK (Populate All Fields)
   const handleEditClick = (item: EventItem) => {
     setEditingId(item._id);
+    setIsEditingDraft(!item.isPublished);
 
     // Basic Fields
     setFormData({
@@ -192,6 +240,7 @@ export default function EventsPage() {
   // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
+    setIsEditingDraft(false);
     resetForm();
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -204,6 +253,7 @@ export default function EventsPage() {
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
+    
     try {
       await eventService.deleteEvent(itemToDelete);
       fetchEvents();
@@ -216,6 +266,7 @@ export default function EventsPage() {
       });
       setShowSuccessModal(true);
     } catch (error) {
+      console.error("Failed to delete event:", error);
       alert("Failed to delete event");
     }
   };
@@ -237,6 +288,7 @@ export default function EventsPage() {
     }
 
     setIsSubmitting(true);
+    setLoadingAction("publishing");
     setShowGlobalError(false);
 
     try {
@@ -286,10 +338,6 @@ export default function EventsPage() {
           images.length > 0 ? images : undefined
         );
         console.log("✅ Event updated successfully");
-        setSuccessMessage({
-          title: "Updated Successfully!",
-          description: "Event details have been updated."
-        });
       } else {
         // CREATE MODE
         await eventService.createEvent(
@@ -297,13 +345,13 @@ export default function EventsPage() {
           images.length > 0 ? images : undefined
         );
         console.log("✅ Event created successfully");
-        setSuccessMessage({
-          title: "Published Successfully!",
-          description: "Your event has been successfully created and is now live."
-        });
       }
 
       setSubmitSuccess(true);
+      setSuccessMessage({
+        title: editingId && !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
+        description: editingId && !isEditingDraft ? "Changes have been saved." : "Event is now live."
+      });
       setShowSuccessModal(true);
       handleCancelEdit(); // Reset form
       fetchEvents(); // Refresh list
@@ -312,11 +360,13 @@ export default function EventsPage() {
       alert("Failed to save event. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
   const handleSaveDraft = async () => {
     setIsSubmitting(true);
+    setLoadingAction("saving");
 
     try {
       const audienceMap: Record<string, string[]> = {
@@ -358,22 +408,35 @@ export default function EventsPage() {
           .filter((d) => d.title || d.items.length > 0),
       };
 
-      const response = await eventService.createEvent(
-        eventData,
-        images.length > 0 ? images : undefined
-      );
+      if (editingId) {
+        // UPDATE DRAFT
+        await eventService.updateEvent(
+          editingId,
+          eventData,
+          images.length > 0 ? images : undefined
+        );
+      } else {
+        // CREATE DRAFT
+        await eventService.createEvent(
+          eventData,
+          images.length > 0 ? images : undefined
+        );
+      }
 
-      console.log("✅ Draft saved successfully:", response);
-      alert("Draft saved successfully!");
+      setSubmitSuccess(true);
+      setSuccessMessage({
+        title: editingId ? "Draft Updated!" : "Draft Saved!",
+        description: editingId ? "Draft changes have been saved." : "Draft has been saved successfully."
+      });
+      setShowSuccessModal(true);
+      handleCancelEdit(); // Reset form
+      fetchEvents(); // Refresh list
     } catch (error) {
       console.error("❌ Error saving draft:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to save draft. Please try again.";
-      alert(errorMessage);
+      alert("Failed to save draft. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setLoadingAction(null);
     }
   };
 
@@ -470,14 +533,10 @@ export default function EventsPage() {
     }
   };
 
-  useEffect(() => {
-    if (Object.values(errors).every((err) => err === false)) {
-      setShowGlobalError(false);
-    }
-  }, [errors]);
+  const publishedItems = eventList.filter((item) => item.isPublished);
 
   return (
-    <section className="min-h-screen bg-gray-50/50 flex flex-col relative">
+    <section className="min-h-screen bg-white flex flex-col relative">
       {/* Background Grid */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Grid />
@@ -489,7 +548,7 @@ export default function EventsPage() {
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {editingId ? "Updating Event..." : "Publishing Event..."}
+              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating Event..." : "Publishing Event..."}
             </p>
           </div>
         </div>
@@ -1264,27 +1323,20 @@ export default function EventsPage() {
                     )}
 
                     <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-                      {!editingId && (
-                        <Link
-                          href="/drafts"
-                          className="px-6 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-200 hover:border-gray-300 transition-all duration-300 text-center"
-                        >
-                          View Drafts
-                        </Link>
-                      )}
+
 
                       {editingId && (
                         <Button
                           variant="outline"
                           type="button"
                           onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-50"
+                          className="text-red-500 border-red-200 hover:bg-red-500 hover:text-red-500"
                         >
                           Cancel Edit
                         </Button>
                       )}
 
-                      {!editingId && (
+                      {(!editingId || isEditingDraft) && (
                         <Button
                           variant="outline"
                           type="button"
@@ -1292,7 +1344,7 @@ export default function EventsPage() {
                           disabled={isSubmitting}
                           className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300"
                         >
-                          Save Draft
+                          {editingId ? "Update" : "Save Draft"}
                         </Button>
                       )}
 
@@ -1303,7 +1355,7 @@ export default function EventsPage() {
                         disabled={isSubmitting}
                         className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {editingId ? "Update Event" : "Publish"}
+                        {editingId && !isEditingDraft ? "Update Event" : "Publish"}
                       </Button>
                     </div>
                   </div>
@@ -1317,7 +1369,7 @@ export default function EventsPage() {
                       Manage Events
                     </h2>
                     <p className="text-gray-500 font-raleway text-sm mt-1">
-                      Total: {eventList.length} events
+                      Total: {publishedItems.length} events
                     </p>
                   </div>
                   <button
@@ -1333,7 +1385,7 @@ export default function EventsPage() {
                     <div className="p-12 text-center text-gray-500 font-raleway">
                       Loading existing events...
                     </div>
-                  ) : eventList.length === 0 ? (
+                  ) : publishedItems.length === 0 ? (
                     <div className="p-12 text-center text-gray-400 font-raleway">
                       No events found. Create one above!
                     </div>
@@ -1348,7 +1400,7 @@ export default function EventsPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 font-raleway">
-                        {eventList.map((item) => (
+                        {publishedItems.map((item) => (
                           <tr
                             key={item._id}
                             className={`hover:bg-blue-50/40 transition-colors group ${
@@ -1413,68 +1465,62 @@ export default function EventsPage() {
 
         {/* Success Modal */}
         {showSuccessModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
             <div
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
               onClick={() => {
                 setShowSuccessModal(false);
                 setSubmitSuccess(false);
               }}
             />
 
-            <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
-              <div className="flex flex-col items-center gap-6">
-                {/* Success Icon with Animation */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
-                    <svg
-                      className="w-12 h-12 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
+            <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl transform animate-in zoom-in-95 duration-300 border border-gray-100">
+              <div className="flex flex-col items-center gap-6 text-center">
+                <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-2 animate-bounce">
+                  <svg
+                    className="w-10 h-10 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="3"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
                 </div>
 
-                <div className="text-center space-y-2">
-                  <h3 className="text-2xl text-primary3 font-bold font-rubik">
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-bold text-gray-900 font-rubik">
                     {successMessage.title}
                   </h3>
-                  <p className="text-gray-600 font-raleway">
+                  <p className="text-gray-500 font-raleway">
                     {successMessage.description}
                   </p>
                 </div>
 
-                <div className="flex gap-3 mt-2 w-full">
-                  <Button
-                    variant="primary3"
+                <div className="w-full pt-2 flex flex-col gap-3">
+                  <button
                     onClick={() => {
                       setShowSuccessModal(false);
                       setSubmitSuccess(false);
                       router.push("/events");
                     }}
-                    className="w-full"
+                    className="w-full py-3.5 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 transition-all duration-300 shadow-lg shadow-gray-900/20"
                   >
                     View Events
-                  </Button>
-                  <Button
-                    variant="outline"
+                  </button>
+                  <button
                     onClick={() => {
                       setShowSuccessModal(false);
                       setSubmitSuccess(false);
                     }}
-                    className="w-full"
+                    className="w-full py-3.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all duration-300"
                   >
                     Close
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>
@@ -1499,7 +1545,7 @@ export default function EventsPage() {
               Confirm Deletion
             </h3>
             <p className="text-gray-500 font-raleway mb-6">
-              Are you sure you want to delete this event? This action cannot be undone.
+              Are you sure you want to delete this item? This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <button
