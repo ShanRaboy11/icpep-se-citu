@@ -7,24 +7,18 @@ import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import Link from "next/link";
-import { Pencil, Trash2, RefreshCw } from "lucide-react"; // Icons
+import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Icons
+import merchService, { MerchItem } from "@/app/services/merch";
 
 // --- INTERFACES ---
-interface MerchItem {
-  _id: string;
-  name: string;
-  description: string;
-  orderLink: string;
-  image?: string;
-  prices: { category: string; price: string }[];
-  isActive?: boolean;
-}
+// MerchItem is imported from service
 
 type FormErrors = {
   name: boolean;
   descrip: boolean;
   orderlink: boolean;
-  prices: boolean;
+  memberPrice: boolean;
+  nonMemberPrice: boolean;
 };
 
 export default function SponsorsPage() {
@@ -38,36 +32,21 @@ export default function SponsorsPage() {
   const [merchList, setMerchList] = useState<MerchItem[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
 
-  // 1. FETCH MERCH (Simulated)
+  // 1. FETCH MERCH
   const fetchMerch = async () => {
     setIsLoadingList(true);
-    // Simulate API Call: await merchService.getAll()
-    setTimeout(() => {
-      const mockData: MerchItem[] = [
-        {
-          _id: "1",
-          name: "ICPEP.SE Lanyard",
-          description: "Official Lanyard 2024",
-          orderLink: "https://forms.gle/...",
-          image: "/gle.png",
-          prices: [
-            { category: "Member", price: "150" },
-            { category: "Non-Member", price: "180" },
-          ],
-        },
-        {
-          _id: "2",
-          name: "Varsity Jacket",
-          description: "Limited Edition Jacket",
-          orderLink: "https://forms.gle/...",
-          image: "/gle.png",
-          prices: [{ category: "Regular", price: "1200" }],
-        },
-      ];
-      setMerchList(mockData);
+    try {
+      const data = await merchService.getAll();
+      setMerchList(data);
+    } catch (error) {
+      console.error("Failed to fetch merch:", error);
+    } finally {
       setIsLoadingList(false);
-    }, 1000);
+    }
   };
 
   useEffect(() => {
@@ -77,12 +56,18 @@ export default function SponsorsPage() {
   // 2. HANDLE EDIT CLICK
   const handleEditClick = (item: MerchItem) => {
     setEditingId(item._id);
+    
+    const memberPrice = item.prices.find(p => p.category === "Member")?.price || "";
+    const nonMemberPrice = item.prices.find(p => p.category === "Non-Member")?.price || "";
+
     setFormData({
       name: item.name,
       descrip: item.description,
       orderlink: item.orderLink,
+      memberPrice: String(memberPrice),
+      nonMemberPrice: String(nonMemberPrice),
     });
-    setPrices(item.prices); // Populate prices array
+    
     setPreview(item.image || null);
     setCover(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -91,17 +76,42 @@ export default function SponsorsPage() {
   // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
-    setFormData({ name: "", descrip: "", orderlink: "" });
-    setPrices([]);
+    setFormData({ 
+      name: "", 
+      descrip: "", 
+      orderlink: "",
+      memberPrice: "",
+      nonMemberPrice: ""
+    });
     setPreview(null);
     setCover(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   // 4. HANDLE DELETE
-  const handleDelete = (id: string) => {
-    if (!confirm("Delete this item?")) return;
-    setMerchList((prev) => prev.filter((m) => m._id !== id));
+  const confirmDelete = (id: string) => {
+    setItemToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+    
+    try {
+      await merchService.delete(itemToDelete);
+      setMerchList((prev) => prev.filter((m) => m._id !== itemToDelete));
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+
+      setSuccessMessage({
+        title: "Deleted Successfully!",
+        description: "The item has been permanently removed."
+      });
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Failed to delete merch:", error);
+      alert("Failed to delete item. Please try again.");
+    }
   };
 
   // 5. PUBLISH / UPDATE LOGIC
@@ -110,88 +120,84 @@ export default function SponsorsPage() {
       name: !formData.name.trim(),
       descrip: !formData.descrip.trim(),
       orderlink: !formData.orderlink.trim(),
-      prices: prices.length === 0,
+      memberPrice: !formData.memberPrice.trim(),
+      nonMemberPrice: !formData.nonMemberPrice.trim(),
     };
 
     setErrors(newErrors);
-    setPriceError(prices.length === 0); // Trigger price error only if empty
 
-    if (Object.values(newErrors).some(Boolean) || (!cover && !editingId)) {
+    if (Object.values(newErrors).some(Boolean) || (!cover && !editingId && !preview)) {
       setShowGlobalError(true);
       return;
     }
 
     setShowGlobalError(false);
     setIsSubmitting(true);
-    setPriceError(false);
 
-    // Simulate API Call
-    setTimeout(() => {
-      const newItem: MerchItem = {
-        _id: editingId || Date.now().toString(),
-        name: formData.name,
-        description: formData.descrip,
-        orderLink: formData.orderlink,
-        image: preview || undefined,
-        prices: prices,
-      };
+    try {
+      const pricesPayload = [
+        { category: "Member", price: Number(formData.memberPrice) },
+        { category: "Non-Member", price: Number(formData.nonMemberPrice) }
+      ];
 
       if (editingId) {
         // Update Logic
+        const updated = await merchService.update(editingId, {
+          name: formData.name,
+          description: formData.descrip,
+          orderLink: formData.orderlink,
+          prices: pricesPayload,
+        }, cover || undefined);
+
         setMerchList((prev) =>
-          prev.map((item) => (item._id === editingId ? newItem : item))
+          prev.map((item) => (item._id === editingId ? updated : item))
         );
+        setSuccessMessage({
+          title: "Updated Successfully!",
+          description: "Item details have been updated."
+        });
       } else {
         // Create Logic
-        setMerchList((prev) => [newItem, ...prev]);
+        if (!cover) throw new Error("Image is required for new items");
+
+        const created = await merchService.create({
+          name: formData.name,
+          description: formData.descrip,
+          orderLink: formData.orderlink,
+          prices: pricesPayload,
+        }, cover);
+
+        setMerchList((prev) => [created, ...prev]);
+        setSuccessMessage({
+          title: "Published Successfully!",
+          description: "Your item has been successfully created and is now live."
+        });
       }
 
       handleCancelEdit(); // Reset form
-      setIsSubmitting(false);
       setShowSuccessModal(true);
-    }, 1500);
-  };
-
-  const [prices, setPrices] = useState<{ category: string; price: string }[]>(
-    []
-  );
-
-  const [priceCategory, setPriceCategory] = useState("");
-  const [priceValue, setPriceValue] = useState("");
-
-  const [priceError, setPriceError] = useState(false);
-
-  const handleAddPrice = () => {
-    if (!priceCategory.trim() || !priceValue.trim()) {
-      setPriceError(true);
-      return;
+    } catch (error) {
+      console.error("Error saving merch:", error);
+      alert("Failed to save item. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setPrices((prev) => [
-      ...prev,
-      { category: priceCategory, price: priceValue },
-    ]);
-
-    setPriceCategory("");
-    setPriceValue("");
-    setPriceError(false);
-  };
-
-  const handleDeletePrice = (index: number) => {
-    setPrices((prev) => prev.filter((_, i) => i !== index));
   };
 
   const [formData, setFormData] = useState({
     name: "",
     descrip: "",
     orderlink: "",
+    memberPrice: "",
+    nonMemberPrice: "",
   });
 
   const [errors, setErrors] = useState<FormErrors>({
     name: false,
     descrip: false,
     orderlink: false,
-    prices: false,
+    memberPrice: false,
+    nonMemberPrice: false,
   });
 
   const handleInputChange = (
@@ -482,60 +488,37 @@ export default function SponsorsPage() {
                   </div>
 
                   {/* Prices Section */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-primary3 font-raleway">
-                      Merchandise Prices <span className="text-red-500">*</span>
-                    </label>
-                    <div
-                      className={`flex flex-col sm:flex-row gap-3 p-4 rounded-2xl transition-all ${
-                        priceError
-                          ? "border-2 border-red-400 bg-red-50"
-                          : "border-2 border-primary2/20 bg-primary2/5"
-                      }`}
-                    >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-primary3 font-raleway">
+                        Member Price (₱) <span className="text-red-500">*</span>
+                      </label>
                       <input
-                        type="text"
-                        placeholder="Category (e.g., General)"
-                        value={priceCategory}
-                        onChange={(e) => setPriceCategory(e.target.value)}
-                        className="flex-1 rounded-xl px-4 py-3 font-rubik border-2 border-white bg-white focus:border-primary2 outline-none"
+                        type="number"
+                        name="memberPrice"
+                        value={formData.memberPrice}
+                        onChange={handleInputChange}
+                        placeholder="0.00"
+                        className={`w-full font-raleway rounded-xl px-4 py-3.5 border-2 ${
+                          errors.memberPrice ? "border-red-400" : "border-gray-200"
+                        } focus:border-primary2 outline-none`}
                       />
-                      <input
-                        type="text"
-                        placeholder="Price (₱)"
-                        value={priceValue}
-                        onChange={(e) => setPriceValue(e.target.value)}
-                        className="w-full sm:w-32 rounded-xl px-4 py-3 font-rubik border-2 border-white bg-white focus:border-primary2 outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddPrice}
-                        className="px-6 py-2 bg-primary2 text-white rounded-xl font-bold hover:bg-primary3"
-                      >
-                        Add
-                      </button>
                     </div>
 
-                    {/* Display Prices */}
-                    <div className="flex flex-wrap gap-3 mt-4">
-                      {prices.map((p, index) => (
-                        <span
-                          key={index}
-                          className="flex items-center gap-3 bg-white border-2 border-primary2/20 text-primary3 font-bold font-rubik px-5 py-2 rounded-xl"
-                        >
-                          <span>{p.category}</span>
-                          <span className="text-primary2 bg-primary2/10 px-2 py-0.5 rounded-md text-sm">
-                            PHP {p.price}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleDeletePrice(index)}
-                            className="w-6 h-6 flex items-center justify-center rounded-full hover:text-red-500"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-primary3 font-raleway">
+                        Non-Member Price (₱) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        name="nonMemberPrice"
+                        value={formData.nonMemberPrice}
+                        onChange={handleInputChange}
+                        placeholder="0.00"
+                        className={`w-full font-raleway rounded-xl px-4 py-3.5 border-2 ${
+                          errors.nonMemberPrice ? "border-red-400" : "border-gray-200"
+                        } focus:border-primary2 outline-none`}
+                      />
                     </div>
                   </div>
 
@@ -689,7 +672,7 @@ export default function SponsorsPage() {
                                   <Pencil size={18} />
                                 </button>
                                 <button
-                                  onClick={() => handleDelete(item._id)}
+                                  onClick={() => confirmDelete(item._id)}
                                   className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
                                   title="Delete"
                                 >
@@ -711,6 +694,41 @@ export default function SponsorsPage() {
         <Footer />
       </div>
 
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowDeleteModal(false)}
+          />
+          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
+              Confirm Deletion
+            </h3>
+            <p className="text-gray-500 font-raleway mb-6">
+              Are you sure you want to delete this item? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Success Modal */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -720,8 +738,11 @@ export default function SponsorsPage() {
           />
           <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center">
             <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
-              {editingId ? "Updated Successfully!" : "Published Successfully!"}
+              {successMessage.title || (editingId ? "Updated Successfully!" : "Published Successfully!")}
             </h3>
+            <p className="text-gray-500 font-raleway mb-4">
+              {successMessage.description}
+            </p>
             <button
               onClick={() => setShowSuccessModal(false)}
               className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold mt-4"
