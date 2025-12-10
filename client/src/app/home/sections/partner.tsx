@@ -1,55 +1,35 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TierCard, type Partner, type Tier } from "../components/tier-card";
 import { CallToActionCard } from "../components/cta-card";
-
-const partners: Partner[] = [
-  {
-    id: 9,
-    name: "Salesforce",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg",
-    tier: "platinum",
-  },
-  {
-    id: 1,
-    name: "Google",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
-    tier: "gold",
-  },
-  {
-    id: 3,
-    name: "Amazon",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
-    tier: "gold",
-  },
-  {
-    id: 2,
-    name: "Microsoft",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
-    tier: "silver",
-  },
-  {
-    id: 8,
-    name: "Apple",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
-    tier: "silver",
-  },
-  {
-    id: 4,
-    name: "IBM",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
-    tier: "bronze",
-  },
-  {
-    id: 10,
-    name: "Oracle",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/5/50/Oracle_logo.svg",
-    tier: "bronze",
-  },
-];
+import partnerService from "@/app/services/partner";
 
 export function PartnersSection() {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const data = await partnerService.getAll('sponsor');
+        // Map backend data to component data
+        const mappedPartners: Partner[] = data.map((p: any) => ({
+          id: p._id,
+          name: p.name,
+          logo: p.logo,
+          tier: (p.description?.toLowerCase() as Tier) || 'bronze'
+        }));
+        setPartners(mappedPartners);
+      } catch (error) {
+        console.error("Failed to fetch partners:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchPartners();
+  }, []);
+
   const groupedPartners = useMemo(
     () =>
       partners.reduce((acc, partner) => {
@@ -58,7 +38,7 @@ export function PartnersSection() {
         acc[tier].push(partner);
         return acc;
       }, {} as Record<Tier, Partner[]>),
-    []
+    [partners]
   );
 
   const tierOrder: Tier[] = ["platinum", "gold", "silver", "bronze"];
@@ -80,15 +60,25 @@ export function PartnersSection() {
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-2 gap-8">
           {/* Tier Cards */}
           <div className="lg:col-span-2 lg:row-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
-            {tierOrder.map(
-              (tier) =>
-                groupedPartners[tier] && (
-                  <TierCard
-                    key={tier}
-                    tier={tier}
-                    partners={groupedPartners[tier]}
-                  />
-                )
+            {isLoading ? (
+               <div className="col-span-2 flex justify-center py-12">
+                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary1"></div>
+               </div>
+            ) : partners.length === 0 ? (
+               <div className="col-span-2 text-center py-12 text-gray-500">
+                 No partners found.
+               </div>
+            ) : (
+              tierOrder.map(
+                (tier) =>
+                  groupedPartners[tier] && (
+                    <TierCard
+                      key={tier}
+                      tier={tier}
+                      partners={groupedPartners[tier]}
+                    />
+                  )
+              )
             )}
           </div>
 

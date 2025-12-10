@@ -1,20 +1,56 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { GlassCard } from "../components/glass-card";
 import FeaturedAnnouncementCard from "../components/featured-announcement";
 import MiniAnnouncementCard from "../components/mini-announcement";
-import { announcements } from "../../announcements/utils/announcements";
+import announcementService from "@/app/services/announcement";
+import { Announcement } from "../../announcements/utils/announcements";
 
 export function AnnouncementsSection() {
   const router = useRouter();
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const sortedAnnouncements = [...announcements].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const response = await announcementService.getAnnouncements({ isPublished: true, limit: 4, sort: '-publishDate' });
+        if (response.success && Array.isArray(response.data)) {
+             const mapped = response.data.map((item: any) => ({
+                 id: item.id || item._id,
+                 title: item.title,
+                 description: item.description || "",
+                 date: item.date || item.publishDate || new Date().toISOString(),
+                 type: item.type,
+                 imageUrl: item.imageUrl || "/placeholder.png",
+                 time: item.time,
+                 location: item.location,
+             }));
+             setAnnouncements(mapped);
+        }
+      } catch (error) {
+        console.error("Failed to fetch announcements", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAnnouncements();
+  }, []);
 
-  const latestAnnouncement = sortedAnnouncements[0];
-  const otherAnnouncements = sortedAnnouncements.slice(1, 4);
+  const latestAnnouncement = announcements[0];
+  const otherAnnouncements = announcements.slice(1, 4);
+
+  if (loading) {
+      return (
+        <section className="dark-light-background relative overflow-hidden py-28 px-4 sm:px-6">
+            <div className="relative z-10 mx-auto max-w-7xl transform -translate-y-8 text-center">
+                <p className="text-gray-500 font-raleway">Loading announcements...</p>
+            </div>
+        </section>
+      );
+  }
 
   return (
     <section className="dark-light-background relative overflow-hidden py-28 px-4 sm:px-6">
@@ -40,21 +76,31 @@ export function AnnouncementsSection() {
           </div>
         </div>
 
-        {/* Featured Announcement */}
-        {latestAnnouncement && (
-          <GlassCard>
-            <FeaturedAnnouncementCard announcement={latestAnnouncement} />
-          </GlassCard>
-        )}
+        {announcements.length === 0 ? (
+            <div className="text-center py-12">
+                <p className="text-gray-500 font-raleway text-lg">No announcements available at the moment.</p>
+            </div>
+        ) : (
+            <>
+                {/* Featured Announcement */}
+                {latestAnnouncement && (
+                <GlassCard>
+                    <FeaturedAnnouncementCard announcement={latestAnnouncement} />
+                </GlassCard>
+                )}
 
-        {/* Grid of Smaller Cards */}
-        <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-flow-col lg:auto-cols-fr items-stretch content-stretch">
-          {otherAnnouncements.map((announcement) => (
-            <GlassCard key={announcement.id}>
-              <MiniAnnouncementCard announcement={announcement} />
-            </GlassCard>
-          ))}
-        </div>
+                {/* Grid of Smaller Cards */}
+                {otherAnnouncements.length > 0 && (
+                    <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-flow-col lg:auto-cols-fr items-stretch content-stretch">
+                    {otherAnnouncements.map((announcement) => (
+                        <GlassCard key={announcement.id}>
+                        <MiniAnnouncementCard announcement={announcement} />
+                        </GlassCard>
+                    ))}
+                    </div>
+                )}
+            </>
+        )}
 
         {/* Mobile View All */}
         <div className="mt-8 flex justify-center sm:hidden">

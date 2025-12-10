@@ -4,41 +4,35 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { TestimonialCard } from "@/app/home/components/testimonial-card";
+import testimonialService from "@/app/services/testimonial";
 
 export function TestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const testimonials = [
-    {
-      name: "Alyssa Cruz",
-      title: "President, ICpEP.SE",
-      imageSrc: "/gle.png",
-      testimonial:
-        "Being part of ICpEP.SE has helped me build confidence, leadership, and technical skills that go beyond the classroom.",
-    },
-    {
-      name: "Joshua Tan",
-      title: "Member",
-      imageSrc: "/faculty.png",
-      testimonial:
-        "Through ICpEP.SE, I met amazing people who share the same passion for innovation and technology.",
-    },
-    {
-      name: "Rina Lopez",
-      title: "Event Organizer",
-      imageSrc: "/gle.png",
-      testimonial:
-        "Organizing events under ICpEP.SE allowed me to grow as both a professional and a student leader.",
-    },
-    {
-      name: "Mark Dela Cruz",
-      title: "Treasurer",
-      imageSrc: "/faculty.png",
-      testimonial:
-        "ICpEP.SE taught me how collaboration and discipline can build a strong tech community.",
-    },
-  ];
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        const response = await testimonialService.getTestimonials();
+        if (response.success && Array.isArray(response.data)) {
+             const mapped = response.data.map((item: any) => ({
+                 name: item.name,
+                 title: item.role,
+                 imageSrc: item.image || "/placeholder.png",
+                 testimonial: item.quote
+             }));
+             setTestimonials(mapped);
+        }
+      } catch (error) {
+        console.error("Failed to fetch testimonials", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTestimonials();
+  }, []);
 
   const handleNext = () => {
     const newIndex = Math.min(currentIndex + 1, testimonials.length - 1);
@@ -85,86 +79,98 @@ export function TestimonialsSection() {
           </p>
         </div>
 
-        {/* --- Mobile Carousel --- */}
-        <div
-          ref={scrollContainerRef}
-          className="lg:hidden z-20 w-full h-[450px] flex overflow-x-auto snap-x snap-mandatory scroll-smooth"
-          style={
-            {
-              scrollbarWidth: "none",
-              msOverflowStyle: "none",
-            } as React.CSSProperties
-          }
-        >
-          {testimonials.map((testimonial, index) => (
-            <div
-              key={index}
-              className="w-full flex-shrink-0 snap-center flex justify-center pt-16 px-4 pb-4"
-            >
-              <div className="w-full max-w-md h-[90%]">
-                <TestimonialCard {...testimonial} position={0} />
-              </div>
+        {loading ? (
+            <div className="text-center py-12">
+                <p className="text-gray-500 font-raleway text-lg">Loading testimonials...</p>
             </div>
-          ))}
-        </div>
-
-        {/* --- Desktop Carousel --- */}
-        <div className="relative z-20 h-[420px] w-full max-w-7xl overflow-visible hidden lg:block">
-          {testimonials.map((testimonial, index) => {
-            const position = index - currentIndex;
-            let animateProps = { x: "0%", scale: 0.7, opacity: 0, zIndex: 0 };
-            if (position === 0) {
-              animateProps = { x: "0%", scale: 1, opacity: 1, zIndex: 3 };
-            } else if (position === 1) {
-              animateProps = { x: "40%", scale: 0.85, opacity: 0.7, zIndex: 2 };
-            } else if (position === -1) {
-              animateProps = {
-                x: "-40%",
-                scale: 0.85,
-                opacity: 0.7,
-                zIndex: 2,
-              };
-            } else {
-              animateProps = {
-                x: `${position > 0 ? 100 : -100}%`,
-                scale: 0.7,
-                opacity: 0,
-                zIndex: 1,
-              };
-            }
-
-            return (
-              <motion.div
-                key={index}
-                className="absolute top-0 left-0 w-full h-full flex items-center justify-center"
-                initial={false}
-                animate={animateProps}
-                transition={{ type: "spring", stiffness: 100, damping: 20 }}
-              >
-                <div className="w-full max-w-2xl h-[90%]">
-                  <TestimonialCard {...testimonial} position={position} />
+        ) : testimonials.length === 0 ? (
+            <div className="text-center py-12">
+                <p className="text-gray-500 font-raleway text-lg">No testimonials available.</p>
+            </div>
+        ) : (
+            <>
+                {/* --- Mobile Carousel --- */}
+                <div
+                ref={scrollContainerRef}
+                className="lg:hidden z-20 w-full h-[450px] flex overflow-x-auto snap-x snap-mandatory scroll-smooth"
+                style={
+                    {
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                    } as React.CSSProperties
+                }
+                >
+                {testimonials.map((testimonial, index) => (
+                    <div
+                    key={index}
+                    className="w-full flex-shrink-0 snap-center flex justify-center pt-16 px-4 pb-4"
+                    >
+                    <div className="w-full max-w-md h-[90%]">
+                        <TestimonialCard {...testimonial} position={0} />
+                    </div>
+                    </div>
+                ))}
                 </div>
-              </motion.div>
-            );
-          })}
-        </div>
 
-        <div className="relative z-30 mt-8 flex gap-4">
-          <button
-            onClick={handlePrev}
-            disabled={currentIndex === 0}
-            className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <ArrowLeft size={24} />
-          </button>
-          <button
-            onClick={handleNext}
-            disabled={currentIndex === testimonials.length - 1}
-            className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <ArrowRight size={24} />
-          </button>
-        </div>
+                {/* --- Desktop Carousel --- */}
+                <div className="relative z-20 h-[420px] w-full max-w-7xl overflow-visible hidden lg:block">
+                {testimonials.map((testimonial, index) => {
+                    const position = index - currentIndex;
+                    let animateProps = { x: "0%", scale: 0.7, opacity: 0, zIndex: 0 };
+                    if (position === 0) {
+                    animateProps = { x: "0%", scale: 1, opacity: 1, zIndex: 3 };
+                    } else if (position === 1) {
+                    animateProps = { x: "40%", scale: 0.85, opacity: 0.7, zIndex: 2 };
+                    } else if (position === -1) {
+                    animateProps = {
+                        x: "-40%",
+                        scale: 0.85,
+                        opacity: 0.7,
+                        zIndex: 2,
+                    };
+                    } else {
+                    animateProps = {
+                        x: `${position > 0 ? 100 : -100}%`,
+                        scale: 0.7,
+                        opacity: 0,
+                        zIndex: 1,
+                    };
+                    }
+
+                    return (
+                    <motion.div
+                        key={index}
+                        className="absolute top-0 left-0 w-full h-full flex items-center justify-center"
+                        initial={false}
+                        animate={animateProps}
+                        transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                    >
+                        <div className="w-full max-w-2xl h-[90%]">
+                        <TestimonialCard {...testimonial} position={position} />
+                        </div>
+                    </motion.div>
+                    );
+                })}
+                </div>
+
+                <div className="relative z-30 mt-8 flex gap-4">
+                <button
+                    onClick={handlePrev}
+                    disabled={currentIndex === 0}
+                    className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                >
+                    <ArrowLeft size={24} />
+                </button>
+                <button
+                    onClick={handleNext}
+                    disabled={currentIndex === testimonials.length - 1}
+                    className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                >
+                    <ArrowRight size={24} />
+                </button>
+                </div>
+            </>
+        )}
       </div>
     </section>
   );
