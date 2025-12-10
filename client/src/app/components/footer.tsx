@@ -162,7 +162,7 @@ const Footer = () => {
                   <Image src="/fb.svg" alt="Facebook" width={28} height={28} />
                 </a>
                 <a
-                  href="mailto:icpep.seofficial2526@gmail.com"
+                  href="mailto:icpepse@cit.edu"
                   className="flex hover:scale-110 transition-transform duration-300"
                 >
                   <Image src="/email.svg" alt="Email" width={28} height={28} />
