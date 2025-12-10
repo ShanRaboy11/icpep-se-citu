@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Sidebar from "./components/sidebarnotif";
+import Sidebar from "./components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
@@ -9,7 +9,7 @@ import { Eye, ChevronDown, Search, Plus } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import NotificationCard, {
   NotificationItem,
-} from "./components/notificationcard";
+} from "./components/notification-card";
 
 export default function AnnouncementsPage() {
   const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
