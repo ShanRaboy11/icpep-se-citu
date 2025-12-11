@@ -23,16 +23,16 @@ export function EventsSection() {
         });
         
         if (response.success && Array.isArray(response.data) && response.data.length > 0) {
-             const mapped = response.data.map((item: any) => ({
+             const mapped: Event[] = response.data.map((item: any) => ({
                  id: item.id || item._id,
                  title: item.title,
-                 status: "Upcoming",
+                 status: "Upcoming" as const,
                  date: item.eventDate || item.date || new Date().toISOString(),
                  endDate: item.endDate,
-                 mode: item.mode || "Onsite",
+                 mode: (item.mode === "Online" ? "Online" : "Onsite") as "Online" | "Onsite",
                  location: item.location || "TBA",
                  organizer: {
-                     name: item.organizer || "ICpEP.SE CIT-U",
+                     name: typeof item.organizer === 'string' ? item.organizer : (item.organizer?.name || "ICpEP.SE CIT-U"),
                      avatarImageUrl: "/icpep logo.png"
                  },
                  tags: item.tags || [],
