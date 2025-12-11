@@ -1,55 +1,50 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { TierCard, type Partner, type Tier } from "../components/tier-card";
 import { CallToActionCard } from "../components/cta-card";
-
-const partners: Partner[] = [
-  {
-    id: 9,
-    name: "Salesforce",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg",
-    tier: "platinum",
-  },
-  {
-    id: 1,
-    name: "Google",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
-    tier: "gold",
-  },
-  {
-    id: 3,
-    name: "Amazon",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
-    tier: "gold",
-  },
-  {
-    id: 2,
-    name: "Microsoft",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
-    tier: "silver",
-  },
-  {
-    id: 8,
-    name: "Apple",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
-    tier: "silver",
-  },
-  {
-    id: 4,
-    name: "IBM",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
-    tier: "bronze",
-  },
-  {
-    id: 10,
-    name: "Oracle",
-    logo: "https://upload.wikimedia.org/wikipedia/commons/5/50/Oracle_logo.svg",
-    tier: "bronze",
-  },
-];
+import sponsorService from "../../services/sponsor";
+const primerFile = "/primer.pdf";
 
 export function PartnersSection() {
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSponsors = async () => {
+      try {
+        const response = await sponsorService.getSponsors();
+        const sponsorsData = response.data || [];
+        
+        // Map backend data to frontend Partner type
+        const mappedPartners: Partner[] = sponsorsData.map((sponsor: any) => {
+          let tier: Tier = "bronze";
+          const typeLower = sponsor.type ? sponsor.type.toLowerCase() : "";
+          
+          if (typeLower.includes("platinum")) tier = "platinum";
+          else if (typeLower.includes("gold")) tier = "gold";
+          else if (typeLower.includes("silver")) tier = "silver";
+          else if (typeLower.includes("bronze")) tier = "bronze";
+
+          return {
+            id: sponsor._id,
+            name: sponsor.name,
+            logo: sponsor.image || "",
+            tier: tier,
+          };
+        });
+        
+        setPartners(mappedPartners);
+      } catch (error) {
+        console.error("Failed to fetch sponsors:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSponsors();
+  }, []);
+
   const groupedPartners = useMemo(
     () =>
       partners.reduce((acc, partner) => {
@@ -58,10 +53,19 @@ export function PartnersSection() {
         acc[tier].push(partner);
         return acc;
       }, {} as Record<Tier, Partner[]>),
-    []
+    [partners]
   );
 
   const tierOrder: Tier[] = ["platinum", "gold", "silver", "bronze"];
+
+  // Now you can use the primerFile variable anywhere in your component
+  // For example, to download it:
+  const handleDownloadPrimer = () => {
+    const link = document.createElement('a');
+    link.href = primerFile;
+    link.download = 'primer.pdf'; // or whatever filename you want
+    link.click();
+  };
 
   return (
     <section className="dark-light-background relative overflow-hidden py-32 px-4 sm:px-6">
@@ -80,15 +84,18 @@ export function PartnersSection() {
         <div className="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-2 gap-8">
           {/* Tier Cards */}
           <div className="lg:col-span-2 lg:row-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
-            {tierOrder.map(
-              (tier) =>
-                groupedPartners[tier] && (
-                  <TierCard
-                    key={tier}
-                    tier={tier}
-                    partners={groupedPartners[tier]}
-                  />
-                )
+            {loading ? (
+               <div className="col-span-2 flex justify-center items-center h-64">
+                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary3"></div>
+               </div>
+            ) : (
+              tierOrder.map((tier) => (
+                <TierCard
+                  key={tier}
+                  tier={tier}
+                  partners={groupedPartners[tier] || []}
+                />
+              ))
             )}
           </div>
 

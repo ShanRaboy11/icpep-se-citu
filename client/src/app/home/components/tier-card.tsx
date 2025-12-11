@@ -6,7 +6,7 @@ import Image from "next/image";
 export type Tier = "platinum" | "gold" | "silver" | "bronze";
 
 export type Partner = {
-  id: number;
+  id: string | number;
   name: string;
   logo: string;
   tier: Tier;

@@ -27,8 +27,8 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
   // Determine if we should show agenda (only for meetings)
   const showAgenda = announcementType === "meeting" && announcement.agenda;
   
-  // Determine if we should show awardees (only for awards)
-  const showAwardees = announcementType === "award" && announcement.awardees;
+  // Determine if we should show awardees (only for awards or achievements)
+  const showAwardees = (announcementType === "award" || announcementType === "achievement") && announcement.awardees;
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg">

@@ -25,6 +25,12 @@ interface Announcement {
   };
   views?: number;
   isPublished: boolean;
+  awardees?: {
+    name: string;
+    program?: string;
+    year: string;
+    award: string;
+  }[];
 }
 
 export default function AnnouncementsPage() {
