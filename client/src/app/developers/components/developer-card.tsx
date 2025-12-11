@@ -14,6 +14,8 @@ interface DeveloperCardProps {
   details: string[];
   githubLink?: string;
   portfolioLink?: string;
+  // 1. Add this optional prop to the interface
+  imageClassName?: string; 
 }
 
 export default function DeveloperCard({
@@ -25,6 +27,8 @@ export default function DeveloperCard({
   details,
   githubLink,
   portfolioLink,
+  // 2. Destructure it here (default to empty string)
+  imageClassName = "", 
 }: DeveloperCardProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -70,14 +74,14 @@ export default function DeveloperCard({
                 alt={`${name}`}
                 width={300}
                 height={300}
-                className="object-contain mx-auto"
+                // 3. Append the custom class here
+                className={`object-contain mx-auto ${imageClassName}`} 
               />
             ) : (
               <div className="w-full aspect-[3/4] bg-white/30 rounded-md mx-auto" />
             )}
           </div>
 
-          {/* FONT FIX: Changed font-raleway to font-rubik */}
           <div
             className="absolute bottom-30 left-[47%] sm:left-[48%] -translate-x-1/2 w-[78%] 
                  text-left flex flex-col text-[22px] sm:text-xl lg:text-2xl
@@ -87,7 +91,6 @@ export default function DeveloperCard({
             <p>{desc}</p>
           </div>
 
-          {/* FONT FIX: Added font-rubik */}
           <div className="-mt-6 bg-primary3 py-2 text-center text-white font-rubik font-bold text-[20px] sm:text-[20px] lg:text-[24px] z-10 ">
             {name}
           </div>
@@ -107,7 +110,6 @@ export default function DeveloperCard({
           </div>
 
           <div className="self-end flex items-center gap-4 mr-[-20px] mt-5 py-2 px-4">
-            {/* GitHub Link */}
             {githubLink && githubLink !== "#" && (
               <a
                 href={githubLink}
@@ -120,9 +122,7 @@ export default function DeveloperCard({
               </a>
             )}
 
-            {/* Portfolio Link */}
             {hasActivePortfolioLink ? (
-              // If the link is active, render a clickable <a> tag
               <a
                 href={portfolioLink}
                 target="_blank"
@@ -133,7 +133,6 @@ export default function DeveloperCard({
                 <ArrowTopRightOnSquareIcon className="h-7 w-7 transition-transform duration-200 hover:scale-110 active:scale-95" />
               </a>
             ) : (
-              // If the link is a placeholder, render a disabled-looking <span>
               <span
                 title="Portfolio not available"
                 className="cursor-not-allowed opacity-40"
