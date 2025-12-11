@@ -18,7 +18,6 @@ import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import Sidebar from "@/app/components/sidebar";
-import OfficerCard from "@/app/officers/components/officer-card";
 import officerService, { Officer as IOfficer } from "@/app/services/officer";
 
 // --- DATA CONFIGURATION ---
@@ -853,58 +852,58 @@ export default function OfficersPage() {
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {displayedOfficers.map((officer) => (
                         <div
                           key={officer.id}
-                          className="group relative w-full max-w-[280px]"
+                          className={`group relative bg-white border rounded-xl p-3 flex items-center gap-3 transition-all hover:shadow-md ${
+                            editingId === officer.id
+                              ? "border-primary1 ring-1 ring-primary1 bg-primary1/5"
+                              : "border-gray-100 hover:border-primary2/30"
+                          }`}
                         >
-                          {/* Floating Action Buttons */}
-                          <div className="absolute top-2 right-2 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          {/* Image */}
+                          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 shrink-0 border border-gray-100">
+                            <img
+                              src={officer.image}
+                              alt={officer.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-gray-800 text-sm truncate font-rubik">
+                              {officer.name}
+                            </h3>
+                            <p className="text-xs text-primary3 font-medium truncate">
+                              {officer.position === "Batch Representative"
+                                ? `${officer.role} Batch Rep`
+                                : officer.position}
+                            </p>
+                            {officer.departmentId === "committee" && (
+                              <p className="text-[10px] text-gray-400 truncate">
+                                {officer.role}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => handleEditClick(officer)}
-                              className="p-2 bg-white rounded-full shadow-md text-blue-600 hover:text-blue-700 hover:bg-gray-50 transition-colors"
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Edit"
                             >
-                              <Edit2 className="h-4 w-4" />
+                              <Edit2 size={14} />
                             </button>
                             <button
                               onClick={() => handleDelete(officer.id)}
-                              className="p-2 bg-white rounded-full shadow-md text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                              className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                               title="Delete"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 size={14} />
                             </button>
-                          </div>
-
-                          {/* Officer Card */}
-                          <div
-                            className={`transform transition-transform duration-300 hover:scale-[1.02] ${
-                              editingId === officer.id
-                                ? "ring-4 ring-primary1/50 rounded-[30px]"
-                                : ""
-                            }`}
-                          >
-                            <OfficerCard
-                              // DISPLAY LOGIC:
-                              // If Batch Rep: Combine Role (Year) + Position => "1st Year Batch Representative"
-                              // Else: Just use Position
-                              position={
-                                officer.position === "Batch Representative"
-                                  ? `${officer.role} Batch Representative`
-                                  : officer.position
-                              }
-                              // For committees, role is committee name. For execs, it's usually empty (except batch rep logic above)
-                              role={
-                                officer.departmentId === "committee"
-                                  ? officer.role
-                                  : ""
-                              }
-                              name={officer.name}
-                              image={officer.image}
-                              gradient={currentDeptData.gradient}
-                              shadow={currentDeptData.shadow}
-                            />
                           </div>
                         </div>
                       ))}
