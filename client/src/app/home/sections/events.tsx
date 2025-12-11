@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Event } from "@/app/events/utils/event";
+import { Event, events as staticEvents } from "@/app/events/utils/event";
 import EventCard from "@/app/home/components/event-card";
 import ParticleNetwork from "@/app/home/components/particle";
 import eventService from "@/app/services/event";
@@ -22,7 +22,7 @@ export function EventsSection() {
             startDate: new Date().toISOString() 
         });
         
-        if (response.success && Array.isArray(response.data)) {
+        if (response.success && Array.isArray(response.data) && response.data.length > 0) {
              const mapped = response.data.map((item: any) => ({
                  id: item.id || item._id,
                  title: item.title,
@@ -43,9 +43,23 @@ export function EventsSection() {
                  galleryImageUrls: item.galleryImages || []
              }));
              setEvents(mapped);
+        } else {
+            // Fallback to static data
+            const now = new Date();
+            const latestUpcomingEvents = staticEvents
+                .filter((event) => new Date(event.date) > now)
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                .slice(0, 3);
+            setEvents(latestUpcomingEvents);
         }
       } catch (error) {
-        console.error("Failed to fetch events", error);
+        console.error("Failed to fetch events, using static data", error);
+        const now = new Date();
+        const latestUpcomingEvents = staticEvents
+            .filter((event) => new Date(event.date) > now)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .slice(0, 3);
+        setEvents(latestUpcomingEvents);
       } finally {
         setLoading(false);
       }

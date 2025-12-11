@@ -12,11 +12,42 @@ export function TestimonialsSection() {
   const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  const staticTestimonials = [
+    {
+      name: "Alyssa Cruz",
+      title: "President, ICpEP.SE",
+      imageSrc: "/gle.png",
+      testimonial:
+        "Being part of ICpEP.SE has helped me build confidence, leadership, and technical skills that go beyond the classroom.",
+    },
+    {
+      name: "Joshua Tan",
+      title: "Member",
+      imageSrc: "/faculty.png",
+      testimonial:
+        "Through ICpEP.SE, I met amazing people who share the same passion for innovation and technology.",
+    },
+    {
+      name: "Rina Lopez",
+      title: "Event Organizer",
+      imageSrc: "/gle.png",
+      testimonial:
+        "Organizing events under ICpEP.SE allowed me to grow as both a professional and a student leader.",
+    },
+    {
+      name: "Mark Dela Cruz",
+      title: "Treasurer",
+      imageSrc: "/faculty.png",
+      testimonial:
+        "ICpEP.SE taught me how collaboration and discipline can build a strong tech community.",
+    },
+  ];
+
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
         const response = await testimonialService.getTestimonials();
-        if (response.success && Array.isArray(response.data)) {
+        if (response.success && Array.isArray(response.data) && response.data.length > 0) {
              const mapped = response.data.map((item: any) => ({
                  name: item.name,
                  title: item.role,
@@ -24,9 +55,12 @@ export function TestimonialsSection() {
                  testimonial: item.quote
              }));
              setTestimonials(mapped);
+        } else {
+            setTestimonials(staticTestimonials);
         }
       } catch (error) {
-        console.error("Failed to fetch testimonials", error);
+        console.error("Failed to fetch testimonials, using static data", error);
+        setTestimonials(staticTestimonials);
       } finally {
         setLoading(false);
       }

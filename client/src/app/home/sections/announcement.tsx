@@ -6,7 +6,7 @@ import { GlassCard } from "../components/glass-card";
 import FeaturedAnnouncementCard from "../components/featured-announcement";
 import MiniAnnouncementCard from "../components/mini-announcement";
 import announcementService from "@/app/services/announcement";
-import { Announcement } from "../../announcements/utils/announcements";
+import { Announcement, announcements as staticAnnouncements } from "../../announcements/utils/announcements";
 
 export function AnnouncementsSection() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export function AnnouncementsSection() {
     const fetchAnnouncements = async () => {
       try {
         const response = await announcementService.getAnnouncements({ isPublished: true, limit: 4, sort: '-publishDate' });
-        if (response.success && Array.isArray(response.data)) {
+        if (response.success && Array.isArray(response.data) && response.data.length > 0) {
              const mapped = response.data.map((item: any) => ({
                  id: item.id || item._id,
                  title: item.title,
@@ -29,9 +29,13 @@ export function AnnouncementsSection() {
                  location: item.location,
              }));
              setAnnouncements(mapped);
+        } else {
+            // Fallback to static data
+            setAnnouncements(staticAnnouncements);
         }
       } catch (error) {
-        console.error("Failed to fetch announcements", error);
+        console.error("Failed to fetch announcements, using static data", error);
+        setAnnouncements(staticAnnouncements);
       } finally {
         setLoading(false);
       }

@@ -5,6 +5,51 @@ import { TierCard, type Partner, type Tier } from "../components/tier-card";
 import { CallToActionCard } from "../components/cta-card";
 import partnerService from "@/app/services/partner";
 
+const staticPartners: Partner[] = [
+  {
+    id: 9,
+    name: "Salesforce",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg",
+    tier: "platinum",
+  },
+  {
+    id: 1,
+    name: "Google",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
+    tier: "gold",
+  },
+  {
+    id: 3,
+    name: "Amazon",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
+    tier: "gold",
+  },
+  {
+    id: 2,
+    name: "Microsoft",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
+    tier: "silver",
+  },
+  {
+    id: 8,
+    name: "Apple",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg",
+    tier: "silver",
+  },
+  {
+    id: 4,
+    name: "IBM",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg",
+    tier: "bronze",
+  },
+  {
+    id: 10,
+    name: "Oracle",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/5/50/Oracle_logo.svg",
+    tier: "bronze",
+  },
+];
+
 export function PartnersSection() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -13,16 +58,21 @@ export function PartnersSection() {
     const fetchPartners = async () => {
       try {
         const data = await partnerService.getAll('sponsor');
-        // Map backend data to component data
-        const mappedPartners: Partner[] = data.map((p: any) => ({
-          id: p._id,
-          name: p.name,
-          logo: p.logo,
-          tier: (p.description?.toLowerCase() as Tier) || 'bronze'
-        }));
-        setPartners(mappedPartners);
+        if (data && data.length > 0) {
+            // Map backend data to component data
+            const mappedPartners: Partner[] = data.map((p: any) => ({
+            id: p._id,
+            name: p.name,
+            logo: p.logo,
+            tier: (p.description?.toLowerCase() as Tier) || 'bronze'
+            }));
+            setPartners(mappedPartners);
+        } else {
+            setPartners(staticPartners);
+        }
       } catch (error) {
-        console.error("Failed to fetch partners:", error);
+        console.error("Failed to fetch partners, using static data", error);
+        setPartners(staticPartners);
       } finally {
         setIsLoading(false);
       }
