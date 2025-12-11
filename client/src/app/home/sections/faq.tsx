@@ -16,23 +16,23 @@ export function FAQSection() {
   
   const staticFaqs: FAQ[] = [
     {
-      question: "Lorem ipsum dolor sit amet consectetur adipiscing elit?",
+      question: "What is the ICpEP.SE CIT-U website for?",
       answer:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+        "The website serves as the official platform for membership registration, announcements, events, and organization updates—making it easier for students to stay informed and connected.",
     },
     {
-      question: "Ut enim ad minim veniam, quis nostrud exercitation?",
+      question: "How do I register as a member?",
       answer:
-        "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+        "You can register directly through the Membership page. Fill out the form, upload the required documents, and wait for verification from the Registrar.",
     },
     {
-      question: "Excepteur sint occaecat cupidatat non proident?",
-      answer: "Sunt in culpa qui officia deserunt mollit anim id est laborum.",
+      question: "How do I check my membership status?",
+      answer: "After registering, you can view your membership status on your profile page. Status updates (Pending, Verified, or Expired) are handled by the officers.",
     },
     {
-      question: "Aliquip ex ea commodo consequat?",
+      question: "Can I still join events even if I’m not a member?",
       answer:
-        "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+        "Some events are open to all, while others are exclusive to verified ICpEP.SE members. Event details will indicate whether membership is required.",
     },
   ];
 
