@@ -29,6 +29,16 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     const baseItems: MenuItem[] = [
       { label: "Home", href: "/home" },
       { label: "About", href: "/about" },
+      
+      // --- NEW SECTION: Updates (Announcements & Events) ---
+      {
+        label: "Updates", 
+        children: [
+          { label: "Announcements", href: "/announcements" },
+          { label: "Events", href: "/events" },
+        ],
+      },
+
       {
         label: "Membership",
         children: [
