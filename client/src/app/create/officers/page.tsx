@@ -1,17 +1,14 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { useState, useRef } from "react";
 import {
-  Plus,
   Edit2,
   Trash2,
   Save,
   Image as ImageIcon,
   ChevronDown,
   Pencil,
-  RefreshCw,
-  AlertTriangle,
+  AlertCircle,
 } from "lucide-react";
 
 // --- IMPORTS ---
@@ -21,29 +18,26 @@ import Grid from "@/app/components/grid";
 import Sidebar from "@/app/components/sidebar";
 import OfficerCard from "@/app/officers/components/officer-card";
 
-// --- LOCAL DATA DEFINITION ---
-// UPDATED: Both departments now use the EXACT same color scheme (Primary1 -> Primary2)
-// This matches the Sponsors and Merch page styling.
+// --- DATA CONFIGURATION ---
 const departments: Record<string, any> = {
   executive: {
     id: "executive",
     title: "Executive Council",
     description: "Leading the chapter with vision and integrity.",
-    gradient: "bg-gradient-to-r from-primary1 to-primary2", // Unified
+    gradient: "bg-gradient-to-r from-primary1 to-primary2",
     shadow: "shadow-primary1/20",
-    officers: [],
   },
   committee: {
     id: "committee",
     title: "Committee Officers",
     description: "The dedicated hands behind our events and initiatives.",
-    gradient: "bg-gradient-to-r from-primary1 to-primary2", // Unified
+    gradient: "bg-gradient-to-r from-primary1 to-primary2",
     shadow: "shadow-primary1/20",
-    officers: [],
   },
 };
 
-// --- CONSTANTS ---
+// --- POSITIONS & DROPDOWN DATA ---
+
 const EXECUTIVE_POSITIONS = [
   "President",
   "VP Internal",
@@ -57,6 +51,8 @@ const EXECUTIVE_POSITIONS = [
   "Batch Representative",
 ];
 
+const YEAR_LEVELS = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
+
 const COMMITTEES_LIST = [
   "Committee on Internal Affairs",
   "Committee on External Affairs",
@@ -68,35 +64,42 @@ const COMMITTEES_LIST = [
   "Media and Documentation Committee",
 ];
 
+const COMMITTEE_ROLES = [
+  "Committee Head",
+  "Assistant Head",
+  "Secretary",
+  "Member",
+];
+
 // Define the Officer type
 type Officer = {
   id: string;
   name: string;
-  role: string;
-  position: string;
+  role: string; // Used for Year Level (Exec) or Committee Name (Comm)
+  position: string; // Used for Position Title
   image: string;
-  departmentId: string; // Added to track which list they belong to
+  departmentId: string;
 };
 
 export default function OfficersPage() {
   // --- STATE ---
-  // Default to executive tab
   const [activeTab, setActiveTab] = useState<string>("executive");
-  const [officers, setOfficers] = useState<Officer[]>([]); // Flat list for all officers
+  const [officers, setOfficers] = useState<Officer[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
     name: "",
-    role: "",
-    position: "",
-    image: "", // Start empty to show upload placeholder
+    role: "", // Used as Year Level for Batch Reps, or Committee Name
+    position: "", // Actual Position Title
+    image: "",
   });
 
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Derived state for current view
+  // Derived state
   const currentDeptData = departments[activeTab];
   const displayedOfficers = officers.filter(
     (o) => o.departmentId === activeTab
@@ -105,28 +108,23 @@ export default function OfficersPage() {
   // --- HANDLERS ---
 
   const handleEditClick = (officer: Officer) => {
+    setError(null);
     setEditingId(officer.id);
-    setActiveTab(officer.departmentId); // Switch tab to where the officer is
+    setActiveTab(officer.departmentId);
     setFormData({
       name: officer.name,
       role: officer.role,
       position: officer.position,
-      image: "", // We keep the URL in preview
+      image: "",
     });
     setPreview(officer.image);
-
-    // Scroll to top
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setFormData({
-      name: "",
-      role: "",
-      position: "",
-      image: "",
-    });
+    setError(null);
+    setFormData({ name: "", role: "", position: "", image: "" });
     setPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -141,16 +139,73 @@ export default function OfficersPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setPreview(url);
+      setPreview(URL.createObjectURL(file));
     }
+  };
+
+  // --- VALIDATION LOGIC ---
+  const validateLimits = (
+    dept: string,
+    pos: string,
+    role: string,
+    currentId: string | null
+  ): boolean => {
+    // Filter out the officer being edited so they don't count against themselves
+    const existing = officers.filter((o) => o.id !== currentId);
+
+    if (dept === "executive") {
+      if (pos === "Batch Representative") {
+        // Limit: 2 per specific Year Level
+        const count = existing.filter(
+          (o) => o.position === pos && o.role === role
+        ).length;
+        if (count >= 2) {
+          setError(`Max 2 Batch Representatives allowed for ${role}.`);
+          return false;
+        }
+      } else if (pos === "SSG Representative") {
+        // Limit: 2 Total
+        const count = existing.filter((o) => o.position === pos).length;
+        if (count >= 2) {
+          setError("Max 2 SSG Representatives allowed.");
+          return false;
+        }
+      } else {
+        // Limit: 1 for all other positions
+        const count = existing.filter((o) => o.position === pos).length;
+        if (count >= 1) {
+          setError(`The position of ${pos} is already filled.`);
+          return false;
+        }
+      }
+    } else if (dept === "committee") {
+      // Role = Committee Name
+      // Position = Role inside committee (Head, Member, etc)
+      const committeeMembers = existing.filter(
+        (o) => o.departmentId === "committee" && o.role === role
+      );
+
+      // Unique positions per committee (except Member)
+      if (["Committee Head", "Assistant Head", "Secretary"].includes(pos)) {
+        if (committeeMembers.some((o) => o.position === pos)) {
+          setError(`'${role}' already has a ${pos}.`);
+          return false;
+        }
+      }
+      // "Member" has no limit
+    }
+
+    return true;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    // 1. Prepare Data
+    let finalRole = formData.role;
 
     // Logic: If Executive and NOT Batch Rep, clear the Role (Year Level)
-    let finalRole = formData.role;
     if (
       activeTab === "executive" &&
       formData.position !== "Batch Representative"
@@ -158,11 +213,20 @@ export default function OfficersPage() {
       finalRole = "";
     }
 
-    // Use default image if none provided
+    // 2. Validate Limits
+    const isValid = validateLimits(
+      activeTab,
+      formData.position,
+      finalRole,
+      editingId
+    );
+    if (!isValid) return;
+
+    // 3. Process Image
     const finalImage = preview || "/faculty.png";
 
+    // 4. Update or Create
     if (editingId) {
-      // Update existing
       setOfficers((prev) =>
         prev.map((o) =>
           o.id === editingId
@@ -178,7 +242,6 @@ export default function OfficersPage() {
         )
       );
     } else {
-      // Create new
       const newOfficer: Officer = {
         id: Math.random().toString(36).substring(7),
         name: formData.name,
@@ -228,7 +291,7 @@ export default function OfficersPage() {
 
             {/* Main Content */}
             <div className="flex-1 space-y-12">
-              {/* 1. THE FORM (Compose/Edit) */}
+              {/* 1. THE FORM */}
               <div
                 className={`bg-white rounded-3xl shadow-xl shadow-gray-200/50 border overflow-hidden transition-all duration-300 ${
                   editingId
@@ -262,7 +325,7 @@ export default function OfficersPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-8 space-y-8">
-                  {/* Department Tabs - UPDATED STYLE to match Sponsors */}
+                  {/* Department Tabs */}
                   <div className="space-y-3">
                     <label className="text-sm font-semibold text-primary3 font-raleway">
                       Department <span className="text-red-500">*</span>
@@ -275,13 +338,22 @@ export default function OfficersPage() {
                           <button
                             key={key}
                             type="button"
-                            onClick={() => setActiveTab(key)}
+                            onClick={() => {
+                              setActiveTab(key);
+                              setError(null);
+                              // Reset fields to avoid data contamination
+                              setFormData((prev) => ({
+                                ...prev,
+                                role: "",
+                                position: "",
+                              }));
+                            }}
                             className={`
                               relative rounded-xl px-6 py-4 text-left font-rubik font-semibold border-2 transition-all duration-300
                               ${
                                 isActive
-                                  ? `bg-primary2 text-white border-primary2 shadow-lg` // Solid color active state
-                                  : "bg-white text-gray-600 border-gray-200 hover:border-primary2/50" // Outline inactive state
+                                  ? `bg-primary2 text-white border-primary2 shadow-lg`
+                                  : "bg-white text-gray-600 border-gray-200 hover:border-primary2/50"
                               }
                             `}
                           >
@@ -309,7 +381,20 @@ export default function OfficersPage() {
                     </div>
                   </div>
 
-                  {/* Image Upload Section */}
+                  {/* Error Alert */}
+                  {error && (
+                    <div className="bg-red-50 text-red-600 p-4 rounded-xl flex items-start gap-3 border border-red-100 animate-in fade-in slide-in-from-top-1">
+                      <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-bold font-rubik">
+                          Action Required
+                        </p>
+                        <p className="text-sm font-raleway">{error}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Image Upload */}
                   <div className="space-y-3">
                     <label className="text-sm font-semibold text-primary3 font-raleway">
                       Officer Photo
@@ -385,10 +470,9 @@ export default function OfficersPage() {
                       />
                     </div>
 
-                    {/* --- CONDITIONAL FIELDS BASED ON ACTIVE TAB --- */}
+                    {/* --- EXECUTIVE FIELDS --- */}
                     {activeTab === "executive" ? (
                       <>
-                        {/* EXECUTIVE: POSITION DROPDOWN */}
                         <div className="space-y-2">
                           <label className="text-sm font-semibold text-primary3 font-raleway">
                             Position <span className="text-red-500">*</span>
@@ -401,6 +485,10 @@ export default function OfficersPage() {
                                 setFormData({
                                   ...formData,
                                   position: e.target.value,
+                                  role:
+                                    e.target.value === "Batch Representative"
+                                      ? formData.role
+                                      : "",
                                 })
                               }
                               className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary2 focus:ring-2 focus:ring-primary2/20 outline-none transition-all font-rubik appearance-none cursor-pointer"
@@ -420,31 +508,43 @@ export default function OfficersPage() {
                           </div>
                         </div>
 
-                        {/* EXECUTIVE: ROLE INPUT (ONLY FOR BATCH REP) */}
+                        {/* Year Level - Only for Batch Rep */}
                         {formData.position === "Batch Representative" && (
                           <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
                             <label className="text-sm font-semibold text-primary3 font-raleway">
                               Year Level <span className="text-red-500">*</span>
                             </label>
-                            <input
-                              type="text"
-                              required
-                              value={formData.role}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  role: e.target.value,
-                                })
-                              }
-                              placeholder="e.g. 2nd Year"
-                              className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary2 focus:ring-2 focus:ring-primary2/20 outline-none transition-all font-rubik"
-                            />
+                            <div className="relative">
+                              <select
+                                required
+                                value={formData.role}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    role: e.target.value,
+                                  })
+                                }
+                                className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary2 focus:ring-2 focus:ring-primary2/20 outline-none transition-all font-rubik appearance-none cursor-pointer"
+                              >
+                                <option value="" disabled>
+                                  Select Year
+                                </option>
+                                {YEAR_LEVELS.map((yr) => (
+                                  <option key={yr} value={yr}>
+                                    {yr}
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                                <ChevronDown className="h-4 w-4" />
+                              </div>
+                            </div>
                           </div>
                         )}
                       </>
                     ) : (
+                      /* --- COMMITTEE FIELDS --- */
                       <>
-                        {/* COMMITTEE: ROLE DROPDOWN (COMMITTEE NAME) */}
                         <div className="space-y-2">
                           <label className="text-sm font-semibold text-primary3 font-raleway">
                             Committee Name{" "}
@@ -453,7 +553,7 @@ export default function OfficersPage() {
                           <div className="relative">
                             <select
                               required
-                              value={formData.role}
+                              value={formData.role} // Committee Name
                               onChange={(e) =>
                                 setFormData({
                                   ...formData,
@@ -477,25 +577,36 @@ export default function OfficersPage() {
                           </div>
                         </div>
 
-                        {/* COMMITTEE: POSITION INPUT (TEXT) */}
                         <div className="space-y-2">
                           <label className="text-sm font-semibold text-primary3 font-raleway">
                             Specific Title{" "}
                             <span className="text-red-500">*</span>
                           </label>
-                          <input
-                            type="text"
-                            required
-                            value={formData.position}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                position: e.target.value,
-                              })
-                            }
-                            placeholder="e.g. Committee Chairperson"
-                            className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary2 focus:ring-2 focus:ring-primary2/20 outline-none transition-all font-rubik"
-                          />
+                          <div className="relative">
+                            <select
+                              required
+                              value={formData.position} // Position (Head, Member, etc)
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  position: e.target.value,
+                                })
+                              }
+                              className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary2 focus:ring-2 focus:ring-primary2/20 outline-none transition-all font-rubik appearance-none cursor-pointer"
+                            >
+                              <option value="" disabled>
+                                Select Role
+                              </option>
+                              {COMMITTEE_ROLES.map((role) => (
+                                <option key={role} value={role}>
+                                  {role}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">
+                              <ChevronDown className="h-4 w-4" />
+                            </div>
+                          </div>
                         </div>
                       </>
                     )}
@@ -583,8 +694,20 @@ export default function OfficersPage() {
                             }`}
                           >
                             <OfficerCard
-                              position={officer.position}
-                              role={officer.role}
+                              // DISPLAY LOGIC:
+                              // If Batch Rep: Combine Role (Year) + Position => "1st Year Batch Representative"
+                              // Else: Just use Position
+                              position={
+                                officer.position === "Batch Representative"
+                                  ? `${officer.role} Batch Representative`
+                                  : officer.position
+                              }
+                              // For committees, role is committee name. For execs, it's usually empty (except batch rep logic above)
+                              role={
+                                officer.departmentId === "committee"
+                                  ? officer.role
+                                  : ""
+                              }
                               name={officer.name}
                               image={officer.image}
                               gradient={currentDeptData.gradient}
