@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Edit2,
   Trash2,
@@ -9,6 +9,8 @@ import {
   ChevronDown,
   Pencil,
   AlertCircle,
+  Search,
+  X,
 } from "lucide-react";
 
 // --- IMPORTS ---
@@ -17,6 +19,7 @@ import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import Sidebar from "@/app/components/sidebar";
 import OfficerCard from "@/app/officers/components/officer-card";
+import officerService, { Officer as IOfficer } from "@/app/services/officer";
 
 // --- DATA CONFIGURATION ---
 const departments: Record<string, any> = {
@@ -71,7 +74,7 @@ const COMMITTEE_ROLES = [
   "Member",
 ];
 
-// Define the Officer type
+// Define the Officer type for UI state
 type Officer = {
   id: string;
   name: string;
@@ -79,6 +82,7 @@ type Officer = {
   position: string; // Used for Position Title
   image: string;
   departmentId: string;
+  studentNumber?: string;
 };
 
 export default function OfficersPage() {
@@ -87,6 +91,12 @@ export default function OfficersPage() {
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Search State
+  const [searchResults, setSearchResults] = useState<IOfficer[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState<IOfficer | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -105,7 +115,84 @@ export default function OfficersPage() {
     (o) => o.departmentId === activeTab
   );
 
+  // --- FETCH DATA ---
+  const fetchOfficers = async () => {
+    try {
+      const data = await officerService.getOfficers();
+      const mapped: Officer[] = data.map((o) => {
+        let role = "";
+        if (o.role === "council-officer") {
+          if (o.position === "Batch Representative" && o.yearLevel) {
+            role = `${o.yearLevel}${
+              o.yearLevel === 1
+                ? "st"
+                : o.yearLevel === 2
+                ? "nd"
+                : o.yearLevel === 3
+                ? "rd"
+                : "th"
+            } Year`;
+          }
+        } else {
+          role = o.department || "";
+        }
+
+        return {
+          id: o._id,
+          name: `${o.firstName} ${o.lastName}`,
+          role: role,
+          position: o.position || "",
+          image: o.profilePicture || "/faculty.png",
+          departmentId:
+            o.role === "council-officer" ? "executive" : "committee",
+          studentNumber: o.studentNumber,
+        };
+      });
+      setOfficers(mapped);
+    } catch (err) {
+      console.error("Failed to fetch officers:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchOfficers();
+  }, []);
+
   // --- HANDLERS ---
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (query.length > 2) {
+      setIsSearching(true);
+      try {
+        const results = await officerService.searchNonOfficers(query);
+        setSearchResults(results);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsSearching(false);
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const selectUser = (user: IOfficer) => {
+    setSelectedUser(user);
+    setFormData((prev) => ({
+      ...prev,
+      name: `${user.firstName} ${user.lastName}`,
+    }));
+    setPreview(user.profilePicture || "/faculty.png");
+    setSearchResults([]);
+    setSearchQuery("");
+  };
+
+  const clearSelection = () => {
+    setSelectedUser(null);
+    setFormData((prev) => ({ ...prev, name: "" }));
+    setPreview(null);
+  };
 
   const handleEditClick = (officer: Officer) => {
     setError(null);
@@ -118,6 +205,7 @@ export default function OfficersPage() {
       image: "",
     });
     setPreview(officer.image);
+    setSelectedUser(null); // Clear selected user when editing existing
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -126,20 +214,43 @@ export default function OfficersPage() {
     setError(null);
     setFormData({ name: "", role: "", position: "", image: "" });
     setPreview(null);
+    setSelectedUser(null);
+    setSearchQuery("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this officer?")) {
-      setOfficers((prev) => prev.filter((o) => o.id !== id));
-      if (editingId === id) handleCancelEdit();
+  const handleDelete = async (id: string) => {
+    if (confirm("Are you sure you want to remove this officer?")) {
+      try {
+        // Demote to student
+        await officerService.updateOfficer(id, {
+          role: "student",
+          position: "",
+          department: "",
+          yearLevel: undefined,
+        } as any);
+        fetchOfficers();
+        if (editingId === id) handleCancelEdit();
+      } catch (err) {
+        console.error("Failed to remove officer:", err);
+        setError("Failed to remove officer.");
+      }
     }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Preview
       setPreview(URL.createObjectURL(file));
+
+      // Convert to Base64 for upload
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setFormData((prev) => ({ ...prev, image: base64String }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -198,7 +309,7 @@ export default function OfficersPage() {
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -214,46 +325,46 @@ export default function OfficersPage() {
     }
 
     // 2. Validate Limits
+    const targetId = editingId || selectedUser?._id;
     const isValid = validateLimits(
       activeTab,
       formData.position,
       finalRole,
-      editingId
+      targetId || null
     );
     if (!isValid) return;
 
-    // 3. Process Image
-    const finalImage = preview || "/faculty.png";
-
-    // 4. Update or Create
-    if (editingId) {
-      setOfficers((prev) =>
-        prev.map((o) =>
-          o.id === editingId
-            ? {
-                ...o,
-                name: formData.name,
-                position: formData.position,
-                role: finalRole,
-                image: finalImage,
-                departmentId: activeTab,
-              }
-            : o
-        )
-      );
-    } else {
-      const newOfficer: Officer = {
-        id: Math.random().toString(36).substring(7),
-        name: formData.name,
-        position: formData.position,
-        role: finalRole,
-        image: finalImage,
-        departmentId: activeTab,
-      };
-      setOfficers((prev) => [...prev, newOfficer]);
+    if (!targetId) {
+      setError("Please select a user to assign.");
+      return;
     }
 
-    handleCancelEdit();
+    // 3. Update Backend
+    try {
+      const updateData: any = {
+        role:
+          activeTab === "executive" ? "council-officer" : "committee-officer",
+        position: formData.position,
+        department: activeTab === "committee" ? formData.role : undefined, // Committee Name
+        yearLevel:
+          activeTab === "executive" &&
+          formData.position === "Batch Representative"
+            ? parseInt(formData.role) // "1st Year" -> 1
+            : undefined,
+      };
+
+      // Include image if it was changed (it will be a base64 string)
+      if (formData.image && formData.image.startsWith("data:image")) {
+        updateData.profilePicture = formData.image;
+      }
+
+      await officerService.updateOfficer(targetId, updateData as any);
+      fetchOfficers();
+      handleCancelEdit();
+    } catch (err) {
+      console.error("Failed to save officer:", err);
+      setError("Failed to save officer.");
+    }
   };
 
   // --- RENDER ---
@@ -347,6 +458,8 @@ export default function OfficersPage() {
                                 role: "",
                                 position: "",
                               }));
+                              setSelectedUser(null);
+                              setSearchQuery("");
                             }}
                             className={`
                               relative rounded-xl px-6 py-4 text-left font-rubik font-semibold border-2 transition-all duration-300
@@ -394,12 +507,13 @@ export default function OfficersPage() {
                     </div>
                   )}
 
-                  {/* Image Upload */}
+                  {/* Image Upload / Preview */}
                   <div className="space-y-3">
                     <label className="text-sm font-semibold text-primary3 font-raleway">
                       Officer Photo
                     </label>
 
+                    {/* Hidden input if we were to support upload */}
                     <input
                       type="file"
                       accept="image/*"
@@ -408,42 +522,54 @@ export default function OfficersPage() {
                       ref={fileInputRef}
                     />
 
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => fileInputRef.current?.click()}
-                      className="block cursor-pointer group"
-                    >
+                    <div className="block group">
                       {preview ? (
-                        <div className="relative w-40 h-40 overflow-hidden rounded-2xl mx-auto sm:mx-0">
+                        <div
+                          className="relative w-40 h-40 overflow-hidden rounded-2xl mx-auto sm:mx-0 cursor-pointer group-hover:opacity-90 transition-opacity"
+                          onClick={() => fileInputRef.current?.click()}
+                          title="Click to change photo"
+                        >
                           <img
                             src={preview}
                             alt="Preview"
-                            className="w-full h-full object-cover bg-gray-50 border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover bg-gray-50 border-4 border-white shadow-lg"
                           />
-                          <button
-                            type="button"
-                            onClick={(ev) => {
-                              ev.stopPropagation();
-                              setPreview(null);
-                            }}
-                            className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 shadow-md hover:bg-red-50"
-                          >
-                            ×
-                          </button>
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Pencil className="text-white h-6 w-6" />
+                          </div>
+                          {/* Only allow clearing if it's a new selection, not editing existing */}
+                          {!editingId && (
+                            <button
+                              type="button"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                clearSelection();
+                              }}
+                              className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 shadow-md hover:bg-red-50 z-10"
+                            >
+                              ×
+                            </button>
+                          )}
                         </div>
                       ) : (
-                        <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center transition-all duration-300 bg-gray-50/50 group-hover:border-primary2 group-hover:bg-primary2/5 w-full sm:w-2/3">
+                        <div
+                          className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center bg-gray-50/50 w-full sm:w-2/3 cursor-pointer hover:border-primary2 hover:bg-primary2/5 transition-all"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
                           <div className="flex flex-col items-center gap-3">
                             <div className="w-12 h-12 rounded-full bg-primary2/10 flex items-center justify-center text-primary2">
                               <ImageIcon size={20} />
                             </div>
                             <div>
                               <p className="text-gray-700 font-semibold font-rubik text-sm">
-                                Click to upload photo
+                                {selectedUser
+                                  ? "Upload photo"
+                                  : "No photo available"}
                               </p>
                               <p className="text-xs text-gray-500 mt-1 font-raleway">
-                                Square ratio recommended
+                                {selectedUser
+                                  ? "Click to upload a new photo"
+                                  : "Select a user to see their profile picture"}
                               </p>
                             </div>
                           </div>
@@ -453,21 +579,87 @@ export default function OfficersPage() {
                   </div>
 
                   <div className="border-t border-gray-100 pt-6 grid grid-cols-1 gap-6">
-                    {/* FULL NAME */}
+                    {/* FULL NAME / SEARCH */}
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-primary3 font-raleway">
                         Full Name <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) =>
-                          setFormData({ ...formData, name: e.target.value })
-                        }
-                        placeholder="e.g. Dela Cruz, Juan"
-                        className="w-full h-12 px-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary2 focus:ring-2 focus:ring-primary2/20 outline-none transition-all font-rubik"
-                      />
+
+                      {editingId ? (
+                        // Read-only when editing
+                        <input
+                          type="text"
+                          disabled
+                          value={formData.name}
+                          className="w-full h-12 px-4 rounded-xl bg-gray-100 border border-gray-200 text-gray-500 font-rubik cursor-not-allowed"
+                        />
+                      ) : selectedUser ? (
+                        // Selected User Display
+                        <div className="flex items-center justify-between w-full h-12 px-4 rounded-xl bg-primary1/10 border border-primary1 text-primary3 font-rubik">
+                          <span>{formData.name}</span>
+                          <button
+                            type="button"
+                            onClick={clearSelection}
+                            className="text-primary3 hover:text-red-500"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      ) : (
+                        // Search Input
+                        <div className="relative">
+                          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                            <Search size={18} />
+                          </div>
+                          <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => handleSearch(e.target.value)}
+                            placeholder="Search for a student..."
+                            className="w-full h-12 pl-12 pr-4 rounded-xl bg-gray-50 border border-gray-200 focus:border-primary2 focus:ring-2 focus:ring-primary2/20 outline-none transition-all font-rubik"
+                          />
+                          {/* Search Results Dropdown */}
+                          {searchResults.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 max-h-60 overflow-y-auto z-50">
+                              {searchResults.map((user) => (
+                                <button
+                                  key={user._id}
+                                  type="button"
+                                  onClick={() => selectUser(user)}
+                                  className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0"
+                                >
+                                  <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                                    {user.profilePicture ? (
+                                      <img
+                                        src={user.profilePicture}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                                        {user.firstName[0]}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="font-semibold text-gray-800 text-sm">
+                                      {user.firstName} {user.lastName}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {user.studentNumber}
+                                    </p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {isSearching && (
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                              <div className="w-4 h-4 border-2 border-primary2 border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* --- EXECUTIVE FIELDS --- */}

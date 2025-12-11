@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose, { Schema, Document, Model } from "mongoose";
+import bcrypt from "bcryptjs";
 
 // Interface for User document
 export interface IUser extends Document {
@@ -10,11 +10,19 @@ export interface IUser extends Document {
   email?: string;
   middleName?: string;
   password: string;
-  role: 'student' | 'council-officer' | 'committee-officer' | 'faculty';
+  role: "student" | "council-officer" | "committee-officer" | "faculty";
+  position?: string;
+  department?:
+    | "executive"
+    | "communications"
+    | "technical"
+    | "finance"
+    | "logistics"
+    | "creatives";
   yearLevel?: number;
   membershipStatus: {
     isMember: boolean;
-    membershipType: 'local' | 'regional' | 'both' | null;
+    membershipType: "local" | "regional" | "both" | null;
     validUntil?: Date;
   };
   profilePicture?: string;
@@ -37,19 +45,19 @@ const userSchema = new Schema<IUser>(
   {
     studentNumber: {
       type: String,
-      required: [true, 'Student number is required'],
+      required: [true, "Student number is required"],
       unique: true,
       trim: true,
       uppercase: true,
     },
     lastName: {
       type: String,
-      required: [true, 'Last name is required'],
+      required: [true, "Last name is required"],
       trim: true,
     },
     firstName: {
       type: String,
-      required: [true, 'First name is required'],
+      required: [true, "First name is required"],
       trim: true,
     },
     middleName: {
@@ -65,15 +73,23 @@ const userSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: [true, "Password is required"],
       minlength: 6,
-      default: '123456',
+      default: "123456",
       select: false,
     },
     role: {
       type: String,
-      enum: ['student', 'council-officer', 'committee-officer', 'faculty'],
-      default: 'student',
+      enum: ["student", "council-officer", "committee-officer", "faculty"],
+      default: "student",
+    },
+    position: {
+      type: String,
+      default: null,
+    },
+    department: {
+      type: String,
+      default: null,
     },
     yearLevel: {
       type: Number,
@@ -84,7 +100,7 @@ const userSchema = new Schema<IUser>(
       isMember: { type: Boolean, default: false },
       membershipType: {
         type: String,
-        enum: ['local', 'regional', 'both', null],
+        enum: ["local", "regional", "both", null],
         default: null,
       },
       validUntil: Date,
@@ -99,7 +115,7 @@ const userSchema = new Schema<IUser>(
     },
     registeredBy: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
       default: null,
     },
     firstLogin: {
@@ -116,7 +132,7 @@ const userSchema = new Schema<IUser>(
 );
 
 // Virtual for full name
-userSchema.virtual('fullName').get(function (this: IUser) {
+userSchema.virtual("fullName").get(function (this: IUser) {
   if (this.middleName) {
     return `${this.firstName} ${this.middleName} ${this.lastName}`;
   }
@@ -124,36 +140,37 @@ userSchema.virtual('fullName').get(function (this: IUser) {
 });
 
 // Virtual for registeredBy name
-userSchema.virtual('registeredByName').get(function (this: IUser) {
-  if (this.registeredBy && typeof this.registeredBy === 'object') {
+userSchema.virtual("registeredByName").get(function (this: IUser) {
+  if (this.registeredBy && typeof this.registeredBy === "object") {
     const registrar = this.registeredBy as IUser;
     return registrar.fullName || `${registrar.firstName} ${registrar.lastName}`;
   }
-  return 'Self-registered';
+  return "Self-registered";
 });
 
 // Pre-save middleware to hash password
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-
 // Method to compare password
-userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+userSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Indexes
 // `unique: true` on studentNumber already creates an index — avoid duplicate index declarations
 userSchema.index({ role: 1 });
-userSchema.index({ 'membershipStatus.isMember': 1 });
-userSchema.index({ 'membershipStatus.membershipType': 1 });
+userSchema.index({ "membershipStatus.isMember": 1 });
+userSchema.index({ "membershipStatus.membershipType": 1 });
 userSchema.index({ createdAt: -1 });
 userSchema.index({ updatedAt: -1 });
 
-const User = mongoose.model<IUser, IUserModel>('User', userSchema);
+const User = mongoose.model<IUser, IUserModel>("User", userSchema);
 
 export default User;
