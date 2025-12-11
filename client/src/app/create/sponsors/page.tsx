@@ -48,7 +48,13 @@ export default function SponsorsPage() {
   const fetchSponsors = async () => {
     setIsLoadingList(true);
     try {
-      const data = await partnerService.getAll('sponsor');
+      // Fetch all sponsors without filtering by type 'sponsor' initially, 
+      // or ensure the backend returns everything if we don't pass a type.
+      // But partnerService.getAll('sponsor') passes type='sponsor'.
+      // If the user wants to see everything in the collection, we might need to relax this.
+      // However, we are now using the 'sponsors' collection, so everything there should be a sponsor.
+      // Let's try fetching without the type filter to be safe, or check if the backend handles it.
+      const data = await partnerService.getAll(); 
       setSponsors(data);
     } catch (error) {
       console.error("Failed to fetch sponsors:", error);
@@ -65,8 +71,18 @@ export default function SponsorsPage() {
   const handleEditClick = (item: Partner) => {
     setEditingId(item._id);
     setFormData({ name: item.name });
-    // Map description back to tab if it matches, otherwise default
-    if (item.description && tabs.includes(item.description)) {
+    
+    // Map tier/description back to tab
+    const tierMap: Record<string, string> = {
+        'platinum': 'Platinum Sponsor',
+        'gold': 'Gold Sponsor',
+        'silver': 'Silver Sponsor',
+        'bronze': 'Bronze Sponsor'
+    };
+
+    if (item.tier && tierMap[item.tier]) {
+        setActiveTab(tierMap[item.tier]);
+    } else if (item.description && tabs.includes(item.description)) {
       setActiveTab(item.description);
     } else {
       setActiveTab(tabs[0]);
@@ -133,11 +149,14 @@ export default function SponsorsPage() {
     setIsSubmitting(true);
 
     try {
+      const tier = activeTab.split(' ')[0].toLowerCase(); // "Platinum Sponsor" -> "platinum"
+
       if (editingId) {
         // Update
         const updated = await partnerService.update(editingId, {
           name: formData.name,
-          description: activeTab, // Storing Tier in description
+          tier: tier,
+          description: activeTab,
           logo: cover || undefined,
         });
         
@@ -155,7 +174,8 @@ export default function SponsorsPage() {
         const created = await partnerService.create({
           name: formData.name,
           type: 'sponsor',
-          description: activeTab, // Storing Tier in description
+          tier: tier,
+          description: activeTab,
           logo: cover,
         });
         
@@ -578,16 +598,16 @@ export default function SponsorsPage() {
                             <td className="px-6 py-4">
                               <span
                                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                  item.description?.includes("Platinum")
+                                  (item.tier === 'platinum' || item.description?.includes("Platinum"))
                                     ? "bg-slate-100 text-slate-700 border border-slate-300"
-                                    : item.description?.includes("Gold")
+                                    : (item.tier === 'gold' || item.description?.includes("Gold"))
                                     ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                                    : item.description?.includes("Silver")
+                                    : (item.tier === 'silver' || item.description?.includes("Silver"))
                                     ? "bg-gray-100 text-gray-600 border border-gray-200"
                                     : "bg-orange-50 text-orange-700 border border-orange-200"
                                 }`}
                               >
-                                {item.description || item.type}
+                                {item.tier ? item.tier.charAt(0).toUpperCase() + item.tier.slice(1) : item.description || "Bronze"}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">

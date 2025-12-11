@@ -7,7 +7,8 @@ export interface Partner {
   name: string;
   logo: string;
   type: 'sponsor' | 'partner';
-  description?: string; // Used for Tier (Platinum, Gold, etc.)
+  tier?: 'platinum' | 'gold' | 'silver' | 'bronze';
+  description?: string;
   website?: string;
   isActive: boolean;
   displayOrder: number;
@@ -18,6 +19,7 @@ export interface Partner {
 export interface CreatePartnerData {
   name: string;
   type: string;
+  tier?: string;
   description?: string;
   website?: string;
   logo: File;
@@ -26,6 +28,7 @@ export interface CreatePartnerData {
 export interface UpdatePartnerData {
   name?: string;
   type?: string;
+  tier?: string;
   description?: string;
   website?: string;
   logo?: File;
@@ -40,7 +43,7 @@ const getAuthHeader = () => {
 
 const partnerService = {
   getAll: async (type?: string) => {
-    const response = await axios.get<Partner[]>(`${API_URL}/partners`, {
+    const response = await axios.get<Partner[]>(`${API_URL}/sponsors`, {
       params: { type },
     });
     return response.data;
@@ -50,11 +53,12 @@ const partnerService = {
     const formData = new FormData();
     formData.append('name', data.name);
     formData.append('type', data.type);
+    if (data.tier) formData.append('tier', data.tier);
     if (data.description) formData.append('description', data.description);
     if (data.website) formData.append('website', data.website);
     formData.append('logo', data.logo);
 
-    const response = await axios.post<Partner>(`${API_URL}/partners`, formData, {
+    const response = await axios.post<Partner>(`${API_URL}/sponsors`, formData, {
       headers: {
         ...getAuthHeader(),
         'Content-Type': 'multipart/form-data',
@@ -67,13 +71,14 @@ const partnerService = {
     const formData = new FormData();
     if (data.name) formData.append('name', data.name);
     if (data.type) formData.append('type', data.type);
+    if (data.tier) formData.append('tier', data.tier);
     if (data.description) formData.append('description', data.description);
     if (data.website) formData.append('website', data.website);
     if (data.logo) formData.append('logo', data.logo);
     if (data.isActive !== undefined) formData.append('isActive', String(data.isActive));
     if (data.displayOrder !== undefined) formData.append('displayOrder', String(data.displayOrder));
 
-    const response = await axios.put<Partner>(`${API_URL}/partners/${id}`, formData, {
+    const response = await axios.put<Partner>(`${API_URL}/sponsors/${id}`, formData, {
       headers: {
         ...getAuthHeader(),
         'Content-Type': 'multipart/form-data',
@@ -83,7 +88,7 @@ const partnerService = {
   },
 
   delete: async (id: string) => {
-    const response = await axios.delete(`${API_URL}/partners/${id}`, {
+    const response = await axios.delete(`${API_URL}/sponsors/${id}`, {
       headers: getAuthHeader(),
     });
     return response.data;

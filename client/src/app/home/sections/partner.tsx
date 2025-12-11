@@ -64,7 +64,7 @@ export function PartnersSection() {
             id: p._id,
             name: p.name,
             logo: p.logo,
-            tier: (p.description?.toLowerCase() as Tier) || 'bronze'
+            tier: (p.tier as Tier) || (p.description?.toLowerCase() as Tier) || 'bronze'
             }));
             setPartners(mappedPartners);
         } else {

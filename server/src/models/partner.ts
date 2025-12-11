@@ -4,6 +4,7 @@ export interface IPartner extends Document {
   name: string;
   logo: string;
   type: 'sponsor' | 'partner';
+  tier?: 'platinum' | 'gold' | 'silver' | 'bronze';
   website?: string;
   description?: string;
   isActive: boolean;
@@ -27,6 +28,11 @@ const partnerSchema = new Schema<IPartner>(
       enum: ['sponsor', 'partner'],
       default: 'partner',
     },
+    tier: {
+      type: String,
+      enum: ['platinum', 'gold', 'silver', 'bronze'],
+      default: 'bronze',
+    },
     website: String,
     description: String,
     isActive: {
@@ -44,4 +50,4 @@ const partnerSchema = new Schema<IPartner>(
 // Indexes
 partnerSchema.index({ isActive: 1, displayOrder: 1 });
 
-export default mongoose.model<IPartner>('Partner', partnerSchema);
+export default mongoose.model<IPartner>('Sponsor', partnerSchema);

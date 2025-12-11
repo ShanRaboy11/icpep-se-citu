@@ -4,7 +4,7 @@ import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinary';
 
 export const createPartner = async (req: Request, res: Response) => {
   try {
-    const { name, type, description, website, displayOrder } = req.body;
+    const { name, type, tier, description, website, displayOrder } = req.body;
     const file = req.file;
 
     if (!file) {
@@ -17,7 +17,8 @@ export const createPartner = async (req: Request, res: Response) => {
       name,
       logo: uploadResult.secure_url,
       type: type || 'sponsor',
-      description, // We can use this for the "Tier" (Platinum, Gold, etc.)
+      tier: tier || 'bronze',
+      description,
       website,
       displayOrder: displayOrder ? parseInt(displayOrder) : 0,
     });
@@ -47,7 +48,7 @@ export const getPartners = async (req: Request, res: Response) => {
 export const updatePartner = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, type, description, website, displayOrder, isActive } = req.body;
+    const { name, type, tier, description, website, displayOrder, isActive } = req.body;
     const file = req.file;
 
     const partner = await Partner.findById(id);
@@ -66,6 +67,7 @@ export const updatePartner = async (req: Request, res: Response) => {
 
     if (name) partner.name = name;
     if (type) partner.type = type;
+    if (tier) partner.tier = tier;
     if (description) partner.description = description;
     if (website) partner.website = website;
     if (displayOrder !== undefined) partner.displayOrder = parseInt(displayOrder);

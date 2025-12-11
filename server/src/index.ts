@@ -228,7 +228,7 @@ app.get("/api", (req: Request, res: Response) => {
       "/api/notifications",
       "/api/officers",
       "/api/faculty",
-      "/api/partners",
+      "/api/sponsors",
       "/api/testimonials",
       "/api/faqs",
       "/api/availability",
@@ -242,7 +242,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/testimonials", testimonialRoutes);
-app.use("/api/partners", partnerRoutes);
+app.use("/api/sponsors", partnerRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/availability", availabilityRoutes);
 
