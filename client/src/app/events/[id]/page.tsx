@@ -39,6 +39,7 @@ interface RawEvent {
   description?: string;
   details?: unknown[];
   galleryImageUrls?: string[];
+  rsvpLink?: string;
 }
 
 export default function EventDetailPage() {
@@ -142,6 +143,7 @@ export default function EventDetailPage() {
             galleryImageUrls: Array.isArray(e.galleryImageUrls)
               ? e.galleryImageUrls
               : [],
+            rsvpLink: e.rsvpLink,
           };
 
           setRawEvent(transformed);
@@ -315,7 +317,7 @@ export default function EventDetailPage() {
                 mode={event.mode}
                 location={event.location}
               />
-              <RsvpCard status={event.status} date={event.date} />
+              <RsvpCard status={event.status} date={event.date} rsvpLink={event.rsvpLink} />
               <EventDetails
                 title={event.title}
                 description={event.description}

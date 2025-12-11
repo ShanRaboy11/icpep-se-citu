@@ -118,7 +118,7 @@ export default function RsvpCard({ status, date, rsvpLink }: Props) {
             onClick={handleRsvp}
             className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-bold py-4 rounded-xl transition-all text-lg sm:text-xl shadow-lg hover:shadow-primary1/40 transform hover:-translate-y-0.5 cursor-pointer"
           >
-            {rsvpLink ? "Register on External Site" : "RSVP Now"}
+            {rsvpLink ? "RSVP Now" : "RSVP Now"}
           </button>
           <div className="flex items-center justify-center gap-2 mt-4 text-sm font-raleway text-gray-600">
             <div className="flex -space-x-2">

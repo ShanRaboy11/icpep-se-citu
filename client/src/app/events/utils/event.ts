@@ -19,6 +19,7 @@ export interface Event {
     items: string[];
   }[];
   galleryImageUrls?: string[];
+  rsvpLink?: string;
 }
 
 // Sample data using the new structure
