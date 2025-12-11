@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import faqService from "../../services/faq";
 
 interface FAQ {
   question: string;
@@ -12,8 +13,8 @@ interface FAQ {
 export function FAQSection() {
   const router = useRouter();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-
-  const faqs: FAQ[] = [
+  
+  const staticFaqs: FAQ[] = [
     {
       question: "Lorem ipsum dolor sit amet consectetur adipiscing elit?",
       answer:
@@ -34,6 +35,24 @@ export function FAQSection() {
         "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
     },
   ];
+
+  const [faqs, setFaqs] = useState<FAQ[]>(staticFaqs);
+
+  useEffect(() => {
+    const fetchFAQs = async () => {
+      try {
+        const response = await faqService.getFAQs();
+        if (response.data && response.data.length > 0) {
+          setFaqs(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch FAQs:", error);
+        // Fallback to static FAQs is already handled by initial state
+      }
+    };
+
+    fetchFAQs();
+  }, []);
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
