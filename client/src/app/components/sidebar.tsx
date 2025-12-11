@@ -9,6 +9,7 @@ import {
   Handshake,
   ShoppingBag,
   Users,
+  FileText,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -45,6 +46,11 @@ const Sidebar = () => {
       name: "Officers",
       href: "/create/officers",
       icon: <Users size={20} />,
+    },
+    {
+      name: "Drafts",
+      href: "/drafts",
+      icon: <FileText size={20} />,
     },
   ];
 
