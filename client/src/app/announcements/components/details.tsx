@@ -18,6 +18,30 @@ interface AnnouncementDetailsProps {
   announcement?: AnnouncementLike | null;
 }
 
+const formatYearLevel = (year: string) => {
+  // If it already contains "Year", assume it's formatted or custom text
+  if (year.toLowerCase().includes("year")) return year;
+
+  const num = parseInt(year);
+  if (isNaN(num)) return year;
+
+  const suffix = (n: number) => {
+    if (n >= 11 && n <= 13) return "th";
+    switch (n % 10) {
+      case 1:
+        return "st";
+      case 2:
+        return "nd";
+      case 3:
+        return "rd";
+      default:
+        return "th";
+    }
+  };
+
+  return `${num}${suffix(num)} Year`;
+};
+
 export default function AnnouncementDetails({ announcement }: AnnouncementDetailsProps) {
   if (!announcement) return null;
 
@@ -91,7 +115,7 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
                   </h4>
                   {awardee.year && (
                     <span className="font-raleway text-xs bg-primary1 text-white px-3 py-1 rounded-full font-semibold">
-                      {awardee.year}
+                      {formatYearLevel(awardee.year)}
                     </span>
                   )}
                 </div>
