@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import AnnouncementDetails from "../components/details";
 import DetailsSidebar from "../components/info";
 import MeetingAttendanceCard from "../components/attendance-card";
@@ -59,11 +59,11 @@ const formatDate = (dateString: string): string => {
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return "Date not available";
-    
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   } catch {
     return "Date not available";
@@ -73,31 +73,31 @@ const formatDate = (dateString: string): string => {
 // Helper function to format time from 24h to 12h format
 const formatTime = (timeString: string | undefined): string => {
   if (!timeString) return "Time not specified";
-  
+
   try {
     // Handle time formats like "14:30" or "14:30:00"
-    const [hours, minutes] = timeString.split(':');
+    const [hours, minutes] = timeString.split(":");
     const hour = parseInt(hours, 10);
-    const min = minutes || '00';
-    
+    const min = minutes || "00";
+
     if (isNaN(hour)) return timeString;
-    
-    const period = hour >= 12 ? 'PM' : 'AM';
+
+    const period = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
-    
+
     return `${displayHour}:${min} ${period}`;
   } catch {
     return timeString;
   }
 };
 
-export default function AnnouncementDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function AnnouncementDetailPage() {
+  const params = useParams();
+  const id = params?.id as string;
   const [showFullAttendance, setShowFullAttendance] = useState(false);
-  const [announcement, setAnnouncement] = useState<RawAnnouncement | null>(null);
+  const [announcement, setAnnouncement] = useState<RawAnnouncement | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -109,7 +109,7 @@ export default function AnnouncementDetailPage({
         setLoading(true);
         setError(null);
 
-        const response = await announcementService.getAnnouncementById(params.id);
+        const response = await announcementService.getAnnouncementById(id);
 
         if (response.success && response.data) {
           setAnnouncement(response.data as RawAnnouncement);
@@ -124,10 +124,10 @@ export default function AnnouncementDetailPage({
       }
     };
 
-    if (params.id) {
+    if (id) {
       fetchAnnouncement();
     }
-  }, [params.id]);
+  }, [id]);
 
   const handleBack = () => {
     router.push("/announcements");
@@ -196,27 +196,37 @@ export default function AnnouncementDetailPage({
   // Map RawAnnouncement to the UI Announcement shape expected by shared components
   let utilAnnouncement: UtilAnnouncement | undefined = undefined;
   if (announcement) {
-    const typeKey = (announcement.type || '').toLowerCase();
-    const mappedType: UtilAnnouncement['type'] =
-      typeKey === 'meeting' ? 'Meeting' : typeKey === 'achievement' ? 'Achievement' : 'News';
+    const typeKey = (announcement.type || "").toLowerCase();
+    const mappedType: UtilAnnouncement["type"] =
+      typeKey === "meeting"
+        ? "Meeting"
+        : typeKey === "achievement"
+        ? "Achievement"
+        : "News";
 
-    const organizerStr = typeof announcement.organizer === 'string'
-      ? announcement.organizer
-      : (announcement.organizer && typeof announcement.organizer === 'object')
-        ? String((announcement.organizer as Record<string, unknown>).name ?? '')
-        : '';
+    const organizerStr =
+      typeof announcement.organizer === "string"
+        ? announcement.organizer
+        : announcement.organizer && typeof announcement.organizer === "object"
+        ? String((announcement.organizer as Record<string, unknown>).name ?? "")
+        : "";
 
     utilAnnouncement = {
-      id: announcement._id || announcement.id || '',
+      id: announcement._id || announcement.id || "",
       title: announcement.title,
       description: announcement.description,
-      date: announcement.publishDate || announcement.date || new Date().toISOString(),
+      date:
+        announcement.publishDate ||
+        announcement.date ||
+        new Date().toISOString(),
       type: mappedType,
       imageUrl: imageUrl,
-      galleryImageUrls: Array.isArray(announcement.galleryImages) ? announcement.galleryImages : [],
+      galleryImageUrls: Array.isArray(announcement.galleryImages)
+        ? announcement.galleryImages
+        : [],
       time: announcement.time,
       location: announcement.location,
-  organizer: organizerStr,
+      organizer: organizerStr,
       attendees: announcement.attendees,
       agenda: announcement.agenda,
       awardees: announcement.awardees,

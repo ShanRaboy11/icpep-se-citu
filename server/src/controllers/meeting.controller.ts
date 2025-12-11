@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import Meeting, { IMeeting } from "../models/meeting";
+import { sendBulkNotifications } from "../utils/notification";
+import OfficersHistory from "../models/officers_history";
+import Availability from "../models/availability";
 
 interface CreateMeetingBody {
   title: string;
@@ -63,6 +66,48 @@ export const createMeeting = async (
     });
 
     await meeting.populate("createdBy", "firstName lastName studentNumber");
+
+    // Notify officers of the included departments
+    if (departments && departments.length > 0) {
+      // Find current officers history
+      const currentOfficersHistory = await OfficersHistory.findOne({
+        isCurrent: true,
+      });
+
+      if (currentOfficersHistory) {
+        // Filter officers belonging to the target departments
+        const officersToNotify = currentOfficersHistory.officers
+          .filter((officer) => departments.includes(officer.department))
+          .map((officer) => officer.user);
+
+        if (officersToNotify.length > 0) {
+          // Create empty availability records for these officers
+          const availabilityRecords = officersToNotify.map((userId) => ({
+            meeting: meeting._id,
+            user: userId,
+            slots: [], // Empty slots means pending/not submitted
+          }));
+
+          try {
+            await Availability.insertMany(availabilityRecords);
+            console.log(
+              `✅ Created ${availabilityRecords.length} availability records.`
+            );
+          } catch (err) {
+            console.error("Error creating availability records:", err);
+          }
+
+          await sendBulkNotifications(
+            officersToNotify,
+            `[COMMEET] Availability Request`,
+            `Please add your availability schedule for the meeting: ${title}. Status: Pending`,
+            "system",
+            meeting._id,
+            null
+          );
+        }
+      }
+    }
 
     res
       .status(201)

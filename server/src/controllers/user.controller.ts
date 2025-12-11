@@ -1,6 +1,7 @@
-import { Request, Response } from 'express';
-import User, { IUser } from '../models/user';
-import mongoose from 'mongoose';
+import { Request, Response } from "express";
+import User, { IUser } from "../models/user";
+import mongoose from "mongoose";
+import { sendNotification } from "../utils/notification";
 
 // Interface for request with authenticated user
 export interface AuthRequest extends Request {
@@ -12,40 +13,43 @@ export interface AuthRequest extends Request {
 }
 
 // Get all users with filtering and sorting
-export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
+export const getAllUsers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const {
       role,
       membershipType,
       isActive,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-      page = '1',
-      limit = '50',
+      sortBy = "createdAt",
+      sortOrder = "desc",
+      page = "1",
+      limit = "50",
     } = req.query;
 
     // Build filter object
     const filter: any = {};
-    
-    if (role && role !== 'all') {
+
+    if (role && role !== "all") {
       filter.role = role;
     }
-    
-    if (membershipType && membershipType !== 'all') {
-      if (membershipType === 'non-member') {
-        filter['membershipStatus.isMember'] = false;
+
+    if (membershipType && membershipType !== "all") {
+      if (membershipType === "non-member") {
+        filter["membershipStatus.isMember"] = false;
       } else {
-        filter['membershipStatus.membershipType'] = membershipType;
+        filter["membershipStatus.membershipType"] = membershipType;
       }
     }
-    
+
     if (isActive !== undefined) {
-      filter.isActive = isActive === 'true';
+      filter.isActive = isActive === "true";
     }
 
     // Build sort object
     const sort: any = {};
-    sort[sortBy as string] = sortOrder === 'asc' ? 1 : -1;
+    sort[sortBy as string] = sortOrder === "asc" ? 1 : -1;
 
     // Pagination
     const pageNum = parseInt(page as string);
@@ -54,7 +58,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
 
     // Execute query
     const users = await User.find(filter)
-      .populate('registeredBy', 'firstName lastName middleName')
+      .populate("registeredBy", "firstName lastName middleName")
       .sort(sort)
       .skip(skip)
       .limit(limitNum)
@@ -76,31 +80,37 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: 'Error fetching users',
+      message: "Error fetching users",
       error: error.message,
     });
   }
 };
 
 // Get single user by ID
-export const getUserById = async (req: Request, res: Response): Promise<void> => {
+export const getUserById = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({
         success: false,
-        message: 'Invalid user ID',
+        message: "Invalid user ID",
       });
       return;
     }
 
-    const user = await User.findById(id).populate('registeredBy', 'firstName lastName middleName');
+    const user = await User.findById(id).populate(
+      "registeredBy",
+      "firstName lastName middleName"
+    );
 
     if (!user) {
       res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: "User not found",
       });
       return;
     }
@@ -112,44 +122,52 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: 'Error fetching user',
+      message: "Error fetching user",
       error: error.message,
     });
   }
 };
 
 // Create new user
-export const createUser = async (req: AuthRequest, res: Response): Promise<void> => {
+export const createUser = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
   try {
     const {
       studentNumber,
       lastName,
       firstName,
       middleName,
-      password = '123456',
-      role = 'student',
+      password = "123456",
+      role = "student",
       yearLevel,
       membershipStatus,
     } = req.body;
 
-    console.log('📝 CREATE USER - req.user:', req.user);
-    console.log('📝 CREATE USER - membershipStatus received:', membershipStatus);
+    console.log("📝 CREATE USER - req.user:", req.user);
+    console.log(
+      "📝 CREATE USER - membershipStatus received:",
+      membershipStatus
+    );
 
     // Validation
     if (!studentNumber || !lastName || !firstName) {
       res.status(400).json({
         success: false,
-        message: 'Student number, first name, and last name are required',
+        message: "Student number, first name, and last name are required",
       });
       return;
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ studentNumber: studentNumber.toUpperCase() });
+    const existingUser = await User.findOne({
+      studentNumber: studentNumber.toUpperCase(),
+    });
     if (existingUser) {
       res.status(409).json({
         success: false,
-        message: 'User with this student number already exists',
+        message: "User with this student number already exists",
       });
       return;
     }
@@ -157,39 +175,39 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
     // ✅ NEW: Handle membership status - supports both string and object formats
     let membershipStatusObj: {
       isMember: boolean;
-      membershipType: 'local' | 'regional' | 'both' | null;
+      membershipType: "local" | "regional" | "both" | null;
     } = {
       isMember: false,
       membershipType: null,
     };
 
     // Check if membershipStatus is already an object (from Excel upload)
-    if (membershipStatus && typeof membershipStatus === 'object') {
+    if (membershipStatus && typeof membershipStatus === "object") {
       membershipStatusObj = {
         isMember: membershipStatus.isMember || false,
         membershipType: membershipStatus.membershipType || null,
       };
-    } 
+    }
     // Handle string format (from manual add form)
-    else if (membershipStatus && typeof membershipStatus === 'string') {
+    else if (membershipStatus && typeof membershipStatus === "string") {
       const statusLower = membershipStatus.toLowerCase();
-      
-      if (statusLower === 'local') {
+
+      if (statusLower === "local") {
         membershipStatusObj = {
           isMember: true,
-          membershipType: 'local',
+          membershipType: "local",
         };
-      } else if (statusLower === 'regional') {
+      } else if (statusLower === "regional") {
         membershipStatusObj = {
           isMember: true,
-          membershipType: 'regional',
+          membershipType: "regional",
         };
-      } else if (statusLower === 'both') {
+      } else if (statusLower === "both") {
         membershipStatusObj = {
           isMember: true,
-          membershipType: 'both',
+          membershipType: "both",
         };
-      } else if (statusLower === 'member') {
+      } else if (statusLower === "member") {
         membershipStatusObj = {
           isMember: true,
           membershipType: null, // Generic member without specific type
@@ -198,7 +216,7 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
       // 'non-member' or any other value defaults to the initial values
     }
 
-    console.log('✅ Processed membershipStatus:', membershipStatusObj);
+    console.log("✅ Processed membershipStatus:", membershipStatusObj);
 
     // Create user
     const newUser = await User.create({
@@ -214,38 +232,41 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
     });
 
     // Populate registeredBy before sending response
-    await newUser.populate('registeredBy', 'firstName lastName middleName');
+    await newUser.populate("registeredBy", "firstName lastName middleName");
 
     res.status(201).json({
       success: true,
-      message: 'User created successfully',
+      message: "User created successfully",
       data: newUser,
     });
   } catch (error: any) {
-    console.error('Create user error:', error);
+    console.error("Create user error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error creating user',
+      message: "Error creating user",
       error: error.message,
     });
   }
 };
 
 // Bulk upload users
-export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<void> => {
+export const bulkUploadUsers = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
   try {
     const { users } = req.body;
 
     if (!Array.isArray(users) || users.length === 0) {
       res.status(400).json({
         success: false,
-        message: 'Users array is required',
+        message: "Users array is required",
       });
       return;
     }
 
     console.log(`📦 Processing bulk upload of ${users.length} users...`);
-    console.log('📦 BULK UPLOAD - req.user:', req.user);
+    console.log("📦 BULK UPLOAD - req.user:", req.user);
 
     interface SuccessResult {
       studentNumber: string;
@@ -270,10 +291,15 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
     for (const userData of users) {
       try {
         // Validate required fields
-        if (!userData.studentNumber || !userData.firstName || !userData.lastName) {
+        if (
+          !userData.studentNumber ||
+          !userData.firstName ||
+          !userData.lastName
+        ) {
           results.failed.push({
-            studentNumber: userData.studentNumber || 'UNKNOWN',
-            reason: 'Missing required fields (studentNumber, firstName, lastName)',
+            studentNumber: userData.studentNumber || "UNKNOWN",
+            reason:
+              "Missing required fields (studentNumber, firstName, lastName)",
             data: userData,
           });
           continue;
@@ -287,7 +313,7 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
         if (existingUser) {
           results.failed.push({
             studentNumber: userData.studentNumber,
-            reason: 'User with this student number already exists',
+            reason: "User with this student number already exists",
             data: userData,
           });
           continue;
@@ -296,39 +322,45 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
         // ✅ NEW: Handle membership status - supports both string and object formats
         let membershipStatusObj: {
           isMember: boolean;
-          membershipType: 'local' | 'regional' | 'both' | null;
+          membershipType: "local" | "regional" | "both" | null;
         } = {
           isMember: false,
           membershipType: null,
         };
 
         // Check if membershipStatus is already an object (from frontend processing)
-        if (userData.membershipStatus && typeof userData.membershipStatus === 'object') {
+        if (
+          userData.membershipStatus &&
+          typeof userData.membershipStatus === "object"
+        ) {
           membershipStatusObj = {
             isMember: userData.membershipStatus.isMember || false,
             membershipType: userData.membershipStatus.membershipType || null,
           };
-        } 
+        }
         // Handle string format (from Excel file)
-        else if (userData.membershipStatus && typeof userData.membershipStatus === 'string') {
+        else if (
+          userData.membershipStatus &&
+          typeof userData.membershipStatus === "string"
+        ) {
           const statusLower = userData.membershipStatus.toLowerCase().trim();
 
-          if (statusLower === 'local') {
+          if (statusLower === "local") {
             membershipStatusObj = {
               isMember: true,
-              membershipType: 'local',
+              membershipType: "local",
             };
-          } else if (statusLower === 'regional') {
+          } else if (statusLower === "regional") {
             membershipStatusObj = {
               isMember: true,
-              membershipType: 'regional',
+              membershipType: "regional",
             };
-          } else if (statusLower === 'both') {
+          } else if (statusLower === "both") {
             membershipStatusObj = {
               isMember: true,
-              membershipType: 'both',
+              membershipType: "both",
             };
-          } else if (statusLower === 'member') {
+          } else if (statusLower === "member") {
             membershipStatusObj = {
               isMember: true,
               membershipType: null, // Generic member
@@ -343,8 +375,8 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
           lastName: userData.lastName,
           firstName: userData.firstName,
           middleName: userData.middleName || null,
-          password: userData.password || '123456',
-          role: userData.role || 'student',
+          password: userData.password || "123456",
+          role: userData.role || "student",
           yearLevel: userData.yearLevel || null,
           membershipStatus: membershipStatusObj,
           registeredBy: req.user?.id || null,
@@ -356,19 +388,26 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
           id: newUser._id.toString(),
         });
 
-        console.log(`✅ Created user: ${newUser.fullName} (${newUser.studentNumber}) - Member: ${membershipStatusObj.isMember}, Type: ${membershipStatusObj.membershipType}`);
+        console.log(
+          `✅ Created user: ${newUser.fullName} (${newUser.studentNumber}) - Member: ${membershipStatusObj.isMember}, Type: ${membershipStatusObj.membershipType}`
+        );
       } catch (error: any) {
-        console.error(`❌ Failed to create user ${userData.studentNumber}:`, error.message);
-        
+        console.error(
+          `❌ Failed to create user ${userData.studentNumber}:`,
+          error.message
+        );
+
         results.failed.push({
-          studentNumber: userData.studentNumber || 'UNKNOWN',
-          reason: error.message || 'Unknown error occurred',
+          studentNumber: userData.studentNumber || "UNKNOWN",
+          reason: error.message || "Unknown error occurred",
           data: userData,
         });
       }
     }
 
-    console.log(`✅ Bulk upload complete: ${results.success.length} succeeded, ${results.failed.length} failed`);
+    console.log(
+      `✅ Bulk upload complete: ${results.success.length} succeeded, ${results.failed.length} failed`
+    );
 
     res.status(201).json({
       success: true,
@@ -376,17 +415,20 @@ export const bulkUploadUsers = async (req: AuthRequest, res: Response): Promise<
       data: results,
     });
   } catch (error: any) {
-    console.error('❌ Bulk upload error:', error);
+    console.error("❌ Bulk upload error:", error);
     res.status(500).json({
       success: false,
-      message: 'Error during bulk upload',
+      message: "Error during bulk upload",
       error: error.message,
     });
   }
 };
 
 // Update user
-export const updateUser = async (req: Request, res: Response): Promise<void> => {
+export const updateUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
     const updates = req.body;
@@ -394,7 +436,17 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({
         success: false,
-        message: 'Invalid user ID',
+        message: "Invalid user ID",
+      });
+      return;
+    }
+
+    // Fetch original user to compare changes
+    const originalUser = await User.findById(id);
+    if (!originalUser) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
       });
       return;
     }
@@ -404,44 +456,107 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     delete updates.registeredBy;
 
     // If updating password, it will be hashed by pre-save middleware
-    
+
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { ...updates, updatedAt: new Date() },
       { new: true, runValidators: true }
-    ).populate('registeredBy', 'firstName lastName middleName');
+    ).populate("registeredBy", "firstName lastName middleName");
 
     if (!updatedUser) {
       res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: "User not found",
       });
       return;
     }
 
+    // Notification Logic
+    // 1. Membership Notification
+    // Check if membership status is being updated and the user is a member
+    if (updates.membershipStatus && updatedUser.membershipStatus.isMember) {
+      const isNewMember = !originalUser.membershipStatus.isMember;
+
+      await sendNotification(
+        updatedUser._id,
+        isNewMember
+          ? "[MEMBERSHIP] Welcome to ICPEP-SE!"
+          : "[MEMBERSHIP] Membership Updated",
+        isNewMember
+          ? "Your membership status has been updated to Member."
+          : `Your membership details have been updated. Type: ${updatedUser.membershipStatus.membershipType}`,
+        "membership",
+        updatedUser._id,
+        "Membership" as any
+      );
+    }
+
+    // 2. Profile Update
+    if (updates.password) {
+      await sendNotification(
+        updatedUser._id,
+        "[PROFILE] Password Updated",
+        "Your password has been successfully updated.",
+        "system",
+        updatedUser._id,
+        null
+      );
+    } else {
+      const profileFields = [
+        "firstName",
+        "lastName",
+        "middleName",
+        "studentNumber",
+        "yearLevel",
+        "email",
+        "profilePicture",
+      ];
+      const changedFields = profileFields.filter(
+        (field) =>
+          updates[field] !== undefined &&
+          updates[field] !== (originalUser as any)[field]
+      );
+
+      if (changedFields.length > 0) {
+        await sendNotification(
+          updatedUser._id,
+          "[PROFILE] Profile Updated",
+          `Your profile information (${changedFields.join(
+            ", "
+          )}) has been updated.`,
+          "system",
+          updatedUser._id,
+          null
+        );
+      }
+    }
+
     res.status(200).json({
       success: true,
-      message: 'User updated successfully',
+      message: "User updated successfully",
       data: updatedUser,
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: 'Error updating user',
+      message: "Error updating user",
       error: error.message,
     });
   }
 };
 
 // Toggle user active status
-export const toggleUserStatus = async (req: Request, res: Response): Promise<void> => {
+export const toggleUserStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({
         success: false,
-        message: 'Invalid user ID',
+        message: "Invalid user ID",
       });
       return;
     }
@@ -451,7 +566,7 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
     if (!user) {
       res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: "User not found",
       });
       return;
     }
@@ -459,31 +574,36 @@ export const toggleUserStatus = async (req: Request, res: Response): Promise<voi
     user.isActive = !user.isActive;
     await user.save();
 
-    await user.populate('registeredBy', 'firstName lastName middleName');
+    await user.populate("registeredBy", "firstName lastName middleName");
 
     res.status(200).json({
       success: true,
-      message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+      message: `User ${
+        user.isActive ? "activated" : "deactivated"
+      } successfully`,
       data: user,
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: 'Error toggling user status',
+      message: "Error toggling user status",
       error: error.message,
     });
   }
 };
 
 // Delete user
-export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+export const deleteUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({
         success: false,
-        message: 'Invalid user ID',
+        message: "Invalid user ID",
       });
       return;
     }
@@ -493,40 +613,53 @@ export const deleteUser = async (req: Request, res: Response): Promise<void> => 
     if (!deletedUser) {
       res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: "User not found",
       });
       return;
     }
 
     res.status(200).json({
       success: true,
-      message: 'User deleted successfully',
+      message: "User deleted successfully",
       data: { id },
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: 'Error deleting user',
+      message: "Error deleting user",
       error: error.message,
     });
   }
 };
 
 // Get user statistics
-export const getUserStats = async (req: Request, res: Response): Promise<void> => {
+export const getUserStats = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const totalUsers = await User.countDocuments();
     const activeUsers = await User.countDocuments({ isActive: true });
-    const members = await User.countDocuments({ 'membershipStatus.isMember': true });
-    const localMembers = await User.countDocuments({ 'membershipStatus.membershipType': 'local' });
-    const regionalMembers = await User.countDocuments({ 'membershipStatus.membershipType': 'regional' });
-    const bothMembers = await User.countDocuments({ 'membershipStatus.membershipType': 'both' });
-    const nonMembers = await User.countDocuments({ 'membershipStatus.isMember': false });
-    
+    const members = await User.countDocuments({
+      "membershipStatus.isMember": true,
+    });
+    const localMembers = await User.countDocuments({
+      "membershipStatus.membershipType": "local",
+    });
+    const regionalMembers = await User.countDocuments({
+      "membershipStatus.membershipType": "regional",
+    });
+    const bothMembers = await User.countDocuments({
+      "membershipStatus.membershipType": "both",
+    });
+    const nonMembers = await User.countDocuments({
+      "membershipStatus.isMember": false,
+    });
+
     const roleStats = await User.aggregate([
       {
         $group: {
-          _id: '$role',
+          _id: "$role",
           count: { $sum: 1 },
         },
       },
@@ -535,7 +668,7 @@ export const getUserStats = async (req: Request, res: Response): Promise<void> =
     const yearLevelStats = await User.aggregate([
       {
         $group: {
-          _id: '$yearLevel',
+          _id: "$yearLevel",
           count: { $sum: 1 },
         },
       },
@@ -564,26 +697,29 @@ export const getUserStats = async (req: Request, res: Response): Promise<void> =
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: 'Error fetching user statistics',
+      message: "Error fetching user statistics",
       error: error.message,
     });
   }
 };
 
 // Search users
-export const searchUsers = async (req: Request, res: Response): Promise<void> => {
+export const searchUsers = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { query } = req.query;
 
     if (!query) {
       res.status(400).json({
         success: false,
-        message: 'Search query is required',
+        message: "Search query is required",
       });
       return;
     }
 
-    const searchRegex = new RegExp(query as string, 'i');
+    const searchRegex = new RegExp(query as string, "i");
 
     const users = await User.find({
       $or: [
@@ -593,7 +729,7 @@ export const searchUsers = async (req: Request, res: Response): Promise<void> =>
         { middleName: searchRegex },
       ],
     })
-      .populate('registeredBy', 'firstName lastName middleName')
+      .populate("registeredBy", "firstName lastName middleName")
       .limit(20);
 
     res.status(200).json({
@@ -603,7 +739,7 @@ export const searchUsers = async (req: Request, res: Response): Promise<void> =>
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: 'Error searching users',
+      message: "Error searching users",
       error: error.message,
     });
   }

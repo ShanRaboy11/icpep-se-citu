@@ -12,13 +12,14 @@ export default function DevelopersPage() {
       desc: "Designer",
       imageSrc: "/eupinado.png",
       bgSrc: "/bg-mai.png",
+      imageClassName: "scale-[0.95] origin-bottom",
       details: [
         "3rd Year Batch Representative, 6th Administration",
         "Head of Training and Seminar Committee, 6th Administration",
         "UI/UX Designer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
       githubLink: "https://github.com/Cayla07",
-      portfolioLink: "#", // actual portfolio link here
+      portfolioLink: "#",
     },
     {
       name: "Gio Christian D. Macatual",
@@ -32,7 +33,7 @@ export default function DevelopersPage() {
         "Frontend Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
       githubLink: "https://github.com/WATRM3LON",
-      portfolioLink: "#", // actual portfolio link here
+      portfolioLink: "#",
     },
     {
       name: "Shan Michael V. Raboy",
@@ -47,7 +48,7 @@ export default function DevelopersPage() {
         "Backend Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
       githubLink: "https://github.com/ShanRaboy11",
-      portfolioLink: "#", // actual portfolio link here
+      portfolioLink: "#",
     },
     {
       name: "Trixie T. Dolera",
@@ -55,6 +56,7 @@ export default function DevelopersPage() {
       desc: "Developer",
       imageSrc: "/dolera.png",
       bgSrc: "/bg-rexi.png",
+      imageClassName: "scale-[1.095] origin-bottom",
       details: [
         "Public Relations Officer, 6th Administration",
         "Asst. Head of Public Relations Committee, 6th Administration",
@@ -62,7 +64,7 @@ export default function DevelopersPage() {
         "Fullstack Developer of the ICPEP.SE CIT-U Chapter Official Website",
       ],
       githubLink: "https://github.com/nsfw-syntaxia",
-      portfolioLink: "#", // actual portfolio link here
+      portfolioLink: "#",
     },
   ];
 

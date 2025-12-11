@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  
   // Allow builds to proceed in environments (like Vercel) where lint rules
   // should not block the production build. Prefer fixing the lint warnings
   // long-term; this is a temporary measure to unblock deployment.
@@ -26,6 +25,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "i.pravatar.cc",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
       },
     ],
   },

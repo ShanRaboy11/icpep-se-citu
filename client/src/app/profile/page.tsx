@@ -259,7 +259,7 @@ export default function ProfilePage() {
                   {/* YEAR LEVEL - ADJUSTED SIZE */}
                   <p className="text-base sm:text-lg font-raleway font-semibold text-cyan-50 tracking-wide drop-shadow-md">
                     {loading ? (
-                      <div className="h-5 w-24 bg-white/20 rounded-lg animate-pulse" />
+                      <span className="inline-block h-5 w-24 bg-white/20 rounded-lg animate-pulse" />
                     ) : (
                       formatYearLevel(user?.yearLevel)
                     )}

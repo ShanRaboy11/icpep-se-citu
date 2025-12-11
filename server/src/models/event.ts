@@ -1,161 +1,169 @@
-import mongoose, { Schema, Document, Model } from 'mongoose';
+import mongoose, { Schema, Document, Model } from "mongoose";
 
 // Interface for Admission
 interface IAdmission {
-    category: string;
-    price: string;
+  category: string;
+  price: string;
 }
 
-const admissionSchema = new Schema<IAdmission>({
+const admissionSchema = new Schema<IAdmission>(
+  {
     category: { type: String, required: true },
     price: { type: String, required: true },
-}, { _id: false });
+  },
+  { _id: false }
+);
 
 // Interface for Event Document
 export interface IEvent extends Document {
-    title: string;
-    description: string;
-    content: string;
-    author: mongoose.Types.ObjectId;
-    tags?: string[];
-    priority?: 'normal' | 'important' | 'urgent';
-    targetAudience?: ('all' | 'members' | 'officers' | 'faculty')[];
-    isPublished?: boolean;
-    scheduled?: boolean;
-    publishDate?: Date;
-    expiryDate?: Date;
-    // Event specific fields
-    eventDate: Date;
-    details?: { title: string; items: string[] }[];
-    time?: string;
-    location?: string;
-    organizer?: string;
-    contact?: string;
-    rsvpLink?: string;
-    admissions?: IAdmission[];
-    registrationRequired?: boolean;
-    registrationStart?: Date;
-    registrationEnd?: Date;
-    // Media
-    coverImage?: string | null;
-    galleryImages?: string[];
-    views?: number;
-    // Mode: Online or Onsite
-    mode?: 'Online' | 'Onsite';
-    // Virtuals
-    isExpired: boolean;
-    formattedDate: string;
-    // Methods
-    incrementViews(): Promise<this>;
+  title: string;
+  description: string;
+  content: string;
+  author: mongoose.Types.ObjectId;
+  tags?: string[];
+  priority?: "normal" | "important" | "urgent";
+  targetAudience?: ("all" | "members" | "officers" | "faculty")[];
+  isPublished?: boolean;
+  scheduled?: boolean;
+  publishDate?: Date;
+  expiryDate?: Date;
+  // Event specific fields
+  eventDate: Date;
+  details?: { title: string; items: string[] }[];
+  time?: string;
+  location?: string;
+  organizer?: string;
+  contact?: string;
+  rsvpLink?: string;
+  admissions?: IAdmission[];
+  registrationRequired?: boolean;
+  registrationStart?: Date;
+  registrationEnd?: Date;
+  // Media
+  coverImage?: string | null;
+  galleryImages?: string[];
+  views?: number;
+  // Mode: Online or Onsite
+  mode?: "Online" | "Onsite";
+  // Virtuals
+  isExpired: boolean;
+  formattedDate: string;
+  createdAt: Date;
+  updatedAt: Date;
+  // Methods
+  incrementViews(): Promise<this>;
 }
 
-const eventSchema = new Schema<IEvent>({
+const eventSchema = new Schema<IEvent>(
+  {
     title: {
-        type: String,
-        required: [true, 'Title is required'],
-        trim: true,
+      type: String,
+      required: [true, "Title is required"],
+      trim: true,
     },
     description: {
-        type: String,
-        required: [true, 'Description is required'],
-        maxlength: [300, 'Description cannot exceed 300 characters'],
+      type: String,
+      required: [true, "Description is required"],
+      maxlength: [300, "Description cannot exceed 300 characters"],
     },
     content: {
-        type: String,
-        required: [true, 'Content is required'],
+      type: String,
+      required: [true, "Content is required"],
     },
     author: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     tags: [String],
     priority: {
-        type: String,
-        enum: ['normal', 'important', 'urgent'],
-        default: 'normal',
+      type: String,
+      enum: ["normal", "important", "urgent"],
+      default: "normal",
     },
     targetAudience: [
-        {
-            type: String,
-            enum: ['all', 'members', 'officers', 'faculty'],
-            default: 'all',
-        },
+      {
+        type: String,
+        enum: ["all", "members", "officers", "faculty"],
+        default: "all",
+      },
     ],
     isPublished: {
-        type: Boolean,
-        default: false,
+      type: Boolean,
+      default: false,
     },
     scheduled: {
-        type: Boolean,
-        default: false,
+      type: Boolean,
+      default: false,
     },
     publishDate: {
-        type: Date,
-        default: Date.now,
+      type: Date,
+      default: Date.now,
     },
     expiryDate: Date,
     // Event specific fields
     eventDate: {
-        type: Date,
-        required: [true, 'Event date is required'],
+      type: Date,
+      required: [true, "Event date is required"],
     },
     time: {
-        type: String,
-        trim: true,
+      type: String,
+      trim: true,
     },
     // Online / Onsite mode
     mode: {
-        type: String,
-        enum: ['Online', 'Onsite'],
-        default: 'Onsite',
+      type: String,
+      enum: ["Online", "Onsite"],
+      default: "Onsite",
     },
     location: {
-        type: String,
-        trim: true,
+      type: String,
+      trim: true,
     },
     organizer: {
-        type: String,
-        trim: true,
+      type: String,
+      trim: true,
     },
     contact: {
-        type: String,
-        trim: true,
+      type: String,
+      trim: true,
     },
     rsvpLink: {
-        type: String,
-        trim: true,
+      type: String,
+      trim: true,
     },
     admissions: [admissionSchema],
     registrationRequired: {
-        type: Boolean,
-        default: false,
+      type: Boolean,
+      default: false,
     },
     registrationStart: Date,
     registrationEnd: Date,
     // Media
     coverImage: {
-        type: String,
-        default: null,
+      type: String,
+      default: null,
     },
     views: {
-        type: Number,
-        default: 0,
+      type: Number,
+      default: 0,
     },
     galleryImages: {
-        type: [String],
-        default: [],
+      type: [String],
+      default: [],
     },
     details: {
-        type: [
-            {
-                title: { type: String, trim: true },
-                items: { type: [String], default: [] },
-            },
-        ],
-        default: [],
+      type: [
+        {
+          title: { type: String, trim: true },
+          items: { type: [String], default: [] },
+        },
+      ],
+      default: [],
     },
-}, { timestamps: true });
+  },
+  { timestamps: true }
+);
 
 // Indexes
 eventSchema.index({ eventDate: -1 });
@@ -165,26 +173,28 @@ eventSchema.index({ tags: 1 });
 eventSchema.index({ targetAudience: 1 });
 
 // Virtual to check if event is expired
-eventSchema.virtual('isExpired').get(function (this: IEvent) {
-    if (!this.expiryDate) return false;
-    return new Date() > this.expiryDate;
+eventSchema.virtual("isExpired").get(function (this: IEvent) {
+  if (!this.expiryDate) return false;
+  return new Date() > this.expiryDate;
 });
 
 // Virtual to format date
-eventSchema.virtual('formattedDate').get(function (this: IEvent) {
-    return this.eventDate?.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    }) || '';
+eventSchema.virtual("formattedDate").get(function (this: IEvent) {
+  return (
+    this.eventDate?.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }) || ""
+  );
 });
 
 // Method to increment views
 eventSchema.methods.incrementViews = function (this: IEvent): Promise<IEvent> {
-    this.views = (this.views || 0) + 1;
-    return this.save();
+  this.views = (this.views || 0) + 1;
+  return this.save();
 };
 
-const Event: Model<IEvent> = mongoose.model<IEvent>('Event', eventSchema);
+const Event: Model<IEvent> = mongoose.model<IEvent>("Event", eventSchema);
 
 export default Event;
