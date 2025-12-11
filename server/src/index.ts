@@ -17,6 +17,7 @@ import sponsorRoutes from "./routes/sponsor.routes";
 import meetingRoutes from "./routes/meeting.routes";
 import availabilityRoutes from "./routes/availability.routes";
 import merchRoutes from "./routes/merch.routes";
+import faqRoutes from "./routes/faq.routes";
 import notificationRoutes from "./routes/notification.routes";
 import startAnnouncementScheduler from "./utils/scheduler";
 
@@ -248,6 +249,7 @@ app.use("/api/sponsors", sponsorRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/availability", availabilityRoutes);
 app.use("/api/merch", merchRoutes);
+app.use("/api/faqs", faqRoutes);
 app.use("/api/notifications", notificationRoutes);
 
 app.get("/api/debug/env", (req: Request, res: Response) => {

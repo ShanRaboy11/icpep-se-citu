@@ -18,6 +18,30 @@ interface AnnouncementDetailsProps {
   announcement?: AnnouncementLike | null;
 }
 
+const formatYearLevel = (year: string) => {
+  // If it already contains "Year", assume it's formatted or custom text
+  if (year.toLowerCase().includes("year")) return year;
+
+  const num = parseInt(year);
+  if (isNaN(num)) return year;
+
+  const suffix = (n: number) => {
+    if (n >= 11 && n <= 13) return "th";
+    switch (n % 10) {
+      case 1:
+        return "st";
+      case 2:
+        return "nd";
+      case 3:
+        return "rd";
+      default:
+        return "th";
+    }
+  };
+
+  return `${num}${suffix(num)} Year`;
+};
+
 export default function AnnouncementDetails({ announcement }: AnnouncementDetailsProps) {
   if (!announcement) return null;
 
@@ -27,8 +51,8 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
   // Determine if we should show agenda (only for meetings)
   const showAgenda = announcementType === "meeting" && announcement.agenda;
   
-  // Determine if we should show awardees (only for awards)
-  const showAwardees = announcementType === "award" && announcement.awardees;
+  // Determine if we should show awardees (only for awards or achievements)
+  const showAwardees = (announcementType === "award" || announcementType === "achievement") && announcement.awardees;
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg">
@@ -91,7 +115,7 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
                   </h4>
                   {awardee.year && (
                     <span className="font-raleway text-xs bg-primary1 text-white px-3 py-1 rounded-full font-semibold">
-                      {awardee.year}
+                      {formatYearLevel(awardee.year)}
                     </span>
                   )}
                 </div>
