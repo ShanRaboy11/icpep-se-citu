@@ -1,97 +1,123 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar, { FilterType, FILTER_OPTIONS } from "./components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
-import { Search, CheckCheck, SlidersHorizontal, X } from "lucide-react";
+import {
+  Search,
+  CheckCheck,
+  SlidersHorizontal,
+  X,
+  Loader2,
+  RotateCcw,
+} from "lucide-react";
 import NotificationCard, {
   NotificationItem,
 } from "./components/notification-card";
+import { notificationService, Notification } from "@/app/services/notification";
 
 export default function AnnouncementsPage() {
   const [activeTab, setActiveTab] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: "0",
-      message: "Action Required: Submit Availability for Executive Meeting",
-      date: "Nov 01, 2025",
-      type: "action",
-      link: "/commeet",
-      read: false,
-    },
-    {
-      id: "1",
-      message: "Annual General Assembly Scheduled",
-      date: "Oct 30, 2025",
-      type: "calendar",
-      link: "/events",
-      read: false,
-    },
-    {
-      id: "2",
-      message: "System Maintenance Notice: Downtime expected",
-      date: "Oct 29, 2025",
-      type: "megaphone",
-      link: "/announcements",
-      read: false,
-    },
-    {
-      id: "3",
-      message: "Your Membership Application has been Approved",
-      date: "Oct 28, 2025",
-      type: "member",
-      link: "/profile",
-      read: true,
-    },
-    {
-      id: "4",
-      message: "Reminder: Submit your Monthly Report",
-      date: "Oct 27, 2025",
-      type: "notification",
-      link: "/reminders",
-      read: false,
-    },
-    {
-      id: "5",
-      message: "New Policy Update: Terms of Service",
-      date: "Oct 26, 2025",
-      type: "megaphone",
-      link: "/announcements",
-      read: true,
-    },
-  ]);
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      // Map frontend filter to backend filter
+      // Frontend: 'all' | 'event' | 'announcement' | 'others'
+      // Backend expects same or we handle mapping in service/controller
+      const response = await notificationService.getAll(1, 50, activeTab);
 
-  // Filtering Logic
+      if (response.success) {
+        const mappedNotifications: NotificationItem[] = response.data.map(
+          (n: Notification) => {
+            // Map backend types to frontend types
+            let type: NotificationItem["type"] = "notification";
+            if (n.type === "announcement") type = "megaphone";
+            else if (n.type === "event") type = "calendar";
+            else if (n.type === "membership") type = "member";
+            else if (n.type === "rsvp") type = "action";
+            else if (n.type === "system") type = "notification";
+
+            // Generate link based on type and relatedId
+            let link = "/notifications";
+            if (n.type === "announcement") link = "/announcements";
+            else if (n.type === "event" && n.relatedId)
+              link = `/events/${n.relatedId}`;
+            else if (n.type === "membership") link = "/profile";
+            else if (n.type === "rsvp") link = "/commeet";
+            else if (n.type === "system" && n.title.includes("Password"))
+              link = "/profile";
+
+            return {
+              id: n._id,
+              message: n.title, // Using title as the main message
+              date: new Date(n.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              }),
+              type,
+              link,
+              read: n.isRead,
+            };
+          }
+        );
+        setNotifications(mappedNotifications);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [activeTab]);
+
+  // Filtering Logic (Client-side search on top of server-side type filtering)
   const filtered = notifications.filter((n) => {
     if (!n.message.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
-    if (activeTab === "all") return true;
-    if (activeTab === "event" && n.type === "calendar") return true;
-    if (activeTab === "announcement" && n.type === "megaphone") return true;
-    if (
-      activeTab === "others" &&
-      (n.type === "member" || n.type === "notification" || n.type === "action")
-    ) {
-      return true;
-    }
-    return false;
+    return true;
   });
 
-  const handleMarkRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+  const handleMarkRead = async (id: string) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+    } catch (error) {
+      console.error("Failed to mark as read:", error);
+    }
   };
 
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const handleMarkAllRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (error) {
+      console.error("Failed to mark all as read:", error);
+    }
+  };
+
+  const handleReset = async () => {
+    try {
+      await notificationService.reset();
+      // Refresh notifications to show them as unread again
+      fetchNotifications();
+    } catch (error) {
+      console.error("Failed to reset notifications:", error);
+    }
   };
 
   return (
@@ -169,6 +195,17 @@ export default function AnnouncementsPage() {
                   )}
                 </button>
 
+                {/* Reset Button */}
+                <Button
+                  variant="secondary"
+                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 h-auto text-sm font-rubik font-medium whitespace-nowrap bg-white border border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all duration-300 rounded-xl shadow-none"
+                  onClick={handleReset}
+                  title="Reset all notifications to unread"
+                >
+                  <RotateCcw className="w-5 h-5 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Reset</span>
+                </Button>
+
                 {/* Mark All Read Button */}
                 <Button
                   variant="secondary"
@@ -219,7 +256,14 @@ export default function AnnouncementsPage() {
 
               {/* --- NOTIFICATION LIST --- */}
               <div className="flex flex-col gap-3 min-h-[400px]">
-                {filtered.length > 0 ? (
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <Loader2 className="w-8 h-8 text-primary1 animate-spin mb-4" />
+                    <p className="text-gray-500 font-rubik">
+                      Loading notifications...
+                    </p>
+                  </div>
+                ) : filtered.length > 0 ? (
                   filtered.map((notification) => (
                     <NotificationCard
                       key={notification.id}

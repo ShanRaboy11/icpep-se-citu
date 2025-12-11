@@ -49,11 +49,15 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
       <div className="embla" ref={emblaRef}>
         <div className="embla__container">
           {imageUrls.map((url, index) => (
-            <div className="embla__slide" key={index}>
+            <div
+              className="embla__slide relative h-64 sm:h-96 w-full"
+              key={index}
+            >
               <Image
                 src={url}
                 alt={`Gallery image ${index + 1}`}
-                className="w-full h-64 sm:h-96 object-cover"
+                fill
+                className="object-cover"
               />
             </div>
           ))}

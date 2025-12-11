@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Event } from "../utils/event";
 import eventService from "../../services/event";
@@ -41,11 +41,9 @@ interface RawEvent {
   galleryImageUrls?: string[];
 }
 
-export default function EventDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function EventDetailPage() {
+  const params = useParams();
+  const id = params?.id as string;
   const router = useRouter();
 
   const [rawEvent, setRawEvent] = useState<Event | null>(null);
@@ -56,14 +54,18 @@ export default function EventDetailPage({
     const loadEvent = async () => {
       setLoading(true);
       try {
-        const res = await eventService.getEventById(params.id);
+        const res = await eventService.getEventById(id);
         if (res && res.success && res.data) {
           const e = res.data as RawEvent;
 
           const toImageUrl = (url: unknown) => {
             if (!url || typeof url !== "string") return "/placeholder.svg";
             if (url.startsWith("http")) return url;
-            const backendHost = (process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+            const backendHost = (
+              process.env.NEXT_PUBLIC_BACKEND_URL ||
+              process.env.NEXT_PUBLIC_API_URL ||
+              "http://localhost:5000"
+            ).replace(/\/+$/, "");
             if (url.startsWith("/")) return `${backendHost}${url}`;
             return url;
           };
@@ -72,44 +74,74 @@ export default function EventDetailPage({
           const detailsArr: { title: string; items: string[] }[] = [];
           if (Array.isArray(e.details)) {
             for (const d of e.details) {
-              if (d && typeof d === 'object') {
+              if (d && typeof d === "object") {
                 const obj = d as Record<string, unknown>;
-                const title = typeof obj.title === 'string' ? obj.title : String(obj.title ?? '');
+                const title =
+                  typeof obj.title === "string"
+                    ? obj.title
+                    : String(obj.title ?? "");
                 const itemsRaw = obj.items;
-                const items: string[] = Array.isArray(itemsRaw) ? itemsRaw.map((it) => String(it)) : [];
-                if (title || items.length > 0) detailsArr.push({ title, items });
+                const items: string[] = Array.isArray(itemsRaw)
+                  ? itemsRaw.map((it) => String(it))
+                  : [];
+                if (title || items.length > 0)
+                  detailsArr.push({ title, items });
               }
             }
           } else if (e.description) {
-            detailsArr.push({ title: 'Overview', items: [String(e.description)] });
+            detailsArr.push({
+              title: "Overview",
+              items: [String(e.description)],
+            });
           }
 
           // Normalize organizer to have name and avatarImageUrl
-          const organizer = typeof e.organizer === 'string'
-            ? { name: e.organizer, avatarImageUrl: '/icpep logo.png' }
-            : (e.organizer && typeof e.organizer === 'object')
+          const organizer =
+            typeof e.organizer === "string"
+              ? { name: e.organizer, avatarImageUrl: "/icpep logo.png" }
+              : e.organizer && typeof e.organizer === "object"
               ? {
-                  name: (e.organizer as Record<string, unknown>).name ? String((e.organizer as Record<string, unknown>).name) : '',
-                  avatarImageUrl: (e.organizer as Record<string, unknown>).avatarImageUrl ? String((e.organizer as Record<string, unknown>).avatarImageUrl) : '/icpep logo.png',
+                  name: (e.organizer as Record<string, unknown>).name
+                    ? String((e.organizer as Record<string, unknown>).name)
+                    : "",
+                  avatarImageUrl: (e.organizer as Record<string, unknown>)
+                    .avatarImageUrl
+                    ? String(
+                        (e.organizer as Record<string, unknown>).avatarImageUrl
+                      )
+                    : "/icpep logo.png",
                 }
-              : { name: '', avatarImageUrl: '/icpep logo.png' };
+              : { name: "", avatarImageUrl: "/icpep logo.png" };
 
-          const mode = typeof e.mode === 'string' && e.mode.toLowerCase() === 'online' ? 'Online' : 'Onsite';
+          const mode =
+            typeof e.mode === "string" && e.mode.toLowerCase() === "online"
+              ? "Online"
+              : "Onsite";
 
           const transformed: Event = {
-            id: e._id || e.id || '',
-            title: e.title || '',
+            id: e._id || e.id || "",
+            title: e.title || "",
             date: e.eventDate || e.date || new Date().toISOString(),
             endDate: e.expiryDate || e.endDate || undefined,
             mode,
-            location: e.location || 'TBA',
-            organizer: { name: organizer.name || '', avatarImageUrl: organizer.avatarImageUrl || '/icpep logo.png' },
+            location: e.location || "TBA",
+            organizer: {
+              name: organizer.name || "",
+              avatarImageUrl: organizer.avatarImageUrl || "/icpep logo.png",
+            },
             tags: Array.isArray(e.tags) ? e.tags : [],
-            bannerImageUrl: toImageUrl(e.bannerImageUrl || e.coverImage || e.image),
-            description: e.description || '',
-            content: typeof (e as Record<string, unknown>).content === 'string' ? String((e as Record<string, unknown>).content) : '',
+            bannerImageUrl: toImageUrl(
+              e.bannerImageUrl || e.coverImage || e.image
+            ),
+            description: e.description || "",
+            content:
+              typeof (e as Record<string, unknown>).content === "string"
+                ? String((e as Record<string, unknown>).content)
+                : "",
             details: detailsArr,
-            galleryImageUrls: Array.isArray(e.galleryImageUrls) ? e.galleryImageUrls : [],
+            galleryImageUrls: Array.isArray(e.galleryImageUrls)
+              ? e.galleryImageUrls
+              : [],
           };
 
           setRawEvent(transformed);
@@ -124,8 +156,10 @@ export default function EventDetailPage({
       }
     };
 
-    loadEvent();
-  }, [params.id]);
+    if (id) {
+      loadEvent();
+    }
+  }, [id]);
 
   let event: ProcessedEvent | undefined;
 
@@ -177,7 +211,10 @@ export default function EventDetailPage({
 
               <div className="space-y-4">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-6 bg-gray-100 rounded animate-pulse" />
+                  <div
+                    key={i}
+                    className="h-6 bg-gray-100 rounded animate-pulse"
+                  />
                 ))}
               </div>
             </div>
@@ -193,8 +230,12 @@ export default function EventDetailPage({
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
         <main className="flex flex-grow flex-col items-center justify-center text-center px-4 pt-[9.5rem] pb-12">
-          <h1 className="font-rubik text-4xl font-bold text-primary3 mb-4">Error</h1>
-          <p className="font-raleway max-w-md text-gray-600 mb-8">{fetchError}</p>
+          <h1 className="font-rubik text-4xl font-bold text-primary3 mb-4">
+            Error
+          </h1>
+          <p className="font-raleway max-w-md text-gray-600 mb-8">
+            {fetchError}
+          </p>
           <button
             onClick={() => router.push("/events")}
             className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2 hover:shadow-primary1/40 hover:-translate-y-0.5"
