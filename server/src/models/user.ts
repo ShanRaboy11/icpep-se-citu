@@ -10,15 +10,8 @@ export interface IUser extends Document {
   email?: string;
   middleName?: string;
   password: string;
-  role: "student" | "council-officer" | "committee-officer" | "faculty";
+  role: 'student' | 'council-officer' | 'committee-officer' | 'faculty';
   position?: string;
-  department?:
-    | "executive"
-    | "communications"
-    | "technical"
-    | "finance"
-    | "logistics"
-    | "creatives";
   yearLevel?: number;
   membershipStatus: {
     isMember: boolean;
@@ -88,6 +81,10 @@ const userSchema = new Schema<IUser>(
       default: null,
     },
     department: {
+      type: String,
+      default: null,
+    },
+    position: {
       type: String,
       default: null,
     },

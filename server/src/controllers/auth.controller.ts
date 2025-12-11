@@ -78,6 +78,7 @@ export const login = async (req: Request, res: Response) => {
       middleName: user.middleName,
       fullName: user.fullName,
       role: user.role,
+      position: user.position,
       yearLevel: user.yearLevel,
       membershipStatus: user.membershipStatus,
       profilePicture: user.profilePicture,
