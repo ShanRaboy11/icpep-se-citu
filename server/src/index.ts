@@ -19,6 +19,7 @@ import availabilityRoutes from "./routes/availability.routes";
 import merchRoutes from "./routes/merch.routes";
 import faqRoutes from "./routes/faq.routes";
 import notificationRoutes from "./routes/notification.routes";
+import officerRoutes from "./routes/officer.routes";
 import startAnnouncementScheduler from "./utils/scheduler";
 
 // Global unhandled rejection handler to avoid process crash during development
@@ -251,6 +252,7 @@ app.use("/api/availability", availabilityRoutes);
 app.use("/api/merch", merchRoutes);
 app.use("/api/faqs", faqRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/officers", officerRoutes);
 
 app.get("/api/debug/env", (req: Request, res: Response) => {
   res.json({
