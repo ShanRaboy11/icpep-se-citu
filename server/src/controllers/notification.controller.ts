@@ -461,37 +461,3 @@ export const deleteNotification = async (
     });
   }
 };
-
-export const resetNotifications = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  try {
-    const userId = req.user?.id;
-
-    if (!userId) {
-      res.status(401).json({
-        success: false,
-        message: "User not authenticated",
-      });
-      return;
-    }
-
-    // Deleting all notification records for this user effectively "unreads" them
-    // because the getNotifications logic will re-discover the underlying
-    // announcements/events/availabilities as "virtual" unread notifications.
-    await Notification.deleteMany({ recipient: userId });
-
-    res.status(200).json({
-      success: true,
-      message: "Notifications reset successfully",
-    });
-  } catch (error: any) {
-    console.error("Error resetting notifications:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error resetting notifications",
-      error: error.message,
-    });
-  }
-};

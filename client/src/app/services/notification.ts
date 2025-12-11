@@ -76,9 +76,4 @@ export const notificationService = {
     const response = await api.delete(`/notifications/${id}`);
     return response.data;
   },
-
-  reset: async () => {
-    const response = await api.delete("/notifications/reset");
-    return response.data;
-  },
 };

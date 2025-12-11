@@ -12,7 +12,6 @@ import {
   SlidersHorizontal,
   X,
   Loader2,
-  RotateCcw,
 } from "lucide-react";
 import NotificationCard, {
   NotificationItem,
@@ -110,16 +109,6 @@ export default function AnnouncementsPage() {
     }
   };
 
-  const handleReset = async () => {
-    try {
-      await notificationService.reset();
-      // Refresh notifications to show them as unread again
-      fetchNotifications();
-    } catch (error) {
-      console.error("Failed to reset notifications:", error);
-    }
-  };
-
   return (
     <section className="min-h-screen bg-white flex flex-col relative overflow-hidden font-rubik">
       {/* Background Grid */}
@@ -194,17 +183,6 @@ export default function AnnouncementsPage() {
                     <SlidersHorizontal className="w-5 h-5" />
                   )}
                 </button>
-
-                {/* Reset Button */}
-                <Button
-                  variant="secondary"
-                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 h-auto text-sm font-rubik font-medium whitespace-nowrap bg-white border border-gray-200 text-gray-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all duration-300 rounded-xl shadow-none"
-                  onClick={handleReset}
-                  title="Reset all notifications to unread"
-                >
-                  <RotateCcw className="w-5 h-5 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Reset</span>
-                </Button>
 
                 {/* Mark All Read Button */}
                 <Button
