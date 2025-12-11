@@ -4,16 +4,14 @@ import { Handshake } from "lucide-react";
 
 interface RolenMembershipInformationProps {
   role?: string | null;
-  councilRole?: string | null;
-  committeeRole?: string | null;
+  position?: string | null;
   membership: "both" | "local" | "regional";
   loading?: boolean;
 }
 
 export function RolenMembershipInformation({
   role,
-  councilRole,
-  committeeRole,
+  position,
   membership,
   loading = false,
 }: RolenMembershipInformationProps) {
@@ -22,9 +20,7 @@ export function RolenMembershipInformation({
   const isCommitteeOfficer = role === 'committee-officer';
   const isOfficer = isCouncilOfficer || isCommitteeOfficer;
 
-  let position = '—';
-  if (isCouncilOfficer && councilRole) position = councilRole;
-  else if (isCommitteeOfficer && committeeRole) position = committeeRole;
+  const displayPosition = position || '—';
 
   const roleLabelMap: Record<string, string> = {
     'student': 'Student',
@@ -88,7 +84,7 @@ export function RolenMembershipInformation({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-colors">
             <span className="text-gray-600 font-raleway font-semibold text-sm mb-1 sm:mb-0">Position</span>
             <span className="font-rubik text-gray-800 font-medium text-base text-left sm:text-right">
-              {position}
+              {displayPosition}
             </span>
           </div>
         )}

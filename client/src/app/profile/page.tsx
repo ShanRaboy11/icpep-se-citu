@@ -331,8 +331,7 @@ export default function ProfilePage() {
               <div className="transform transition-all duration-300 hover:translate-y-[-2px]">
                 <RolenMembershipInformation
                   role={loading ? undefined : user?.role}
-                  councilRole={loading ? undefined : user?.councilRole}
-                  committeeRole={loading ? undefined : user?.committeeRole}
+                  position={loading ? undefined : user?.position}
                   membership={normalizeMembership(user)}
                   loading={loading}
                 />

@@ -45,8 +45,7 @@ export interface CurrentUser {
   email?: string;
   yearLevel?: string | number;
   role?: string;
-  councilRole?: string;
-  committeeRole?: string;
+  position?: string;
   membership?: 'both' | 'local' | 'regional' | string;
   avatar?: string;
 }

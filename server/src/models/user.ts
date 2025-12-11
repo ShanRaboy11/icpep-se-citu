@@ -11,6 +11,7 @@ export interface IUser extends Document {
   middleName?: string;
   password: string;
   role: 'student' | 'council-officer' | 'committee-officer' | 'faculty';
+  position?: string;
   yearLevel?: number;
   membershipStatus: {
     isMember: boolean;
@@ -74,6 +75,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: ['student', 'council-officer', 'committee-officer', 'faculty'],
       default: 'student',
+    },
+    position: {
+      type: String,
+      default: null,
     },
     yearLevel: {
       type: Number,
