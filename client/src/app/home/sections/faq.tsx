@@ -13,7 +13,7 @@ interface FAQ {
 export function FAQSection() {
   const router = useRouter();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  
+
   const staticFaqs: FAQ[] = [
     {
       question: "What is the ICpEP.SE CIT-U website for?",
@@ -23,11 +23,12 @@ export function FAQSection() {
     {
       question: "How do I register as a member?",
       answer:
-        "You can register directly through the Membership page. Fill out the form, upload the required documents, and wait for verification from the Registrar.",
+        "Registration is only available during the official membership period announced by the organization, so please stay posted for updates. Once open, you can register directly through the Membership page or during designated onsite registration schedules.",
     },
     {
       question: "How do I check my membership status?",
-      answer: "After registering, you can view your membership status on your profile page. Status updates (Pending, Verified, or Expired) are handled by the officers.",
+      answer:
+        "After registering, you can view your membership status on your profile page. Status updates (Pending, Verified, or Expired) are handled by the officers.",
     },
     {
       question: "Can I still join events even if I’m not a member?",
@@ -105,9 +106,10 @@ export function FAQSection() {
             here to help you.
           </p>
           <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
-            <a 
+            <a
               href="mailto:icpepse@cit.edu"
-              className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer inline-flex items-center justify-center">
+              className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer inline-flex items-center justify-center"
+            >
               Contact Us
             </a>
             <button
