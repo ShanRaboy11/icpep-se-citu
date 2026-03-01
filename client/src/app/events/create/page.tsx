@@ -8,7 +8,17 @@ import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "../../components/grid";
-import { ChevronDown, Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Icons
+import {
+  ChevronDown,
+  Pencil,
+  Trash2,
+  RefreshCw,
+  AlertTriangle,
+  Globe,
+  Users,
+  Shield,
+  Check,
+} from "lucide-react";
 import eventService from "../../services/event";
 
 type FormErrors = {
@@ -19,7 +29,6 @@ type FormErrors = {
   body: boolean;
 };
 
-// --- INTERFACE FOR EVENT ---
 interface EventItem {
   _id: string;
   title: string;
@@ -43,27 +52,81 @@ interface EventItem {
   details?: { title: string; items: string[] }[];
 }
 
+const VISIBILITY_OPTIONS = [
+  {
+    value: "public",
+    label: "Public",
+    sublabel: "Everyone can see this",
+    icon: Globe,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    ring: "ring-emerald-200",
+    badge: "bg-emerald-100 text-emerald-700",
+  },
+  {
+    value: "members",
+    label: "Members Only",
+    sublabel: "Visible to registered members",
+    icon: Users,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    ring: "ring-blue-200",
+    badge: "bg-blue-100 text-blue-700",
+  },
+  {
+    value: "officers",
+    label: "Officers Only",
+    sublabel: "Restricted to organization officers",
+    icon: Shield,
+    color: "text-violet-600",
+    bg: "bg-violet-50",
+    ring: "ring-violet-200",
+    badge: "bg-violet-100 text-violet-700",
+  },
+] as const;
+
 export default function EventsPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
+  const [dateConflictError, setDateConflictError] = useState(false);
   const [registrationRequired, setRegistrationRequired] = useState(false);
   const [registrationStart, setRegistrationStart] = useState("");
   const [registrationEnd, setRegistrationEnd] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
-  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
+  const [loadingAction, setLoadingAction] = useState<
+    "saving" | "publishing" | null
+  >(null);
+  const [successMessage, setSuccessMessage] = useState({
+    title: "",
+    description: "",
+  });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
+  const visibilityRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit");
 
-  // --- MANAGEMENT STATE ---
   const [eventList, setEventList] = useState<EventItem[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
+
+  // Close visibility dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        visibilityRef.current &&
+        !visibilityRef.current.contains(e.target as Node)
+      ) {
+        setShowVisibilityDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (editIdParam) {
@@ -75,7 +138,9 @@ export default function EventsPage() {
             setEditingId(data._id);
             setIsEditingDraft(!data.isPublished);
             setFormData({
-              date: data.eventDate ? new Date(data.eventDate).toISOString().split('T')[0] : "",
+              date: data.eventDate
+                ? new Date(data.eventDate).toISOString().split("T")[0]
+                : "",
               time: data.time || "",
               title: data.title,
               description: data.description,
@@ -88,17 +153,33 @@ export default function EventsPage() {
             setMode(data.mode);
             if (data.tags) setTags(data.tags);
             if (data.admissions) {
-                setAdmissions(data.admissions.map((a: any) => ({ category: a.category, price: String(a.price) })));
-                setShowAdmissionInput(true);
+              setAdmissions(
+                data.admissions.map((a: any) => ({
+                  category: a.category,
+                  price: String(a.price),
+                })),
+              );
+              setShowAdmissionInput(true);
             }
             if (data.details) setDetails(data.details);
             if (data.coverImage) setPreviews([data.coverImage]);
             if (data.organizer) {
-                setOrganizer(typeof data.organizer === 'string' ? data.organizer : data.organizer.name);
+              setOrganizer(
+                typeof data.organizer === "string"
+                  ? data.organizer
+                  : data.organizer.name,
+              );
             }
-            if (data.registrationRequired) setRegistrationRequired(data.registrationRequired);
-            if (data.registrationStart) setRegistrationStart(new Date(data.registrationStart).toISOString().split('T')[0]);
-            if (data.registrationEnd) setRegistrationEnd(new Date(data.registrationEnd).toISOString().split('T')[0]);
+            if (data.registrationRequired)
+              setRegistrationRequired(data.registrationRequired);
+            if (data.registrationStart)
+              setRegistrationStart(
+                new Date(data.registrationStart).toISOString().split("T")[0],
+              );
+            if (data.registrationEnd)
+              setRegistrationEnd(
+                new Date(data.registrationEnd).toISOString().split("T")[0],
+              );
           }
         } catch (error) {
           console.error("Failed to fetch event for edit:", error);
@@ -137,30 +218,22 @@ export default function EventsPage() {
   const [newTag, setNewTag] = useState("");
   const [showAdmissionInput, setShowAdmissionInput] = useState(false);
   const [admissions, setAdmissions] = useState<
-    {
-      category: string;
-      price: string;
-    }[]
+    { category: string; price: string }[]
   >([]);
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const [organizer, setOrganizer] = useState("");
-  const [details, setDetails] = useState<
-    {
-      title: string;
-      body: string;
-    }[]
-  >([{ title: "", body: "" }]);
+  const [details, setDetails] = useState<{ title: string; body: string }[]>([
+    { title: "", body: "" },
+  ]);
   const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
 
   const predefinedTags = ["Workshop", "Seminar", "Training", "Webinar"];
 
-  // 1. FETCH EVENTS ON LOAD
   const fetchEvents = async () => {
     setIsLoadingList(true);
     try {
       const response = await eventService.getEvents({ limit: 100 });
-      // Handle different response structures
       const data = response.data || (Array.isArray(response) ? response : []);
       setEventList(data as EventItem[]);
     } catch (err) {
@@ -174,12 +247,9 @@ export default function EventsPage() {
     fetchEvents();
   }, []);
 
-  // 2. HANDLE EDIT CLICK (Populate All Fields)
   const handleEditClick = (item: EventItem) => {
     setEditingId(item._id);
     setIsEditingDraft(!item.isPublished);
-
-    // Basic Fields
     setFormData({
       title: item.title,
       description: item.description,
@@ -194,50 +264,42 @@ export default function EventsPage() {
       visibility: item.targetAudience?.includes("members")
         ? "members"
         : item.targetAudience?.includes("officers")
-        ? "officers"
-        : "public",
+          ? "officers"
+          : "public",
     });
-
-    // Complex Fields
     setMode(item.mode);
     setTags(item.tags || []);
     setAdmissions(item.admissions || []);
     setOrganizer(
       typeof item.organizer === "object"
         ? item.organizer.name
-        : item.organizer || ""
+        : item.organizer || "",
     );
     setRegistrationRequired(!!item.registrationRequired);
     setRegistrationStart(
       item.registrationStart
         ? new Date(item.registrationStart).toISOString().slice(0, 16)
-        : ""
+        : "",
     );
     setRegistrationEnd(
       item.registrationEnd
         ? new Date(item.registrationEnd).toISOString().slice(0, 16)
-        : ""
+        : "",
     );
-
-    // Transform Details back to form format
     if (item.details && item.details.length > 0) {
       setDetails(
-        item.details.map((d) => ({ title: d.title, body: d.items.join("\n") }))
+        item.details.map((d) => ({ title: d.title, body: d.items.join("\n") })),
       );
       setShowAdditionalInfo(true);
     } else {
       setDetails([{ title: "", body: "" }]);
       setShowAdditionalInfo(false);
     }
-
-    // Image
     setPreviews(item.coverImage ? [item.coverImage] : []);
-    setImages([]); // Reset file input
-
+    setImages([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
     setIsEditingDraft(false);
@@ -245,7 +307,6 @@ export default function EventsPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // 4. HANDLE DELETE
   const confirmDelete = (id: string) => {
     setItemToDelete(id);
     setShowDeleteModal(true);
@@ -253,16 +314,14 @@ export default function EventsPage() {
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
-    
     try {
       await eventService.deleteEvent(itemToDelete);
       fetchEvents();
       setShowDeleteModal(false);
       setItemToDelete(null);
-
       setSuccessMessage({
         title: "Deleted Successfully!",
-        description: "The event has been permanently removed."
+        description: "The event has been permanently removed.",
       });
       setShowSuccessModal(true);
     } catch (error) {
@@ -281,6 +340,7 @@ export default function EventsPage() {
     };
 
     setErrors(newErrors);
+    setDateConflictError(false);
 
     if (Object.values(newErrors).some(Boolean)) {
       setShowGlobalError(true);
@@ -288,17 +348,18 @@ export default function EventsPage() {
     }
 
     // Prevent publishing events on the current day
-    const selectedDate = new Date(formData.date);
     const today = new Date();
-    // Normalize time components for accurate date comparison
-    today.setHours(0, 0, 0, 0);
-    // Since input date is YYYY-MM-DD (UTC midnight), adjust for timezone or use local components
-    // A simpler way: compare date strings
-    const selectedDateString = formData.date;
-    const todayString = today.toLocaleDateString("en-CA"); // YYYY-MM-DD format in local time
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    const todayString = `${year}-${month}-${day}`;
 
-    if (selectedDateString === todayString) {
-      alert("Events cannot be scheduled for the current day. Please select a past or future date.");
+    if (formData.date === todayString) {
+      setDateConflictError(true);
+      // Scroll to the date field
+      document
+        .getElementById("date")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -346,30 +407,34 @@ export default function EventsPage() {
       };
 
       if (editingId) {
-        // UPDATE MODE
         await eventService.updateEvent(
           editingId,
           eventData,
-          images.length > 0 ? images : undefined
+          images.length > 0 ? images : undefined,
         );
         console.log("✅ Event updated successfully");
       } else {
-        // CREATE MODE
         await eventService.createEvent(
           eventData,
-          images.length > 0 ? images : undefined
+          images.length > 0 ? images : undefined,
         );
         console.log("✅ Event created successfully");
       }
 
       setSubmitSuccess(true);
       setSuccessMessage({
-        title: editingId && !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
-        description: editingId && !isEditingDraft ? "Changes have been saved." : "Event is now live."
+        title:
+          editingId && !isEditingDraft
+            ? "Updated Successfully!"
+            : "Published Successfully!",
+        description:
+          editingId && !isEditingDraft
+            ? "Changes have been saved."
+            : "Event is now live.",
       });
       setShowSuccessModal(true);
-      handleCancelEdit(); // Reset form
-      fetchEvents(); // Refresh list
+      handleCancelEdit();
+      fetchEvents();
     } catch (error) {
       console.error("❌ Error saving event:", error);
       alert("Failed to save event. Please try again.");
@@ -424,28 +489,28 @@ export default function EventsPage() {
       };
 
       if (editingId) {
-        // UPDATE DRAFT
         await eventService.updateEvent(
           editingId,
           eventData,
-          images.length > 0 ? images : undefined
+          images.length > 0 ? images : undefined,
         );
       } else {
-        // CREATE DRAFT
         await eventService.createEvent(
           eventData,
-          images.length > 0 ? images : undefined
+          images.length > 0 ? images : undefined,
         );
       }
 
       setSubmitSuccess(true);
       setSuccessMessage({
         title: editingId ? "Draft Updated!" : "Draft Saved!",
-        description: editingId ? "Draft changes have been saved." : "Draft has been saved successfully."
+        description: editingId
+          ? "Draft changes have been saved."
+          : "Draft has been saved successfully.",
       });
       setShowSuccessModal(true);
-      handleCancelEdit(); // Reset form
-      fetchEvents(); // Refresh list
+      handleCancelEdit();
+      fetchEvents();
     } catch (error) {
       console.error("❌ Error saving draft:", error);
       alert("Failed to save draft. Please try again.");
@@ -478,58 +543,50 @@ export default function EventsPage() {
     setDetails([{ title: "", body: "" }]);
     setShowAdditionalInfo(false);
     setMode("Onsite");
+    setDateConflictError(false);
   };
 
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target as HTMLInputElement & {
       name: string;
       value: string;
     };
-
     setFormData((prev) => ({ ...prev, [name]: value }));
-
     if (Object.prototype.hasOwnProperty.call(errors, name)) {
       setErrors((prev) => ({ ...prev, [name as keyof FormErrors]: false }));
     }
+    // Clear date conflict error when user changes the date
+    if (name === "date") setDateConflictError(false);
   };
 
   const resizeImage = (file: File, maxWidth = 1200): Promise<File> => {
     return new Promise((resolve) => {
       const img = new Image();
       const reader = new FileReader();
-
       reader.onload = (e) => {
         img.src = e.target?.result as string;
       };
-
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const scaleSize = maxWidth / img.width;
         canvas.width = maxWidth;
         canvas.height = img.height * scaleSize;
-
         const ctx = canvas.getContext("2d");
         if (!ctx) return resolve(file);
-
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
         canvas.toBlob(
           (blob) => {
             if (!blob) return resolve(file);
-            const resizedFile = new File([blob], file.name, {
-              type: file.type,
-            });
-            resolve(resizedFile);
+            resolve(new File([blob], file.name, { type: file.type }));
           },
           file.type,
-          0.8
+          0.8,
         );
       };
-
       reader.readAsDataURL(file);
     });
   };
@@ -537,7 +594,6 @@ export default function EventsPage() {
   const handleImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
       const resized = await resizeImage(file);
       setImages([resized]);
@@ -550,20 +606,27 @@ export default function EventsPage() {
 
   const publishedItems = eventList.filter((item) => item.isPublished);
 
+  // Derived for visibility UI
+  const selectedVisibility = VISIBILITY_OPTIONS.find(
+    (o) => o.value === formData.visibility,
+  );
+
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
-      {/* Background Grid */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Grid />
       </div>
 
-      {/* Loading Overlay */}
       {isSubmitting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all duration-300">
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating Event..." : "Publishing Event..."}
+              {loadingAction === "saving"
+                ? "Saving Draft..."
+                : editingId
+                  ? "Updating Event..."
+                  : "Publishing Event..."}
             </p>
           </div>
         </div>
@@ -573,7 +636,6 @@ export default function EventsPage() {
         <Header />
 
         <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
-          {/* Page Header */}
           <div className="mb-12 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-primary1/10 to-primary2/10 rounded-3xl blur-3xl -z-10" />
             <div className="text-center sm:text-left">
@@ -596,17 +658,11 @@ export default function EventsPage() {
             </aside>
 
             <div className="flex-1 space-y-12">
-              {/* 1. THE FORM */}
               <div
-                className={`bg-white rounded-3xl shadow-xl shadow-gray-200/50 border overflow-hidden transition-all duration-300 ${
-                  editingId
-                    ? "border-primary1 shadow-primary1/20"
-                    : "border-gray-100"
-                }`}
+                className={`bg-white rounded-3xl shadow-xl shadow-gray-200/50 border transition-all duration-300 ${editingId ? "border-primary1 shadow-primary1/20" : "border-gray-100"}`}
               >
-                {/* Edit Mode Banner */}
                 {editingId && (
-                  <div className="bg-amber-50 border-b border-amber-100 px-8 py-5 flex items-center justify-between">
+                  <div className="bg-amber-50 border-b border-amber-100 px-8 py-5 rounded-t-3xl flex items-center justify-between">
                     <span className="text-amber-800 font-medium font-rubik text-sm flex items-center gap-2">
                       <Pencil size={14} /> Editing Mode Active
                     </span>
@@ -619,8 +675,7 @@ export default function EventsPage() {
                   </div>
                 )}
 
-                {/* Form Header */}
-                <div className="bg-gradient-to-r from-primary1 to-primary2 p-8">
+                <div className="bg-gradient-to-r from-primary1 to-primary2 p-8 rounded-t-3xl">
                   <h2 className="text-3xl font-bold text-white font-rubik flex items-center gap-3">
                     {editingId ? "Edit Details" : "Content Details"}
                   </h2>
@@ -632,14 +687,13 @@ export default function EventsPage() {
                 </div>
 
                 <div className="p-8 space-y-8">
-                  {/* Upload Image */}
+                  {/* Cover Image */}
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 mb-4">
                       <label className="text-lg font-semibold text-primary3 font-rubik">
                         Cover Image
                       </label>
                     </div>
-
                     <input
                       type="file"
                       accept="image/*"
@@ -647,7 +701,6 @@ export default function EventsPage() {
                       onChange={handleImagesChange}
                       ref={fileInputRef}
                     />
-
                     <div
                       role="button"
                       tabIndex={0}
@@ -683,11 +736,7 @@ export default function EventsPage() {
                         </div>
                       ) : (
                         <div
-                          className={`border-3 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
-                            showGlobalError && !images
-                              ? "border-red-400 bg-red-50/50"
-                              : "border-gray-300 bg-gray-50/50 group-hover:border-primary2 group-hover:bg-primary2/5"
-                          }`}
+                          className={`border-3 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${showGlobalError && !images ? "border-red-400 bg-red-50/50" : "border-gray-300 bg-gray-50/50 group-hover:border-primary2 group-hover:bg-primary2/5"}`}
                         >
                           <div className="flex flex-col items-center gap-4">
                             <div className="w-16 h-16 rounded-full bg-primary2/10 flex items-center justify-center group-hover:bg-primary2/20 transition-colors duration-300">
@@ -733,19 +782,14 @@ export default function EventsPage() {
                             setTags((prev) =>
                               prev.includes(tag)
                                 ? prev.filter((t) => t !== tag)
-                                : [...prev, tag]
+                                : [...prev, tag],
                             )
                           }
-                          className={`px-4 py-2 text-sm font-bold rounded-xl border-2 transition-all duration-300 font-rubik ${
-                            tags.includes(tag)
-                              ? "bg-primary2 text-white border-primary2 shadow-md shadow-primary2/30"
-                              : "border-gray-200 text-gray-500 bg-white hover:border-primary2 hover:text-primary2"
-                          }`}
+                          className={`px-4 py-2 text-sm font-bold rounded-xl border-2 transition-all duration-300 font-rubik ${tags.includes(tag) ? "bg-primary2 text-white border-primary2 shadow-md shadow-primary2/30" : "border-gray-200 text-gray-500 bg-white hover:border-primary2 hover:text-primary2"}`}
                         >
                           {tag}
                         </button>
                       ))}
-
                       {!showTagInput && (
                         <button
                           type="button"
@@ -755,7 +799,6 @@ export default function EventsPage() {
                           + Add Custom Tag
                         </button>
                       )}
-
                       {showTagInput && (
                         <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
                           <input
@@ -800,8 +843,6 @@ export default function EventsPage() {
                         </div>
                       )}
                     </div>
-
-                    {/* Selected Tags Display */}
                     {tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">
                         {tags.map((tag, index) => (
@@ -827,7 +868,7 @@ export default function EventsPage() {
 
                   <div className="h-px bg-gray-100 w-full" />
 
-                  {/* Details Section */}
+                  {/* Event Schedule */}
                   <div className="space-y-6">
                     <div>
                       <h3 className="text-xl font-bold text-primary3 font-rubik mb-1">
@@ -839,6 +880,7 @@ export default function EventsPage() {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {/* Date field with improved error */}
                       <div className="space-y-2">
                         <label className="text-sm font-semibold text-primary3 font-rubik">
                           Date *
@@ -850,11 +892,30 @@ export default function EventsPage() {
                           value={formData.date}
                           onChange={handleInputChange}
                           className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${
-                            errors.date
+                            errors.date || dateConflictError
                               ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
                               : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
                           }`}
                         />
+                        {errors.date && (
+                          <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
+                            <span>•</span> Date is required.
+                          </p>
+                        )}
+                        {dateConflictError && (
+                          <div className="mt-2 flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 animate-in slide-in-from-top-1 fade-in duration-200">
+                            <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-bold text-amber-800 font-rubik">
+                                Today's date is not allowed
+                              </p>
+                              <p className="text-xs text-amber-600 font-raleway mt-0.5">
+                                Events must be scheduled for a past or future
+                                date to allow proper setup time.
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="space-y-2">
@@ -867,11 +928,7 @@ export default function EventsPage() {
                           name="time"
                           value={formData.time}
                           onChange={handleInputChange}
-                          className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${
-                            errors.time
-                              ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
-                              : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                          }`}
+                          className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${errors.time ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
                         />
                       </div>
 
@@ -890,7 +947,7 @@ export default function EventsPage() {
                       </div>
                     </div>
 
-                    {/* Admission Section */}
+                    {/* Admission */}
                     <div className="space-y-4 pt-4 border-t border-gray-100">
                       <div className="flex items-center justify-between">
                         <label className="text-lg font-semibold text-primary3 font-rubik">
@@ -906,7 +963,6 @@ export default function EventsPage() {
                           </button>
                         )}
                       </div>
-
                       {showAdmissionInput && (
                         <div className="flex flex-col sm:flex-row gap-3 p-4 border-2 border-primary2/20 rounded-2xl bg-primary2/5 animate-in fade-in slide-in-from-top-2 duration-300">
                           <input
@@ -917,7 +973,6 @@ export default function EventsPage() {
                             className="flex-1 border-2 border-white bg-white rounded-xl px-4 py-3 font-rubik focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                             autoFocus
                           />
-
                           <input
                             type="text"
                             placeholder="Price"
@@ -925,7 +980,6 @@ export default function EventsPage() {
                             onChange={(e) => setPrice(e.target.value)}
                             className="w-full sm:w-32 border-2 border-white bg-white rounded-xl px-4 py-3 font-rubik focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                           />
-
                           <div className="flex gap-2">
                             <button
                               type="button"
@@ -943,7 +997,6 @@ export default function EventsPage() {
                             >
                               Add
                             </button>
-
                             <button
                               type="button"
                               onClick={() => {
@@ -958,7 +1011,6 @@ export default function EventsPage() {
                           </div>
                         </div>
                       )}
-
                       {admissions.length > 0 && (
                         <div className="flex flex-wrap gap-3">
                           {admissions.map((ad, index) => (
@@ -974,7 +1026,7 @@ export default function EventsPage() {
                                 type="button"
                                 onClick={() =>
                                   setAdmissions(
-                                    admissions.filter((_, i) => i !== index)
+                                    admissions.filter((_, i) => i !== index),
                                   )
                                 }
                                 className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors ml-1"
@@ -997,22 +1049,14 @@ export default function EventsPage() {
                       <button
                         type="button"
                         onClick={() => setMode("Onsite")}
-                        className={`px-6 py-3 rounded-xl text-sm font-bold font-rubik transition-all duration-300 ${
-                          mode === "Onsite"
-                            ? "bg-white text-primary1 shadow-md shadow-gray-200 ring-1 ring-black/5"
-                            : "text-gray-500 hover:text-primary1 hover:bg-white/50"
-                        }`}
+                        className={`px-6 py-3 rounded-xl text-sm font-bold font-rubik transition-all duration-300 ${mode === "Onsite" ? "bg-white text-primary1 shadow-md shadow-gray-200 ring-1 ring-black/5" : "text-gray-500 hover:text-primary1 hover:bg-white/50"}`}
                       >
                         Onsite
                       </button>
                       <button
                         type="button"
                         onClick={() => setMode("Online")}
-                        className={`px-6 py-3 rounded-xl text-sm font-bold font-rubik transition-all duration-300 ${
-                          mode === "Online"
-                            ? "bg-white text-primary1 shadow-md shadow-gray-200 ring-1 ring-black/5"
-                            : "text-gray-500 hover:text-primary1 hover:bg-white/50"
-                        }`}
+                        className={`px-6 py-3 rounded-xl text-sm font-bold font-rubik transition-all duration-300 ${mode === "Online" ? "bg-white text-primary1 shadow-md shadow-gray-200 ring-1 ring-black/5" : "text-gray-500 hover:text-primary1 hover:bg-white/50"}`}
                       >
                         Online
                       </button>
@@ -1021,7 +1065,7 @@ export default function EventsPage() {
 
                   <div className="h-px bg-gray-100 w-full" />
 
-                  {/* Registration Section */}
+                  {/* Registration */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <label className="text-lg font-semibold text-primary3 font-rubik">
@@ -1045,7 +1089,6 @@ export default function EventsPage() {
                         </label>
                       </div>
                     </div>
-
                     {registrationRequired && (
                       <div className="grid sm:grid-cols-2 gap-6 p-6 border-2 border-primary2/20 rounded-2xl bg-primary2/5 animate-in fade-in slide-in-from-top-2 duration-300">
                         <div className="space-y-2">
@@ -1061,7 +1104,6 @@ export default function EventsPage() {
                             className="w-full rounded-xl border-2 border-white bg-white px-4 py-3 text-gray-600 focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                           />
                         </div>
-
                         <div className="space-y-2">
                           <label className="text-sm font-semibold text-primary3 font-rubik">
                             Registration Closes
@@ -1079,7 +1121,7 @@ export default function EventsPage() {
 
                   <div className="h-px bg-gray-100 w-full" />
 
-                  {/* Organizer Section */}
+                  {/* Organizer & Contact */}
                   <div className="grid sm:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-primary3 font-rubik">
@@ -1115,12 +1157,9 @@ export default function EventsPage() {
                     <div className="space-y-2">
                       <label
                         htmlFor="title"
-                        className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                        className="text-lg font-semibold text-primary3 font-rubik"
                       >
                         Event Title
-                        {formData.title && (
-                          <span className="text-green-500 text-xs">✓</span>
-                        )}
                       </label>
                       <input
                         id="title"
@@ -1129,11 +1168,7 @@ export default function EventsPage() {
                         value={formData.title}
                         onChange={handleInputChange}
                         placeholder="Add a clear and descriptive title"
-                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${
-                          errors.title
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
-                            : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                        }`}
+                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${errors.title ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
                       />
                       {errors.title && (
                         <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
@@ -1145,12 +1180,9 @@ export default function EventsPage() {
                     <div className="space-y-2">
                       <label
                         htmlFor="description"
-                        className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                        className="text-lg font-semibold text-primary3 font-rubik"
                       >
                         Description
-                        {formData.description && (
-                          <span className="text-green-500 text-xs">✓</span>
-                        )}
                       </label>
                       <input
                         id="description"
@@ -1159,11 +1191,7 @@ export default function EventsPage() {
                         value={formData.description}
                         onChange={handleInputChange}
                         placeholder="Short description for notification"
-                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${
-                          errors.description
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
-                            : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                        }`}
+                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${errors.description ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
                       />
                       {errors.description && (
                         <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
@@ -1175,12 +1203,9 @@ export default function EventsPage() {
                     <div className="space-y-2">
                       <label
                         htmlFor="body"
-                        className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
+                        className="text-lg font-semibold text-primary3 font-rubik"
                       >
                         Contents
-                        {formData.body && (
-                          <span className="text-green-500 text-xs">✓</span>
-                        )}
                       </label>
                       <textarea
                         id="body"
@@ -1189,11 +1214,7 @@ export default function EventsPage() {
                         onChange={handleInputChange}
                         rows={8}
                         placeholder="Agenda/program highlights"
-                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 resize-y min-h-[200px] ${
-                          errors.body
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
-                            : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                        }`}
+                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 resize-y min-h-[200px] ${errors.body ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
                       />
                       {errors.body && (
                         <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
@@ -1203,6 +1224,7 @@ export default function EventsPage() {
                     </div>
                   </div>
 
+                  {/* Additional Info */}
                   <div className="space-y-4 pt-4 border-t border-gray-100">
                     <div className="flex items-center justify-between">
                       <label className="text-lg font-semibold text-primary3 font-rubik">
@@ -1218,7 +1240,6 @@ export default function EventsPage() {
                         </button>
                       )}
                     </div>
-
                     {showAdditionalInfo && (
                       <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                         {details.map((section, idx) => (
@@ -1236,8 +1257,8 @@ export default function EventsPage() {
                                     prev.map((s, i) =>
                                       i === idx
                                         ? { ...s, title: e.target.value }
-                                        : s
-                                    )
+                                        : s,
+                                    ),
                                   )
                                 }
                                 className="flex-1 rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
@@ -1246,7 +1267,7 @@ export default function EventsPage() {
                                 type="button"
                                 onClick={() =>
                                   setDetails((prev) =>
-                                    prev.filter((_, i) => i !== idx)
+                                    prev.filter((_, i) => i !== idx),
                                   )
                                 }
                                 className="px-4 py-2 rounded-xl bg-white border-2 border-red-100 text-red-500 hover:bg-red-50 hover:border-red-200 font-bold transition-all"
@@ -1254,7 +1275,6 @@ export default function EventsPage() {
                                 Remove
                               </button>
                             </div>
-
                             <textarea
                               placeholder="Section body (use new lines to separate items)"
                               value={section.body}
@@ -1263,15 +1283,14 @@ export default function EventsPage() {
                                   prev.map((s, i) =>
                                     i === idx
                                       ? { ...s, body: e.target.value }
-                                      : s
-                                  )
+                                      : s,
+                                  ),
                                 )
                               }
                               className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 h-32 focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all resize-y"
                             />
                           </div>
                         ))}
-
                         <button
                           type="button"
                           onClick={() =>
@@ -1287,7 +1306,7 @@ export default function EventsPage() {
 
                   {/* RSVP Link */}
                   <div className="space-y-2">
-                    <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
+                    <label className="text-lg font-semibold text-primary3 font-rubik">
                       RSVP Link
                     </label>
                     <input
@@ -1301,31 +1320,141 @@ export default function EventsPage() {
                     />
                   </div>
 
-                  {/* Visibility */}
+                  {/* ─── IMPROVED VISIBILITY DROPDOWN ─── */}
                   <div className="space-y-2">
-                    <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
+                    <label className="text-lg font-semibold text-primary3 font-rubik">
                       Visibility
                     </label>
-                    <div className="relative w-full">
-                      <select
-                        id="visibility"
-                        name="visibility"
-                        value={formData.visibility}
-                        onChange={handleInputChange}
-                        className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 bg-gray-50/30 focus:bg-white focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 transition-all duration-300 appearance-none cursor-pointer"
+
+                    <div className="relative" ref={visibilityRef}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowVisibilityDropdown((prev) => !prev)
+                        }
+                        className={`
+                          w-full flex items-center justify-between
+                          rounded-xl border-2 px-5 py-4 text-left
+                          focus:outline-none focus:ring-4 transition-all duration-300
+                          ${
+                            selectedVisibility
+                              ? `ring-2 border-transparent ${selectedVisibility.ring} ${selectedVisibility.bg}`
+                              : "border-gray-200 bg-gray-50/30 hover:border-primary2 hover:bg-primary2/5 focus:border-primary2 focus:ring-primary2/10"
+                          }
+                        `}
                       >
-                        <option value="" className="text-gray-400">
-                          Select visibility
-                        </option>
-                        <option value="public">Public (Everyone)</option>
-                        <option value="members">Members Only</option>
-                        <option value="officers">Officers Only</option>
-                      </select>
-                      <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-primary3">
-                        <ChevronDown className="w-5 h-5" />
-                      </span>
+                        <span className="flex items-center gap-3">
+                          {selectedVisibility ? (
+                            <>
+                              <span
+                                className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedVisibility.bg}`}
+                              >
+                                <selectedVisibility.icon
+                                  className={`w-5 h-5 ${selectedVisibility.color}`}
+                                />
+                              </span>
+                              <span>
+                                <span
+                                  className={`block text-base font-bold font-rubik leading-tight ${selectedVisibility.color}`}
+                                >
+                                  {selectedVisibility.label}
+                                </span>
+                                <span className="block text-xs text-gray-500 font-raleway mt-0.5">
+                                  {selectedVisibility.sublabel}
+                                </span>
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="w-9 h-9 rounded-lg flex items-center justify-center bg-gray-100 flex-shrink-0">
+                                <Globe className="w-5 h-5 text-gray-400" />
+                              </span>
+                              <span className="text-gray-400 font-raleway text-base">
+                                Select who can see this
+                              </span>
+                            </>
+                          )}
+                        </span>
+                        <ChevronDown
+                          className={`w-5 h-5 text-gray-400 transition-transform duration-300 flex-shrink-0 ${showVisibilityDropdown ? "rotate-180" : ""}`}
+                        />
+                      </button>
+
+                      {showVisibilityDropdown && (
+                        <div
+                          className="absolute z-[9999] top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-gray-200/60 animate-in slide-in-from-top-2 fade-in duration-200"
+                          style={{ overflow: "visible" }}
+                        >
+                          <div className="px-4 pt-3.5 pb-2.5 border-b border-gray-100 bg-gray-50/60 rounded-t-2xl">
+                            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 font-rubik">
+                              Choose Audience
+                            </p>
+                          </div>
+                          <div className="p-2 space-y-1">
+                            {VISIBILITY_OPTIONS.map((opt) => {
+                              const Icon = opt.icon;
+                              const isActive =
+                                formData.visibility === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      visibility: opt.value,
+                                    }));
+                                    setShowVisibilityDropdown(false);
+                                  }}
+                                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all duration-200 group ${isActive ? `${opt.bg} ring-1 ${opt.ring}` : "hover:bg-gray-50"}`}
+                                >
+                                  <span
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${isActive ? opt.bg : "bg-gray-100 group-hover:bg-gray-200"}`}
+                                  >
+                                    <Icon
+                                      className={`w-5 h-5 ${isActive ? opt.color : "text-gray-500"}`}
+                                    />
+                                  </span>
+                                  <span className="flex-1 min-w-0">
+                                    <span
+                                      className={`block text-sm font-bold font-rubik leading-tight ${isActive ? opt.color : "text-gray-700"}`}
+                                    >
+                                      {opt.label}
+                                    </span>
+                                    <span className="block text-xs text-gray-400 font-raleway mt-0.5 truncate">
+                                      {opt.sublabel}
+                                    </span>
+                                  </span>
+                                  {isActive ? (
+                                    <span
+                                      className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${opt.badge}`}
+                                    >
+                                      <Check
+                                        className="w-3.5 h-3.5"
+                                        strokeWidth={3}
+                                      />
+                                    </span>
+                                  ) : (
+                                    <span
+                                      className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${opt.badge} opacity-0 group-hover:opacity-100 transition-opacity duration-150`}
+                                    >
+                                      Select
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/40 rounded-b-2xl">
+                            <p className="text-[11px] text-gray-400 font-raleway">
+                              ✦ Visibility determines who can view this event.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
+                  {/* ─── END VISIBILITY DROPDOWN ─── */}
 
                   <div className="h-px bg-gray-100 w-full" />
 
@@ -1336,10 +1465,7 @@ export default function EventsPage() {
                         Please fill all required fields before publishing.
                       </p>
                     )}
-
                     <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-
-
                       {editingId && (
                         <Button
                           variant="outline"
@@ -1350,7 +1476,6 @@ export default function EventsPage() {
                           Cancel Edit
                         </Button>
                       )}
-
                       {(!editingId || isEditingDraft) && (
                         <Button
                           variant="outline"
@@ -1362,7 +1487,6 @@ export default function EventsPage() {
                           {editingId ? "Update" : "Save Draft"}
                         </Button>
                       )}
-
                       <Button
                         variant="primary3"
                         type="button"
@@ -1370,13 +1494,16 @@ export default function EventsPage() {
                         disabled={isSubmitting}
                         className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {editingId && !isEditingDraft ? "Update Event" : "Publish"}
+                        {editingId && !isEditingDraft
+                          ? "Update Event"
+                          : "Publish"}
                       </Button>
                     </div>
                   </div>
                 </div>
               </div>
-              {/* 2. MANAGE EVENTS LIST */}
+
+              {/* Manage Events List */}
               <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
                 <div className="p-8 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                   <div>
@@ -1394,7 +1521,6 @@ export default function EventsPage() {
                     <RefreshCw size={16} /> Refresh List
                   </button>
                 </div>
-
                 <div className="overflow-x-auto">
                   {isLoadingList ? (
                     <div className="p-12 text-center text-gray-500 font-raleway">
@@ -1418,11 +1544,7 @@ export default function EventsPage() {
                         {publishedItems.map((item) => (
                           <tr
                             key={item._id}
-                            className={`hover:bg-blue-50/40 transition-colors group ${
-                              editingId === item._id
-                                ? "bg-blue-50 ring-1 ring-inset ring-primary1/30"
-                                : ""
-                            }`}
+                            className={`hover:bg-blue-50/40 transition-colors group ${editingId === item._id ? "bg-blue-50 ring-1 ring-inset ring-primary1/30" : ""}`}
                           >
                             <td className="px-6 py-4">
                               <p className="font-bold text-gray-800 font-rubik">
@@ -1433,18 +1555,14 @@ export default function EventsPage() {
                               <p className="text-sm text-gray-600">
                                 {item.eventDate
                                   ? new Date(
-                                      item.eventDate
+                                      item.eventDate,
                                     ).toLocaleDateString()
                                   : "N/A"}
                               </p>
                             </td>
                             <td className="px-6 py-4">
                               <span
-                                className={`px-2 py-1 rounded text-xs font-bold ${
-                                  item.mode === "Online"
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-orange-100 text-orange-700"
-                                }`}
+                                className={`px-2 py-1 rounded text-xs font-bold ${item.mode === "Online" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
                               >
                                 {item.mode}
                               </span>
@@ -1488,7 +1606,6 @@ export default function EventsPage() {
                 setSubmitSuccess(false);
               }}
             />
-
             <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl transform animate-in zoom-in-95 duration-300 border border-gray-100">
               <div className="flex flex-col items-center gap-6 text-center">
                 <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-2 animate-bounce">
@@ -1506,7 +1623,6 @@ export default function EventsPage() {
                     />
                   </svg>
                 </div>
-
                 <div className="space-y-2">
                   <h3 className="text-2xl font-bold text-gray-900 font-rubik">
                     {successMessage.title}
@@ -1515,7 +1631,6 @@ export default function EventsPage() {
                     {successMessage.description}
                   </p>
                 </div>
-
                 <div className="w-full pt-2 flex flex-col gap-3">
                   <button
                     onClick={() => {
@@ -1545,7 +1660,7 @@ export default function EventsPage() {
         <Footer />
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
@@ -1560,7 +1675,8 @@ export default function EventsPage() {
               Confirm Deletion
             </h3>
             <p className="text-gray-500 font-raleway mb-6">
-              Are you sure you want to delete this item? This action cannot be undone.
+              Are you sure you want to delete this item? This action cannot be
+              undone.
             </p>
             <div className="flex gap-3">
               <button
