@@ -251,9 +251,6 @@ class AnnouncementService {
             if (data.awardees) {
                 formData.append('awardees', JSON.stringify(data.awardees));
             }
-            if (data.attachments) {
-                formData.append('attachments', JSON.stringify(data.attachments));
-            }
 
             // Append image(s) if provided
             if (images) {
