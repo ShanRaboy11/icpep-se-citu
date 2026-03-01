@@ -2,17 +2,22 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import Sidebar from "@/app/components/sidebar";
-import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
+import { GlassCard } from "../../components/glass-card";
 import testimonialService from "@/app/services/testimonial";
-// Added icons for the management list
-import { Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  RefreshCw,
+  AlertTriangle,
+  Upload,
+  Quote,
+  User,
+} from "lucide-react";
 
-// Define interface for data
 interface Testimonial {
   _id: string;
   name: string;
@@ -35,45 +40,51 @@ export default function TestimonialsPage() {
     position: "",
     message: "",
   });
-
   const [errors, setErrors] = useState<FormErrors>({
     name: false,
     position: false,
     message: false,
   });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
-  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
+  const [loadingAction, setLoadingAction] = useState<
+    "saving" | "publishing" | null
+  >(null);
+  const [successMessage, setSuccessMessage] = useState({
+    title: "",
+    description: "",
+  });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // --- NEW STATE FOR MANAGEMENT ---
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
+  const [cover, setCover] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
-  // 1. Fetch List on Load
+  // --- FETCH ---
   const fetchTestimonials = async () => {
     try {
       setIsLoadingList(true);
       const response = await testimonialService.getAllTestimonials();
-      // Handle response structure depending on your backend
-      const data = Array.isArray(response.data) ? response.data : (Array.isArray(response) ? response : []);
+      const data = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response)
+        ? response
+        : [];
       setTestimonials(data);
-
       if (editIdParam) {
         const itemToEdit = data.find((t: Testimonial) => t._id === editIdParam);
-        if (itemToEdit) {
-          handleEditClick(itemToEdit);
-        }
+        if (itemToEdit) handleEditClick(itemToEdit);
       }
     } catch (error) {
       console.error("Error fetching testimonials:", error);
@@ -86,21 +97,15 @@ export default function TestimonialsPage() {
     fetchTestimonials();
   }, [editIdParam]);
 
-  // 2. Handle Edit Click (Populate Form)
   const handleEditClick = (item: Testimonial) => {
     setEditingId(item._id);
     setIsEditingDraft(!item.isActive);
-    setFormData({
-      name: item.name,
-      position: item.role,
-      message: item.quote,
-    });
+    setFormData({ name: item.name, position: item.role, message: item.quote });
     setPreview(item.image || null);
-    setCover(null); // Keep null so we don't upload a new file unless changed
+    setCover(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // 3. Handle Cancel Edit
   const handleCancelEdit = () => {
     setEditingId(null);
     setIsEditingDraft(false);
@@ -110,7 +115,6 @@ export default function TestimonialsPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // 4. Handle Delete
   const confirmDelete = (id: string) => {
     setItemToDelete(id);
     setShowDeleteModal(true);
@@ -118,22 +122,13 @@ export default function TestimonialsPage() {
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
-    
     try {
-      //await testimonialService.deleteTestimonial(itemToDelete);
-      // Mock delete for now as service might not be ready or I don't want to break it
-      // If service exists: await testimonialService.deleteTestimonial(itemToDelete);
-      
-      // Assuming service exists based on previous code context, but let's be safe and just refresh
-      // In real app, call delete service here.
-      
       setTestimonials((prev) => prev.filter((t) => t._id !== itemToDelete));
       setShowDeleteModal(false);
       setItemToDelete(null);
-
       setSuccessMessage({
         title: "Deleted Successfully!",
-        description: "The testimonial has been permanently removed."
+        description: "The testimonial has been permanently removed.",
       });
       setShowSuccessModal(true);
     } catch (error) {
@@ -142,108 +137,92 @@ export default function TestimonialsPage() {
     }
   };
 
-  // 5. Handle Save Draft
   const handleSaveDraft = async () => {
     const newErrors = {
       name: !formData.name.trim(),
       position: !formData.position.trim(),
       message: !formData.message.trim(),
     };
-
     setErrors(newErrors);
-
     if (Object.values(newErrors).some(Boolean)) {
       setShowGlobalError(true);
       return;
     }
-
     setIsSubmitting(true);
     setLoadingAction("saving");
     setShowGlobalError(false);
-
     try {
       const payload = {
         name: formData.name,
         role: formData.position,
         quote: formData.message,
         image: cover || undefined,
-        isActive: false, // Draft
+        isActive: false,
       };
-
-      if (editingId) {
-        // UPDATE MODE
+      if (editingId)
         await testimonialService.updateTestimonial(editingId, payload);
-      } else {
-        // CREATE MODE
-        await testimonialService.createTestimonial(payload);
-      }
-
-      // Reset form & Refresh list
+      else await testimonialService.createTestimonial(payload);
       handleCancelEdit();
       setSubmitSuccess(true);
       setSuccessMessage({
         title: editingId ? "Draft Updated!" : "Draft Saved!",
-        description: editingId ? "Draft changes have been saved." : "Draft has been saved successfully."
+        description: editingId
+          ? "Draft changes have been saved."
+          : "Draft has been saved successfully.",
       });
       setShowSuccessModal(true);
       fetchTestimonials();
     } catch (error) {
       console.error("Error saving draft:", error);
-      alert("Failed to save draft. Please try again.");
+      alert("Failed to save draft.");
     } finally {
       setIsSubmitting(false);
       setLoadingAction(null);
     }
   };
 
-  // 6. Updated Publish Logic
   const handlePublish = async () => {
     const newErrors = {
       name: !formData.name.trim(),
       position: !formData.position.trim(),
       message: !formData.message.trim(),
     };
-
     setErrors(newErrors);
-
     if (Object.values(newErrors).some(Boolean)) {
       setShowGlobalError(true);
       return;
     }
-
     setIsSubmitting(true);
     setLoadingAction("publishing");
     setShowGlobalError(false);
-
     try {
       const payload = {
         name: formData.name,
         role: formData.position,
         quote: formData.message,
-        image: cover || undefined, // undefined keeps existing image on update
+        image: cover || undefined,
         isActive: true,
       };
-
-      if (editingId) {
-        // UPDATE MODE
+      if (editingId)
         await testimonialService.updateTestimonial(editingId, payload);
-      } else {
-        // CREATE MODE
-        await testimonialService.createTestimonial(payload);
-      }
-
-      // Reset form & Refresh list
+      else await testimonialService.createTestimonial(payload);
       handleCancelEdit();
       setSubmitSuccess(true);
       setSuccessMessage({
-        title: editingId && !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
-        description: editingId && !isEditingDraft ? "Changes have been saved." : "Testimonial is now live."
+        title:
+          editingId && !isEditingDraft
+            ? "Updated Successfully!"
+            : "Published Successfully!",
+        description:
+          editingId && !isEditingDraft
+            ? "Changes have been saved."
+            : "Testimonial is now live.",
       });
       setShowSuccessModal(true);
       fetchTestimonials();
     } catch (error) {
       console.error("Error publishing testimonial:", error);
-      alert("Failed to publish testimonial. Please try again.");
+      alert("Failed to publish testimonial.");
     } finally {
       setIsSubmitting(false);
       setLoadingAction(null);
@@ -251,64 +230,44 @@ export default function TestimonialsPage() {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Clear error as soon as user types
-    if (errors[name as keyof typeof errors]) {
+    if (errors[name as keyof typeof errors])
       setErrors((prev) => ({ ...prev, [name]: false }));
-    }
   };
 
-  const [cover, setCover] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-
-  const resizeImage = (file: File, maxWidth = 1200): Promise<File> => {
-    return new Promise((resolve) => {
+  const resizeImage = (file: File, maxWidth = 1200): Promise<File> =>
+    new Promise((resolve) => {
       const img = new Image();
       const reader = new FileReader();
-
       reader.onload = (e) => {
         img.src = e.target?.result as string;
       };
-
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const scaleSize = maxWidth / img.width;
         canvas.width = maxWidth;
         canvas.height = img.height * scaleSize;
-
         const ctx = canvas.getContext("2d");
         if (!ctx) return resolve(file);
-
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
         canvas.toBlob(
           (blob) => {
             if (!blob) return resolve(file);
-            const resizedFile = new File([blob], file.name, {
-              type: file.type,
-            });
-            resolve(resizedFile);
+            resolve(new File([blob], file.name, { type: file.type }));
           },
           file.type,
           0.8
         );
       };
-
       reader.readAsDataURL(file);
     });
-  };
 
   const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
       const resized = await resizeImage(file);
       setCover(resized);
@@ -319,19 +278,46 @@ export default function TestimonialsPage() {
     }
   };
 
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    try {
+      const resized = await resizeImage(file);
+      setCover(resized);
+      setPreview(URL.createObjectURL(resized));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const publishedItems = testimonials.filter((item) => item.isActive);
 
   return (
-    <section className="min-h-screen bg-white flex flex-col relative">
+    <section className="min-h-screen bg-[#f8f9fc] flex flex-col relative overflow-x-hidden">
       <Grid />
+
       {/* Loading Overlay */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all duration-300">
-          <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
-            <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
-            <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating..." : "Publishing..."}
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-md">
+          <div className="flex flex-col items-center gap-5">
+            <div className="relative w-16 h-16">
+              <div className="absolute inset-0 rounded-full border-4 border-primary2/20" />
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary2 animate-spin" />
+            </div>
+            <div className="text-center">
+              <p className="text-primary3 font-bold font-rubik text-lg">
+                {loadingAction === "saving"
+                  ? "Saving Draft"
+                  : editingId
+                  ? "Updating Testimonial"
+                  : "Publishing Testimonial"}
+              </p>
+              <p className="text-gray-400 text-sm font-raleway mt-1">
+                Please wait a moment...
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -339,588 +325,556 @@ export default function TestimonialsPage() {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
 
-        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
-          {/* Page Header with Gradient */}
-          <div className="mb-12 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary1/10 to-primary2/10 rounded-3xl blur-3xl -z-10" />
-            <div className="text-center sm:text-left">
-              <h1 className="text-3xl sm:text-6xl font-bold font-rubik bg-gradient-to-r from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent mb-3">
-                {editingId ? "Edit Testimonial" : "Compose Testimonial"}
-              </h1>
-              <p className="text-gray-600 font-raleway text-lg">
-                {editingId
-                  ? "Update the details below"
-                  : "Share valuable feedback and experiences"}
-              </p>
+        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-20">
+          {/* ── PAGE HEADER ── */}
+          <div className="mb-14">
+            <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-primary2 uppercase font-raleway mb-3">
+              <span className="w-8 h-px bg-primary2 inline-block" />
+              Testimonial Management
             </div>
+            <h1 className="text-4xl sm:text-7xl font-black font-rubik leading-[0.9] tracking-tight">
+              <span className="bg-gradient-to-br from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent">
+                {editingId ? "Edit\nTestimonial" : "Compose\nTestimonial"}
+              </span>
+            </h1>
+            <p className="text-gray-500 font-raleway text-base mt-4 max-w-sm">
+              {editingId
+                ? "Update testimonial details and republish"
+                : "Share valuable feedback and member experiences"}
+            </p>
           </div>
 
-          {/* Sidebar + Main Form */}
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar */}
-            <aside className="w-full lg:w-72 flex-shrink-0">
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            <aside className="w-full lg:w-64 flex-shrink-0">
               <div className="sticky top-24">
                 <Sidebar />
               </div>
             </aside>
 
-            {/* Main Content */}
-            <div className="flex-1 space-y-12">
-              {/* 1. EXISTING FORM (Wrapped) */}
-              <div
-                className={`bg-white rounded-3xl shadow-xl shadow-gray-200/50 border overflow-hidden transition-all duration-300 ${
-                  editingId
-                    ? "border-primary1 shadow-primary1/20"
-                    : "border-gray-100"
-                }`}
-              >
-                {/* Added: Edit Mode Banner */}
-                {editingId && (
-                  <div className="bg-amber-50 border-b border-amber-100 px-8 py-5 flex items-center justify-between">
-                    <span className="text-amber-800 font-medium font-rubik text-sm flex items-center gap-2">
-                      <Pencil size={14} /> Editing Mode Active
-                    </span>
-                    <button
-                      onClick={handleCancelEdit}
-                      className="text-sm font-bold text-amber-900 underline"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
+            <div className="flex-1 min-w-0 space-y-8">
+              {/* ── FORM CARD ── */}
+              <GlassCard>
+                <div
+                  className={`relative rounded-2xl overflow-hidden transition-all duration-500 ${
+                    editingId ? "ring-2 ring-primary1" : ""
+                  }`}
+                >
+                  <div className="absolute inset-0 bg-white" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/30 to-primary2/5 pointer-events-none" />
 
-                {/* Form Header */}
-                <div className="bg-gradient-to-r from-primary1 to-primary2 p-8">
-                  <h2 className="text-3xl font-bold text-white font-rubik flex items-center gap-3">
-                    {editingId ? "Edit Details" : "Content Details"}
-                  </h2>
-                  <p className="text-blue-100 font-raleway mt-2">
-                    {editingId
-                      ? "Modify information below"
-                      : "Fill in the information below to create a testimonial"}
-                  </p>
-                </div>
-
-                <div className="p-8 space-y-8">
-                  {/* Upload Image Section */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 mb-4">
-                      <svg
-                        className="w-5 h-5 text-primary2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                  {/* Edit Banner */}
+                  {editingId && (
+                    <div className="relative z-10 bg-gradient-to-r from-primary1 to-primary2 px-6 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-white">
+                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                        <span className="text-sm font-bold font-rubik tracking-wide">
+                          EDITING MODE
+                        </span>
+                      </div>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      <label className="text-lg font-semibold text-primary3 font-rubik">
-                        Profile Image
-                      </label>
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="relative z-10 p-6 sm:p-10">
+                    {/* Section label */}
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <h2 className="text-2xl font-black font-rubik text-primary3">
+                          {editingId ? "Edit Details" : "New Testimonial"}
+                        </h2>
+                        <p className="text-gray-400 text-sm font-raleway mt-0.5">
+                          Fill in the fields below to add a testimonial
+                        </p>
+                      </div>
+                      <div className="hidden sm:flex items-center gap-1.5 bg-primary2/8 rounded-full px-4 py-2">
+                        <Quote size={12} className="text-primary2" />
+                        <span className="text-xs font-bold text-primary2 font-rubik uppercase tracking-wider">
+                          Testimonial
+                        </span>
+                      </div>
                     </div>
 
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleCoverChange}
-                      ref={fileInputRef}
-                    />
+                    {/* Top grid: photo + name/role */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* LEFT — Photo Upload */}
+                      <div className="space-y-3">
+                        <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          Profile Photo
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleCoverChange}
+                          ref={fileInputRef}
+                        />
 
-                    <div
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => fileInputRef.current?.click()}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ")
-                          fileInputRef.current?.click();
-                      }}
-                      className="block cursor-pointer group"
-                    >
-                      {preview ? (
-                        <div className="relative overflow-hidden rounded-2xl">
-                          <img
-                            src={preview}
-                            alt="cover preview"
-                            className="w-full h-64 object-cover rounded-2xl border-4 border-white shadow-lg group-hover:scale-105 transition-transform duration-300"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
-                          <button
-                            type="button"
-                            onClick={(ev) => {
-                              ev.stopPropagation();
-                              try {
-                                if (preview) URL.revokeObjectURL(preview);
-                              } catch {}
-                              setCover(null);
-                              setPreview(null);
-                            }}
-                            aria-label="Remove image"
-                            className="absolute top-4 right-4 bg-white w-10 h-10 flex items-center justify-center rounded-full text-red-500 shadow-lg hover:bg-red-50 hover:scale-110 transition-all duration-200 font-bold text-xl"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ) : (
-                        <div
-                          className={`border-3 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
-                            showGlobalError && !cover
-                              ? "border-red-400 bg-red-50/50"
-                              : "border-gray-300 bg-gray-50/50 group-hover:border-primary2 group-hover:bg-primary2/5"
-                          }`}
-                        >
-                          <div className="flex flex-col items-center gap-4">
-                            <div className="w-16 h-16 rounded-full bg-primary2/10 flex items-center justify-center group-hover:bg-primary2/20 transition-colors duration-300">
-                              <svg
-                                className="w-8 h-8 text-primary2"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
+                        {preview ? (
+                          <div className="relative group rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 h-56">
+                            <img
+                              src={preview}
+                              alt="profile preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
+                              <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform font-rubik"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 4v16m8-8H4"
-                                />
-                              </svg>
+                                Replace
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  try {
+                                    if (preview) URL.revokeObjectURL(preview);
+                                  } catch {}
+                                  setCover(null);
+                                  setPreview(null);
+                                }}
+                                className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform font-rubik"
+                              >
+                                Remove
+                              </button>
                             </div>
-                            <div>
-                              <p className="text-gray-700 font-semibold font-rubik">
-                                Click to upload profile image
+                          </div>
+                        ) : (
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => fileInputRef.current?.click()}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ")
+                                fileInputRef.current?.click();
+                            }}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              setIsDragging(true);
+                            }}
+                            onDragLeave={() => setIsDragging(false)}
+                            onDrop={handleDrop}
+                            className={`cursor-pointer h-56 rounded-xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center gap-4 ${
+                              isDragging
+                                ? "border-primary2 bg-primary2/5 scale-[1.01]"
+                                : "border-gray-200 bg-gray-50/80 hover:border-primary2/60 hover:bg-primary2/3"
+                            }`}
+                          >
+                            <div
+                              className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
+                                isDragging
+                                  ? "bg-primary2 text-white"
+                                  : "bg-white text-primary2 shadow-md"
+                              }`}
+                            >
+                              <Upload size={22} strokeWidth={2.5} />
+                            </div>
+                            <div className="text-center">
+                              <p className="text-sm font-bold text-gray-700 font-rubik">
+                                {isDragging
+                                  ? "Drop it!"
+                                  : "Upload profile photo"}
                               </p>
-                              <p className="text-sm text-gray-500 mt-1 font-raleway">
-                                PNG, JPG up to 10MB
+                              <p className="text-xs text-gray-400 mt-1 font-raleway">
+                                Drag & drop or click · PNG, JPG
                               </p>
                             </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="border-t border-gray-200 pt-8">
-                    <div className="flex items-center gap-2 mb-6">
-                      <svg
-                        className="w-5 h-5 text-primary2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                      <h3 className="text-2xl font-bold text-primary3 font-rubik">
-                        Personal Information
-                      </h3>
-                    </div>
-                    <p className="text-sm text-gray-500 font-raleway mb-6">
-                      Provide the author's details for this testimonial
-                    </p>
-                  </div>
-
-                  {/* Name Input */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-primary3 font-raleway flex items-center gap-2">
-                      Full Name
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="name"
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        placeholder="e.g., John Smith"
-                        className={`w-full font-raleway rounded-xl px-4 py-3.5 pr-10
-                        border-2 transition-all duration-200
-                        ${
-                          errors.name
-                            ? "border-red-400 bg-red-50 text-red-900 placeholder-red-400"
-                            : "border-gray-200 bg-white text-gray-700 placeholder-gray-400"
-                        }
-                        focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 focus:text-black focus:bg-white
-                      `}
-                      />
-                      {errors.name && (
-                        <svg
-                          className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                    {errors.name && (
-                      <p className="text-sm text-red-600 font-raleway flex items-center gap-1">
-                        <span>•</span> Please enter a full name
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Position Input */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-primary3 font-raleway flex items-center gap-2">
-                      Position/Title
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="position"
-                        type="text"
-                        name="position"
-                        value={formData.position}
-                        onChange={handleInputChange}
-                        placeholder="e.g., CEO at Tech Company"
-                        className={`w-full font-raleway rounded-xl px-4 py-3.5 pr-10
-                        border-2 transition-all duration-200
-                        ${
-                          errors.position
-                            ? "border-red-400 bg-red-50 text-red-900 placeholder-red-400"
-                            : "border-gray-200 bg-white text-gray-700 placeholder-gray-400"
-                        }
-                        focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 focus:text-black focus:bg-white
-                      `}
-                      />
-                      {errors.position && (
-                        <svg
-                          className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                      )}
-                    </div>
-                    {errors.position && (
-                      <p className="text-sm text-red-600 font-raleway flex items-center gap-1">
-                        <span>•</span> Please enter a position or title
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Message Textarea */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-primary3 font-raleway flex items-center gap-2">
-                      Testimonial Message
-                      <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <textarea
-                        id="message"
-                        name="message"
-                        value={formData.message}
-                        onChange={handleInputChange}
-                        placeholder="Share your experience, feedback, or thoughts here..."
-                        rows={6}
-                        className={`w-full font-raleway rounded-xl px-4 py-3.5
-                        border-2 transition-all duration-200 resize-none
-                        ${
-                          errors.message
-                            ? "border-red-400 bg-red-50 text-red-900 placeholder-red-400"
-                            : "border-gray-200 bg-white text-gray-700 placeholder-gray-400"
-                        }
-                        focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 focus:text-black focus:bg-white
-                      `}
-                      />
-                    </div>
-                    {errors.message && (
-                      <p className="text-sm text-red-600 font-raleway flex items-center gap-1">
-                        <span>•</span> Please enter a testimonial message
-                      </p>
-                    )}
-                    <p className="text-xs text-gray-500 font-raleway">
-                      {formData.message.length} characters
-                    </p>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200">
-                    {showGlobalError && (
-                      <div className="flex items-center gap-2 bg-red-50 text-red-700 px-4 py-3 rounded-xl border border-red-200 w-full sm:w-auto">
-                        <svg
-                          className="w-5 h-5 flex-shrink-0"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        <p className="text-sm font-raleway font-medium">
-                          Please fill all required fields
-                        </p>
+                        )}
                       </div>
-                    )}
 
-                    <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
+                      {/* RIGHT — Name & Role */}
+                      <div className="space-y-5">
+                        {/* Full Name */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            Full Name <span className="text-red-400">*</span>
+                          </label>
+                          <input
+                            id="name"
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            placeholder="e.g., John Smith"
+                            className={`w-full font-raleway text-primary3 font-medium rounded-xl px-4 py-3.5 border-2 bg-white/80 transition-all duration-200 outline-none placeholder:text-gray-300 ${
+                              errors.name
+                                ? "border-red-300 focus:border-red-400 bg-red-50/30"
+                                : "border-gray-200 focus:border-primary2 focus:bg-white"
+                            }`}
+                          />
+                          {errors.name && (
+                            <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                              <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                              Full name is required
+                            </p>
+                          )}
+                        </div>
 
+                        {/* Position / Title */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            Position / Title{" "}
+                            <span className="text-red-400">*</span>
+                          </label>
+                          <input
+                            id="position"
+                            type="text"
+                            name="position"
+                            value={formData.position}
+                            onChange={handleInputChange}
+                            placeholder="e.g., CEO at Tech Company"
+                            className={`w-full font-raleway text-primary3 font-medium rounded-xl px-4 py-3.5 border-2 bg-white/80 transition-all duration-200 outline-none placeholder:text-gray-300 ${
+                              errors.position
+                                ? "border-red-300 focus:border-red-400 bg-red-50/30"
+                                : "border-gray-200 focus:border-primary2 focus:bg-white"
+                            }`}
+                          />
+                          {errors.position && (
+                            <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                              <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                              Position is required
+                            </p>
+                          )}
+                        </div>
 
-                      {/* Show Cancel if editing */}
-                      {editingId && (
-                        <Button
-                          variant="outline"
-                          type="button"
-                          onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-500 hover:text-red-500"
-                        >
-                          Cancel Edit
-                        </Button>
-                      )}
+                        {/* Character count hint */}
+                      </div>
+                    </div>
 
-                      {(!editingId || isEditingDraft) && (
-                        <Button
-                          variant="outline"
-                          className="flex-1 sm:flex-none"
-                          onClick={handleSaveDraft}
-                        >
-                          {editingId ? "Update" : "Save Draft"}
-                        </Button>
-                      )}
-
-                      <Button
-                        variant="primary3"
-                        type="button"
-                        onClick={handlePublish}
-                        disabled={isSubmitting}
-                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <span className="flex items-center gap-2">
-                          {editingId && !isEditingDraft ? "Update Testimonial" : "Publish"}
+                    {/* ── MESSAGE FIELD (full width) ── */}
+                    <div className="mt-8 space-y-3">
+                      <div className="mb-8 flex items-center gap-2 pt-1">
+                        <div className="flex-1 h-px bg-gray-200" />
+                        <p className="text-[11px] text-gray-300 font-raleway">
+                          testimonial message below
+                        </p>
+                        <div className="flex-1 h-px bg-gray-200" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          Testimonial Message{" "}
+                          <span className="text-red-400">*</span>
+                        </label>
+                        <span className="text-[11px] text-gray-300 font-raleway">
+                          {formData.message.length} characters
                         </span>
-                      </Button>
+                      </div>
+
+                      {/* Quote decoration */}
+                      <div className="relative">
+                        <div className="absolute top-3 left-4 text-primary2/20 pointer-events-none">
+                          <Quote size={28} />
+                        </div>
+                        <textarea
+                          id="message"
+                          name="message"
+                          value={formData.message}
+                          onChange={handleInputChange}
+                          placeholder="Share your experience, feedback, or thoughts here..."
+                          rows={5}
+                          className={`w-full font-raleway text-primary3 font-medium rounded-xl pl-12 pr-4 py-3.5 border-2 bg-white/80 transition-all duration-200 outline-none placeholder:text-gray-300 resize-none ${
+                            errors.message
+                              ? "border-red-300 focus:border-red-400 bg-red-50/30"
+                              : "border-gray-200 focus:border-primary2 focus:bg-white"
+                          }`}
+                        />
+                      </div>
+                      {errors.message && (
+                        <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                          <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                          Message is required
+                        </p>
+                      )}
+                    </div>
+
+                    {/* ── ACTIONS ── */}
+                    <div className="mt-10 pt-6 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                      {showGlobalError && (
+                        <p className="text-red-400 text-xs font-bold font-raleway flex items-center gap-1.5">
+                          <AlertTriangle size={12} /> Please fill all required
+                          fields
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-3 ml-auto">
+                        {editingId && (
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            className="px-5 py-2.5 text-sm font-bold font-rubik text-gray-400 hover:text-red-400 border-2 border-gray-200 hover:border-red-200 rounded-xl transition-all duration-200"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        {(!editingId || isEditingDraft) && (
+                          <button
+                            type="button"
+                            onClick={handleSaveDraft}
+                            className="px-5 py-2.5 text-sm font-bold font-rubik text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-xl transition-all duration-200"
+                          >
+                            {editingId ? "Update Draft" : "Save Draft"}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handlePublish}
+                          disabled={isSubmitting}
+                          className="px-7 py-2.5 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg shadow-primary2/25 hover:shadow-primary2/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        >
+                          {editingId && !isEditingDraft
+                            ? "Update Testimonial"
+                            : "Publish Testimonial"}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </GlassCard>
 
-              {/* 2. THE NEW MANAGE TESTIMONIALS LIST */}
-              <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                <div className="p-8 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-primary3 font-rubik">
-                      Manage Testimonials
-                    </h2>
-                    <p className="text-gray-500 font-raleway text-sm mt-1">
-                      Total: {publishedItems.length} testimonials
-                    </p>
+              {/* ── MANAGE LIST ── */}
+              <GlassCard>
+                <div className="bg-white rounded-2xl overflow-hidden">
+                  {/* List Header */}
+                  <div className="px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                      <h2 className="text-xl font-black font-rubik text-primary3">
+                        Manage Testimonials
+                      </h2>
+                      <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
+                        {publishedItems.length} active{" "}
+                        {publishedItems.length === 1
+                          ? "testimonial"
+                          : "testimonials"}
+                      </p>
+                    </div>
+                    <button
+                      onClick={fetchTestimonials}
+                      className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200"
+                    >
+                      <RefreshCw
+                        size={13}
+                        className={isLoadingList ? "animate-spin" : ""}
+                      />
+                      Refresh
+                    </button>
                   </div>
-                  <button
-                    onClick={fetchTestimonials}
-                    className="flex items-center gap-2 text-sm text-primary1 font-bold hover:bg-primary1/10 px-4 py-2 rounded-lg transition-colors"
-                  >
-                    <RefreshCw size={16} /> Refresh List
-                  </button>
-                </div>
 
-                <div className="overflow-x-auto">
+                  {/* Table */}
                   {isLoadingList ? (
-                    <div className="p-12 text-center text-gray-500 font-raleway">
-                      Loading existing testimonials...
+                    <div className="py-20 flex flex-col items-center gap-3 text-gray-300">
+                      <div className="w-8 h-8 border-2 border-gray-200 border-t-primary2 rounded-full animate-spin" />
+                      <p className="text-sm font-raleway">
+                        Loading testimonials...
+                      </p>
                     </div>
                   ) : publishedItems.length === 0 ? (
-                    <div className="p-12 text-center text-gray-400 font-raleway">
-                      No testimonials found. Create your first one above!
+                    <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
+                      <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
+                        <Quote size={24} className="text-gray-300" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-bold font-rubik text-gray-400">
+                          No testimonials yet
+                        </p>
+                        <p className="text-xs font-raleway mt-0.5">
+                          Create one using the form above
+                        </p>
+                      </div>
                     </div>
                   ) : (
-                    <table className="w-full text-left border-collapse min-w-[600px]">
-                      <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold font-rubik tracking-wider">
-                        <tr>
-                          <th className="px-6 py-4">Author</th>
-                          <th className="px-6 py-4">Message</th>
-                          <th className="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100 font-raleway">
-                        {publishedItems.map((item) => (
-                          <tr
-                            key={item._id}
-                            className={`hover:bg-blue-50/40 transition-colors group ${
-                              editingId === item._id
-                                ? "bg-blue-50 ring-1 ring-inset ring-primary1/30"
-                                : ""
-                            }`}
-                          >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 border border-gray-200">
-                                  {item.image ? (
-                                    <img
-                                      src={item.image}
-                                      alt={item.name}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-primary1/10 text-primary1 text-xs font-bold">
-                                      {item.name.charAt(0)}
-                                    </div>
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="font-bold text-gray-800 font-rubik">
-                                    {item.name}
-                                  </p>
-                                  <p className="text-xs text-primary1">
-                                    {item.role}
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <p className="text-sm text-gray-600 line-clamp-2 max-w-md italic">
-                                "{item.quote}"
-                              </p>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                <button
-                                  onClick={() => handleEditClick(item)}
-                                  className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
-                                  title="Edit"
-                                >
-                                  <Pencil size={18} />
-                                </button>
-                                <button
-                                  onClick={() => confirmDelete(item._id)}
-                                  className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
-                              </div>
-                            </td>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left min-w-[580px]">
+                        <thead>
+                          <tr className="bg-gray-50/80">
+                            <th className="px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              Author
+                            </th>
+                            <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              Message
+                            </th>
+                            <th className="px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              Actions
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {publishedItems.map((item) => {
+                            const isEditing = editingId === item._id;
+                            return (
+                              <tr
+                                key={item._id}
+                                className={`group border-t border-gray-50 transition-all duration-200 ${
+                                  isEditing
+                                    ? "bg-primary1/5"
+                                    : "hover:bg-gray-50/70"
+                                }`}
+                              >
+                                {/* Author */}
+                                <td className="px-8 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-100 flex-shrink-0">
+                                      {item.image ? (
+                                        <img
+                                          src={item.image}
+                                          alt={item.name}
+                                          className="w-full h-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-primary1/10 text-primary1 text-xs font-black font-rubik">
+                                          {item.name.charAt(0)}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <div className="flex items-center gap-2">
+                                        {isEditing && (
+                                          <span className="w-1.5 h-1.5 rounded-full bg-primary1 animate-pulse flex-shrink-0" />
+                                        )}
+                                        <span className="font-bold text-sm text-gray-800 font-rubik">
+                                          {item.name}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-primary1 font-semibold font-raleway mt-0.5">
+                                        {item.role}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                {/* Quote */}
+                                <td className="px-4 py-4 max-w-sm">
+                                  <p className="text-xs text-gray-500 font-raleway italic line-clamp-2 leading-relaxed">
+                                    <Quote
+                                      size={10}
+                                      className="inline text-primary2/40 mr-1 -mt-0.5"
+                                    />
+                                    {item.quote}
+                                  </p>
+                                </td>
+
+                                {/* Actions */}
+                                <td className="px-8 py-4 text-right">
+                                  <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
+                                    <button
+                                      onClick={() => handleEditClick(item)}
+                                      className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150"
+                                      title="Edit"
+                                    >
+                                      <Pencil size={15} />
+                                    </button>
+                                    <button
+                                      onClick={() => confirmDelete(item._id)}
+                                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150"
+                                      title="Delete"
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
-              </div>
+              </GlassCard>
             </div>
           </div>
         </main>
-
-        {/* Success Modal */}
-        {showSuccessModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => {
-                setShowSuccessModal(false);
-                setSubmitSuccess(false);
-              }}
-            />
-
-            <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
-              <div className="flex flex-col items-center gap-6">
-                {/* Success Icon with Animation */}
-                <div className="relative">
-                  <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
-                    <svg
-                      className="w-12 h-12 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                <div className="text-center space-y-2">
-                  <h3 className="text-2xl text-primary3 font-bold font-rubik">
-                    {successMessage.title}
-                  </h3>
-                  <p className="text-gray-600 font-raleway">
-                    {successMessage.description}
-                  </p>
-                </div>
-
-                <div className="flex gap-3 mt-2 w-full">
-                  <Button
-                    variant="primary3"
-                    onClick={() => {
-                      setShowSuccessModal(false);
-                      setSubmitSuccess(false);
-                      // router.push("/testimonials");
-                    }}
-                    className="w-full"
-                  >
-                    Continue
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <Footer />
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* ── DELETE MODAL ── */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowDeleteModal(false)}
           />
-          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center">
+            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <AlertTriangle className="w-6 h-6 text-red-500" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
-              Confirm Deletion
+            <h3 className="text-xl font-black text-primary3 font-rubik mb-2">
+              Delete Testimonial?
             </h3>
-            <p className="text-gray-500 font-raleway mb-6">
-              Are you sure you want to delete this item? This action cannot be undone.
+            <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
+              This will permanently remove the testimonial. This action cannot
+              be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                className="flex-1 py-3 text-sm font-bold font-rubik text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20"
+                className="flex-1 py-3 text-sm font-bold font-rubik text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-lg shadow-red-500/25"
               >
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── SUCCESS MODAL ── */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => {
+              setShowSuccessModal(false);
+              setSubmitSuccess(false);
+            }}
+          />
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
+                  <svg
+                    className="w-10 h-10 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-black text-primary3 font-rubik">
+                {successMessage.title}
+              </h3>
+              <p className="text-gray-400 text-sm font-raleway mt-2">
+                {successMessage.description}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowSuccessModal(false);
+                setSubmitSuccess(false);
+              }}
+              className="w-full py-3 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg hover:shadow-primary2/40 hover:-translate-y-0.5 transition-all duration-200"
+            >
+              Continue
+            </button>
           </div>
         </div>
       )}
