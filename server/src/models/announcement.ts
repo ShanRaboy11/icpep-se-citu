@@ -1,21 +1,5 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-// Interface for Attachment
-interface IAttachment {
-  name: string;
-  url: string;
-  fileType?: string;
-}
-
-const attachmentSchema = new Schema<IAttachment>(
-  {
-    name: { type: String, required: true },
-    url: { type: String, required: true },
-    fileType: String,
-  },
-  { _id: false }
-);
-
 // Interface for Awardee
 interface IAwardee {
   name: string;
@@ -71,7 +55,6 @@ export interface IAnnouncement extends Document {
   // Media
   imageUrl?: string | null;
   galleryImages?: string[];
-  attachments?: IAttachment[];
   views?: number;
   // Virtuals
   isExpired: boolean;
@@ -178,7 +161,6 @@ const announcementSchema = new Schema<IAnnouncement>(
       type: [String],
       default: [],
     },
-    attachments: [attachmentSchema],
     views: {
       type: Number,
       default: 0,

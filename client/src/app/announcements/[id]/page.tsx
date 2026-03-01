@@ -45,11 +45,6 @@ interface RawAnnouncement {
     year: string;
     award: string;
   }>;
-  attachments?: Array<{
-    name: string;
-    url: string;
-    fileType?: string;
-  }>;
   priority?: string;
   expiryDate?: string;
 }
@@ -130,7 +125,7 @@ export default function AnnouncementDetailPage() {
   }, [id]);
 
   const handleBack = () => {
-    router.push("/announcements");
+    router.back();
   };
 
   // Loading state

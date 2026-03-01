@@ -4,7 +4,100 @@ import { motion } from "framer-motion";
 import FacultyOfficerCard from "@/app/home/components/faculty-officer-card";
 import { useState, useEffect } from "react";
 
+// Shimmer animation style
+const shimmerStyle = `
+  @keyframes shimmer {
+    0% { background-position: -800px 0; }
+    100% { background-position: 800px 0; }
+  }
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.04) 0px,
+      rgba(255,255,255,0.10) 40px,
+      rgba(255,255,255,0.04) 80px
+    );
+    background-size: 800px 100%;
+    animation: shimmer 1.6s infinite linear;
+  }
+`;
+
+function SkeletonBlock({ className = "" }: { className?: string }) {
+  return (
+    <div className={`skeleton-shimmer rounded-lg bg-white/5 ${className}`} />
+  );
+}
+
+// Mirrors the FacultyOfficerCard dimensions (120px wide card)
+function FacultyOfficerCardSkeleton() {
+  return (
+    <div className="flex-shrink-0 flex flex-col items-center gap-2 w-[120px]">
+      {/* Avatar circle */}
+      <SkeletonBlock className="w-[80px] h-[80px] rounded-full" />
+      {/* Name line */}
+      <SkeletonBlock className="w-[90px] h-3 rounded-md" />
+      {/* Title line */}
+      <SkeletonBlock className="w-[70px] h-3 rounded-md" />
+    </div>
+  );
+}
+
+function FacultyOfficersSkeleton() {
+  const CARD_COUNT = 9;
+
+  return (
+    <section className="light-dark-background relative pt-28 pb-16 sm:pt-36 sm:pb-20">
+      <style>{shimmerStyle}</style>
+
+      {/* Header skeleton */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="mb-12 md:mb-16 text-center flex flex-col items-center gap-3">
+          {/* Mobile: two-line title */}
+          <div className="flex flex-col items-center gap-2 sm:hidden">
+            <SkeletonBlock className="w-44 h-9 rounded-md" />
+            <SkeletonBlock className="w-28 h-9 rounded-md" />
+          </div>
+          {/* Desktop: single-line title */}
+          <SkeletonBlock className="hidden sm:block w-72 h-10 rounded-md" />
+          {/* Subtitle */}
+          <SkeletonBlock className="w-52 h-5 rounded-md" />
+        </div>
+      </div>
+
+      {/* Mobile skeleton rows */}
+      <div className="relative z-10 w-full overflow-hidden block sm:hidden">
+        <div className="flex gap-6 px-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <FacultyOfficerCardSkeleton key={`mob-top-${i}`} />
+          ))}
+        </div>
+        <div className="flex gap-6 px-5 mt-6">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <FacultyOfficerCardSkeleton key={`mob-bot-${i}`} />
+          ))}
+        </div>
+      </div>
+
+      {/* Desktop skeleton rows */}
+      <div className="relative z-10 w-full overflow-hidden hidden sm:block">
+        <div className="flex gap-6 p-5">
+          {Array.from({ length: CARD_COUNT }).map((_, i) => (
+            <FacultyOfficerCardSkeleton key={`desk-top-${i}`} />
+          ))}
+        </div>
+        <div className="flex gap-6 p-5 -mt-5">
+          {Array.from({ length: CARD_COUNT }).map((_, i) => (
+            <FacultyOfficerCardSkeleton key={`desk-bot-${i}`} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export function FacultyOfficersSection() {
+  const [loading, setLoading] = useState(true);
+
   const facultyAndOfficers = [
     {
       name: "Dr. Maria L. Dizon",
@@ -50,13 +143,19 @@ export function FacultyOfficersSection() {
     { name: "Kyla Fernandez", title: "Technical Lead", image: "/faculty.png" },
   ];
 
+  // Simulate a brief loading state so skeleton is visible during hydration/mount
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 0);
+    return () => clearTimeout(timer);
+  }, []);
+
   const MINIMUM_BASE_LENGTH = 15;
   let extendedList = [...facultyAndOfficers];
   if (extendedList.length > 0 && extendedList.length < MINIMUM_BASE_LENGTH) {
     const repeatsNeeded = Math.ceil(MINIMUM_BASE_LENGTH / extendedList.length);
     extendedList = Array.from(
       { length: repeatsNeeded },
-      () => facultyAndOfficers
+      () => facultyAndOfficers,
     ).flat();
   }
   const duplicated = [...extendedList, ...extendedList];
@@ -67,15 +166,20 @@ export function FacultyOfficersSection() {
   const bottomRowOfficers = facultyAndOfficers.slice(half);
 
   useEffect(() => {
+    if (loading) return;
     const interval = setInterval(() => {
       setActiveMobileSlide((prev) => (prev + 1) % topRowOfficers.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, [topRowOfficers.length]);
+  }, [topRowOfficers.length, loading]);
 
   const MOBILE_CARD_WIDTH = 120;
   const MOBILE_GAP = 24;
   const SLIDE_OFFSET = MOBILE_CARD_WIDTH + MOBILE_GAP;
+
+  if (loading) {
+    return <FacultyOfficersSkeleton />;
+  }
 
   return (
     <section className="light-dark-background relative pt-28 pb-16 sm:pt-36 sm:pb-20">
@@ -94,6 +198,7 @@ export function FacultyOfficersSection() {
         </div>
       </div>
 
+      {/* Mobile marquee */}
       <div className="relative z-10 w-full overflow-hidden block sm:hidden">
         <motion.div
           className="flex w-max gap-6 px-5"
@@ -128,6 +233,7 @@ export function FacultyOfficersSection() {
         </motion.div>
       </div>
 
+      {/* Desktop marquee */}
       <div className="relative z-10 w-full overflow-hidden hidden sm:block">
         <motion.div
           className="flex w-max gap-6 p-5"

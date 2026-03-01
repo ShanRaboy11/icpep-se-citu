@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Sidebar from "../../components/sidebar";
@@ -8,7 +8,17 @@ import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
-import { ChevronDown, Pencil, Trash2, RefreshCw, AlertTriangle } from "lucide-react"; // Added Icons
+import {
+  ChevronDown,
+  Pencil,
+  Trash2,
+  RefreshCw,
+  AlertTriangle,
+  Globe,
+  Users,
+  Shield,
+  Check,
+} from "lucide-react";
 import announcementService, {
   AnnouncementData,
 } from "../../services/announcement";
@@ -25,21 +35,6 @@ type FormErrors = {
   image?: boolean;
 };
 
-type FileAttachment = {
-  name: string;
-  type: "file";
-  file: File;
-};
-
-type LinkAttachment = {
-  name: string;
-  url: string;
-  type: "link";
-};
-
-type Attachment = FileAttachment | LinkAttachment;
-
-// Interface for the list items
 interface AnnouncementItem {
   _id: string;
   title: string;
@@ -59,10 +54,40 @@ interface AnnouncementItem {
   date?: string;
 }
 
+const VISIBILITY_OPTIONS = [
+  {
+    value: "public",
+    label: "Public",
+    sublabel: "Everyone can see this",
+    icon: Globe,
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+    ring: "ring-emerald-200",
+    badge: "bg-emerald-100 text-emerald-700",
+  },
+  {
+    value: "members",
+    label: "Members Only",
+    sublabel: "Visible to registered members",
+    icon: Users,
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+    ring: "ring-blue-200",
+    badge: "bg-blue-100 text-blue-700",
+  },
+  {
+    value: "officers",
+    label: "Officers Only",
+    sublabel: "Restricted to organization officers",
+    icon: Shield,
+    color: "text-violet-600",
+    bg: "bg-violet-50",
+    ring: "ring-violet-200",
+    badge: "bg-violet-100 text-violet-700",
+  },
+] as const;
+
 export default function AnnouncementsPage() {
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [showLinkInput, setShowLinkInput] = useState(false);
-  const [newLink, setNewLink] = useState("");
   type ActiveTab = "General" | "News" | "Meeting" | "Achievement";
   const [activeTab, setActiveTab] = useState<ActiveTab>("General");
   const [showOrganizerInput, setShowOrganizerInput] = useState(false);
@@ -74,35 +99,53 @@ export default function AnnouncementsPage() {
     { name: "", program: "", year: "", award: "" },
   ]);
   const [agenda, setAgenda] = useState<string[]>([""]);
-  const [showGlobalError, setShowGlobalError] = useState(false);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [showGlobalError, setShowGlobalError] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [loadingAction, setLoadingAction] = useState<"saving" | "publishing" | null>(null);
-  const [successMessage, setSuccessMessage] = useState({ title: "", description: "" });
+  const [loadingAction, setLoadingAction] = useState<
+    "saving" | "publishing" | null
+  >(null);
+  const [successMessage, setSuccessMessage] = useState({
+    title: "",
+    description: "",
+  });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-  
-  const tabs: ActiveTab[] = ["General", "News", "Meeting", "Achievement"];
+  const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
+  const visibilityRef = useRef<HTMLDivElement>(null);
 
-  const removeAttachment = (index: number) => {
-    setAttachments((prev) => prev.filter((_, i) => i !== index));
-  };
+  const tabs: ActiveTab[] = ["General", "News", "Meeting", "Achievement"];
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit");
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Close visibility dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        visibilityRef.current &&
+        !visibilityRef.current.contains(e.target as Node)
+      ) {
+        setShowVisibilityDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     if (editIdParam) {
       const fetchAnnouncement = async () => {
         try {
-          const response = await announcementService.getAnnouncementById(editIdParam);
-          const data = response.data as any; // Assuming response structure
+          const response =
+            await announcementService.getAnnouncementById(editIdParam);
+          const data = response.data as any;
           if (data) {
             setEditingId(data._id);
             setIsEditingDraft(!data.isPublished);
@@ -110,22 +153,21 @@ export default function AnnouncementsPage() {
               title: data.title,
               summary: data.description,
               body: data.content,
-              visibility: "Public", // Default or map from data
+              visibility: "Public",
               date: data.date || "",
               time: data.time || "",
               location: data.location || "",
-              attendanceLink: "", // Map if available
+              attendanceLink: "",
             });
             setActiveTab(data.type as ActiveTab);
-            // Populate other fields as needed (images, agenda, etc.)
             if (data.agenda) setAgenda(data.agenda);
             if (data.awardees) setAwardees(data.awardees);
             if (data.organizer) {
-                setOrganizer(data.organizer);
-                setShowOrganizerInput(true);
+              setOrganizer(data.organizer);
+              setShowOrganizerInput(true);
             }
             if (data.imageUrl) {
-                setPreviews([data.imageUrl]);
+              setPreviews([data.imageUrl]);
             }
           }
         } catch (error) {
@@ -159,21 +201,18 @@ export default function AnnouncementsPage() {
     image: false,
   });
 
-  // --- NEW MANAGEMENT STATE ---
   const [announcementList, setAnnouncementList] = useState<AnnouncementItem[]>(
-    []
+    [],
   );
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
 
-  // 1. FETCH ANNOUNCEMENTS
   const fetchAnnouncements = async () => {
     setIsLoadingList(true);
     try {
       const response = await announcementService.getAnnouncements({
         limit: 100,
       });
-      // Handle various API response structures
       const data = response.data || (Array.isArray(response) ? response : []);
       setAnnouncementList(data as AnnouncementItem[]);
     } catch (err) {
@@ -187,12 +226,9 @@ export default function AnnouncementsPage() {
     fetchAnnouncements();
   }, []);
 
-  // 2. HANDLE EDIT CLICK (Populates Form)
   const handleEditClick = (item: AnnouncementItem) => {
     setEditingId(item._id);
     setIsEditingDraft(!item.isPublished);
-
-    // Basic Fields
     setFormData({
       title: item.title,
       summary: item.description,
@@ -201,32 +237,24 @@ export default function AnnouncementsPage() {
       time: item.time || "",
       location: item.location || "",
       attendanceLink: item.attendees || "",
-      // Map audience array to visibility string
       visibility: item.targetAudience?.includes("members")
         ? "members"
         : item.targetAudience?.includes("officers")
-        ? "officers"
-        : "public",
+          ? "officers"
+          : "public",
     });
-
-    // Organizer
     setOrganizer(item.organizer || "");
     setShowOrganizerInput(!!item.organizer);
-
-    // Tabs
     let tabToSet: ActiveTab = "General";
     if (item.type === "Meeting") tabToSet = "Meeting";
     if (item.type === "Achievement") tabToSet = "Achievement";
     if (item.type === "News") tabToSet = "News";
     setActiveTab(tabToSet);
-
-    // Complex Arrays
     if (item.type === "Meeting" && item.agenda && item.agenda.length > 0) {
       setAgenda(item.agenda);
     } else {
       setAgenda([""]);
     }
-
     if (
       item.type === "Achievement" &&
       item.awardees &&
@@ -236,8 +264,6 @@ export default function AnnouncementsPage() {
     } else {
       setAwardees([{ name: "", program: "", year: "", award: "" }]);
     }
-
-    // Schedule / Draft Status
     if (!item.isPublished && item.publishDate) {
       const pDate = new Date(item.publishDate);
       setShowSchedule(true);
@@ -248,16 +274,11 @@ export default function AnnouncementsPage() {
       setScheduleDate("");
       setScheduleTime("");
     }
-
-    // Images
     setPreviews(item.imageUrl ? [item.imageUrl] : []);
-    setImages([]); // Clear file input since we have a preview URL
-
-    // Scroll to form
+    setImages([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // 3. CANCEL EDIT
   const handleCancelEdit = () => {
     setEditingId(null);
     setIsEditingDraft(false);
@@ -265,7 +286,6 @@ export default function AnnouncementsPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // 4. DELETE
   const confirmDelete = (id: string) => {
     setItemToDelete(id);
     setShowDeleteModal(true);
@@ -273,25 +293,14 @@ export default function AnnouncementsPage() {
 
   const handleDelete = async () => {
     if (!itemToDelete) return;
-    
     try {
-      await announcementService.deleteAnnouncement(itemToDelete);
       await announcementService.deleteAnnouncement(itemToDelete);
       fetchAnnouncements();
       setShowDeleteModal(false);
       setItemToDelete(null);
-
       setSuccessMessage({
         title: "Deleted Successfully!",
-        description: "The announcement has been permanently removed."
-      });
-      setShowSuccessModal(true);
-      setShowDeleteModal(false);
-      setItemToDelete(null);
-
-      setSuccessMessage({
-        title: "Deleted Successfully!",
-        description: "The announcement has been permanently removed."
+        description: "The announcement has been permanently removed.",
       });
       setShowSuccessModal(true);
     } catch (error) {
@@ -300,7 +309,6 @@ export default function AnnouncementsPage() {
     }
   };
 
-  // 5. UPDATE PUBLISH LOGIC
   const handlePublish = async () => {
     const newErrors: FormErrors = {
       date: !formData.date.trim(),
@@ -310,22 +318,17 @@ export default function AnnouncementsPage() {
       body: !formData.body.trim(),
       visibility: !formData.visibility.trim(),
     };
-
     if (activeTab === "Meeting" && !formData.attendanceLink.trim()) {
       newErrors.attendanceLink = true;
     }
     if (activeTab === "Meeting" && !agenda.some((a) => a.trim())) {
       newErrors.agenda = true;
     }
-
     setErrors(newErrors);
-
     if (Object.values(newErrors).some((err) => err)) {
       setShowGlobalError(true);
       return;
     }
-
-    // Require image only if new creation OR editing but user removed existing image
     const hasImage = images.length > 0 || (editingId && previews.length > 0);
     if (!hasImage) {
       setErrors((prev) => ({ ...prev, image: true }));
@@ -336,44 +339,32 @@ export default function AnnouncementsPage() {
       });
       return;
     }
-
     setIsSubmitting(true);
     setLoadingAction("publishing");
     setShowGlobalError(false);
-
     try {
       const typeMap: Record<ActiveTab, AnnouncementData["type"]> = {
         General: "General",
-        News: "General", // Mapping News to General/News based on backend
+        News: "General",
         Meeting: "Meeting",
         Achievement: "Achievement",
       };
-
       const audienceMap: Record<string, string[]> = {
         public: ["all"],
         members: ["members"],
         officers: ["officers"],
       };
-
-      const attachmentsData = attachments
-        .filter((att): att is LinkAttachment => att.type === "link")
-        .map((att) => ({
-          name: att.name,
-          url: att.url,
-          fileType: att.type,
-        }));
-
       const announcementData = {
         title: formData.title,
         description: formData.summary,
         content: formData.body,
         type: typeMap[activeTab],
         targetAudience: audienceMap[formData.visibility] || ["all"],
-        isPublished: true, // Always true for publish
+        isPublished: true,
         publishDate:
           showSchedule && scheduleDate
             ? new Date(
-                `${scheduleDate}T${scheduleTime || "00:00"}`
+                `${scheduleDate}T${scheduleTime || "00:00"}`,
               ).toISOString()
             : new Date().toISOString(),
         time: formData.time,
@@ -385,43 +376,36 @@ export default function AnnouncementsPage() {
           activeTab === "Achievement"
             ? awardees.filter((a) => a.name.trim())
             : undefined,
-        attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
         agenda:
           activeTab === "Meeting" ? agenda.filter((a) => a.trim()) : undefined,
         date: formData.date || undefined,
       };
-
       if (editingId) {
-        // UPDATE
         await announcementService.updateAnnouncement(
           editingId,
           announcementData,
-          images.length > 0 ? images : undefined
+          images.length > 0 ? images : undefined,
         );
-        setSuccessMessage({
-          title: "Updated Successfully!",
-          description: "Changes have been saved."
-        });
       } else {
-        // CREATE
         await announcementService.createAnnouncement(
           announcementData,
-          images.length > 0 ? images : undefined
+          images.length > 0 ? images : undefined,
         );
-        setSuccessMessage({
-          title: "Published Successfully!",
-          description: "Announcement is now live."
-        });
       }
-
       setSubmitSuccess(true);
       setSuccessMessage({
-        title: editingId && !isEditingDraft ? "Updated Successfully!" : "Published Successfully!",
-        description: editingId && !isEditingDraft ? "Changes have been saved." : "Announcement is now live."
+        title:
+          editingId && !isEditingDraft
+            ? "Updated Successfully!"
+            : "Published Successfully!",
+        description:
+          editingId && !isEditingDraft
+            ? "Changes have been saved."
+            : "Announcement is now live.",
       });
       setShowSuccessModal(true);
-      handleCancelEdit(); // Reset form
-      fetchAnnouncements(); // Refresh List
+      handleCancelEdit();
+      fetchAnnouncements();
     } catch (error) {
       console.error("❌ Error:", error);
       alert("Failed to process announcement.");
@@ -434,7 +418,6 @@ export default function AnnouncementsPage() {
   const handleSaveDraft = async () => {
     setIsSubmitting(true);
     setLoadingAction("saving");
-
     try {
       const typeMap: Record<ActiveTab, AnnouncementData["type"]> = {
         General: "General",
@@ -442,21 +425,11 @@ export default function AnnouncementsPage() {
         Meeting: "Meeting",
         Achievement: "Achievement",
       };
-
       const audienceMap: Record<string, string[]> = {
         public: ["all"],
         members: ["members"],
         officers: ["officers"],
       };
-
-      const attachmentsData = attachments
-        .filter((att): att is LinkAttachment => att.type === "link")
-        .map((att) => ({
-          name: att.name,
-          url: att.url,
-          fileType: att.type,
-        }));
-
       const announcementData = {
         title: formData.title || "Untitled Draft",
         description: formData.summary || "No description",
@@ -473,35 +446,32 @@ export default function AnnouncementsPage() {
           activeTab === "Achievement"
             ? awardees.filter((a) => a.name.trim())
             : undefined,
-        attachments: attachmentsData.length > 0 ? attachmentsData : undefined,
         agenda:
           activeTab === "Meeting" ? agenda.filter((a) => a.trim()) : undefined,
         date: formData.date || undefined,
       };
-
       if (editingId) {
-        // UPDATE DRAFT
         await announcementService.updateAnnouncement(
           editingId,
           announcementData,
-          images.length > 0 ? images : undefined
+          images.length > 0 ? images : undefined,
         );
       } else {
-        // CREATE DRAFT
         await announcementService.createAnnouncement(
           announcementData,
-          images.length > 0 ? images : undefined
+          images.length > 0 ? images : undefined,
         );
       }
-
       setSubmitSuccess(true);
       setSuccessMessage({
         title: editingId ? "Draft Updated!" : "Draft Saved!",
-        description: editingId ? "Draft changes have been saved." : "Draft has been saved successfully."
+        description: editingId
+          ? "Draft changes have been saved."
+          : "Draft has been saved successfully.",
       });
       setShowSuccessModal(true);
-      handleCancelEdit(); // Reset form
-      fetchAnnouncements(); // Refresh List
+      handleCancelEdit();
+      fetchAnnouncements();
     } catch (error) {
       console.error("❌ Error saving draft:", error);
       const errorMessage =
@@ -526,7 +496,6 @@ export default function AnnouncementsPage() {
       location: "",
       attendanceLink: "",
     });
-    setAttachments([]);
     setOrganizer("");
     setAwardees([{ name: "", program: "", year: "", award: "" }]);
     setAgenda([""]);
@@ -542,11 +511,10 @@ export default function AnnouncementsPage() {
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
     if (errors[name as keyof typeof errors]) {
       setErrors((prev) => ({ ...prev, [name]: false }));
     }
@@ -555,7 +523,7 @@ export default function AnnouncementsPage() {
   const handleAwardeeChange = (
     index: number,
     field: "name" | "program" | "year" | "award",
-    value: string
+    value: string,
   ) => {
     setAwardees((prev) => {
       const updated = [...prev];
@@ -564,73 +532,44 @@ export default function AnnouncementsPage() {
     });
   };
 
-  const addAwardee = () => {
+  const addAwardee = () =>
     setAwardees([...awardees, { name: "", program: "", year: "", award: "" }]);
-  };
-
-  const removeAwardee = (index: number) => {
+  const removeAwardee = (index: number) =>
     setAwardees((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const addAgendaItem = () => {
-    setAgenda((prev) => [...prev, ""]);
-  };
-
-  const updateAgendaItem = (index: number, value: string) => {
+  const addAgendaItem = () => setAgenda((prev) => [...prev, ""]);
+  const updateAgendaItem = (index: number, value: string) =>
     setAgenda((prev) => {
-      const updated = [...prev];
-      updated[index] = value;
-      return updated;
+      const u = [...prev];
+      u[index] = value;
+      return u;
     });
-  };
-
-  const removeAgendaItem = (index: number) => {
+  const removeAgendaItem = (index: number) =>
     setAgenda((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    const newFiles: Attachment[] = files.map((file) => ({
-      name: file.name,
-      type: "file",
-      file,
-    }));
-    setAttachments((prev) => [...prev, ...newFiles]);
-  };
 
   const resizeImage = (file: File, maxWidth = 1200): Promise<File> => {
     return new Promise((resolve) => {
       const img = new Image();
       const reader = new FileReader();
-
       reader.onload = (e) => {
         img.src = e.target?.result as string;
       };
-
       img.onload = () => {
         const canvas = document.createElement("canvas");
         const scaleSize = maxWidth / img.width;
         canvas.width = maxWidth;
         canvas.height = img.height * scaleSize;
-
         const ctx = canvas.getContext("2d");
         if (!ctx) return resolve(file);
-
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
         canvas.toBlob(
           (blob) => {
             if (!blob) return resolve(file);
-            const resizedFile = new File([blob], file.name, {
-              type: file.type,
-            });
-            resolve(resizedFile);
+            resolve(new File([blob], file.name, { type: file.type }));
           },
           file.type,
-          0.8
+          0.8,
         );
       };
-
       reader.readAsDataURL(file);
     });
   };
@@ -638,7 +577,6 @@ export default function AnnouncementsPage() {
   const handleImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
-
     const files = Array.from(fileList);
     try {
       const resized = await Promise.all(files.map((f) => resizeImage(f)));
@@ -658,25 +596,31 @@ export default function AnnouncementsPage() {
       previews.forEach((p) => {
         try {
           URL.revokeObjectURL(p);
-        } catch (err) {
-          /* ignore */
-        }
+        } catch {}
       });
     };
   }, [previews]);
 
   const publishedItems = announcementList.filter((item) => item.isPublished);
 
+  // Derived for visibility UI
+  const selectedVisibility = VISIBILITY_OPTIONS.find(
+    (o) => o.value === formData.visibility,
+  );
+
   return (
     <section className="min-h-screen bg-white flex flex-col relative">
       <Grid />
-      {/* Loading Overlay */}
       {isSubmitting && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all duration-300">
           <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
             <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
             <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {loadingAction === "saving" ? "Saving Draft..." : editingId ? "Updating Announcement..." : "Publishing..."}
+              {loadingAction === "saving"
+                ? "Saving Draft..."
+                : editingId
+                  ? "Updating Announcement..."
+                  : "Publishing..."}
             </p>
           </div>
         </div>
@@ -686,7 +630,6 @@ export default function AnnouncementsPage() {
         <Header />
 
         <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
-          {/* Page Header */}
           <div className="mb-12 relative">
             <div className="absolute inset-0 bg-gradient-to-r from-primary1/10 to-primary2/10 rounded-3xl blur-3xl -z-10" />
             <div className="text-center sm:text-left">
@@ -708,17 +651,10 @@ export default function AnnouncementsPage() {
               </div>
             </aside>
 
-            {/* MAIN CONTENT COLUMN */}
             <div className="flex-1 space-y-12">
-              {/* 1. THE FORM */}
               <div
-                className={`bg-white rounded-3xl shadow-xl shadow-gray-200/50 border overflow-hidden transition-all duration-300 ${
-                  editingId
-                    ? "border-primary1 shadow-primary1/20"
-                    : "border-gray-100"
-                }`}
+                className={`bg-white rounded-3xl shadow-xl shadow-gray-200/50 border overflow-hidden transition-all duration-300 ${editingId ? "border-primary1 shadow-primary1/20" : "border-gray-100"}`}
               >
-                {/* Edit Banner */}
                 {editingId && (
                   <div className="bg-amber-50 border-b border-amber-100 px-8 py-3 flex items-center justify-between">
                     <span className="text-amber-800 font-medium font-rubik text-sm flex items-center gap-2">
@@ -733,7 +669,6 @@ export default function AnnouncementsPage() {
                   </div>
                 )}
 
-                {/* Form Header */}
                 <div className="bg-gradient-to-r from-primary1 to-primary2 p-8">
                   <h2 className="text-3xl font-bold text-white font-rubik flex items-center gap-3">
                     {editingId ? "Edit Content" : "Content Details"}
@@ -766,15 +701,8 @@ export default function AnnouncementsPage() {
                         Featured Image
                       </label>
                     </div>
-
                     <div
-                      className={`w-full rounded-2xl p-3 transition-all duration-300 border-2 ${
-                        errors.image
-                          ? "border-red-400 bg-red-50/50"
-                          : previews.length > 0
-                          ? "border-green-400 bg-green-50/30"
-                          : "border-gray-300 bg-gray-50/50 hover:border-primary2 hover:bg-primary2/5"
-                      }`}
+                      className={`w-full rounded-2xl p-3 transition-all duration-300 border-2 ${errors.image ? "border-red-400 bg-red-50/50" : previews.length > 0 ? "border-green-400 bg-green-50/30" : "border-gray-300 bg-gray-50/50 hover:border-primary2 hover:bg-primary2/5"}`}
                       aria-invalid={errors.image ? "true" : "false"}
                     >
                       <input
@@ -785,7 +713,6 @@ export default function AnnouncementsPage() {
                         onChange={handleImagesChange}
                         ref={fileInputRef}
                       />
-
                       <div
                         role="button"
                         tabIndex={0}
@@ -816,10 +743,10 @@ export default function AnnouncementsPage() {
                                       URL.revokeObjectURL(p);
                                     } catch {}
                                     setImages((prev) =>
-                                      prev.filter((_, idx) => idx !== i)
+                                      prev.filter((_, idx) => idx !== i),
                                     );
                                     setPreviews((prev) =>
-                                      prev.filter((_, idx) => idx !== i)
+                                      prev.filter((_, idx) => idx !== i),
                                     );
                                   }}
                                   aria-label={`Remove image ${i + 1}`}
@@ -913,11 +840,7 @@ export default function AnnouncementsPage() {
                           key={tab}
                           type="button"
                           onClick={() => setActiveTab(tab)}
-                          className={`relative px-6 py-3 rounded-xl text-sm font-bold font-rubik transition-all duration-300 ${
-                            activeTab === tab
-                              ? "bg-white text-primary1 shadow-md shadow-gray-200 ring-1 ring-black/5"
-                              : "text-gray-500 hover:text-primary1 hover:bg-white/50"
-                          }`}
+                          className={`relative px-6 py-3 rounded-xl text-sm font-bold font-rubik transition-all duration-300 ${activeTab === tab ? "bg-white text-primary1 shadow-md shadow-gray-200 ring-1 ring-black/5" : "text-gray-500 hover:text-primary1 hover:bg-white/50"}`}
                         >
                           {tab}
                         </button>
@@ -937,14 +860,9 @@ export default function AnnouncementsPage() {
                         name="date"
                         value={formData.date}
                         onChange={handleInputChange}
-                        className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${
-                          errors.date
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
-                            : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                        }`}
+                        className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${errors.date ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
                       />
                     </div>
-
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-primary3 font-rubik">
                         Time
@@ -955,14 +873,9 @@ export default function AnnouncementsPage() {
                         name="time"
                         value={formData.time}
                         onChange={handleInputChange}
-                        className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${
-                          errors.time
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
-                            : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                        }`}
+                        className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${errors.time ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
                       />
                     </div>
-
                     <div className="space-y-2 sm:col-span-2 lg:col-span-2">
                       <label className="text-sm font-semibold text-primary3 font-rubik">
                         Location
@@ -983,11 +896,7 @@ export default function AnnouncementsPage() {
                               ? setShowOrganizerInput((prev) => !prev)
                               : setOrganizer("")
                           }
-                          className={`px-4 rounded-xl border-2 font-bold transition-all duration-300 ${
-                            organizer || showOrganizerInput
-                              ? "border-red-200 text-red-500 hover:bg-red-50"
-                              : "border-primary2 text-primary2 hover:bg-primary2 hover:text-white"
-                          }`}
+                          className={`px-4 rounded-xl border-2 font-bold transition-all duration-300 ${organizer || showOrganizerInput ? "border-red-200 text-red-500 hover:bg-red-50" : "border-primary2 text-primary2 hover:bg-primary2 hover:text-white"}`}
                           title={
                             organizer || showOrganizerInput
                               ? "Remove Organizer"
@@ -1014,18 +923,16 @@ export default function AnnouncementsPage() {
                       />
                     </div>
                   )}
+
                   <div className="h-px bg-gray-100 w-full" />
 
-                  {/* Text Inputs */}
+                  {/* Title */}
                   <div className="space-y-2">
                     <label
                       htmlFor="title"
                       className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
                     >
                       Title
-                      {formData.title && (
-                        <span className="text-green-500 text-xs">✓</span>
-                      )}
                     </label>
                     <input
                       id="title"
@@ -1034,11 +941,7 @@ export default function AnnouncementsPage() {
                       value={formData.title}
                       onChange={handleInputChange}
                       placeholder="Add a clear and descriptive title"
-                      className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${
-                        errors.title
-                          ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
-                          : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                      }`}
+                      className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${errors.title ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
                     />
                     {errors.title && (
                       <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
@@ -1054,9 +957,6 @@ export default function AnnouncementsPage() {
                       className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
                     >
                       Summary
-                      {formData.summary && (
-                        <span className="text-green-500 text-xs">✓</span>
-                      )}
                     </label>
                     <input
                       id="summary"
@@ -1065,11 +965,7 @@ export default function AnnouncementsPage() {
                       value={formData.summary}
                       onChange={handleInputChange}
                       placeholder="Brief overview of the announcement"
-                      className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${
-                        errors.summary
-                          ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
-                          : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                      }`}
+                      className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${errors.summary ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
                     />
                     {errors.summary && (
                       <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
@@ -1077,6 +973,7 @@ export default function AnnouncementsPage() {
                       </p>
                     )}
                   </div>
+
                   {/* Body */}
                   <div className="space-y-2">
                     <label
@@ -1084,9 +981,6 @@ export default function AnnouncementsPage() {
                       className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
                     >
                       Body
-                      {formData.body && (
-                        <span className="text-green-500 text-xs">✓</span>
-                      )}
                     </label>
                     <textarea
                       id="body"
@@ -1095,11 +989,7 @@ export default function AnnouncementsPage() {
                       onChange={handleInputChange}
                       rows={8}
                       placeholder="Add full details, links, and attachments"
-                      className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 resize-y min-h-[200px] ${
-                        errors.body
-                          ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
-                          : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                      }`}
+                      className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 resize-y min-h-[200px] ${errors.body ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
                     />
                     {errors.body && (
                       <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
@@ -1108,6 +998,7 @@ export default function AnnouncementsPage() {
                     )}
                   </div>
 
+                  {/* Awardees */}
                   {activeTab === "Achievement" && (
                     <div className="space-y-4 animate-in slide-in-from-top-4 fade-in duration-300">
                       <div className="flex items-center justify-between">
@@ -1122,7 +1013,6 @@ export default function AnnouncementsPage() {
                           + Add Awardee
                         </button>
                       </div>
-
                       <div className="space-y-3">
                         {awardees.map((a, index) => (
                           <div
@@ -1138,13 +1028,12 @@ export default function AnnouncementsPage() {
                                   handleAwardeeChange(
                                     index,
                                     "name",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                               />
                             </div>
-
                             <div className="sm:col-span-3">
                               <input
                                 type="text"
@@ -1154,13 +1043,12 @@ export default function AnnouncementsPage() {
                                   handleAwardeeChange(
                                     index,
                                     "program",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                               />
                             </div>
-
                             <div className="sm:col-span-2">
                               <input
                                 type="text"
@@ -1170,13 +1058,12 @@ export default function AnnouncementsPage() {
                                   handleAwardeeChange(
                                     index,
                                     "year",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                               />
                             </div>
-
                             <div className="sm:col-span-3">
                               <input
                                 type="text"
@@ -1186,13 +1073,12 @@ export default function AnnouncementsPage() {
                                   handleAwardeeChange(
                                     index,
                                     "award",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
                               />
                             </div>
-
                             <div className="sm:col-span-1 flex justify-end">
                               <button
                                 type="button"
@@ -1208,179 +1094,172 @@ export default function AnnouncementsPage() {
                     </div>
                   )}
 
-                  {/* Visibility */}
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="visibility"
-                      className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
-                    >
+                  {/* ─── IMPROVED VISIBILITY DROPDOWN ─── */}
+                  <div className="space-y-2" ref={visibilityRef}>
+                    <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
                       Visibility
-                      {formData.visibility && (
-                        <span className="text-green-500 text-xs">✓</span>
-                      )}
                     </label>
-                    <div className="relative w-full">
-                      <select
-                        id="visibility"
-                        name="visibility"
-                        value={formData.visibility}
-                        onChange={handleInputChange}
-                        className={`w-full rounded-xl border-2 px-5 py-4 text-lg appearance-none cursor-pointer focus:outline-none focus:ring-4 transition-all duration-300 ${
-                          errors.visibility
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30"
-                            : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"
-                        } ${formData.visibility ? "text-gray-900" : "text-gray-400"}`}
+
+                    {/* Trigger Button */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowVisibilityDropdown((prev) => !prev)
+                        }
+                        className={`
+                          w-full flex items-center justify-between
+                          rounded-xl border-2 px-5 py-4 text-left
+                          focus:outline-none focus:ring-4 transition-all duration-300
+                          ${
+                            errors.visibility
+                              ? "border-red-300 bg-red-50/30 focus:border-red-500 focus:ring-red-100"
+                              : selectedVisibility
+                                ? `ring-2 border-transparent ${selectedVisibility.ring} ${selectedVisibility.bg} focus:ring-4`
+                                : "border-gray-200 bg-gray-50/30 hover:border-primary2 hover:bg-primary2/5 focus:border-primary2 focus:ring-primary2/10"
+                          }
+                        `}
                       >
-                        <option value="" className="text-gray-500">
-                          Select visibility
-                        </option>
-                        <option value="public">Public (Everyone)</option>
-                        <option value="members">Members Only</option>
-                        <option value="officers">Officers Only</option>
-                      </select>
-                      <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-primary3">
-                        <ChevronDown className="w-5 h-5" />
-                      </span>
+                        <span className="flex items-center gap-3">
+                          {selectedVisibility ? (
+                            <>
+                              <span
+                                className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedVisibility.bg}`}
+                              >
+                                <selectedVisibility.icon
+                                  className={`w-5 h-5 ${selectedVisibility.color}`}
+                                />
+                              </span>
+                              <span>
+                                <span
+                                  className={`block text-base font-bold font-rubik leading-tight ${selectedVisibility.color}`}
+                                >
+                                  {selectedVisibility.label}
+                                </span>
+                                <span className="block text-xs text-gray-500 font-raleway mt-0.5">
+                                  {selectedVisibility.sublabel}
+                                </span>
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="w-9 h-9 rounded-lg flex items-center justify-center bg-gray-100 flex-shrink-0">
+                                <Globe className="w-5 h-5 text-gray-400" />
+                              </span>
+                              <span className="text-gray-400 font-raleway text-base">
+                                Select who can see this
+                              </span>
+                            </>
+                          )}
+                        </span>
+                        <ChevronDown
+                          className={`w-5 h-5 text-gray-400 transition-transform duration-300 flex-shrink-0 ${showVisibilityDropdown ? "rotate-180" : ""}`}
+                        />
+                      </button>
+
+                      {/* Dropdown Panel */}
+                      {showVisibilityDropdown && (
+                        <div className="absolute z-30 top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-gray-200/60 overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200">
+                          {/* Panel Header */}
+                          <div className="px-4 pt-3.5 pb-2.5 border-b border-gray-100 bg-gray-50/60">
+                            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 font-rubik">
+                              Choose Audience
+                            </p>
+                          </div>
+
+                          {/* Options */}
+                          <div className="p-2 space-y-1">
+                            {VISIBILITY_OPTIONS.map((opt) => {
+                              const Icon = opt.icon;
+                              const isActive =
+                                formData.visibility === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  type="button"
+                                  onClick={() => {
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      visibility: opt.value,
+                                    }));
+                                    setErrors((prev) => ({
+                                      ...prev,
+                                      visibility: false,
+                                    }));
+                                    setShowVisibilityDropdown(false);
+                                  }}
+                                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all duration-200 group ${isActive ? `${opt.bg} ring-1 ${opt.ring}` : "hover:bg-gray-50"}`}
+                                >
+                                  {/* Icon */}
+                                  <span
+                                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${isActive ? opt.bg : "bg-gray-100 group-hover:bg-gray-200"}`}
+                                  >
+                                    <Icon
+                                      className={`w-5 h-5 ${isActive ? opt.color : "text-gray-500"}`}
+                                    />
+                                  </span>
+
+                                  {/* Label */}
+                                  <span className="flex-1 min-w-0">
+                                    <span
+                                      className={`block text-sm font-bold font-rubik leading-tight ${isActive ? opt.color : "text-gray-700"}`}
+                                    >
+                                      {opt.label}
+                                    </span>
+                                    <span className="block text-xs text-gray-400 font-raleway mt-0.5 truncate">
+                                      {opt.sublabel}
+                                    </span>
+                                  </span>
+
+                                  {/* Check / Select badge */}
+                                  {isActive ? (
+                                    <span
+                                      className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${opt.badge}`}
+                                    >
+                                      <Check
+                                        className="w-3.5 h-3.5"
+                                        strokeWidth={3}
+                                      />
+                                    </span>
+                                  ) : (
+                                    <span
+                                      className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${opt.badge} opacity-0 group-hover:opacity-100 transition-opacity duration-150`}
+                                    >
+                                      Select
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* Panel Footer hint */}
+                          <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/40">
+                            <p className="text-[11px] text-gray-400 font-raleway">
+                              ✦ Visibility determines who can view this
+                              announcement.
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
+
                     {errors.visibility && (
                       <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
                         <span>•</span> Visibility is required.
                       </p>
                     )}
                   </div>
+                  {/* ─── END VISIBILITY DROPDOWN ─── */}
 
                   <div className="h-px bg-gray-100 w-full" />
 
-                  {/* Attachments */}
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
-                        Attachments
-                      </label>
-                      <p className="text-sm text-gray-500 font-raleway mt-1">
-                        Optional — attach supporting files or links (e.g. PDFs,
-                        images, or external resources).
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3">
-                      <input
-                        id="fileUpload"
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={handleFileChange}
-                      />
-
-                      <button
-                        onClick={() =>
-                          document.getElementById("fileUpload")?.click()
-                        }
-                        className="px-6 py-3 bg-primary2 text-white rounded-xl font-bold shadow-lg shadow-primary2/30 hover:bg-primary3 hover:shadow-primary2/50 hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2"
-                        type="button"
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                          />
-                        </svg>
-                        Add File
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (showLinkInput && newLink.trim() === "") {
-                            setShowLinkInput(false);
-                            return;
-                          }
-                          setShowLinkInput(true);
-                        }}
-                        className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300 flex items-center gap-2"
-                      >
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                          />
-                        </svg>
-                        Add Link
-                      </button>
-                    </div>
-                  </div>
-
-                  {showLinkInput && (
-                    <div className="flex gap-2 mb-4 animate-fade-in">
-                      <input
-                        type="text"
-                        placeholder="Paste link here"
-                        value={newLink}
-                        onChange={(e) => setNewLink(e.target.value)}
-                        className="flex-1 border border-gray-300 rounded-lg p-2 focus:outline-none focus:border-primary2 font-rubik"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!newLink.trim()) return;
-
-                          setAttachments((prev) => [
-                            ...prev,
-                            {
-                              name: newLink.trim(),
-                              url: newLink.trim(),
-                              type: "link",
-                            },
-                          ]);
-
-                          setNewLink("");
-                          setShowLinkInput(false);
-                        }}
-                        className="px-4 py-2 bg-primary2 text-white rounded-lg hover:bg-primary3 font-rubik"
-                      >
-                        Add
-                      </button>
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-2">
-                    {attachments.map((att, index) => (
-                      <span
-                        key={index}
-                        className="flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1 rounded-full border border-gray-300 text-sm"
-                      >
-                        {att.name}
-
-                        <button
-                          onClick={() => removeAttachment(index)}
-                          className="text-gray-500 hover:text-red-500 font-bold"
-                          type="button"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+                  {/* Meeting fields */}
                   {activeTab === "Meeting" && (
                     <div className="mt-6">
                       <label className="text-md font-normal text-primary3 font-raleway block mb-1 mt-1">
                         Attendance Transparency (optional)
                       </label>
-
                       <input
                         type="url"
                         id="attendanceLink"
@@ -1388,22 +1267,12 @@ export default function AnnouncementsPage() {
                         value={formData.attendanceLink}
                         onChange={handleInputChange}
                         placeholder="Link to attendance Google Sheet / Drive folder"
-                        className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2
-  border transition-all
-  ${
-    errors.attendanceLink
-      ? "border-2 border-red-500 bg-red-50"
-      : "border-gray-300 bg-white text-gray-600"
-  }
-  focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white
-`}
+                        className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2 border transition-all ${errors.attendanceLink ? "border-2 border-red-500 bg-red-50" : "border-gray-300 bg-white text-gray-600"} focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white`}
                       />
-
                       <div className="mt-4">
                         <label className="text-md font-normal text-primary3 font-raleway block mb-2">
                           Agenda (list the meeting agenda items)
                         </label>
-
                         <div className="space-y-2">
                           {agenda.map((item, index) => (
                             <div
@@ -1428,7 +1297,6 @@ export default function AnnouncementsPage() {
                               </button>
                             </div>
                           ))}
-
                           <button
                             type="button"
                             onClick={addAgendaItem}
@@ -1462,40 +1330,36 @@ export default function AnnouncementsPage() {
                       <p className="text-sm text-gray-500 mb-4">
                         Publish timing
                       </p>
-
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="text-md font-normal text-primary3 font-raleway block mb-1">
                             Date
                           </label>
-                          <div className="relative">
-                            <input
-                              type="date"
-                              value={scheduleDate}
-                              onChange={(e) => setScheduleDate(e.target.value)}
-                              className="w-full border border-primary2 text-gray-500 rounded-xl px-3 py-2 focus:outline-none focus:border-primary3 font-rubik"
-                            />
-                          </div>
+                          <input
+                            type="date"
+                            value={scheduleDate}
+                            onChange={(e) => setScheduleDate(e.target.value)}
+                            className="w-full border border-primary2 text-gray-500 rounded-xl px-3 py-2 focus:outline-none focus:border-primary3 font-rubik"
+                          />
                         </div>
-
                         <div>
                           <label className="text-md font-normal text-primary3 font-raleway block mb-1">
                             Time
                           </label>
-                          <div className="relative">
-                            <input
-                              type="time"
-                              value={scheduleTime}
-                              onChange={(e) => setScheduleTime(e.target.value)}
-                              className="w-full border border-primary2 text-gray-500 rounded-xl px-3 py-2 focus:outline-none focus:border-primary3 font-rubik"
-                            />
-                          </div>
+                          <input
+                            type="time"
+                            value={scheduleTime}
+                            onChange={(e) => setScheduleTime(e.target.value)}
+                            className="w-full border border-primary2 text-gray-500 rounded-xl px-3 py-2 focus:outline-none focus:border-primary3 font-rubik"
+                          />
                         </div>
                       </div>
                     </div>
                   )}
+
                   <div className="h-px bg-gray-100 w-full" />
-                  {/* Buttons */}
+
+                  {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
                     {showGlobalError && (
                       <p className="text-red-500 text-sm font-bold font-raleway animate-pulse">
@@ -1503,7 +1367,6 @@ export default function AnnouncementsPage() {
                       </p>
                     )}
                     <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-
                       {editingId && (
                         <Button
                           variant="outline"
@@ -1535,15 +1398,15 @@ export default function AnnouncementsPage() {
                         {isSubmitting
                           ? "Processing..."
                           : editingId && !isEditingDraft
-                          ? "Update Announcement"
-                          : "Publish"}
+                            ? "Update Announcement"
+                            : "Publish"}
                       </Button>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 2. MANAGE LIST */}
+              {/* Manage List */}
               <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
                 <div className="p-8 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                   <div>
@@ -1561,7 +1424,6 @@ export default function AnnouncementsPage() {
                     <RefreshCw size={16} /> Refresh List
                   </button>
                 </div>
-
                 <div className="overflow-x-auto">
                   {isLoadingList ? (
                     <div className="p-12 text-center text-gray-500 font-raleway">
@@ -1586,11 +1448,7 @@ export default function AnnouncementsPage() {
                         {publishedItems.map((item) => (
                           <tr
                             key={item._id}
-                            className={`hover:bg-blue-50/40 transition-colors group ${
-                              editingId === item._id
-                                ? "bg-blue-50 ring-1 ring-inset ring-primary1/30"
-                                : ""
-                            }`}
+                            className={`hover:bg-blue-50/40 transition-colors group ${editingId === item._id ? "bg-blue-50 ring-1 ring-inset ring-primary1/30" : ""}`}
                           >
                             <td className="px-6 py-4">
                               <p className="font-bold text-gray-800 font-rubik truncate max-w-[200px]">
@@ -1599,13 +1457,7 @@ export default function AnnouncementsPage() {
                             </td>
                             <td className="px-6 py-4">
                               <span
-                                className={`px-2 py-1 rounded text-xs font-bold ${
-                                  item.type === "Meeting"
-                                    ? "bg-purple-100 text-purple-700"
-                                    : item.type === "Achievement"
-                                    ? "bg-yellow-100 text-yellow-700"
-                                    : "bg-blue-100 text-blue-700"
-                                }`}
+                                className={`px-2 py-1 rounded text-xs font-bold ${item.type === "Meeting" ? "bg-purple-100 text-purple-700" : item.type === "Achievement" ? "bg-yellow-100 text-yellow-700" : "bg-blue-100 text-blue-700"}`}
                               >
                                 {item.type}
                               </span>
@@ -1613,17 +1465,13 @@ export default function AnnouncementsPage() {
                             <td className="px-6 py-4 text-sm text-gray-600">
                               {item.publishDate
                                 ? new Date(
-                                    item.publishDate
+                                    item.publishDate,
                                   ).toLocaleDateString()
                                 : "N/A"}
                             </td>
                             <td className="px-6 py-4">
                               <span
-                                className={`px-2 py-1 rounded text-xs font-bold ${
-                                  item.isPublished
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-gray-200 text-gray-600"
-                                }`}
+                                className={`px-2 py-1 rounded text-xs font-bold ${item.isPublished ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"}`}
                               >
                                 {item.isPublished ? "Published" : "Draft"}
                               </span>
@@ -1657,6 +1505,7 @@ export default function AnnouncementsPage() {
           </div>
         </main>
 
+        {/* Success Modal */}
         {showSuccessModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
             <div
@@ -1666,10 +1515,8 @@ export default function AnnouncementsPage() {
                 setSubmitSuccess(false);
               }}
             />
-
             <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
               <div className="flex flex-col items-center gap-6">
-                {/* Success Icon with Animation */}
                 <div className="relative">
                   <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
                   <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
@@ -1688,7 +1535,6 @@ export default function AnnouncementsPage() {
                     </svg>
                   </div>
                 </div>
-
                 <div className="text-center space-y-2">
                   <h3 className="text-2xl text-primary3 font-bold font-rubik">
                     {successMessage.title}
@@ -1697,7 +1543,6 @@ export default function AnnouncementsPage() {
                     {successMessage.description}
                   </p>
                 </div>
-
                 <div className="flex gap-3 mt-2 w-full">
                   <Button
                     variant="primary3"
@@ -1718,7 +1563,7 @@ export default function AnnouncementsPage() {
         <Footer />
       </div>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div
@@ -1733,7 +1578,8 @@ export default function AnnouncementsPage() {
               Confirm Deletion
             </h3>
             <p className="text-gray-500 font-raleway mb-6">
-              Are you sure you want to delete this item? This action cannot be undone.
+              Are you sure you want to delete this item? This action cannot be
+              undone.
             </p>
             <div className="flex gap-3">
               <button

@@ -143,7 +143,7 @@ export default function EventsListPage() {
   }, []);
 
   const handleBackToHome = () => {
-    router.push("/");
+    router.push("/home");
   };
 
   const now = new Date();

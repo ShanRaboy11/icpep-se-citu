@@ -185,7 +185,7 @@ export default function EventDetailPage() {
   }
 
   const handleBackToEvents = () => {
-    router.push("/events");
+    router.back();
   };
 
   if (loading) {
