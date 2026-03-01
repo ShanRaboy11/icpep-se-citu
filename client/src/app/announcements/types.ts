@@ -50,11 +50,6 @@ export interface Announcement {
   
   // Media
   imageUrl?: string;
-  attachments: {
-    name: string;
-    url: string;
-    fileType: string;
-  }[];
   
   views: number;
   createdAt: string;

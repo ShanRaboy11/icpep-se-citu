@@ -63,7 +63,6 @@ export const createAnnouncement = async (
       attendees,
       agenda,
       awardees,
-      attachments,
     } = req.body;
 
     // Get author from authenticated user
@@ -149,12 +148,11 @@ export const createAnnouncement = async (
     }
 
     // Parse arrays if sent as strings with error handling
-    let parsedAgenda, parsedAwardees, parsedAttachments, parsedTargetAudience;
+    let parsedAgenda, parsedAwardees, parsedTargetAudience;
 
     try {
       parsedAgenda = agenda ? JSON.parse(agenda) : undefined;
       parsedAwardees = awardees ? JSON.parse(awardees) : undefined;
-      parsedAttachments = attachments ? JSON.parse(attachments) : undefined;
       parsedTargetAudience = targetAudience
         ? JSON.parse(targetAudience)
         : ["all"];
@@ -216,7 +214,6 @@ export const createAnnouncement = async (
       awardees: parsedAwardees,
       imageUrl,
       galleryImages,
-      attachments: parsedAttachments,
     };
 
     // If a publishDate exists and it's in the future, ensure announcement remains unpublished until scheduler runs
@@ -275,7 +272,7 @@ export const createAnnouncement = async (
         `[ANNOUNCEMENT] ${announcement.title}`,
         `New announcement: ${announcement.title}`,
         "announcement",
-        announcement._id,
+        announcement._id as any,
         "Announcement"
       );
     }

@@ -185,11 +185,6 @@ export interface AnnouncementData {
         year: string;
         award: string;
     }>;
-    attachments?: Array<{
-        name: string;
-        url: string;
-        fileType?: string;
-    }>;
     date?: string;
 }
 
