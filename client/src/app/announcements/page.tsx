@@ -94,7 +94,7 @@ export default function AnnouncementsPage() {
   };
 
   const handleBackToHome = () => {
-    router.push("/");
+    router.push("/home");
   };
 
   const tabs = ["All", "News", "Meeting", "Achievement"];

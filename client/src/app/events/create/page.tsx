@@ -287,6 +287,21 @@ export default function EventsPage() {
       return;
     }
 
+    // Prevent publishing events on the current day
+    const selectedDate = new Date(formData.date);
+    const today = new Date();
+    // Normalize time components for accurate date comparison
+    today.setHours(0, 0, 0, 0);
+    // Since input date is YYYY-MM-DD (UTC midnight), adjust for timezone or use local components
+    // A simpler way: compare date strings
+    const selectedDateString = formData.date;
+    const todayString = today.toLocaleDateString("en-CA"); // YYYY-MM-DD format in local time
+
+    if (selectedDateString === todayString) {
+      alert("Events cannot be scheduled for the current day. Please select a past or future date.");
+      return;
+    }
+
     setIsSubmitting(true);
     setLoadingAction("publishing");
     setShowGlobalError(false);
