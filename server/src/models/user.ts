@@ -80,14 +80,6 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: null,
     },
-    department: {
-      type: String,
-      default: null,
-    },
-    position: {
-      type: String,
-      default: null,
-    },
     yearLevel: {
       type: Number,
       min: 1,
@@ -146,7 +138,7 @@ userSchema.virtual("registeredByName").get(function (this: IUser) {
 });
 
 // Pre-save middleware to hash password
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function (this: IUser, next) {
   if (!this.isModified("password")) return next();
 
   this.password = await bcrypt.hash(this.password, 10);
@@ -155,6 +147,7 @@ userSchema.pre("save", async function (next) {
 
 // Method to compare password
 userSchema.methods.comparePassword = async function (
+  this: IUser,
   candidatePassword: string
 ): Promise<boolean> {
   return await bcrypt.compare(candidatePassword, this.password);

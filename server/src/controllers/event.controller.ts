@@ -6,7 +6,7 @@ import {
   uploadMultipleToCloudinary,
 } from "../utils/cloudinary";
 import mongoose from "mongoose";
-import { notifyAllUsers } from "../utils/notification";
+import { notifyTargetAudience } from "../utils/notification";
 
 // Local Multer file shape (avoid relying on global Express.Multer augmentation)
 type MulterFile = MulterLocal.MulterFile;
@@ -291,7 +291,8 @@ export const createEvent = async (
 
     // Send notification if published
     if (event.isPublished) {
-      await notifyAllUsers(
+      await notifyTargetAudience(
+        event.targetAudience || ["all"],
         `[NEW] ${event.title}`,
         `New event: ${event.title}`,
         "event",
