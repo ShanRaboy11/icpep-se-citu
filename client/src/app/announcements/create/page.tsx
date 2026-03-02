@@ -2,14 +2,12 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import Sidebar from "../../components/sidebar";
-import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
+import { GlassCard } from "../../components/glass-card";
 import {
-  ChevronDown,
   Pencil,
   Trash2,
   RefreshCw,
@@ -18,6 +16,13 @@ import {
   Users,
   Shield,
   Check,
+  Upload,
+  Plus,
+  X,
+  Megaphone,
+  MapPin,
+  Clock,
+  Calendar,
 } from "lucide-react";
 import announcementService, {
   AnnouncementData,
@@ -62,33 +67,65 @@ const VISIBILITY_OPTIONS = [
     icon: Globe,
     color: "text-emerald-600",
     bg: "bg-emerald-50",
-    ring: "ring-emerald-200",
-    badge: "bg-emerald-100 text-emerald-700",
+    border: "border-emerald-200",
+    dot: "bg-emerald-500",
   },
   {
     value: "members",
     label: "Members Only",
-    sublabel: "Visible to registered members",
+    sublabel: "Registered members",
     icon: Users,
     color: "text-blue-600",
     bg: "bg-blue-50",
-    ring: "ring-blue-200",
-    badge: "bg-blue-100 text-blue-700",
+    border: "border-blue-200",
+    dot: "bg-blue-500",
   },
   {
     value: "officers",
     label: "Officers Only",
-    sublabel: "Restricted to organization officers",
+    sublabel: "Organization officers",
     icon: Shield,
     color: "text-violet-600",
     bg: "bg-violet-50",
-    ring: "ring-violet-200",
-    badge: "bg-violet-100 text-violet-700",
+    border: "border-violet-200",
+    dot: "bg-violet-500",
   },
 ] as const;
 
+type ActiveTab = "General" | "News" | "Meeting" | "Achievement";
+const tabs: ActiveTab[] = ["General", "News", "Meeting", "Achievement"];
+
+const TYPE_META: Record<
+  string,
+  { color: string; bg: string; border: string; dot: string }
+> = {
+  Meeting: {
+    color: "text-violet-700",
+    bg: "bg-violet-50",
+    border: "border-violet-200",
+    dot: "bg-violet-500",
+  },
+  Achievement: {
+    color: "text-amber-700",
+    bg: "bg-amber-50",
+    border: "border-amber-200",
+    dot: "bg-amber-500",
+  },
+  News: {
+    color: "text-blue-700",
+    bg: "bg-blue-50",
+    border: "border-blue-200",
+    dot: "bg-blue-500",
+  },
+  General: {
+    color: "text-gray-700",
+    bg: "bg-gray-100",
+    border: "border-gray-200",
+    dot: "bg-gray-400",
+  },
+};
+
 export default function AnnouncementsPage() {
-  type ActiveTab = "General" | "News" | "Meeting" | "Achievement";
   const [activeTab, setActiveTab] = useState<ActiveTab>("General");
   const [showOrganizerInput, setShowOrganizerInput] = useState(false);
   const [organizer, setOrganizer] = useState("");
@@ -101,8 +138,9 @@ export default function AnnouncementsPage() {
   const [agenda, setAgenda] = useState<string[]>([""]);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [showGlobalError, setShowGlobalError] = useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -115,30 +153,40 @@ export default function AnnouncementsPage() {
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-  const [showVisibilityDropdown, setShowVisibilityDropdown] = useState(false);
-  const visibilityRef = useRef<HTMLDivElement>(null);
-
-  const tabs: ActiveTab[] = ["General", "News", "Meeting", "Achievement"];
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isEditingDraft, setIsEditingDraft] = useState(false);
 
-  // Close visibility dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        visibilityRef.current &&
-        !visibilityRef.current.contains(e.target as Node)
-      ) {
-        setShowVisibilityDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const [formData, setFormData] = useState({
+    title: "",
+    summary: "",
+    body: "",
+    visibility: "",
+    attendanceLink: "",
+    date: "",
+    time: "",
+    location: "",
+  });
+  const [errors, setErrors] = useState<FormErrors>({
+    date: false,
+    time: false,
+    title: false,
+    summary: false,
+    body: false,
+    visibility: false,
+    attendanceLink: false,
+    agenda: false,
+    image: false,
+  });
+  const [announcementList, setAnnouncementList] = useState<AnnouncementItem[]>(
+    [],
+  );
+  const [isLoadingList, setIsLoadingList] = useState(true);
 
+  // Fetch on edit param
   useEffect(() => {
     if (editIdParam) {
       const fetchAnnouncement = async () => {
@@ -153,7 +201,7 @@ export default function AnnouncementsPage() {
               title: data.title,
               summary: data.description,
               body: data.content,
-              visibility: "Public",
+              visibility: "public",
               date: data.date || "",
               time: data.time || "",
               location: data.location || "",
@@ -166,9 +214,7 @@ export default function AnnouncementsPage() {
               setOrganizer(data.organizer);
               setShowOrganizerInput(true);
             }
-            if (data.imageUrl) {
-              setPreviews([data.imageUrl]);
-            }
+            if (data.imageUrl) setPreviews([data.imageUrl]);
           }
         } catch (error) {
           console.error("Failed to fetch announcement for edit:", error);
@@ -177,35 +223,6 @@ export default function AnnouncementsPage() {
       fetchAnnouncement();
     }
   }, [editIdParam]);
-
-  const [formData, setFormData] = useState({
-    title: "",
-    summary: "",
-    body: "",
-    visibility: "",
-    attendanceLink: "",
-    date: "",
-    time: "",
-    location: "",
-  });
-
-  const [errors, setErrors] = useState<FormErrors>({
-    date: false,
-    time: false,
-    title: false,
-    summary: false,
-    body: false,
-    visibility: false,
-    attendanceLink: false,
-    agenda: false,
-    image: false,
-  });
-
-  const [announcementList, setAnnouncementList] = useState<AnnouncementItem[]>(
-    [],
-  );
-  const [isLoadingList, setIsLoadingList] = useState(true);
-  const [isEditingDraft, setIsEditingDraft] = useState(false);
 
   const fetchAnnouncements = async () => {
     setIsLoadingList(true);
@@ -250,20 +267,11 @@ export default function AnnouncementsPage() {
     if (item.type === "Achievement") tabToSet = "Achievement";
     if (item.type === "News") tabToSet = "News";
     setActiveTab(tabToSet);
-    if (item.type === "Meeting" && item.agenda && item.agenda.length > 0) {
-      setAgenda(item.agenda);
-    } else {
-      setAgenda([""]);
-    }
-    if (
-      item.type === "Achievement" &&
-      item.awardees &&
-      item.awardees.length > 0
-    ) {
+    if (item.type === "Meeting" && item.agenda?.length) setAgenda(item.agenda);
+    else setAgenda([""]);
+    if (item.type === "Achievement" && item.awardees?.length)
       setAwardees(item.awardees);
-    } else {
-      setAwardees([{ name: "", program: "", year: "", award: "" }]);
-    }
+    else setAwardees([{ name: "", program: "", year: "", award: "" }]);
     if (!item.isPublished && item.publishDate) {
       const pDate = new Date(item.publishDate);
       setShowSchedule(true);
@@ -277,212 +285,6 @@ export default function AnnouncementsPage() {
     setPreviews(item.imageUrl ? [item.imageUrl] : []);
     setImages([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingId(null);
-    setIsEditingDraft(false);
-    resetForm();
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const confirmDelete = (id: string) => {
-    setItemToDelete(id);
-    setShowDeleteModal(true);
-  };
-
-  const handleDelete = async () => {
-    if (!itemToDelete) return;
-    try {
-      await announcementService.deleteAnnouncement(itemToDelete);
-      fetchAnnouncements();
-      setShowDeleteModal(false);
-      setItemToDelete(null);
-      setSuccessMessage({
-        title: "Deleted Successfully!",
-        description: "The announcement has been permanently removed.",
-      });
-      setShowSuccessModal(true);
-    } catch (error) {
-      console.error("Failed to delete announcement:", error);
-      alert("Failed to delete announcement.");
-    }
-  };
-
-  const handlePublish = async () => {
-    const newErrors: FormErrors = {
-      date: !formData.date.trim(),
-      time: !formData.time.trim(),
-      title: !formData.title.trim(),
-      summary: !formData.summary.trim(),
-      body: !formData.body.trim(),
-      visibility: !formData.visibility.trim(),
-    };
-    if (activeTab === "Meeting" && !formData.attendanceLink.trim()) {
-      newErrors.attendanceLink = true;
-    }
-    if (activeTab === "Meeting" && !agenda.some((a) => a.trim())) {
-      newErrors.agenda = true;
-    }
-    setErrors(newErrors);
-    if (Object.values(newErrors).some((err) => err)) {
-      setShowGlobalError(true);
-      return;
-    }
-    const hasImage = images.length > 0 || (editingId && previews.length > 0);
-    if (!hasImage) {
-      setErrors((prev) => ({ ...prev, image: true }));
-      setShowGlobalError(true);
-      fileInputRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-      return;
-    }
-    setIsSubmitting(true);
-    setLoadingAction("publishing");
-    setShowGlobalError(false);
-    try {
-      const typeMap: Record<ActiveTab, AnnouncementData["type"]> = {
-        General: "General",
-        News: "General",
-        Meeting: "Meeting",
-        Achievement: "Achievement",
-      };
-      const audienceMap: Record<string, string[]> = {
-        public: ["all"],
-        members: ["members"],
-        officers: ["officers"],
-      };
-      const announcementData = {
-        title: formData.title,
-        description: formData.summary,
-        content: formData.body,
-        type: typeMap[activeTab],
-        targetAudience: audienceMap[formData.visibility] || ["all"],
-        isPublished: true,
-        publishDate:
-          showSchedule && scheduleDate
-            ? new Date(
-                `${scheduleDate}T${scheduleTime || "00:00"}`,
-              ).toISOString()
-            : new Date().toISOString(),
-        time: formData.time,
-        location: formData.location,
-        organizer: organizer || undefined,
-        attendees:
-          activeTab === "Meeting" ? formData.attendanceLink : undefined,
-        awardees:
-          activeTab === "Achievement"
-            ? awardees.filter((a) => a.name.trim())
-            : undefined,
-        agenda:
-          activeTab === "Meeting" ? agenda.filter((a) => a.trim()) : undefined,
-        date: formData.date || undefined,
-      };
-      if (editingId) {
-        await announcementService.updateAnnouncement(
-          editingId,
-          announcementData,
-          images.length > 0 ? images : undefined,
-        );
-      } else {
-        await announcementService.createAnnouncement(
-          announcementData,
-          images.length > 0 ? images : undefined,
-        );
-      }
-      setSubmitSuccess(true);
-      setSuccessMessage({
-        title:
-          editingId && !isEditingDraft
-            ? "Updated Successfully!"
-            : "Published Successfully!",
-        description:
-          editingId && !isEditingDraft
-            ? "Changes have been saved."
-            : "Announcement is now live.",
-      });
-      setShowSuccessModal(true);
-      handleCancelEdit();
-      fetchAnnouncements();
-    } catch (error) {
-      console.error("❌ Error:", error);
-      alert("Failed to process announcement.");
-    } finally {
-      setIsSubmitting(false);
-      setLoadingAction(null);
-    }
-  };
-
-  const handleSaveDraft = async () => {
-    setIsSubmitting(true);
-    setLoadingAction("saving");
-    try {
-      const typeMap: Record<ActiveTab, AnnouncementData["type"]> = {
-        General: "General",
-        News: "General",
-        Meeting: "Meeting",
-        Achievement: "Achievement",
-      };
-      const audienceMap: Record<string, string[]> = {
-        public: ["all"],
-        members: ["members"],
-        officers: ["officers"],
-      };
-      const announcementData = {
-        title: formData.title || "Untitled Draft",
-        description: formData.summary || "No description",
-        content: formData.body || "No content",
-        type: typeMap[activeTab],
-        targetAudience: formData.visibility
-          ? audienceMap[formData.visibility]
-          : ["all"],
-        isPublished: false,
-        time: formData.time || undefined,
-        location: formData.location || undefined,
-        organizer: organizer || undefined,
-        awardees:
-          activeTab === "Achievement"
-            ? awardees.filter((a) => a.name.trim())
-            : undefined,
-        agenda:
-          activeTab === "Meeting" ? agenda.filter((a) => a.trim()) : undefined,
-        date: formData.date || undefined,
-      };
-      if (editingId) {
-        await announcementService.updateAnnouncement(
-          editingId,
-          announcementData,
-          images.length > 0 ? images : undefined,
-        );
-      } else {
-        await announcementService.createAnnouncement(
-          announcementData,
-          images.length > 0 ? images : undefined,
-        );
-      }
-      setSubmitSuccess(true);
-      setSuccessMessage({
-        title: editingId ? "Draft Updated!" : "Draft Saved!",
-        description: editingId
-          ? "Draft changes have been saved."
-          : "Draft has been saved successfully.",
-      });
-      setShowSuccessModal(true);
-      handleCancelEdit();
-      fetchAnnouncements();
-    } catch (error) {
-      console.error("❌ Error saving draft:", error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to save draft. Please try again.";
-      alert(errorMessage);
-    } finally {
-      setIsSubmitting(false);
-      setLoadingAction(null);
-    }
   };
 
   const resetForm = () => {
@@ -508,6 +310,178 @@ export default function AnnouncementsPage() {
     setActiveTab("General");
   };
 
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setIsEditingDraft(false);
+    resetForm();
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+  const confirmDelete = (id: string) => {
+    setItemToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+    try {
+      await announcementService.deleteAnnouncement(itemToDelete);
+      fetchAnnouncements();
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+      setSuccessMessage({
+        title: "Deleted Successfully!",
+        description: "The announcement has been permanently removed.",
+      });
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Failed to delete announcement:", error);
+      alert("Failed to delete announcement.");
+    }
+  };
+
+  const buildAnnouncementData = (isPublished: boolean) => {
+    const typeMap: Record<ActiveTab, AnnouncementData["type"]> = {
+      General: "General",
+      News: "General",
+      Meeting: "Meeting",
+      Achievement: "Achievement",
+    };
+    const audienceMap: Record<string, string[]> = {
+      public: ["all"],
+      members: ["members"],
+      officers: ["officers"],
+    };
+    return {
+      title: formData.title || "Untitled Draft",
+      description: formData.summary || "No description",
+      content: formData.body || "No content",
+      type: typeMap[activeTab],
+      targetAudience: formData.visibility
+        ? audienceMap[formData.visibility]
+        : ["all"],
+      isPublished,
+      publishDate: isPublished
+        ? showSchedule && scheduleDate
+          ? new Date(`${scheduleDate}T${scheduleTime || "00:00"}`).toISOString()
+          : new Date().toISOString()
+        : undefined,
+      time: formData.time || undefined,
+      location: formData.location || undefined,
+      organizer: organizer || undefined,
+      attendees: activeTab === "Meeting" ? formData.attendanceLink : undefined,
+      awardees:
+        activeTab === "Achievement"
+          ? awardees.filter((a) => a.name.trim())
+          : undefined,
+      agenda:
+        activeTab === "Meeting" ? agenda.filter((a) => a.trim()) : undefined,
+      date: formData.date || undefined,
+    };
+  };
+
+  const handlePublish = async () => {
+    const newErrors: FormErrors = {
+      date: !formData.date.trim(),
+      time: !formData.time.trim(),
+      title: !formData.title.trim(),
+      summary: !formData.summary.trim(),
+      body: !formData.body.trim(),
+      visibility: !formData.visibility.trim(),
+    };
+    if (activeTab === "Meeting" && !formData.attendanceLink.trim())
+      newErrors.attendanceLink = true;
+    if (activeTab === "Meeting" && !agenda.some((a) => a.trim()))
+      newErrors.agenda = true;
+    setErrors(newErrors);
+    if (Object.values(newErrors).some((e) => e)) {
+      setShowGlobalError(true);
+      return;
+    }
+    const hasImage = images.length > 0 || (editingId && previews.length > 0);
+    if (!hasImage) {
+      setErrors((p) => ({ ...p, image: true }));
+      setShowGlobalError(true);
+      fileInputRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      return;
+    }
+    setIsSubmitting(true);
+    setLoadingAction("publishing");
+    setShowGlobalError(false);
+    try {
+      const announcementData = buildAnnouncementData(true) as any;
+      announcementData.isPublished = true;
+      if (editingId)
+        await announcementService.updateAnnouncement(
+          editingId,
+          announcementData,
+          images.length > 0 ? images : undefined,
+        );
+      else
+        await announcementService.createAnnouncement(
+          announcementData,
+          images.length > 0 ? images : undefined,
+        );
+      setSubmitSuccess(true);
+      setSuccessMessage({
+        title:
+          editingId && !isEditingDraft
+            ? "Updated Successfully!"
+            : "Published Successfully!",
+        description:
+          editingId && !isEditingDraft
+            ? "Changes have been saved."
+            : "Announcement is now live.",
+      });
+      setShowSuccessModal(true);
+      handleCancelEdit();
+      fetchAnnouncements();
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to process announcement.");
+    } finally {
+      setIsSubmitting(false);
+      setLoadingAction(null);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    setIsSubmitting(true);
+    setLoadingAction("saving");
+    try {
+      const announcementData = buildAnnouncementData(false);
+      if (editingId)
+        await announcementService.updateAnnouncement(
+          editingId,
+          announcementData,
+          images.length > 0 ? images : undefined,
+        );
+      else
+        await announcementService.createAnnouncement(
+          announcementData,
+          images.length > 0 ? images : undefined,
+        );
+      setSubmitSuccess(true);
+      setSuccessMessage({
+        title: editingId ? "Draft Updated!" : "Draft Saved!",
+        description: editingId
+          ? "Draft changes have been saved."
+          : "Draft has been saved successfully.",
+      });
+      setShowSuccessModal(true);
+      handleCancelEdit();
+      fetchAnnouncements();
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      alert("Failed to save draft.");
+    } finally {
+      setIsSubmitting(false);
+      setLoadingAction(null);
+    }
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -515,22 +489,20 @@ export default function AnnouncementsPage() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name as keyof typeof errors]) {
+    if (errors[name as keyof typeof errors])
       setErrors((prev) => ({ ...prev, [name]: false }));
-    }
   };
 
   const handleAwardeeChange = (
     index: number,
     field: "name" | "program" | "year" | "award",
     value: string,
-  ) => {
+  ) =>
     setAwardees((prev) => {
-      const updated = [...prev];
-      updated[index][field] = value;
-      return updated;
+      const u = [...prev];
+      u[index][field] = value;
+      return u;
     });
-  };
 
   const addAwardee = () =>
     setAwardees([...awardees, { name: "", program: "", year: "", award: "" }]);
@@ -546,8 +518,8 @@ export default function AnnouncementsPage() {
   const removeAgendaItem = (index: number) =>
     setAgenda((prev) => prev.filter((_, i) => i !== index));
 
-  const resizeImage = (file: File, maxWidth = 1200): Promise<File> => {
-    return new Promise((resolve) => {
+  const resizeImage = (file: File, maxWidth = 1200): Promise<File> =>
+    new Promise((resolve) => {
       const img = new Image();
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -555,9 +527,8 @@ export default function AnnouncementsPage() {
       };
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const scaleSize = maxWidth / img.width;
         canvas.width = maxWidth;
-        canvas.height = img.height * scaleSize;
+        canvas.height = img.height * (maxWidth / img.width);
         const ctx = canvas.getContext("2d");
         if (!ctx) return resolve(file);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -572,14 +543,14 @@ export default function AnnouncementsPage() {
       };
       reader.readAsDataURL(file);
     });
-  };
 
   const handleImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
-    if (!fileList || fileList.length === 0) return;
-    const files = Array.from(fileList);
+    if (!fileList || !fileList.length) return;
     try {
-      const resized = await Promise.all(files.map((f) => resizeImage(f)));
+      const resized = await Promise.all(
+        Array.from(fileList).map((f) => resizeImage(f)),
+      );
       setImages((prev) => [...prev, ...resized]);
       setPreviews((prev) => [
         ...prev,
@@ -587,7 +558,21 @@ export default function AnnouncementsPage() {
       ]);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
-      console.error("Error resizing images", err);
+      console.error(err);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    try {
+      const resized = await resizeImage(file);
+      setImages((p) => [...p, resized]);
+      setPreviews((p) => [...p, URL.createObjectURL(resized)]);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -603,25 +588,35 @@ export default function AnnouncementsPage() {
 
   const publishedItems = announcementList.filter((item) => item.isPublished);
 
-  // Derived for visibility UI
-  const selectedVisibility = VISIBILITY_OPTIONS.find(
-    (o) => o.value === formData.visibility,
-  );
+  const inputCls = (hasError: boolean) =>
+    `w-full font-raleway text-primary3 font-medium rounded-xl px-4 py-3.5 border-2 bg-white/80 transition-all duration-200 outline-none placeholder:text-gray-300 ${hasError ? "border-red-300 focus:border-red-400 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:bg-white"}`;
+
+  const Divider = () => <div className="h-px bg-gray-100 w-full" />;
 
   return (
-    <section className="min-h-screen bg-white flex flex-col relative">
+    <section className="min-h-screen bg-[#f8f9fc] flex flex-col relative overflow-x-hidden">
       <Grid />
+
+      {/* Loading Overlay */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm transition-all duration-300">
-          <div className="flex flex-col items-center gap-4 animate-in zoom-in duration-300">
-            <div className="w-12 h-12 border-4 border-primary2 border-t-transparent rounded-full animate-spin" />
-            <p className="text-primary3 font-semibold font-rubik animate-pulse">
-              {loadingAction === "saving"
-                ? "Saving Draft..."
-                : editingId
-                  ? "Updating Announcement..."
-                  : "Publishing..."}
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-md">
+          <div className="flex flex-col items-center gap-5">
+            <div className="relative w-16 h-16">
+              <div className="absolute inset-0 rounded-full border-4 border-primary2/20" />
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary2 animate-spin" />
+            </div>
+            <div className="text-center">
+              <p className="text-primary3 font-bold font-rubik text-lg">
+                {loadingAction === "saving"
+                  ? "Saving Draft"
+                  : editingId
+                    ? "Updating Announcement"
+                    : "Publishing Announcement"}
+              </p>
+              <p className="text-gray-400 text-sm font-raleway mt-1">
+                Please wait a moment...
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -629,82 +624,97 @@ export default function AnnouncementsPage() {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Header />
 
-        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-16">
-          <div className="mb-12 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary1/10 to-primary2/10 rounded-3xl blur-3xl -z-10" />
-            <div className="text-center sm:text-left">
-              <h1 className="text-3xl sm:text-6xl font-bold font-rubik bg-gradient-to-r from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent mb-3">
-                {editingId ? "Edit Announcement" : "Compose Announcement"}
-              </h1>
-              <p className="text-gray-600 font-raleway text-lg">
-                {editingId
-                  ? "Update the details below"
-                  : "Share updates, news, and important information"}
-              </p>
+        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-20">
+          {/* PAGE HEADER */}
+          <div className="mb-14">
+            <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-primary2 uppercase font-raleway mb-3">
+              <span className="w-8 h-px bg-primary2 inline-block" />
+              Announcement Management
             </div>
+            <h1 className="text-4xl sm:text-7xl font-black font-rubik leading-[0.9] tracking-tight">
+              <span className="bg-gradient-to-br from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent">
+                {editingId ? "Edit\nAnnouncement" : "Compose\nAnnouncement"}
+              </span>
+            </h1>
+            <p className="text-gray-500 font-raleway text-base mt-4 max-w-sm">
+              {editingId
+                ? "Update details and republish"
+                : "Share updates, news, and important information"}
+            </p>
           </div>
 
-          <div className="flex flex-col lg:flex-row gap-8">
-            <aside className="w-full lg:w-72 flex-shrink-0">
+          <div className="flex flex-col lg:flex-row gap-8 items-start">
+            <aside className="w-full lg:w-64 flex-shrink-0">
               <div className="sticky top-24">
                 <Sidebar />
               </div>
             </aside>
 
-            <div className="flex-1 space-y-12">
-              <div
-                className={`bg-white rounded-3xl shadow-xl shadow-gray-200/50 border overflow-hidden transition-all duration-300 ${editingId ? "border-primary1 shadow-primary1/20" : "border-gray-100"}`}
-              >
-                {editingId && (
-                  <div className="bg-amber-50 border-b border-amber-100 px-8 py-3 flex items-center justify-between">
-                    <span className="text-amber-800 font-medium font-rubik text-sm flex items-center gap-2">
-                      <Pencil size={14} /> Editing Mode Active
-                    </span>
-                    <button
-                      onClick={handleCancelEdit}
-                      className="text-xs font-bold text-amber-900 underline"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
+            <div className="flex-1 min-w-0 space-y-8">
+              {/* FORM CARD */}
+              <GlassCard>
+                <div
+                  className={`relative rounded-2xl overflow-hidden transition-all duration-500 ${editingId ? "ring-2 ring-primary1" : ""}`}
+                >
+                  <div className="absolute inset-0 bg-white" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/30 to-primary2/5 pointer-events-none" />
 
-                <div className="bg-gradient-to-r from-primary1 to-primary2 p-8">
-                  <h2 className="text-3xl font-bold text-white font-rubik flex items-center gap-3">
-                    {editingId ? "Edit Content" : "Content Details"}
-                  </h2>
-                  <p className="text-blue-100 font-raleway mt-2">
-                    {editingId
-                      ? "Modify information below"
-                      : "Fill in the information below to create an announcement"}
-                  </p>
-                </div>
-
-                <div className="p-8 space-y-8">
-                  {/* Image Upload */}
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 mb-4">
-                      <svg
-                        className="w-5 h-5 text-primary2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                  {/* Edit Banner */}
+                  {editingId && (
+                    <div className="relative z-10 bg-gradient-to-r from-primary1 to-primary2 px-6 py-3 flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-white">
+                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                        <span className="text-sm font-bold font-rubik tracking-wide">
+                          EDITING MODE
+                        </span>
+                      </div>
+                      <button
+                        onClick={handleCancelEdit}
+                        className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      <label className="text-lg font-semibold text-primary3 font-rubik">
-                        Featured Image
-                      </label>
+                        Cancel
+                      </button>
                     </div>
-                    <div
-                      className={`w-full rounded-2xl p-3 transition-all duration-300 border-2 ${errors.image ? "border-red-400 bg-red-50/50" : previews.length > 0 ? "border-green-400 bg-green-50/30" : "border-gray-300 bg-gray-50/50 hover:border-primary2 hover:bg-primary2/5"}`}
-                      aria-invalid={errors.image ? "true" : "false"}
-                    >
+                  )}
+
+                  <div className="relative z-10 p-6 sm:p-10 space-y-10">
+                    {/* Section label */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-2xl font-black font-rubik text-primary3">
+                          {editingId ? "Edit Details" : "New Announcement"}
+                        </h2>
+                        <p className="text-gray-400 text-sm font-raleway mt-0.5">
+                          Fill in the fields below
+                        </p>
+                      </div>
+                      <div className="hidden sm:flex items-center gap-1.5 bg-primary2/8 rounded-full px-4 py-2">
+                        <Megaphone size={12} className="text-primary2" />
+                        <span className="text-xs font-bold text-primary2 font-rubik uppercase tracking-wider">
+                          Announcement
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* FEATURED IMAGE */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          Featured Image <span className="text-red-400">*</span>
+                        </label>
+                        {previews.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setImages([]);
+                              setPreviews([]);
+                            }}
+                            className="text-xs font-bold text-red-400 hover:text-red-600 font-rubik flex items-center gap-1 transition-colors"
+                          >
+                            <X size={11} /> Clear all
+                          </button>
+                        )}
+                      </div>
                       <input
                         type="file"
                         accept="image/*"
@@ -713,28 +723,20 @@ export default function AnnouncementsPage() {
                         onChange={handleImagesChange}
                         ref={fileInputRef}
                       />
-                      <div
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => fileInputRef.current?.click()}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ")
-                            fileInputRef.current?.click();
-                        }}
-                        className="block cursor-pointer group"
-                      >
-                        {previews.length > 0 ? (
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            {previews.map((p, i) => (
-                              <div
-                                key={i}
-                                className="relative overflow-hidden rounded-xl group-image"
-                              >
-                                <img
-                                  src={p}
-                                  alt={`preview-${i}`}
-                                  className="w-full h-40 object-cover rounded-xl border-2 border-white shadow-md transition-transform duration-300 hover:scale-105"
-                                />
+
+                      {previews.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {previews.map((p, i) => (
+                            <div
+                              key={i}
+                              className="relative group rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 h-40"
+                            >
+                              <img
+                                src={p}
+                                alt={`preview-${i}`}
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -749,852 +751,855 @@ export default function AnnouncementsPage() {
                                       prev.filter((_, idx) => idx !== i),
                                     );
                                   }}
-                                  aria-label={`Remove image ${i + 1}`}
-                                  className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center rounded-full text-red-500 shadow-lg hover:bg-red-50 hover:scale-110 transition-all duration-200"
+                                  className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition-transform font-rubik"
                                 >
-                                  ×
+                                  Remove
                                 </button>
                               </div>
-                            ))}
-                            <div className="flex flex-col items-center justify-center border-2 border-dashed border-primary2/50 text-primary2 rounded-xl h-40 hover:bg-primary2/5 transition-colors">
-                              <span className="text-4xl font-light mb-2">
-                                +
-                              </span>
-                              <span className="text-sm font-rubik">
-                                Add More
-                              </span>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="py-12 text-center">
-                            <div className="flex flex-col items-center gap-4">
-                              <div className="w-16 h-16 rounded-full bg-primary2/10 flex items-center justify-center group-hover:bg-primary2/20 transition-colors duration-300">
-                                <svg
-                                  className="w-8 h-8 text-primary2"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 4v16m8-8H4"
-                                  />
-                                </svg>
-                              </div>
-                              <div>
-                                <p className="text-gray-700 font-semibold font-rubik">
-                                  Click to upload featured image(s)
-                                </p>
-                                <p className="text-sm text-gray-500 mt-1 font-raleway">
-                                  PNG, JPG up to 10MB
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      {images.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPreviews([]);
-                            setImages([]);
-                          }}
-                          className="mt-4 text-red-500 text-sm hover:text-red-600 font-medium flex items-center gap-1 transition-colors"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
+                          ))}
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => fileInputRef.current?.click()}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ")
+                                fileInputRef.current?.click();
+                            }}
+                            className="cursor-pointer h-40 rounded-xl border-2 border-dashed border-primary2/40 hover:border-primary2 hover:bg-primary2/5 transition-all flex flex-col items-center justify-center gap-2 text-primary2"
                           >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                          Remove all images
-                        </button>
+                            <Plus size={20} strokeWidth={2} />
+                            <span className="text-xs font-bold font-rubik">
+                              Add More
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => fileInputRef.current?.click()}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ")
+                              fileInputRef.current?.click();
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setIsDragging(true);
+                          }}
+                          onDragLeave={() => setIsDragging(false)}
+                          onDrop={handleDrop}
+                          className={`cursor-pointer h-52 rounded-xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center gap-4 ${errors.image ? "border-red-300 bg-red-50/30" : isDragging ? "border-primary2 bg-primary2/5 scale-[1.01]" : "border-gray-200 bg-gray-50/80 hover:border-primary2/60"}`}
+                        >
+                          <div
+                            className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${isDragging ? "bg-primary2 text-white" : "bg-white text-primary2 shadow-md"}`}
+                          >
+                            <Upload size={22} strokeWidth={2.5} />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-gray-700 font-rubik">
+                              {isDragging
+                                ? "Drop it!"
+                                : "Upload featured image(s)"}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1 font-raleway">
+                              Drag & drop or click · PNG, JPG · Multiple allowed
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {errors.image && (
+                        <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                          <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                          A featured image is required to publish
+                        </p>
                       )}
                     </div>
-                    {errors.image && (
-                      <p className="text-sm text-red-600 mt-2 font-raleway flex items-center gap-1">
-                        <span>•</span> A featured image is required to publish.
-                      </p>
-                    )}
-                  </div>
 
-                  {/* Tabs */}
-                  <div className="space-y-3">
-                    <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
-                      Category
-                    </label>
-                    <div className="flex flex-wrap gap-2 p-1.5 bg-gray-50 rounded-2xl border border-gray-200 w-fit">
-                      {tabs.map((tab) => (
-                        <button
-                          key={tab}
-                          type="button"
-                          onClick={() => setActiveTab(tab)}
-                          className={`relative px-6 py-3 rounded-xl text-sm font-bold font-rubik transition-all duration-300 ${activeTab === tab ? "bg-white text-primary1 shadow-md shadow-gray-200 ring-1 ring-black/5" : "text-gray-500 hover:text-primary1 hover:bg-white/50"}`}
-                        >
-                          {tab}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                    <Divider />
 
-                  {/* Date Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-primary3 font-rubik">
-                        Date
+                    {/* CATEGORY TABS */}
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                        Category
                       </label>
-                      <input
-                        id="date"
-                        type="date"
-                        name="date"
-                        value={formData.date}
-                        onChange={handleInputChange}
-                        className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${errors.date ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-primary3 font-rubik">
-                        Time
-                      </label>
-                      <input
-                        id="time"
-                        type="time"
-                        name="time"
-                        value={formData.time}
-                        onChange={handleInputChange}
-                        className={`w-full rounded-xl border-2 px-4 py-3 text-gray-600 focus:outline-none focus:ring-4 transition-all duration-300 ${errors.time ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
-                      />
-                    </div>
-                    <div className="space-y-2 sm:col-span-2 lg:col-span-2">
-                      <label className="text-sm font-semibold text-primary3 font-rubik">
-                        Location
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          name="location"
-                          value={formData.location}
-                          onChange={handleInputChange}
-                          placeholder="Where is it happening?"
-                          className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 bg-gray-50/30 focus:bg-white focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 transition-all duration-300"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            organizer.trim() === ""
-                              ? setShowOrganizerInput((prev) => !prev)
-                              : setOrganizer("")
-                          }
-                          className={`px-4 rounded-xl border-2 font-bold transition-all duration-300 ${organizer || showOrganizerInput ? "border-red-200 text-red-500 hover:bg-red-50" : "border-primary2 text-primary2 hover:bg-primary2 hover:text-white"}`}
-                          title={
-                            organizer || showOrganizerInput
-                              ? "Remove Organizer"
-                              : "Add Organizer"
-                          }
-                        >
-                          {organizer || showOrganizerInput ? "×" : "+"}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {showOrganizerInput && (
-                    <div className="animate-in slide-in-from-top-2 fade-in duration-300">
-                      <label className="text-sm font-semibold text-primary3 font-rubik mb-2 block">
-                        Organizer
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Organizer name or group"
-                        value={organizer}
-                        onChange={(e) => setOrganizer(e.target.value)}
-                        className="w-full rounded-xl border-2 border-gray-200 px-4 py-3 text-gray-600 bg-gray-50/30 focus:bg-white focus:outline-none focus:border-primary2 focus:ring-4 focus:ring-primary2/10 transition-all duration-300"
-                      />
-                    </div>
-                  )}
-
-                  <div className="h-px bg-gray-100 w-full" />
-
-                  {/* Title */}
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="title"
-                      className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
-                    >
-                      Title
-                    </label>
-                    <input
-                      id="title"
-                      type="text"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      placeholder="Add a clear and descriptive title"
-                      className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${errors.title ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
-                    />
-                    {errors.title && (
-                      <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
-                        <span>•</span> Title is required.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Summary */}
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="summary"
-                      className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
-                    >
-                      Summary
-                    </label>
-                    <input
-                      id="summary"
-                      type="text"
-                      name="summary"
-                      value={formData.summary}
-                      onChange={handleInputChange}
-                      placeholder="Brief overview of the announcement"
-                      className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 ${errors.summary ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
-                    />
-                    {errors.summary && (
-                      <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
-                        <span>•</span> Summary is required.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Body */}
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="body"
-                      className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2"
-                    >
-                      Body
-                    </label>
-                    <textarea
-                      id="body"
-                      name="body"
-                      value={formData.body}
-                      onChange={handleInputChange}
-                      rows={8}
-                      placeholder="Add full details, links, and attachments"
-                      className={`w-full rounded-xl border-2 px-5 py-4 text-lg focus:outline-none focus:ring-4 transition-all duration-300 resize-y min-h-[200px] ${errors.body ? "border-red-300 focus:border-red-500 focus:ring-red-100 bg-red-50/30" : "border-gray-200 focus:border-primary2 focus:ring-primary2/10 bg-gray-50/30 focus:bg-white"}`}
-                    />
-                    {errors.body && (
-                      <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
-                        <span>•</span> Body is required.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Awardees */}
-                  {activeTab === "Achievement" && (
-                    <div className="space-y-4 animate-in slide-in-from-top-4 fade-in duration-300">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-primary3 font-rubik">
-                          Awardees
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={addAwardee}
-                          className="px-4 py-2 bg-primary2/10 text-primary2 rounded-xl font-bold text-sm hover:bg-primary2 hover:text-white transition-all duration-300"
-                        >
-                          + Add Awardee
-                        </button>
-                      </div>
-                      <div className="space-y-3">
-                        {awardees.map((a, index) => (
-                          <div
-                            key={index}
-                            className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start bg-gray-50 p-4 rounded-2xl border border-gray-200 group hover:border-primary2/30 transition-all duration-300"
+                      <div className="flex flex-wrap gap-2 p-1 bg-gray-100/80 rounded-xl border border-gray-200 w-fit">
+                        {tabs.map((tab) => (
+                          <button
+                            key={tab}
+                            type="button"
+                            onClick={() => setActiveTab(tab)}
+                            className={`px-5 py-2.5 rounded-lg text-xs font-bold font-rubik transition-all duration-200 ${activeTab === tab ? "bg-white text-primary1 shadow-sm ring-1 ring-black/5" : "text-gray-400 hover:text-gray-600"}`}
                           >
-                            <div className="sm:col-span-3">
-                              <input
-                                type="text"
-                                placeholder="Name"
-                                value={a.name}
-                                onChange={(e) =>
-                                  handleAwardeeChange(
-                                    index,
-                                    "name",
-                                    e.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
-                              />
-                            </div>
-                            <div className="sm:col-span-3">
-                              <input
-                                type="text"
-                                placeholder="Program (optional)"
-                                value={a.program}
-                                onChange={(e) =>
-                                  handleAwardeeChange(
-                                    index,
-                                    "program",
-                                    e.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
-                              />
-                            </div>
-                            <div className="sm:col-span-2">
-                              <input
-                                type="text"
-                                placeholder="Year"
-                                value={a.year}
-                                onChange={(e) =>
-                                  handleAwardeeChange(
-                                    index,
-                                    "year",
-                                    e.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
-                              />
-                            </div>
-                            <div className="sm:col-span-3">
-                              <input
-                                type="text"
-                                placeholder="Award"
-                                value={a.award}
-                                onChange={(e) =>
-                                  handleAwardeeChange(
-                                    index,
-                                    "award",
-                                    e.target.value,
-                                  )
-                                }
-                                className="w-full rounded-xl border-2 border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-primary2 focus:ring-2 focus:ring-primary2/10 transition-all"
-                              />
-                            </div>
-                            <div className="sm:col-span-1 flex justify-end">
-                              <button
-                                type="button"
-                                onClick={() => removeAwardee(index)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-200"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          </div>
+                            {tab}
+                          </button>
                         ))}
                       </div>
                     </div>
-                  )}
 
-                  {/* ─── IMPROVED VISIBILITY DROPDOWN ─── */}
-                  <div className="space-y-2" ref={visibilityRef}>
-                    <label className="text-lg font-semibold text-primary3 font-rubik flex items-center gap-2">
-                      Visibility
-                    </label>
+                    <Divider />
 
-                    {/* Trigger Button */}
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowVisibilityDropdown((prev) => !prev)
-                        }
-                        className={`
-                          w-full flex items-center justify-between
-                          rounded-xl border-2 px-5 py-4 text-left
-                          focus:outline-none focus:ring-4 transition-all duration-300
-                          ${
-                            errors.visibility
-                              ? "border-red-300 bg-red-50/30 focus:border-red-500 focus:ring-red-100"
-                              : selectedVisibility
-                                ? `ring-2 border-transparent ${selectedVisibility.ring} ${selectedVisibility.bg} focus:ring-4`
-                                : "border-gray-200 bg-gray-50/30 hover:border-primary2 hover:bg-primary2/5 focus:border-primary2 focus:ring-primary2/10"
-                          }
-                        `}
-                      >
-                        <span className="flex items-center gap-3">
-                          {selectedVisibility ? (
-                            <>
-                              <span
-                                className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${selectedVisibility.bg}`}
-                              >
-                                <selectedVisibility.icon
-                                  className={`w-5 h-5 ${selectedVisibility.color}`}
-                                />
-                              </span>
-                              <span>
-                                <span
-                                  className={`block text-base font-bold font-rubik leading-tight ${selectedVisibility.color}`}
-                                >
-                                  {selectedVisibility.label}
-                                </span>
-                                <span className="block text-xs text-gray-500 font-raleway mt-0.5">
-                                  {selectedVisibility.sublabel}
-                                </span>
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <span className="w-9 h-9 rounded-lg flex items-center justify-center bg-gray-100 flex-shrink-0">
-                                <Globe className="w-5 h-5 text-gray-400" />
-                              </span>
-                              <span className="text-gray-400 font-raleway text-base">
-                                Select who can see this
-                              </span>
-                            </>
+                    {/* DATE / TIME / LOCATION */}
+                    <div className="space-y-5">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 font-rubik">
+                        Schedule & Location
+                      </h3>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            Date <span className="text-red-400">*</span>
+                          </label>
+                          <div className="relative">
+                            <Calendar
+                              size={14}
+                              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none"
+                            />
+                            <input
+                              id="date"
+                              type="date"
+                              name="date"
+                              value={formData.date}
+                              onChange={handleInputChange}
+                              className={`${inputCls(errors.date)} pl-9`}
+                            />
+                          </div>
+                          {errors.date && (
+                            <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                              <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                              Required
+                            </p>
                           )}
-                        </span>
-                        <ChevronDown
-                          className={`w-5 h-5 text-gray-400 transition-transform duration-300 flex-shrink-0 ${showVisibilityDropdown ? "rotate-180" : ""}`}
-                        />
-                      </button>
-
-                      {/* Dropdown Panel */}
-                      {showVisibilityDropdown && (
-                        <div className="absolute z-30 top-full left-0 mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-gray-200/60 overflow-hidden animate-in slide-in-from-top-2 fade-in duration-200">
-                          {/* Panel Header */}
-                          <div className="px-4 pt-3.5 pb-2.5 border-b border-gray-100 bg-gray-50/60">
-                            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 font-rubik">
-                              Choose Audience
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            Time <span className="text-red-400">*</span>
+                          </label>
+                          <div className="relative">
+                            <Clock
+                              size={14}
+                              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none"
+                            />
+                            <input
+                              id="time"
+                              type="time"
+                              name="time"
+                              value={formData.time}
+                              onChange={handleInputChange}
+                              className={`${inputCls(errors.time)} pl-9`}
+                            />
+                          </div>
+                          {errors.time && (
+                            <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                              <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                              Required
                             </p>
+                          )}
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            Location
+                          </label>
+                          <div className="flex gap-2">
+                            <div className="relative flex-1">
+                              <MapPin
+                                size={14}
+                                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none"
+                              />
+                              <input
+                                type="text"
+                                name="location"
+                                value={formData.location}
+                                onChange={handleInputChange}
+                                placeholder="Where is it happening?"
+                                className={`${inputCls(false)} pl-9`}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                organizer.trim() === ""
+                                  ? setShowOrganizerInput((p) => !p)
+                                  : setOrganizer("")
+                              }
+                              className={`px-4 rounded-xl border-2 font-bold text-xs transition-all font-rubik ${organizer || showOrganizerInput ? "border-red-200 text-red-400 hover:bg-red-50" : "border-primary2/30 text-primary2 hover:border-primary2 hover:bg-primary2/5"}`}
+                              title={
+                                organizer || showOrganizerInput
+                                  ? "Remove Organizer"
+                                  : "Add Organizer"
+                              }
+                            >
+                              {organizer || showOrganizerInput
+                                ? "×"
+                                : "+ Organizer"}
+                            </button>
                           </div>
+                        </div>
+                      </div>
 
-                          {/* Options */}
-                          <div className="p-2 space-y-1">
-                            {VISIBILITY_OPTIONS.map((opt) => {
-                              const Icon = opt.icon;
-                              const isActive =
-                                formData.visibility === opt.value;
-                              return (
-                                <button
-                                  key={opt.value}
-                                  type="button"
-                                  onClick={() => {
-                                    setFormData((prev) => ({
-                                      ...prev,
-                                      visibility: opt.value,
-                                    }));
-                                    setErrors((prev) => ({
-                                      ...prev,
-                                      visibility: false,
-                                    }));
-                                    setShowVisibilityDropdown(false);
-                                  }}
-                                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition-all duration-200 group ${isActive ? `${opt.bg} ring-1 ${opt.ring}` : "hover:bg-gray-50"}`}
-                                >
-                                  {/* Icon */}
-                                  <span
-                                    className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${isActive ? opt.bg : "bg-gray-100 group-hover:bg-gray-200"}`}
-                                  >
-                                    <Icon
-                                      className={`w-5 h-5 ${isActive ? opt.color : "text-gray-500"}`}
-                                    />
-                                  </span>
-
-                                  {/* Label */}
-                                  <span className="flex-1 min-w-0">
-                                    <span
-                                      className={`block text-sm font-bold font-rubik leading-tight ${isActive ? opt.color : "text-gray-700"}`}
-                                    >
-                                      {opt.label}
-                                    </span>
-                                    <span className="block text-xs text-gray-400 font-raleway mt-0.5 truncate">
-                                      {opt.sublabel}
-                                    </span>
-                                  </span>
-
-                                  {/* Check / Select badge */}
-                                  {isActive ? (
-                                    <span
-                                      className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${opt.badge}`}
-                                    >
-                                      <Check
-                                        className="w-3.5 h-3.5"
-                                        strokeWidth={3}
-                                      />
-                                    </span>
-                                  ) : (
-                                    <span
-                                      className={`flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${opt.badge} opacity-0 group-hover:opacity-100 transition-opacity duration-150`}
-                                    >
-                                      Select
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          {/* Panel Footer hint */}
-                          <div className="px-4 py-2.5 border-t border-gray-100 bg-gray-50/40">
-                            <p className="text-[11px] text-gray-400 font-raleway">
-                              ✦ Visibility determines who can view this
-                              announcement.
-                            </p>
-                          </div>
+                      {showOrganizerInput && (
+                        <div className="space-y-2">
+                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            Organizer
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Organizer name or group"
+                            value={organizer}
+                            onChange={(e) => setOrganizer(e.target.value)}
+                            className={inputCls(false)}
+                          />
                         </div>
                       )}
                     </div>
 
-                    {errors.visibility && (
-                      <p className="text-sm text-red-600 mt-1 font-raleway flex items-center gap-1">
-                        <span>•</span> Visibility is required.
-                      </p>
-                    )}
-                  </div>
-                  {/* ─── END VISIBILITY DROPDOWN ─── */}
+                    <Divider />
 
-                  <div className="h-px bg-gray-100 w-full" />
-
-                  {/* Meeting fields */}
-                  {activeTab === "Meeting" && (
-                    <div className="mt-6">
-                      <label className="text-md font-normal text-primary3 font-raleway block mb-1 mt-1">
-                        Attendance Transparency (optional)
-                      </label>
-                      <input
-                        type="url"
-                        id="attendanceLink"
-                        name="attendanceLink"
-                        value={formData.attendanceLink}
-                        onChange={handleInputChange}
-                        placeholder="Link to attendance Google Sheet / Drive folder"
-                        className={`w-full text-gray-500 font-raleway rounded-lg px-3 py-2 border transition-all ${errors.attendanceLink ? "border-2 border-red-500 bg-red-50" : "border-gray-300 bg-white text-gray-600"} focus:outline-none focus:border-2 focus:border-primary2 focus:text-black focus:bg-white`}
-                      />
-                      <div className="mt-4">
-                        <label className="text-md font-normal text-primary3 font-raleway block mb-2">
-                          Agenda (list the meeting agenda items)
+                    {/* CONTENT */}
+                    <div className="space-y-5">
+                      <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 font-rubik">
+                        Content
+                      </h3>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          Title <span className="text-red-400">*</span>
                         </label>
-                        <div className="space-y-2">
-                          {agenda.map((item, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2"
-                            >
-                              <input
-                                type="text"
-                                value={item}
-                                onChange={(e) =>
-                                  updateAgendaItem(index, e.target.value)
-                                }
-                                placeholder={`Agenda item ${index + 1}`}
-                                className="flex-1 text-gray-500 placeholder-gray-400 bg-white border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-primary2 font-rubik"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeAgendaItem(index)}
-                                className="text-red-500 font-bold"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={addAgendaItem}
-                            className="px-3 py-1 bg-primary2 text-white rounded-lg text-sm"
-                          >
-                            + Add Agenda Item
-                          </button>
+                        <input
+                          id="title"
+                          type="text"
+                          name="title"
+                          value={formData.title}
+                          onChange={handleInputChange}
+                          placeholder="Add a clear and descriptive title"
+                          className={inputCls(errors.title)}
+                        />
+                        {errors.title && (
+                          <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                            <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                            Title is required
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          Summary <span className="text-red-400">*</span>
+                        </label>
+                        <input
+                          id="summary"
+                          type="text"
+                          name="summary"
+                          value={formData.summary}
+                          onChange={handleInputChange}
+                          placeholder="Brief overview of the announcement"
+                          className={inputCls(errors.summary)}
+                        />
+                        {errors.summary && (
+                          <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                            <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                            Summary is required
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            Body <span className="text-red-400">*</span>
+                          </label>
+                          <span className="text-[11px] text-gray-300 font-raleway">
+                            {formData.body.length} chars
+                          </span>
                         </div>
-                        {errors.agenda && (
-                          <p className="text-red-500 text-sm mt-2">
-                            Please add at least one agenda item for meetings.
+                        <textarea
+                          id="body"
+                          name="body"
+                          value={formData.body}
+                          onChange={handleInputChange}
+                          rows={7}
+                          placeholder="Add full details, links, and information..."
+                          className={`${inputCls(errors.body)} resize-y min-h-[180px]`}
+                        />
+                        {errors.body && (
+                          <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                            <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                            Body is required
                           </p>
                         )}
                       </div>
                     </div>
-                  )}
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    type="button"
-                    onClick={() => setShowSchedule((prev) => !prev)}
-                  >
-                    Set Schedule
-                  </Button>
-                  {showSchedule && (
-                    <div className="animate-fade-in">
-                      <h3 className="text-lg font-semibold text-primary3 font-rubik mb-1">
-                        Schedule
-                      </h3>
-                      <p className="text-sm text-gray-500 mb-4">
-                        Publish timing
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="text-md font-normal text-primary3 font-raleway block mb-1">
-                            Date
-                          </label>
-                          <input
-                            type="date"
-                            value={scheduleDate}
-                            onChange={(e) => setScheduleDate(e.target.value)}
-                            className="w-full border border-primary2 text-gray-500 rounded-xl px-3 py-2 focus:outline-none focus:border-primary3 font-rubik"
-                          />
+                    {/* AWARDEES — Achievement tab */}
+                    {activeTab === "Achievement" && (
+                      <>
+                        <Divider />
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              Awardees
+                            </label>
+                            <button
+                              type="button"
+                              onClick={addAwardee}
+                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik"
+                            >
+                              <Plus size={11} /> Add Awardee
+                            </button>
+                          </div>
+                          <div className="space-y-3">
+                            {awardees.map((a, idx) => (
+                              <div
+                                key={idx}
+                                className="grid grid-cols-1 sm:grid-cols-12 gap-3 p-4 bg-gray-50/80 border-2 border-gray-100 rounded-xl hover:border-primary2/20 transition-all"
+                              >
+                                <div className="sm:col-span-3">
+                                  <input
+                                    type="text"
+                                    placeholder="Name"
+                                    value={a.name}
+                                    onChange={(e) =>
+                                      handleAwardeeChange(
+                                        idx,
+                                        "name",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full rounded-xl border-2 border-white bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
+                                  />
+                                </div>
+                                <div className="sm:col-span-3">
+                                  <input
+                                    type="text"
+                                    placeholder="Program (optional)"
+                                    value={a.program}
+                                    onChange={(e) =>
+                                      handleAwardeeChange(
+                                        idx,
+                                        "program",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full rounded-xl border-2 border-white bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
+                                  />
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Year"
+                                    value={a.year}
+                                    onChange={(e) =>
+                                      handleAwardeeChange(
+                                        idx,
+                                        "year",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full rounded-xl border-2 border-white bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
+                                  />
+                                </div>
+                                <div className="sm:col-span-3">
+                                  <input
+                                    type="text"
+                                    placeholder="Award"
+                                    value={a.award}
+                                    onChange={(e) =>
+                                      handleAwardeeChange(
+                                        idx,
+                                        "award",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full rounded-xl border-2 border-white bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
+                                  />
+                                </div>
+                                <div className="sm:col-span-1 flex items-center justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => removeAwardee(idx)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-xl bg-white border-2 border-red-100 text-red-400 hover:bg-red-50 transition-all text-sm font-bold"
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <div>
-                          <label className="text-md font-normal text-primary3 font-raleway block mb-1">
-                            Time
-                          </label>
-                          <input
-                            type="time"
-                            value={scheduleTime}
-                            onChange={(e) => setScheduleTime(e.target.value)}
-                            className="w-full border border-primary2 text-gray-500 rounded-xl px-3 py-2 focus:outline-none focus:border-primary3 font-rubik"
-                          />
+                      </>
+                    )}
+
+                    {/* MEETING FIELDS */}
+                    {activeTab === "Meeting" && (
+                      <>
+                        <Divider />
+                        <div className="space-y-5">
+                          <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 font-rubik">
+                            Meeting Details
+                          </h3>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                              Attendance Link
+                            </label>
+                            <input
+                              type="url"
+                              id="attendanceLink"
+                              name="attendanceLink"
+                              value={formData.attendanceLink}
+                              onChange={handleInputChange}
+                              placeholder="Link to attendance Google Sheet / Drive folder"
+                              className={inputCls(!!errors.attendanceLink)}
+                            />
+                            {errors.attendanceLink && (
+                              <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                                <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                                Attendance link is required for meetings
+                              </p>
+                            )}
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                                Agenda <span className="text-red-400">*</span>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={addAgendaItem}
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik"
+                              >
+                                <Plus size={11} /> Add Item
+                              </button>
+                            </div>
+                            <div className="space-y-2">
+                              {agenda.map((item, i) => (
+                                <div
+                                  key={i}
+                                  className="flex items-center gap-2"
+                                >
+                                  <span className="text-xs font-black text-gray-300 font-rubik w-5 text-right flex-shrink-0">
+                                    {i + 1}.
+                                  </span>
+                                  <input
+                                    type="text"
+                                    value={item}
+                                    onChange={(e) =>
+                                      updateAgendaItem(i, e.target.value)
+                                    }
+                                    placeholder={`Agenda item ${i + 1}`}
+                                    className="flex-1 rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-rubik text-gray-700 focus:outline-none focus:border-primary2 transition-all"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => removeAgendaItem(i)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-xl border-2 border-red-100 text-red-400 hover:bg-red-50 transition-all"
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                            {errors.agenda && (
+                              <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                                <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                                At least one agenda item is required
+                              </p>
+                            )}
+                          </div>
                         </div>
+                      </>
+                    )}
+
+                    <Divider />
+
+                    {/* VISIBILITY */}
+                    <div className="space-y-3">
+                      <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                        Visibility <span className="text-red-400">*</span>
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {VISIBILITY_OPTIONS.map((opt) => {
+                          const Icon = opt.icon;
+                          const isActive = formData.visibility === opt.value;
+                          return (
+                            <button
+                              key={opt.value}
+                              type="button"
+                              onClick={() => {
+                                setFormData((p) => ({
+                                  ...p,
+                                  visibility: opt.value,
+                                }));
+                                setErrors((p) => ({ ...p, visibility: false }));
+                              }}
+                              className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-left border-2 transition-all duration-200 ${isActive ? `${opt.bg} ${opt.color} ${opt.border} shadow-sm scale-[1.02]` : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"}`}
+                            >
+                              <span
+                                className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? opt.dot : "bg-gray-200"}`}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold font-rubik leading-tight">
+                                  {opt.label}
+                                </p>
+                                <p
+                                  className={`text-[10px] font-raleway mt-0.5 truncate ${isActive ? "opacity-70" : "text-gray-300"}`}
+                                >
+                                  {opt.sublabel}
+                                </p>
+                              </div>
+                              {isActive && (
+                                <Check
+                                  size={12}
+                                  className="flex-shrink-0 opacity-70"
+                                />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {errors.visibility && (
+                        <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                          <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                          Visibility is required
+                        </p>
+                      )}
+                    </div>
+
+                    <Divider />
+
+                    {/* SCHEDULE PUBLISH */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          Schedule Publish
+                        </label>
+                        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                          <div
+                            className={`w-10 h-5 rounded-full transition-all duration-200 relative ${showSchedule ? "bg-primary2" : "bg-gray-200"}`}
+                            onClick={() => setShowSchedule((p) => !p)}
+                          >
+                            <div
+                              className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${showSchedule ? "left-5" : "left-0.5"}`}
+                            />
+                          </div>
+                          <span className="text-xs font-bold text-gray-500 font-rubik">
+                            Schedule
+                          </span>
+                        </label>
+                      </div>
+                      {showSchedule && (
+                        <div className="grid sm:grid-cols-2 gap-4 p-5 border-2 border-gray-100 rounded-xl bg-gray-50/60">
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                              Publish Date
+                            </label>
+                            <input
+                              type="date"
+                              value={scheduleDate}
+                              onChange={(e) => setScheduleDate(e.target.value)}
+                              className={inputCls(false)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                              Publish Time
+                            </label>
+                            <input
+                              type="time"
+                              value={scheduleTime}
+                              onChange={(e) => setScheduleTime(e.target.value)}
+                              className={inputCls(false)}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <Divider />
+
+                    {/* ACTIONS */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                      {showGlobalError && (
+                        <p className="text-red-400 text-xs font-bold font-raleway flex items-center gap-1.5">
+                          <AlertTriangle size={12} /> Please fill all required
+                          fields
+                        </p>
+                      )}
+                      <div className="flex flex-wrap gap-3 ml-auto">
+                        {editingId && (
+                          <button
+                            type="button"
+                            onClick={handleCancelEdit}
+                            className="px-5 py-2.5 text-sm font-bold font-rubik text-gray-400 hover:text-red-400 border-2 border-gray-200 hover:border-red-200 rounded-xl transition-all duration-200"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                        {(!editingId || isEditingDraft) && (
+                          <button
+                            type="button"
+                            onClick={handleSaveDraft}
+                            disabled={isSubmitting}
+                            className="px-5 py-2.5 text-sm font-bold font-rubik text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-xl transition-all duration-200"
+                          >
+                            {editingId ? "Update Draft" : "Save Draft"}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handlePublish}
+                          disabled={isSubmitting}
+                          className="px-7 py-2.5 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg shadow-primary2/25 hover:shadow-primary2/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        >
+                          {editingId && !isEditingDraft
+                            ? "Update Announcement"
+                            : "Publish Announcement"}
+                        </button>
                       </div>
                     </div>
-                  )}
+                  </div>
+                </div>
+              </GlassCard>
 
-                  <div className="h-px bg-gray-100 w-full" />
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
-                    {showGlobalError && (
-                      <p className="text-red-500 text-sm font-bold font-raleway animate-pulse">
-                        Please fill all required fields before publishing.
+              {/* MANAGE LIST */}
+              <GlassCard>
+                <div className="bg-white rounded-2xl overflow-hidden">
+                  <div className="px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                      <h2 className="text-xl font-black font-rubik text-primary3">
+                        Manage Announcements
+                      </h2>
+                      <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
+                        {publishedItems.length} published{" "}
+                        {publishedItems.length === 1
+                          ? "announcement"
+                          : "announcements"}
                       </p>
-                    )}
-                    <div className="flex flex-wrap gap-3 ml-auto w-full sm:w-auto">
-                      {editingId && (
-                        <Button
-                          variant="outline"
-                          type="button"
-                          onClick={handleCancelEdit}
-                          className="text-red-500 border-red-200 hover:bg-red-500 hover:text-red-500"
-                        >
-                          Cancel Edit
-                        </Button>
-                      )}
-                      {(!editingId || isEditingDraft) && (
-                        <Button
-                          variant="outline"
-                          type="button"
-                          onClick={handleSaveDraft}
-                          disabled={isSubmitting}
-                          className="px-6 py-3 border-2 border-primary2 text-primary2 rounded-xl font-bold hover:bg-primary2 hover:text-white transition-all duration-300"
-                        >
-                          {editingId ? "Update" : "Save Draft"}
-                        </Button>
-                      )}
-                      <Button
-                        variant="primary3"
-                        type="button"
-                        onClick={handlePublish}
-                        disabled={isSubmitting}
-                        className="px-8 py-3 bg-primary3 text-white rounded-xl font-bold shadow-lg shadow-primary3/30 hover:shadow-primary3/50 hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isSubmitting
-                          ? "Processing..."
-                          : editingId && !isEditingDraft
-                            ? "Update Announcement"
-                            : "Publish"}
-                      </Button>
                     </div>
+                    <button
+                      onClick={fetchAnnouncements}
+                      className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200"
+                    >
+                      <RefreshCw
+                        size={13}
+                        className={isLoadingList ? "animate-spin" : ""}
+                      />{" "}
+                      Refresh
+                    </button>
                   </div>
-                </div>
-              </div>
 
-              {/* Manage List */}
-              <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-                <div className="p-8 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-primary3 font-rubik">
-                      Manage Announcements
-                    </h2>
-                    <p className="text-gray-500 font-raleway text-sm mt-1">
-                      Total: {publishedItems.length} items
-                    </p>
-                  </div>
-                  <button
-                    onClick={fetchAnnouncements}
-                    className="flex items-center gap-2 text-sm text-primary1 font-bold hover:bg-primary1/10 px-4 py-2 rounded-lg transition-colors"
-                  >
-                    <RefreshCw size={16} /> Refresh List
-                  </button>
-                </div>
-                <div className="overflow-x-auto">
                   {isLoadingList ? (
-                    <div className="p-12 text-center text-gray-500 font-raleway">
-                      Loading existing announcements...
+                    <div className="py-20 flex flex-col items-center gap-3 text-gray-300">
+                      <div className="w-8 h-8 border-2 border-gray-200 border-t-primary2 rounded-full animate-spin" />
+                      <p className="text-sm font-raleway">
+                        Loading announcements...
+                      </p>
                     </div>
                   ) : publishedItems.length === 0 ? (
-                    <div className="p-12 text-center text-gray-400 font-raleway">
-                      No announcements found. Create one above!
+                    <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
+                      <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
+                        <Megaphone size={24} className="text-gray-300" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-sm font-bold font-rubik text-gray-400">
+                          No announcements yet
+                        </p>
+                        <p className="text-xs font-raleway mt-0.5">
+                          Create one using the form above
+                        </p>
+                      </div>
                     </div>
                   ) : (
-                    <table className="w-full text-left border-collapse min-w-[700px]">
-                      <thead className="bg-gray-50 text-xs uppercase text-gray-500 font-semibold font-rubik tracking-wider">
-                        <tr>
-                          <th className="px-6 py-4">Title</th>
-                          <th className="px-6 py-4">Type</th>
-                          <th className="px-6 py-4">Date</th>
-                          <th className="px-6 py-4">Status</th>
-                          <th className="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100 font-raleway">
-                        {publishedItems.map((item) => (
-                          <tr
-                            key={item._id}
-                            className={`hover:bg-blue-50/40 transition-colors group ${editingId === item._id ? "bg-blue-50 ring-1 ring-inset ring-primary1/30" : ""}`}
-                          >
-                            <td className="px-6 py-4">
-                              <p className="font-bold text-gray-800 font-rubik truncate max-w-[200px]">
-                                {item.title}
-                              </p>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span
-                                className={`px-2 py-1 rounded text-xs font-bold ${item.type === "Meeting" ? "bg-purple-100 text-purple-700" : item.type === "Achievement" ? "bg-yellow-100 text-yellow-700" : "bg-blue-100 text-blue-700"}`}
-                              >
-                                {item.type}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">
-                              {item.publishDate
-                                ? new Date(
-                                    item.publishDate,
-                                  ).toLocaleDateString()
-                                : "N/A"}
-                            </td>
-                            <td className="px-6 py-4">
-                              <span
-                                className={`px-2 py-1 rounded text-xs font-bold ${item.isPublished ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"}`}
-                              >
-                                {item.isPublished ? "Published" : "Draft"}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                <button
-                                  onClick={() => handleEditClick(item)}
-                                  className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg"
-                                  title="Edit"
-                                >
-                                  <Pencil size={18} />
-                                </button>
-                                <button
-                                  onClick={() => confirmDelete(item._id)}
-                                  className="p-2 text-red-500 hover:bg-red-100 rounded-lg"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={18} />
-                                </button>
-                              </div>
-                            </td>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left min-w-[680px]">
+                        <thead>
+                          <tr className="bg-gray-50/80">
+                            <th className="px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              Title
+                            </th>
+                            <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              Type
+                            </th>
+                            <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              Date
+                            </th>
+                            <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              Status
+                            </th>
+                            <th className="px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              Actions
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {publishedItems.map((item) => {
+                            const isEditing = editingId === item._id;
+                            const meta =
+                              TYPE_META[item.type] || TYPE_META.General;
+                            return (
+                              <tr
+                                key={item._id}
+                                className={`group border-t border-gray-50 transition-all duration-200 ${isEditing ? "bg-primary1/5" : "hover:bg-gray-50/70"}`}
+                              >
+                                <td className="px-8 py-4">
+                                  <div className="flex items-center gap-2">
+                                    {isEditing && (
+                                      <span className="w-1.5 h-1.5 rounded-full bg-primary1 animate-pulse flex-shrink-0" />
+                                    )}
+                                    <div>
+                                      <span className="font-bold text-sm text-gray-800 font-rubik truncate max-w-[200px] block">
+                                        {item.title}
+                                      </span>
+                                      {item.description && (
+                                        <p className="text-xs text-gray-400 font-raleway mt-0.5 max-w-[200px] truncate">
+                                          {item.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${meta.bg} ${meta.color} ${meta.border}`}
+                                  >
+                                    <span
+                                      className={`w-1.5 h-1.5 rounded-full ${meta.dot}`}
+                                    />
+                                    {item.type}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <span className="text-xs text-gray-600 font-raleway">
+                                    {item.publishDate
+                                      ? new Date(
+                                          item.publishDate,
+                                        ).toLocaleDateString()
+                                      : "N/A"}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${item.isPublished ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-gray-100 text-gray-500 border-gray-200"}`}
+                                  >
+                                    <span
+                                      className={`w-1.5 h-1.5 rounded-full ${item.isPublished ? "bg-emerald-500" : "bg-gray-400"}`}
+                                    />
+                                    {item.isPublished ? "Published" : "Draft"}
+                                  </span>
+                                </td>
+                                <td className="px-8 py-4 text-right">
+                                  <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
+                                    <button
+                                      onClick={() => handleEditClick(item)}
+                                      className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150"
+                                      title="Edit"
+                                    >
+                                      <Pencil size={15} />
+                                    </button>
+                                    <button
+                                      onClick={() => confirmDelete(item._id)}
+                                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150"
+                                      title="Delete"
+                                    >
+                                      <Trash2 size={15} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
-              </div>
+              </GlassCard>
             </div>
           </div>
         </main>
-
-        {/* Success Modal */}
-        {showSuccessModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-              onClick={() => {
-                setShowSuccessModal(false);
-                setSubmitSuccess(false);
-              }}
-            />
-            <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in duration-300">
-              <div className="flex flex-col items-center gap-6">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-green-500/20 rounded-full animate-ping" />
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg relative">
-                    <svg
-                      className="w-12 h-12 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={3}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="text-center space-y-2">
-                  <h3 className="text-2xl text-primary3 font-bold font-rubik">
-                    {successMessage.title}
-                  </h3>
-                  <p className="text-gray-600 font-raleway">
-                    {successMessage.description}
-                  </p>
-                </div>
-                <div className="flex gap-3 mt-2 w-full">
-                  <Button
-                    variant="primary3"
-                    onClick={() => {
-                      setShowSuccessModal(false);
-                      setSubmitSuccess(false);
-                    }}
-                    className="w-full"
-                  >
-                    Continue
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         <Footer />
       </div>
 
-      {/* Delete Modal */}
+      {/* DELETE MODAL */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowDeleteModal(false)}
           />
-          <div className="relative bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl text-center animate-in zoom-in duration-300">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-red-600" />
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center">
+            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <AlertTriangle className="w-6 h-6 text-red-500" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 font-rubik mb-2">
-              Confirm Deletion
+            <h3 className="text-xl font-black text-primary3 font-rubik mb-2">
+              Delete Announcement?
             </h3>
-            <p className="text-gray-500 font-raleway mb-6">
-              Are you sure you want to delete this item? This action cannot be
-              undone.
+            <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
+              This will permanently remove the announcement. This action cannot
+              be undone.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-colors"
+                className="flex-1 py-3 text-sm font-bold font-rubik text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20"
+                className="flex-1 py-3 text-sm font-bold font-rubik text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-lg shadow-red-500/25"
               >
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUCCESS MODAL */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => {
+              setShowSuccessModal(false);
+              setSubmitSuccess(false);
+            }}
+          />
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
+                  <svg
+                    className="w-10 h-10 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-black text-primary3 font-rubik">
+                {successMessage.title}
+              </h3>
+              <p className="text-gray-400 text-sm font-raleway mt-2">
+                {successMessage.description}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowSuccessModal(false);
+                setSubmitSuccess(false);
+              }}
+              className="w-full py-3 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg hover:shadow-primary2/40 hover:-translate-y-0.5 transition-all duration-200"
+            >
+              Continue
+            </button>
           </div>
         </div>
       )}
