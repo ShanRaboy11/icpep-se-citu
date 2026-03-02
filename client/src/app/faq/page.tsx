@@ -4,6 +4,7 @@ import Header from "../components/header";
 import Footer from "../components/footer";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import faqService from "../services/faq";
 import Image from "next/image";
 import { 
   Plus, 
