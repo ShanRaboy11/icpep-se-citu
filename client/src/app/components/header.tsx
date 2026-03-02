@@ -4,6 +4,7 @@ import Image from "next/image";
 import Button from "./button";
 import Menu from "./menu";
 import { useRouter } from "next/navigation";
+import { notificationService } from "@/app/services/notification";
 
 // UserRole types
 type UserRole =
@@ -20,6 +21,7 @@ const Header = () => {
   const [userName, setUserName] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -47,6 +49,26 @@ const Header = () => {
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      const fetchUnreadCount = async () => {
+        try {
+          const response = await notificationService.getAll(1, 1);
+          if (response.success) {
+            setUnreadCount(response.unreadCount);
+          }
+        } catch (error) {
+          console.error("Failed to fetch notifications count", error);
+        }
+      };
+
+      fetchUnreadCount();
+      // Optional: Poll every minute or set up socket
+      const interval = setInterval(fetchUnreadCount, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -104,11 +126,13 @@ const Header = () => {
     text,
     onClick,
     isDestructive = false,
+    badge,
   }: {
     icon: React.ReactNode;
     text: string;
     onClick: () => void;
     isDestructive?: boolean;
+    badge?: number;
   }) => (
     <button
       onClick={onClick}
@@ -125,16 +149,23 @@ const Header = () => {
       >
         {icon}
       </div>
-      <span
-        className={`text-sm font-medium font-rubik tracking-wide transition-colors duration-200
-        ${
-          isDestructive
-            ? "text-[#373d47] group-hover:text-red-500"
-            : "text-[#373d47] group-hover:text-[#00a7ee]"
-        }`}
-      >
-        {text}
-      </span>
+      <div className="flex-1 flex items-center justify-between">
+        <span
+          className={`text-sm font-medium font-rubik tracking-wide transition-colors duration-200
+          ${
+            isDestructive
+              ? "text-[#373d47] group-hover:text-red-500"
+              : "text-[#373d47] group-hover:text-[#00a7ee]"
+          }`}
+        >
+          {text}
+        </span>
+        {badge !== undefined && badge > 0 && (
+          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-[#ef4444]/90 text-white text-[10px] font-bold rounded-full shadow-sm">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
+      </div>
     </button>
   );
 
@@ -299,6 +330,7 @@ const Header = () => {
                       <DropdownItem
                         onClick={() => router.push("/notifications")}
                         text="Notifications"
+                        badge={unreadCount}
                         icon={
                           <svg
                             width="20"

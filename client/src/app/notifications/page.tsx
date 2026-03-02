@@ -45,14 +45,20 @@ export default function AnnouncementsPage() {
             else if (n.type === "system") type = "notification";
 
             // Generate link based on type and relatedId
-            let link = "/notifications";
-            if (n.type === "announcement") link = "/announcements";
-            else if (n.type === "event" && n.relatedId)
-              link = `/events/${n.relatedId}`;
-            else if (n.type === "membership") link = "/profile";
-            else if (n.type === "rsvp") link = "/commeet";
-            else if (n.type === "system" && n.title.includes("Password"))
-              link = "/profile";
+            let link = n.link || "/notifications";
+
+            // Fallback for older notifications without link property
+            if (!n.link) {
+              if (n.type === "announcement" && n.relatedId)
+                link = `/announcements/${n.relatedId}`;
+              else if (n.type === "announcement") link = "/announcements";
+              else if (n.type === "event" && n.relatedId)
+                link = `/events/${n.relatedId}`;
+              else if (n.type === "membership") link = "/profile";
+              else if (n.type === "rsvp") link = "/commeet";
+              else if (n.type === "system" && n.title.includes("Password"))
+                link = "/profile";
+            }
 
             return {
               id: n._id,

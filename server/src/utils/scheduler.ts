@@ -43,7 +43,8 @@ export function startAnnouncementScheduler(intervalMs = 30_000) {
                             `New announcement: ${ann.title}`,
                             "announcement",
                             ann._id,
-                            "Announcement"
+                            "Announcement",
+                            `/announcements/${ann._id}`
                         );
                     } catch (err) {
                         console.error('❌ Failed to publish scheduled announcement', ann._id, err);
@@ -81,7 +82,8 @@ export function startAnnouncementScheduler(intervalMs = 30_000) {
                             `New event: ${evt.title}`,
                             "event",
                             evt._id,
-                            "Event"
+                            "Event",
+                            `/events/${evt._id}`
                         );
                     } catch (err) {
                         console.error('❌ Failed to publish scheduled event', evt._id, err);

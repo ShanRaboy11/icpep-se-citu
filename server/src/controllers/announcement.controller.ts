@@ -274,7 +274,8 @@ export const createAnnouncement = async (
         `New announcement: ${announcement.title}`,
         "announcement",
         announcement._id as any,
-        "Announcement"
+        "Announcement",
+        `/announcements/${announcement._id}`
       );
     }
 
