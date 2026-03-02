@@ -6,7 +6,7 @@ import {
   deleteFromCloudinary,
 } from "../utils/cloudinary";
 import mongoose from "mongoose";
-import { notifyAllUsers } from "../utils/notification";
+import { notifyTargetAudience } from "../utils/notification";
 
 // Local Multer file shape (avoid relying on global Express.Multer augmentation)
 type MulterFile = MulterLocal.MulterFile;
@@ -268,7 +268,8 @@ export const createAnnouncement = async (
 
     // Send notification if published
     if (announcement.isPublished) {
-      await notifyAllUsers(
+      await notifyTargetAudience(
+        announcement.targetAudience || ["all"],
         `[ANNOUNCEMENT] ${announcement.title}`,
         `New announcement: ${announcement.title}`,
         "announcement",

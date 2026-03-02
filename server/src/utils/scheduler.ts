@@ -1,5 +1,6 @@
 import Announcement from '../models/announcement';
 import Event from '../models/event';
+import { notifyTargetAudience } from './notification';
 
 /**
  * Start a simple scheduler that publishes announcements whose publishDate has arrived.
@@ -34,6 +35,16 @@ export function startAnnouncementScheduler(intervalMs = 30_000) {
                         if (!ann.publishDate) ann.publishDate = new Date();
                         await ann.save();
                         console.log('✅ Published scheduled announcement', ann._id, 'at', new Date().toISOString());
+
+                        // Notify target audience
+                        await notifyTargetAudience(
+                            ann.targetAudience || ["all"],
+                            `[ANNOUNCEMENT] ${ann.title}`,
+                            `New announcement: ${ann.title}`,
+                            "announcement",
+                            ann._id,
+                            "Announcement"
+                        );
                     } catch (err) {
                         console.error('❌ Failed to publish scheduled announcement', ann._id, err);
                     }
@@ -62,6 +73,16 @@ export function startAnnouncementScheduler(intervalMs = 30_000) {
                         if (!evt.publishDate) evt.publishDate = new Date();
                         await evt.save();
                         console.log('✅ Published scheduled event', evt._id, 'at', new Date().toISOString());
+
+                        // Notify target audience
+                        await notifyTargetAudience(
+                            evt.targetAudience || ["all"],
+                            `[NEW] ${evt.title}`,
+                            `New event: ${evt.title}`,
+                            "event",
+                            evt._id,
+                            "Event"
+                        );
                     } catch (err) {
                         console.error('❌ Failed to publish scheduled event', evt._id, err);
                     }
