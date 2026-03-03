@@ -41,6 +41,8 @@ export default function ViewUserModal({
         return "bg-primary1/20 text-blue-700 border-blue-200";
       case "committee-officer":
         return "bg-indigo-100 text-indigo-700 border-indigo-200";
+      case "admin":
+        return "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 border-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.4)]";
       case "member":
         return "bg-green-100 text-green-700 border-green-200";
       case "non-member":
@@ -71,7 +73,7 @@ export default function ViewUserModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              className="p-2 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
             >
               <X className="w-6 h-6 text-white" />
             </button>
@@ -104,6 +106,8 @@ export default function ViewUserModal({
                   ? "Council Officer"
                   : user.role === "committee-officer"
                   ? "Committee Officer"
+                  : user.role === "admin"
+                  ? "Admin"
                   : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
               </span>
 

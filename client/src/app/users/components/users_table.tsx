@@ -79,13 +79,14 @@ export default function UsersTable({
           <select
             value={filterRole}
             onChange={(e) => onFilterChange('role', e.target.value)}
-            className="font-raleway text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
+            className="font-raleway text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1 cursor-pointer"
           >
             <option value="all">All Roles</option>
             <option value="student">Student</option>
             <option value="council-officer">Council Officer</option>
             <option value="committee-officer">Committee Officer</option>
             <option value="faculty">Faculty</option>
+            <option value="admin">Admin</option>
           </select>
         </div>
 
@@ -96,7 +97,7 @@ export default function UsersTable({
           <select
             value={filterMembership}
             onChange={(e) => onFilterChange('membership', e.target.value)}
-            className="font-raleway text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
+            className="font-raleway text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1 cursor-pointer"
           >
             <option value="all">All</option>
             <option value="local">Local</option>

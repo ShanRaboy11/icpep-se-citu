@@ -33,7 +33,7 @@ export default function AddUserModal({
     middleName: "",
     yearLevel: undefined,
     password: "123456",
-    role: "member",
+    role: "student",
     membershipStatus: "non-member",
   });
 
@@ -130,7 +130,7 @@ export default function AddUserModal({
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -289,6 +289,7 @@ export default function AddUserModal({
                   <option value="council-officer">Council Officer</option>
                   <option value="committee-officer">Committee Officer</option>
                   <option value="faculty">Faculty</option>
+                  <option value="admin">Admin</option>
                 </select>
               </div>
 
@@ -326,13 +327,13 @@ export default function AddUserModal({
           <button
             type="button"
             onClick={handleClose}
-            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+            className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all cursor-pointer"
           >
             Add User
           </button>

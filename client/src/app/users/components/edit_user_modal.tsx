@@ -119,7 +119,7 @@ export default function EditUserModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              className="p-2 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
             >
               <X className="w-6 h-6 text-white" />
             </button>
@@ -235,10 +235,11 @@ export default function EditUserModal({
                 }`}
               >
                 <option value="">Select Role</option>
-                <option value="member">Student</option>
+                <option value="student">Student</option>
                 <option value="council-officer">Council Officer</option>
                 <option value="committee-officer">Committee Officer</option>
                 <option value="faculty">Faculty</option>
+                {user.role === "admin" && <option value="admin">Admin</option>}
               </select>
               {errors.role && (
                 <p className="mt-1 text-sm text-red-500 font-raleway">
@@ -327,13 +328,13 @@ export default function EditUserModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="flex items-center gap-2 px-6 py-2 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors"
+            className="flex items-center gap-2 px-6 py-2 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors cursor-pointer"
           >
             <Save className="w-4 h-4" />
             Save Changes

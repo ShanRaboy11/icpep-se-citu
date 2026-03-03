@@ -75,7 +75,13 @@ interface UploadUserData {
   membershipStatus?: string;
 }
 
-type SortField = "studentNumber" | "fullName" | "role" | "yearLevel" | "createdAt" | "updatedAt";
+type SortField =
+  | "studentNumber"
+  | "fullName"
+  | "role"
+  | "yearLevel"
+  | "createdAt"
+  | "updatedAt";
 type SortDirection = "asc" | "desc";
 
 // API Configuration - Production Ready
@@ -104,11 +110,11 @@ const USERS_PER_PAGE = 100;
 
 // Helper functions
 const validateRole = (
-  role: string
-): "faculty" | "council-officer" | "committee-officer" | "student" => {
+  role: string,
+): "faculty" | "council-officer" | "committee-officer" | "student" | "admin" => {
   const roleMap: Record<
     string,
-    "faculty" | "council-officer" | "committee-officer" | "student"
+    "faculty" | "council-officer" | "committee-officer" | "student" | "admin"
   > = {
     faculty: "faculty",
     "council-officer": "council-officer",
@@ -116,13 +122,14 @@ const validateRole = (
     student: "student",
     member: "student",
     "non-member": "student",
+    admin: "admin",
   };
 
   return roleMap[role] || "student";
 };
 
 const validateMembershipType = (
-  membershipType: string | null
+  membershipType: string | null,
 ): "regional" | "local" | "both" | null => {
   if (membershipType === null) return null;
 
@@ -135,7 +142,7 @@ const validateMembershipType = (
 };
 
 const parseMembershipStatus = (
-  membershipStatus?: string
+  membershipStatus?: string,
 ): { isMember: boolean; membershipType: string | null } => {
   if (!membershipStatus) {
     return { isMember: false, membershipType: null };
@@ -224,7 +231,7 @@ export default function UsersListPage() {
   const [filterMembership, setFilterMembership] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  
+
   // 🔍 NEW: Search state
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
@@ -275,7 +282,7 @@ export default function UsersListPage() {
     return allUsers.filter((user) => {
       // Role filter
       const roleMatch = filterRole === "all" || user.role === filterRole;
-      
+
       // Membership filter
       const membershipMatch =
         filterMembership === "all" ||
@@ -286,17 +293,19 @@ export default function UsersListPage() {
         (filterMembership === "both" &&
           user.membershipStatus.membershipType === "both") ||
         (filterMembership === "non-member" && !user.membershipStatus.isMember);
-      
+
       // 🔍 Search filter - searches across multiple fields
-      const searchMatch = searchQuery === "" || 
+      const searchMatch =
+        searchQuery === "" ||
         user.studentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (user.middleName && user.middleName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (user.middleName &&
+          user.middleName.toLowerCase().includes(searchQuery.toLowerCase())) ||
         user.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (user.yearLevel && user.yearLevel.toString().includes(searchQuery));
-      
+
       return roleMatch && membershipMatch && searchMatch;
     });
   };
@@ -341,10 +350,10 @@ export default function UsersListPage() {
         if (aValue == null && bValue == null) return 0;
         if (aValue == null) return 1; // nulls at end
         if (bValue == null) return -1; // nulls at end
-        
+
         const aNum = aValue as number;
         const bNum = bValue as number;
-        
+
         return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
       }
 
@@ -352,12 +361,12 @@ export default function UsersListPage() {
       if (typeof aValue === "string" && typeof bValue === "string") {
         if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
         if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      } 
+      }
       // Number comparison
       else if (typeof aValue === "number" && typeof bValue === "number") {
         if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
         if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      } 
+      }
       // Date comparison
       else if (aValue instanceof Date && bValue instanceof Date) {
         if (aValue.getTime() < bValue.getTime())
@@ -377,19 +386,30 @@ export default function UsersListPage() {
   // Update displayed users when page, filters, OR SORT changes
   useEffect(() => {
     updateDisplayedUsers();
-  }, [currentPage, allUsers, filterRole, filterMembership, sortField, sortDirection, searchQuery]);
-  
+  }, [
+    currentPage,
+    allUsers,
+    filterRole,
+    filterMembership,
+    sortField,
+    sortDirection,
+    searchQuery,
+  ]);
+
   // 🔍 Close search suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
         setShowSearchSuggestions(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -399,7 +419,7 @@ export default function UsersListPage() {
       console.log("🔍 Fetching all users...");
 
       const response: ApiResponse<ApiUser[]> = await fetchWithAuth(
-        `${API_BASE_URL}/users?limit=10000&page=1`
+        `${API_BASE_URL}/users?limit=10000&page=1`,
       );
 
       console.log("📊 Response:", response);
@@ -415,14 +435,14 @@ export default function UsersListPage() {
             user.fullName ||
               `${user.firstName} ${user.middleName || ""} ${
                 user.lastName
-              }`.trim()
+              }`.trim(),
           ),
           role: validateRole(user.role),
           yearLevel: user.yearLevel,
           membershipStatus: {
             isMember: user.membershipStatus.isMember,
             membershipType: validateMembershipType(
-              user.membershipStatus.membershipType
+              user.membershipStatus.membershipType,
             ),
           },
           profilePicture: user.profilePicture,
@@ -431,7 +451,7 @@ export default function UsersListPage() {
             ? {
                 id: user.registeredBy._id,
                 fullName: capitalizeWords(
-                  `${user.registeredBy.firstName} ${user.registeredBy.lastName}`
+                  `${user.registeredBy.firstName} ${user.registeredBy.lastName}`,
                 ),
               }
             : null,
@@ -459,7 +479,7 @@ export default function UsersListPage() {
   const updateDisplayedUsers = () => {
     // Step 1: Filter
     let processedUsers = getFilteredUsers();
-    
+
     // Step 2: Sort ALL filtered users
     processedUsers = sortUsers(processedUsers);
 
@@ -475,47 +495,50 @@ export default function UsersListPage() {
     console.log(
       `📄 Page ${currentPage}: Showing users ${startIndex + 1}-${Math.min(
         endIndex,
-        processedUsers.length
-      )} of ${processedUsers.length} (filtered from ${allUsers.length} total, sorted by ${sortField} ${sortDirection})`
+        processedUsers.length,
+      )} of ${processedUsers.length} (filtered from ${allUsers.length} total, sorted by ${sortField} ${sortDirection})`,
     );
     setDisplayedUsers(usersToDisplay);
   };
 
   // Reset to page 1 when filters or sort changes
-  const handleFilterChange = (type: 'role' | 'membership', value: string) => {
-    if (type === 'role') {
+  const handleFilterChange = (type: "role" | "membership", value: string) => {
+    if (type === "role") {
       setFilterRole(value);
     } else {
       setFilterMembership(value);
     }
     setCurrentPage(1);
   };
-  
+
   // 🔍 NEW: Handle search input
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1); // Reset to first page when searching
     setShowSearchSuggestions(value.length > 0);
   };
-  
+
   // 🔍 NEW: Clear search
   const handleClearSearch = () => {
     setSearchQuery("");
     setShowSearchSuggestions(false);
   };
-  
+
   // 🔍 NEW: Get search suggestions (top 10 matches)
   const getSearchSuggestions = () => {
     if (searchQuery.length === 0) return [];
-    
+
     const filtered = allUsers.filter((user) => {
-      return user.studentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      return (
+        user.studentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (user.middleName && user.middleName.toLowerCase().includes(searchQuery.toLowerCase()));
+        (user.middleName &&
+          user.middleName.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
     });
-    
+
     return filtered.slice(0, 10); // Limit to 10 suggestions
   };
 
@@ -542,7 +565,7 @@ export default function UsersListPage() {
         {
           method: "POST",
           body: JSON.stringify(newUser),
-        }
+        },
       );
 
       if (response.success) {
@@ -551,7 +574,7 @@ export default function UsersListPage() {
           show: true,
           title: "User Added Successfully",
           message: `${capitalizeWords(
-            response.data.fullName
+            response.data.fullName,
           )} has been added to the system.`,
         });
       }
@@ -580,65 +603,48 @@ export default function UsersListPage() {
       });
       setUploadProgress("Preparing upload...");
 
+      // Transform data
+      const usersToUpload = uploadedUsers.map((userData) => ({
+        studentNumber: userData.studentNumber,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        middleName: userData.middleName,
+        role: userData.role,
+        yearLevel: userData.yearLevel,
+        membershipStatus: userData.membershipStatus,
+      }));
+
+      // Send bulk request
+      setUploadProgress("Uploading users...");
+
+      const response: ApiResponse<any> = await fetchWithAuth(
+        `${API_BASE_URL}/users/bulk-upload`,
+        {
+          method: "POST",
+          body: JSON.stringify({ users: usersToUpload }),
+        },
+      );
+
       let successCount = 0;
       let failedCount = 0;
-      const failedUsers: FailedUser[] = [];
+      let failedUsers: any[] = [];
+      const totalUsers = uploadedUsers.length;
 
-      for (let i = 0; i < uploadedUsers.length; i++) {
-        const userData = uploadedUsers[i];
-
-        setUploadStats((prev) => ({
-          ...prev,
-          current: i + 1,
+      if (response.success && response.data) {
+        successCount = response.data.success.length;
+        failedCount = response.data.failed.length;
+        failedUsers = response.data.failed.map((fail: any) => ({
+          studentNumber: fail.studentNumber,
+          reason: fail.reason,
+          data: fail.data,
         }));
-
-        setUploadProgress(`Processing ${userData.studentNumber || "user"}...`);
-
-        try {
-          const transformedUserData = {
-            studentNumber: userData.studentNumber,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            middleName: userData.middleName,
-            role: userData.role,
-            yearLevel: userData.yearLevel,
-            membershipStatus: parseMembershipStatus(userData.membershipStatus),
-          };
-
-          const response: ApiResponse<ApiUser> = await fetchWithAuth(
-            `${API_BASE_URL}/users`,
-            {
-              method: "POST",
-              body: JSON.stringify(transformedUserData),
-            }
-          );
-
-          if (response.success) {
-            successCount++;
-            setUploadStats((prev) => ({
-              ...prev,
-              successful: successCount,
-            }));
-          }
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : "Unknown error";
-          failedCount++;
-          failedUsers.push({
-            studentNumber: userData.studentNumber || "UNKNOWN",
-            reason: errorMessage,
-            data: userData as unknown as Record<string, unknown>,
-          });
-          setUploadStats((prev) => ({
-            ...prev,
-            failed: failedCount,
-          }));
-        }
+      } else {
+        throw new Error(response.message || "Upload failed");
       }
 
       setUploadStats({
-        total: uploadedUsers.length,
-        current: uploadedUsers.length,
+        total: totalUsers,
+        current: totalUsers,
         successful: successCount,
         failed: failedCount,
       });
@@ -756,7 +762,7 @@ export default function UsersListPage() {
             yearLevel: updatedUser.yearLevel,
             membershipStatus: updatedUser.membershipStatus,
           }),
-        }
+        },
       );
 
       if (response.success) {
@@ -791,7 +797,7 @@ export default function UsersListPage() {
           `${API_BASE_URL}/users/${userToDelete.id}`,
           {
             method: "DELETE",
-          }
+          },
         );
 
         if (response.success) {
@@ -828,7 +834,7 @@ export default function UsersListPage() {
         const response: ApiResponse<{ isActive: boolean; updatedAt: string }> =
           await fetchWithAuth(
             `${API_BASE_URL}/users/${userToToggle.id}/toggle-status`,
-            { method: "PATCH" }
+            { method: "PATCH" },
           );
 
         if (response.success) {
@@ -928,7 +934,10 @@ export default function UsersListPage() {
 
           {/* 🔍 Search Bar - Redesigned */}
           <div className="mb-6">
-            <div className="relative max-w-3xl mx-auto" ref={searchContainerRef}>
+            <div
+              className="relative max-w-3xl mx-auto"
+              ref={searchContainerRef}
+            >
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
                   <Search className="h-5 w-5 text-primary1" />
@@ -937,21 +946,23 @@ export default function UsersListPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  onFocus={() => setShowSearchSuggestions(searchQuery.length > 0)}
+                  onFocus={() =>
+                    setShowSearchSuggestions(searchQuery.length > 0)
+                  }
                   placeholder="Search users by name, student number, role, or year level..."
                   className="w-full pl-14 pr-14 py-4 font-raleway text-base text-gray-900 placeholder-gray-500 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-primary1 transition-all duration-300 shadow-sm hover:shadow-md"
                 />
                 {searchQuery && (
                   <button
                     onClick={handleClearSearch}
-                    className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-primary1 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-primary1 transition-colors cursor-pointer"
                     title="Clear search"
                   >
                     <X className="h-5 w-5" />
                   </button>
                 )}
               </div>
-              
+
               {/* Search Suggestions Dropdown - Redesigned */}
               {showSearchSuggestions && searchQuery.length > 0 && (
                 <div className="absolute z-50 mt-3 w-full bg-white rounded-xl shadow-2xl border border-gray-200 max-h-[32rem] overflow-hidden">
@@ -959,8 +970,10 @@ export default function UsersListPage() {
                     <>
                       <div className="px-5 py-3 bg-gradient-to-r from-primary1/5 to-primary1/10 border-b border-gray-200">
                         <p className="font-raleway text-sm font-semibold text-primary3">
-                          Found {getSearchSuggestions().length} result{getSearchSuggestions().length !== 1 ? 's' : ''}
-                          {getSearchSuggestions().length === 10 && ' (showing top 10)'}
+                          Found {getSearchSuggestions().length} result
+                          {getSearchSuggestions().length !== 1 ? "s" : ""}
+                          {getSearchSuggestions().length === 10 &&
+                            " (showing top 10)"}
                         </p>
                       </div>
                       <div className="overflow-y-auto max-h-[28rem]">
@@ -979,7 +992,9 @@ export default function UsersListPage() {
                                   <h4 className="font-raleway font-bold text-base text-gray-900 truncate group-hover:text-primary1 transition-colors">
                                     {user.fullName}
                                   </h4>
-                                  <div className={`w-2 h-2 rounded-full flex-shrink-0 ${user.isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                                  <div
+                                    className={`w-2 h-2 rounded-full flex-shrink-0 ${user.isActive ? "bg-green-500" : "bg-gray-400"}`}
+                                  ></div>
                                 </div>
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="font-raleway text-sm text-gray-600 font-medium">
@@ -987,7 +1002,7 @@ export default function UsersListPage() {
                                   </span>
                                   <span className="text-gray-400">•</span>
                                   <span className="font-raleway text-sm text-gray-600 capitalize">
-                                    {user.role.replace('-', ' ')}
+                                    {user.role.replace("-", " ")}
                                   </span>
                                   {user.yearLevel && (
                                     <>
@@ -1002,7 +1017,8 @@ export default function UsersListPage() {
                               <div className="flex-shrink-0">
                                 {user.membershipStatus.isMember ? (
                                   <span className="inline-block px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-raleway font-bold rounded-full uppercase tracking-wide shadow-sm">
-                                    {user.membershipStatus.membershipType || 'Member'}
+                                    {user.membershipStatus.membershipType ||
+                                      "Member"}
                                   </span>
                                 ) : (
                                   <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-raleway font-semibold rounded-full">
@@ -1036,7 +1052,7 @@ export default function UsersListPage() {
           <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-300"
+              className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-300 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               Export All
@@ -1044,14 +1060,14 @@ export default function UsersListPage() {
             <button
               onClick={() => setIsUploadModalOpen(true)}
               disabled={isUploading}
-              className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <Upload className="w-4 h-4" />
               Upload Excel
             </button>
             <button
               onClick={handleAddUser}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
               Add User
@@ -1082,7 +1098,7 @@ export default function UsersListPage() {
                 {currentPage > 1 ? (
                   <button
                     onClick={handlePreviousPage}
-                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300"
+                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300 cursor-pointer"
                     title="Previous page"
                   >
                     <ChevronLeft className="w-5 h-5" />
@@ -1106,7 +1122,7 @@ export default function UsersListPage() {
                 {currentPage < totalPages ? (
                   <button
                     onClick={handleNextPage}
-                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300"
+                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300 cursor-pointer"
                     title="Next page"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -1244,7 +1260,7 @@ export default function UsersListPage() {
                   failedUsers: [],
                 })
               }
-              className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300"
+              className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300 cursor-pointer"
             >
               Close
             </button>
@@ -1267,7 +1283,7 @@ export default function UsersListPage() {
                 onClick={() =>
                   setSuccessModal({ show: false, title: "", message: "" })
                 }
-                className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300"
+                className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300 cursor-pointer"
               >
                 Close
               </button>
@@ -1291,7 +1307,7 @@ export default function UsersListPage() {
                 onClick={() =>
                   setErrorModal({ show: false, title: "", message: "" })
                 }
-                className="w-full px-6 py-3 bg-red-500 text-white font-raleway font-semibold rounded-lg hover:bg-red-600 transition-colors duration-300"
+                className="w-full px-6 py-3 bg-red-500 text-white font-raleway font-semibold rounded-lg hover:bg-red-600 transition-colors duration-300 cursor-pointer"
               >
                 Close
               </button>

@@ -37,6 +37,8 @@ export default function UserTableRow({
         return "bg-indigo-100 text-indigo-700 border-indigo-200";
       case "student":
         return "bg-green-100 text-green-700 border-green-200";
+      case "admin":
+        return "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 border-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.4)]";
       default:
         return "bg-green-100 text-green-700 border-green-200";
     }
@@ -111,6 +113,8 @@ export default function UserTableRow({
               ? "Council Officer"
               : user.role === "committee-officer"
               ? "Committee Officer"
+              : user.role === "admin"
+              ? "Admin"
               : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
           </span>
         </td>
@@ -162,7 +166,7 @@ export default function UserTableRow({
         <td className="px-4 py-4 whitespace-nowrap text-center">
           <button
             onClick={handleMenuClick}
-            className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
             title="More actions"
           >
             <MoreVertical className="w-5 h-5 text-gray-500" />

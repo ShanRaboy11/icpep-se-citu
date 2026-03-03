@@ -10,7 +10,8 @@ interface MenuProps {
     | "student"
     | "council-officer"
     | "committee-officer"
-    | "faculty";
+    | "faculty"
+    | "admin";
   onExit: () => void;
 }
 
@@ -49,7 +50,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
       { label: "Developers", href: "/developers" },
     ];
 
-    if (userRole === "council-officer") {
+    if (userRole === "council-officer" || userRole === "admin") {
       baseItems.push({
         label: "Manage",
         children: [
@@ -65,7 +66,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
       });
     }
 
-    if (userRole === "council-officer" || userRole === "committee-officer") {
+    if (userRole === "council-officer" || userRole === "committee-officer" || userRole === "admin") {
       baseItems.push({ label: "ComMeet", href: "/commeet" });
     }
 
