@@ -15,7 +15,7 @@ export interface AuthRequest extends Request {
 // Get all users with filtering and sorting
 export const getAllUsers = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const {
@@ -89,7 +89,7 @@ export const getAllUsers = async (
 // Get single user by ID
 export const getUserById = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -104,7 +104,7 @@ export const getUserById = async (
 
     const user = await User.findById(id).populate(
       "registeredBy",
-      "firstName lastName middleName"
+      "firstName lastName middleName",
     );
 
     if (!user) {
@@ -131,7 +131,7 @@ export const getUserById = async (
 // Create new user
 export const createUser = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const {
@@ -148,7 +148,7 @@ export const createUser = async (
     console.log("📝 CREATE USER - req.user:", req.user);
     console.log(
       "📝 CREATE USER - membershipStatus received:",
-      membershipStatus
+      membershipStatus,
     );
 
     // Validation
@@ -252,7 +252,7 @@ export const createUser = async (
 // Bulk upload users
 export const bulkUploadUsers = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { users } = req.body;
@@ -300,20 +300,6 @@ export const bulkUploadUsers = async (
             studentNumber: userData.studentNumber || "UNKNOWN",
             reason:
               "Missing required fields (studentNumber, firstName, lastName)",
-            data: userData,
-          });
-          continue;
-        }
-
-        // Check if user exists
-        const existingUser = await User.findOne({
-          studentNumber: userData.studentNumber.toUpperCase(),
-        });
-
-        if (existingUser) {
-          results.failed.push({
-            studentNumber: userData.studentNumber,
-            reason: "User with this student number already exists",
             data: userData,
           });
           continue;
@@ -369,6 +355,37 @@ export const bulkUploadUsers = async (
           // 'non-member' or any other value defaults to initial values
         }
 
+        // Check if user exists
+        const existingUser = await User.findOne({
+          studentNumber: userData.studentNumber.toUpperCase(),
+        });
+
+        if (existingUser) {
+          // Update existing user but keep password
+          existingUser.firstName = userData.firstName;
+          existingUser.lastName = userData.lastName;
+          if (userData.middleName !== undefined)
+            existingUser.middleName = userData.middleName || null;
+          if (userData.role) existingUser.role = userData.role;
+          if (userData.yearLevel) existingUser.yearLevel = userData.yearLevel;
+
+          existingUser.membershipStatus = membershipStatusObj;
+          // Do not update password
+
+          await existingUser.save();
+
+          results.success.push({
+            studentNumber: userData.studentNumber,
+            fullName: existingUser.fullName,
+            id: existingUser._id.toString(),
+          });
+
+          console.log(
+            `🔄 Updated user: ${existingUser.fullName} (${existingUser.studentNumber}) - Member: ${membershipStatusObj.isMember}`,
+          );
+          continue;
+        }
+
         // Create new user
         const newUser = await User.create({
           studentNumber: userData.studentNumber,
@@ -389,12 +406,12 @@ export const bulkUploadUsers = async (
         });
 
         console.log(
-          `✅ Created user: ${newUser.fullName} (${newUser.studentNumber}) - Member: ${membershipStatusObj.isMember}, Type: ${membershipStatusObj.membershipType}`
+          `✅ Created user: ${newUser.fullName} (${newUser.studentNumber}) - Member: ${membershipStatusObj.isMember}, Type: ${membershipStatusObj.membershipType}`,
         );
       } catch (error: any) {
         console.error(
           `❌ Failed to create user ${userData.studentNumber}:`,
-          error.message
+          error.message,
         );
 
         results.failed.push({
@@ -406,7 +423,7 @@ export const bulkUploadUsers = async (
     }
 
     console.log(
-      `✅ Bulk upload complete: ${results.success.length} succeeded, ${results.failed.length} failed`
+      `✅ Bulk upload complete: ${results.success.length} succeeded, ${results.failed.length} failed`,
     );
 
     res.status(201).json({
@@ -427,7 +444,7 @@ export const bulkUploadUsers = async (
 // Update user
 export const updateUser = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -460,7 +477,7 @@ export const updateUser = async (
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { ...updates, updatedAt: new Date() },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).populate("registeredBy", "firstName lastName middleName");
 
     if (!updatedUser) {
@@ -487,7 +504,7 @@ export const updateUser = async (
           : `Your membership details have been updated. Type: ${updatedUser.membershipStatus.membershipType}`,
         "membership",
         updatedUser._id,
-        "Membership" as any
+        "Membership" as any,
       );
     }
 
@@ -499,7 +516,7 @@ export const updateUser = async (
         "Your password has been successfully updated.",
         "system",
         updatedUser._id,
-        null
+        null,
       );
     } else {
       const profileFields = [
@@ -514,7 +531,7 @@ export const updateUser = async (
       const changedFields = profileFields.filter(
         (field) =>
           updates[field] !== undefined &&
-          updates[field] !== (originalUser as any)[field]
+          updates[field] !== (originalUser as any)[field],
       );
 
       if (changedFields.length > 0) {
@@ -522,11 +539,11 @@ export const updateUser = async (
           updatedUser._id,
           "[PROFILE] Profile Updated",
           `Your profile information (${changedFields.join(
-            ", "
+            ", ",
           )}) has been updated.`,
           "system",
           updatedUser._id,
-          null
+          null,
         );
       }
     }
@@ -548,7 +565,7 @@ export const updateUser = async (
 // Toggle user active status
 export const toggleUserStatus = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -595,7 +612,7 @@ export const toggleUserStatus = async (
 // Delete user
 export const deleteUser = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -635,7 +652,7 @@ export const deleteUser = async (
 // Get user statistics
 export const getUserStats = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const totalUsers = await User.countDocuments();
@@ -706,7 +723,7 @@ export const getUserStats = async (
 // Search users
 export const searchUsers = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { query } = req.query;
