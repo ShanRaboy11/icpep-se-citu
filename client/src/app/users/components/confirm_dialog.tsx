@@ -71,7 +71,7 @@ export default function ConfirmDialog({
             </div>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-white/50 rounded-full transition-colors"
+              className="p-1 hover:bg-white/50 rounded-full transition-colors cursor-pointer"
             >
               <X className="w-5 h-5 text-gray-600" />
             </button>
@@ -89,7 +89,7 @@ export default function ConfirmDialog({
         <div className="px-6 py-4 bg-gray-50 flex items-center justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
           >
             {cancelText}
           </button>
@@ -98,7 +98,7 @@ export default function ConfirmDialog({
               onConfirm();
               onClose();
             }}
-            className={`px-6 py-2 ${styles.button} text-white font-raleway font-semibold rounded-lg transition-colors`}
+            className={`px-6 py-2 ${styles.button} text-white font-raleway font-semibold rounded-lg transition-colors cursor-pointer`}
           >
             {confirmText}
           </button>

@@ -955,7 +955,7 @@ export default function UsersListPage() {
                 {searchQuery && (
                   <button
                     onClick={handleClearSearch}
-                    className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-primary1 transition-colors"
+                    className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-primary1 transition-colors cursor-pointer"
                     title="Clear search"
                   >
                     <X className="h-5 w-5" />
@@ -1052,7 +1052,7 @@ export default function UsersListPage() {
           <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-300"
+              className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-300 cursor-pointer"
             >
               <Download className="w-4 h-4" />
               Export All
@@ -1060,14 +1060,14 @@ export default function UsersListPage() {
             <button
               onClick={() => setIsUploadModalOpen(true)}
               disabled={isUploading}
-              className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               <Upload className="w-4 h-4" />
               Upload Excel
             </button>
             <button
               onClick={handleAddUser}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
               Add User
@@ -1098,7 +1098,7 @@ export default function UsersListPage() {
                 {currentPage > 1 ? (
                   <button
                     onClick={handlePreviousPage}
-                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300"
+                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300 cursor-pointer"
                     title="Previous page"
                   >
                     <ChevronLeft className="w-5 h-5" />
@@ -1122,7 +1122,7 @@ export default function UsersListPage() {
                 {currentPage < totalPages ? (
                   <button
                     onClick={handleNextPage}
-                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300"
+                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300 cursor-pointer"
                     title="Next page"
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -1260,7 +1260,7 @@ export default function UsersListPage() {
                   failedUsers: [],
                 })
               }
-              className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300"
+              className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300 cursor-pointer"
             >
               Close
             </button>
@@ -1283,7 +1283,7 @@ export default function UsersListPage() {
                 onClick={() =>
                   setSuccessModal({ show: false, title: "", message: "" })
                 }
-                className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300"
+                className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300 cursor-pointer"
               >
                 Close
               </button>
@@ -1307,7 +1307,7 @@ export default function UsersListPage() {
                 onClick={() =>
                   setErrorModal({ show: false, title: "", message: "" })
                 }
-                className="w-full px-6 py-3 bg-red-500 text-white font-raleway font-semibold rounded-lg hover:bg-red-600 transition-colors duration-300"
+                className="w-full px-6 py-3 bg-red-500 text-white font-raleway font-semibold rounded-lg hover:bg-red-600 transition-colors duration-300 cursor-pointer"
               >
                 Close
               </button>

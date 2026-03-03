@@ -73,7 +73,7 @@ export default function ViewUserModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              className="p-2 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
             >
               <X className="w-6 h-6 text-white" />
             </button>

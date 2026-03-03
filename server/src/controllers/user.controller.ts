@@ -366,7 +366,11 @@ export const bulkUploadUsers = async (
           existingUser.lastName = userData.lastName;
           if (userData.middleName !== undefined)
             existingUser.middleName = userData.middleName || null;
-          if (userData.role) existingUser.role = userData.role;
+          
+          if (userData.role && existingUser.role !== "admin") {
+            existingUser.role = userData.role;
+          }
+
           if (userData.yearLevel) existingUser.yearLevel = userData.yearLevel;
 
           existingUser.membershipStatus = membershipStatusObj;

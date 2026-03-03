@@ -90,7 +90,7 @@ export default function UserContextMenu({
               onView();
               onClose();
             }}
-            className="w-full px-4 py-2 text-left font-raleway text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+            className="w-full px-4 py-2 text-left font-raleway text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
           >
             <Eye className="w-4 h-4 text-gray-500" />
             View Details
@@ -102,7 +102,7 @@ export default function UserContextMenu({
               onEdit();
               onClose();
             }}
-            className="w-full px-4 py-2 text-left font-raleway text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+            className="w-full px-4 py-2 text-left font-raleway text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
           >
             <Edit className="w-4 h-4 text-blue-500" />
             Edit User
@@ -117,7 +117,7 @@ export default function UserContextMenu({
               onToggleActive();
               onClose();
             }}
-            className="w-full px-4 py-2 text-left font-raleway text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors"
+            className="w-full px-4 py-2 text-left font-raleway text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-3 transition-colors cursor-pointer"
           >
             {isActive ? (
               <>
@@ -141,7 +141,7 @@ export default function UserContextMenu({
               onDelete();
               onClose();
             }}
-            className="w-full px-4 py-2 text-left font-raleway text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"
+            className="w-full px-4 py-2 text-left font-raleway text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
             Delete User

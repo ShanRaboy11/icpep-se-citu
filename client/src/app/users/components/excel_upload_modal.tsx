@@ -243,7 +243,7 @@ export default function ExcelUploadModal({
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -280,7 +280,7 @@ export default function ExcelUploadModal({
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg transition-all"
+                className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg transition-all cursor-pointer"
               >
                 Select File
               </button>
@@ -305,7 +305,7 @@ export default function ExcelUploadModal({
                     setFile(null);
                     setUploadedUsers([]);
                   }}
-                  className="text-red-600 hover:text-red-700 font-raleway text-sm font-semibold"
+                  className="text-red-600 hover:text-red-700 font-raleway text-sm font-semibold cursor-pointer"
                 >
                   Remove
                 </button>
@@ -430,7 +430,7 @@ export default function ExcelUploadModal({
                   link.download = "user-upload-template.xlsx";
                   link.click();
                 }}
-                className="px-3 py-1 bg-blue-600 text-white text-xs font-raleway font-semibold rounded hover:bg-blue-700 transition-colors"
+                className="px-3 py-1 bg-blue-600 text-white text-xs font-raleway font-semibold rounded hover:bg-blue-700 transition-colors cursor-pointer"
               >
                 Download Template
               </button>
@@ -470,14 +470,14 @@ export default function ExcelUploadModal({
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
           <button
             onClick={handleClose}
-            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleUpload}
             disabled={validCount === 0 || isProcessing}
-            className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             {isProcessing
               ? "Processing..."
