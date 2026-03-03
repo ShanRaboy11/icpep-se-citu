@@ -40,6 +40,14 @@ export default function FAQPage() {
       answer:
         "Some events are open to all, while others are exclusive to verified ICpEP.SE members. Event details will indicate whether membership is required.",
     },
+    {
+      question: "Is there a fee for registration?",
+      answer: "Membership fees are determined annually by the board. Please check the latest announcements for current rates.",
+    },
+    {
+      question: "How do I reset my password?",
+      answer: "You can reset your password by clicking 'Forgot Password' on the login screen and following the instructions sent to your school email.",
+    }
   ];
 
   const [faqs, setFaqs] = useState<FAQ[]>(staticFaqs);
@@ -81,38 +89,49 @@ export default function FAQPage() {
           <Image src="/question.svg" alt="decoration" width={350} height={350} className="hidden lg:block absolute bottom-[-10%] right-[-1%] rotate-[15deg] blur-[6px] opacity-50" />
         </div>
 
-        {/* Centered Content Container */}
-        <div className="relative z-20 max-w-4xl mx-auto px-6 md:px-12 py-16 md:py-24 flex flex-col items-center">
+        {/* Content Layer */}
+        <div className="relative z-20 max-w-7xl mx-auto px-6 md:px-12 py-20 md:py-40 flex flex-col md:flex-row justify-between items-start w-full gap-12">
           
-          {/* Top Row: Back Button and Search Bar aligned */}
-          <div className="flex flex-col sm:flex-row items-center gap-6 mb-16 w-full">
-             <button
-                onClick={() => router.back()}
-                className="inline-flex w-12 h-12 flex-shrink-0 items-center justify-center rounded-full border border-blue-400 text-blue-500 hover:bg-blue-50 transition-all"
-              >
-                <ArrowLeft className="w-6 h-6" />
-              </button>
+          {/* Left Content Block - STATIC (Sticky) */}
+          <div className="w-full md:w-1/2 mb-10 md:mb-0 text-center md:text-left md:sticky md:top-32 self-start">
+                <button
+                  onClick={() => router.back()}
+                  title="Go Back"
+                  className="relative flex h-10 w-10 md:h-12 md:w-12 cursor-pointer items-center justify-center 
+                            rounded-full border-2 border-primary1 text-primary1 
+                            overflow-hidden transition-all duration-300 ease-in-out 
+                            active:scale-95 hover:bg-primary1/5"
+                >
+                  <ArrowLeft className="h-5 w-5 md:h-6 md:w-6 animate-nudge-left" />
+                </button>
 
-            <div className="flex-grow w-full">
-              <div className="relative group shadow-sm rounded-full">
-                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search FAQs..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-white border border-gray-200 text-slate-700 placeholder-slate-400 px-14 py-4 rounded-full focus:outline-none focus:border-blue-400 transition-all"
-                />
-              </div>
+            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 mb-4 leading-tight">
+              Any questions? <br /> We got you.
+            </h1>
+            <p className="font-raleway text-bodytext mb-8 text-base md:text-lg max-w-md mx-auto md:mx-0">
+              Can't find what you're looking for? Search or browse our frequently asked questions below.
+            </p>
+            
+            <div className="flex flex-col gap-4 max-w-md mx-auto md:mx-0">
+                <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Search FAQs..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-white border-2 border-gray-200 text-gray-700 placeholder-gray-400 px-12 py-3 rounded-full focus:outline-none focus:border-blue-600 focus:ring-4 focus:ring-blue-100 transition-all duration-300 shadow-sm"
+                  />
+                </div>
             </div>
           </div>
 
-          {/* Centered FAQ List */}
-          <div className="w-full min-h-[400px]">
+          {/* Right Accordion Block - SCROLLING */}
+          <div className="w-full md:w-1/2">
             <div className="space-y-4">
               {filteredFaqs.length === 0 ? (
                 <div className="text-center py-20 border-2 border-dashed border-gray-100 rounded-3xl">
-                  <p className="text-slate-400 font-medium font-raleway">No matches found for your search.</p>
+                  <p className="text-slate-400 font-medium font-raleway">No matches found.</p>
                 </div>
               ) : (
                 filteredFaqs.map((faq, index) => (
@@ -121,12 +140,12 @@ export default function FAQPage() {
                     className="border-b border-gray-300/80 pb-4 cursor-pointer"
                     onClick={() => toggleFAQ(index)}
                   >
-                    <div className="flex justify-between items-center gap-4">
-                      <h3 className="font-rubik text-primary3 text-xl md:text-2xl font-semibold leading-snug">
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-rubik text-primary3 text-xl font-semibold">
                         {faq.question}
                       </h3>
                       <span
-                        className={`text-2xl font-bold text-primary1 transition-transform duration-300 ease-in-out flex-shrink-0 ${
+                        className={`text-2xl font-bold text-primary1 transition-transform duration-300 ease-in-out ${
                           openIndex === index ? "rotate-45" : "rotate-0"
                         }`}
                       >
@@ -139,7 +158,7 @@ export default function FAQPage() {
                       }`}
                     >
                       <div className="overflow-hidden">
-                        <p className="font-raleway text-bodytext text-sm md:text-base lg:text-lg leading-relaxed pt-4">
+                        <p className="font-raleway text-bodytext text-sm md:text-base leading-relaxed pt-3">
                           {faq.answer}
                         </p>
                       </div>
