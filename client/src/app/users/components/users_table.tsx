@@ -86,6 +86,7 @@ export default function UsersTable({
             <option value="council-officer">Council Officer</option>
             <option value="committee-officer">Committee Officer</option>
             <option value="faculty">Faculty</option>
+            <option value="admin">Admin</option>
           </select>
         </div>
 

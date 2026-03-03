@@ -111,10 +111,10 @@ const USERS_PER_PAGE = 100;
 // Helper functions
 const validateRole = (
   role: string,
-): "faculty" | "council-officer" | "committee-officer" | "student" => {
+): "faculty" | "council-officer" | "committee-officer" | "student" | "admin" => {
   const roleMap: Record<
     string,
-    "faculty" | "council-officer" | "committee-officer" | "student"
+    "faculty" | "council-officer" | "committee-officer" | "student" | "admin"
   > = {
     faculty: "faculty",
     "council-officer": "council-officer",
@@ -122,6 +122,7 @@ const validateRole = (
     student: "student",
     member: "student",
     "non-member": "student",
+    admin: "admin",
   };
 
   return roleMap[role] || "student";
