@@ -81,15 +81,16 @@ api.interceptors.response.use(
         return response;
     },
     (error: AxiosError) => {
-        console.error('❌ API Error:', {
+        // Safe error logging
+        const errorDetails = {
             status: error.response?.status,
             url: error.config?.url,
-            baseURL: error.config?.baseURL,
-            fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown',
+            method: error.config?.method,
             message: error.message,
             data: error.response?.data,
-            code: error.code,
-        });
+        };
+        
+        console.error('❌ API Error:', errorDetails);
         return Promise.reject(error);
     }
 );
@@ -195,16 +196,11 @@ class AnnouncementService {
     private handleError(error: unknown): never {
         if (axios.isAxiosError(error)) {
             const axiosError = error as AxiosError<ApiError>;
-            const errorMessage = axiosError.response?.data?.message || error.message;
+            const errorMessage = axiosError.response?.data?.message || error.message || 'An unknown error occurred';
             const statusCode = axiosError.response?.status;
             
-            console.error('Service Error Details:', {
-                status: statusCode,
-                message: errorMessage,
-                url: axiosError.config?.url,
-                method: axiosError.config?.method,
-                code: axiosError.code,
-            });
+            // Avoid double logging if interceptor already logged it
+            // console.error('Service Error Details:', { ... });
             
             throw new Error(`${statusCode ? `[${statusCode}] ` : ''}${errorMessage}`);
         }

@@ -10,7 +10,7 @@ export interface IUser extends Document {
   email?: string;
   middleName?: string;
   password: string;
-  role: 'student' | 'council-officer' | 'committee-officer' | 'faculty';
+  role: 'student' | 'council-officer' | 'committee-officer' | 'faculty' | 'admin';
   position?: string;
   yearLevel?: number;
   membershipStatus: {
@@ -73,7 +73,7 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ["student", "council-officer", "committee-officer", "faculty"],
+      enum: ["student", "council-officer", "committee-officer", "faculty", "admin"],
       default: "student",
     },
     position: {

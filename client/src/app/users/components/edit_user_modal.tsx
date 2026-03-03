@@ -235,10 +235,11 @@ export default function EditUserModal({
                 }`}
               >
                 <option value="">Select Role</option>
-                <option value="member">Student</option>
+                <option value="student">Student</option>
                 <option value="council-officer">Council Officer</option>
                 <option value="committee-officer">Committee Officer</option>
                 <option value="faculty">Faculty</option>
+                <option value="admin">Admin</option>
               </select>
               {errors.role && (
                 <p className="mt-1 text-sm text-red-500 font-raleway">

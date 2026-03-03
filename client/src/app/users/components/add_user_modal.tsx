@@ -33,7 +33,7 @@ export default function AddUserModal({
     middleName: "",
     yearLevel: undefined,
     password: "123456",
-    role: "member",
+    role: "student",
     membershipStatus: "non-member",
   });
 
@@ -289,6 +289,7 @@ export default function AddUserModal({
                   <option value="council-officer">Council Officer</option>
                   <option value="committee-officer">Committee Officer</option>
                   <option value="faculty">Faculty</option>
+                  <option value="admin">Admin</option>
                 </select>
               </div>
 
