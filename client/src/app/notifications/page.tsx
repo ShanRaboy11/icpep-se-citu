@@ -33,7 +33,7 @@ export default function AnnouncementsPage() {
       // Backend expects same or we handle mapping in service/controller
       const response = await notificationService.getAll(1, 50, activeTab);
 
-      if (response.success) {
+      if (response?.success) {
         const mappedNotifications: NotificationItem[] = response.data.map(
           (n: Notification) => {
             // Map backend types to frontend types

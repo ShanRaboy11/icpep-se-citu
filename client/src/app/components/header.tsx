@@ -55,7 +55,7 @@ const Header = () => {
       const fetchUnreadCount = async () => {
         try {
           const response = await notificationService.getAll(1, 1);
-          if (response.success) {
+          if (response?.success) {
             setUnreadCount(response.unreadCount);
           }
         } catch (error) {
