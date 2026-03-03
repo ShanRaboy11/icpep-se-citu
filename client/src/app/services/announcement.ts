@@ -90,7 +90,7 @@ api.interceptors.response.use(
             data: error.response?.data,
         };
         
-        console.error('❌ API Error:', errorDetails);
+        console.error('❌ API Error:', JSON.stringify(errorDetails, null, 2));
         return Promise.reject(error);
     }
 );
@@ -196,11 +196,14 @@ class AnnouncementService {
     private handleError(error: unknown): never {
         if (axios.isAxiosError(error)) {
             const axiosError = error as AxiosError<ApiError>;
-            const errorMessage = axiosError.response?.data?.message || error.message || 'An unknown error occurred';
-            const statusCode = axiosError.response?.status;
+            // Friendly message for timeouts
+            let errorMessage = axiosError.response?.data?.message || axiosError.message || 'An unknown error occurred';
             
-            // Avoid double logging if interceptor already logged it
-            // console.error('Service Error Details:', { ... });
+            if (axiosError.code === 'ECONNABORTED' || (axiosError.message && axiosError.message.toLowerCase().includes('timeout'))) {
+                errorMessage = 'Request timed out. The upload may be large or the network slow — try reducing image size or retrying.';
+            }
+
+            const statusCode = axiosError.response?.status;
             
             throw new Error(`${statusCode ? `[${statusCode}] ` : ''}${errorMessage}`);
         }
