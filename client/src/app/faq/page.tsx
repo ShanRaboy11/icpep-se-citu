@@ -38,18 +38,16 @@ export default function FAQPage() {
     },
     {
       question: "Is there a fee for registration?",
-      answer: "Membership fees are determined annually by the board. Please check the latest announcements for current rates.",
+      answer: "Membership fees are determined by the Council Officers. Please check the latest announcements for current rates.",
     },
     {
       question: "How do I reset my password?",
-      answer: "You can reset your password by clicking 'Forgot Password' on the login screen and following the instructions sent to your school email.",
+      answer: "You can reset your password by clicking 'Forgot Password' on the login screen and the reset form will be sent to your email given.",
     },
     // Repeated items to ensure the right side is long enough to demonstrate scrolling
-    { question: "How do I contact support?", answer: "You can reach out to us via the contact form or email." },
-    { question: "Where is the office located?", answer: "Our main chapter office is located at the CIT-U campus." },
+    { question: "How do I contact support?", answer: "You can reach out to us via the contact form, email, or the ICpEP.SE Facebook Page ." },
     { question: "Can I edit my profile?", answer: "Yes, you can edit your personal information through the account settings." },
     { question: "What are the membership benefits?", answer: "Members get exclusive access to seminars, workshops, and networking events." },
-    { question: "How often are events held?", answer: "Events are typically held monthly throughout the academic semester." }
   ];
 
   const [faqs, setFaqs] = useState<FAQ[]>(staticFaqs);
