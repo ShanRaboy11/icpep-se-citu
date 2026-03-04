@@ -303,14 +303,29 @@ const Header = () => {
                   aria-label="Notifications"
                   className="relative cursor-pointer select-none group"
                 >
-                  {/* Pill container — echoes the Login button's border style */}
-                  <div className="relative flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 transition-all duration-300 ease-in-out group-hover:bg-[#dbeeff] group-hover:drop-shadow-[0_0_6px_rgba(0,167,238,0.35)] active:scale-95">
+                  <style>{`
+                    @keyframes bell-ring {
+                      0%   { transform: rotate(0deg); }
+                      10%  { transform: rotate(18deg); }
+                      30%  { transform: rotate(-16deg); }
+                      50%  { transform: rotate(12deg); }
+                      70%  { transform: rotate(-8deg); }
+                      85%  { transform: rotate(4deg); }
+                      100% { transform: rotate(0deg); }
+                    }
+                    .bell-ring:hover svg {
+                      animation: bell-ring 0.6s ease-in-out;
+                      transform-origin: top center;
+                      drop-shadow: 0 0 10px rgba(0,167,238,0.75);
+                    }
+                  `}</style>
+                  <div className="relative flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 bell-ring">
                     <svg
                       width="34"
                       height="34"
                       viewBox="0 0 24 24"
                       fill="currentColor"
-                      className="text-[#00a7ee] transition-colors duration-300"
+                      className="text-[#00a7ee] transition-colors duration-300 ease-in-out group-hover:text-[#0096d6] group-hover:drop-shadow-[0_0_10px_rgba(0,167,238,0.75)]"
                     >
                       <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
                     </svg>
@@ -318,7 +333,7 @@ const Header = () => {
 
                   {/* Badge */}
                   {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-[#ef4444] text-white text-[10px] font-bold rounded-full shadow-sm pointer-events-none border-2 border-white">
+                    <span className="absolute top-0.5 right-[-2.5] flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-[#ef4444] text-white text-[10px] font-bold rounded-full shadow-sm pointer-events-none border-2 border-white">
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
