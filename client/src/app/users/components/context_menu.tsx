@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Trash2,
   Edit,
@@ -58,7 +59,9 @@ export default function UserContextMenu({
     };
   }, [onClose]);
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <>
       {/* Backdrop */}
       <div className="fixed inset-0 z-40" onClick={onClose}></div>
@@ -66,7 +69,7 @@ export default function UserContextMenu({
       {/* Context Menu */}
       <div
         ref={menuRef}
-        className="fixed z-50 bg-white rounded-lg shadow-2xl border border-gray-200 py-2 min-w-[200px] animate-in fade-in duration-100"
+        className="absolute z-50 bg-white rounded-lg shadow-2xl border border-gray-200 py-2 min-w-[200px] animate-in fade-in duration-100"
         style={{
           top: `${y}px`,
           left: `${x}px`,
@@ -148,6 +151,7 @@ export default function UserContextMenu({
           </button>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }

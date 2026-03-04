@@ -59,7 +59,7 @@ export default function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-scale-in">
         {/* Header */}
         <div className={`${styles.bg} ${styles.border} border-b px-6 py-4`}>
           <div className="flex items-center justify-between">

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Button from "./button";
@@ -33,12 +34,20 @@ const Header = () => {
     } else {
       document.body.style.overflow = "";
     }
-    // Cleanup ensures scroll is restored if component unmounts
     return () => {
       document.body.style.overflow = "";
     };
   }, [open]);
-  // -------------------------------------------------
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && open) {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -64,7 +73,6 @@ const Header = () => {
       };
 
       fetchUnreadCount();
-      // Optional: Poll every minute or set up socket
       const interval = setInterval(fetchUnreadCount, 60000);
       return () => clearInterval(interval);
     }
@@ -182,82 +190,87 @@ const Header = () => {
         <div className="flex items-center justify-between py-3 px-4 md:max-w-[88%] md:mx-auto md:px-8 lg:px-10">
           {/* Logo Section */}
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <Image
-              src="/icpep logo.png"
-              alt="ICPEP Logo"
-              width={55}
-              height={55}
-              className="md:h-15 md:w-auto sm:h-25 sm:w-auto rounded-full cursor-pointer 
-                       transition-all duration-300 ease-in-out 
-                       hover:drop-shadow-[0_0_8px_rgba(0,167,238,0.7)]"
-              onClick={() => router.push("/home")}
-            />
-            <div className="flex items-end gap-0.5">
+            <Link
+              href="/home"
+              className="flex items-center gap-3 sm:gap-4 min-w-0 group"
+              aria-label="Go to Home"
+            >
               <Image
-                src="/Vector-i.svg"
-                alt="I"
-                width={0}
-                height={50}
-                className="h-0 w-auto sm:h-12"
+                src="/icpep logo.png"
+                alt="ICPEP Logo"
+                width={55}
+                height={55}
+                className="md:h-15 md:w-auto sm:h-25 sm:w-auto rounded-full cursor-pointer 
+                         transition-all duration-300 ease-in-out 
+                         group-hover:drop-shadow-[0_0_8px_rgba(0,167,238,0.7)]"
               />
-              <Image
-                src="/Vector-c.svg"
-                alt="C"
-                width={0}
-                height={50}
-                className="h-0 w-auto sm:h-12"
-              />
-              <Image
-                src="/Vector-p1.svg"
-                alt="P"
-                width={0}
-                height={50}
-                className="h-0 w-auto sm:h-12"
-              />
-              <Image
-                src="/Vector-e1.svg"
-                alt="E"
-                width={0}
-                height={50}
-                className="h-0 w-auto sm:h-12"
-              />
-              <Image
-                src="/Vector-p2.svg"
-                alt="P"
-                width={0}
-                height={50}
-                className="h-0 w-auto sm:h-12"
-              />
-              <Image
-                src="/Vector-dot.svg"
-                alt="."
-                width={0}
-                height={16}
-                className="h-0 w-auto sm:h-3.5 -ml-2"
-              />
-              <Image
-                src="/Vector-s.svg"
-                alt="S"
-                width={0}
-                height={50}
-                className="h-0 w-auto sm:h-12"
-              />
-              <Image
-                src="/Vector-e2.svg"
-                alt="E"
-                width={0}
-                height={50}
-                className="h-0 w-auto sm:h-12"
-              />
-            </div>
-            <div className="min-w-0 font-rubik -ml-2">
-              <div className="truncate text-[0px] sm:text-[22px] font-bold text-[#00a7ee] -mt-1 pt-1">
-                Region 7
+              <div className="flex items-end gap-0.5">
+                <Image
+                  src="/Vector-i.svg"
+                  alt="I"
+                  width={0}
+                  height={50}
+                  className="h-0 w-auto sm:h-12"
+                />
+                <Image
+                  src="/Vector-c.svg"
+                  alt="C"
+                  width={0}
+                  height={50}
+                  className="h-0 w-auto sm:h-12"
+                />
+                <Image
+                  src="/Vector-p1.svg"
+                  alt="P"
+                  width={0}
+                  height={50}
+                  className="h-0 w-auto sm:h-12"
+                />
+                <Image
+                  src="/Vector-e1.svg"
+                  alt="E"
+                  width={0}
+                  height={50}
+                  className="h-0 w-auto sm:h-12"
+                />
+                <Image
+                  src="/Vector-p2.svg"
+                  alt="P"
+                  width={0}
+                  height={50}
+                  className="h-0 w-auto sm:h-12"
+                />
+                <Image
+                  src="/Vector-dot.svg"
+                  alt="."
+                  width={0}
+                  height={16}
+                  className="h-0 w-auto sm:h-3.5 -ml-2"
+                />
+                <Image
+                  src="/Vector-s.svg"
+                  alt="S"
+                  width={0}
+                  height={50}
+                  className="h-0 w-auto sm:h-12"
+                />
+                <Image
+                  src="/Vector-e2.svg"
+                  alt="E"
+                  width={0}
+                  height={50}
+                  className="h-0 w-auto sm:h-12"
+                />
               </div>
-              <div className="truncate text-[0px] sm:text-[22px] font-bold text-[#00a7ee] -mt-1">
-                CIT-U Chapter
+              <div className="min-w-0 font-rubik -ml-2">
+                <div className="truncate text-[0px] sm:text-[22px] font-bold text-[#00a7ee] -mt-1 pt-1">
+                  Region 7
+                </div>
+                <div className="truncate text-[0px] sm:text-[22px] font-bold text-[#00a7ee] -mt-1">
+                  CIT-U Chapter
+                </div>
               </div>
-            </div>
+            </Link>
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-5">
@@ -282,116 +295,141 @@ const Header = () => {
 
             {/* Logged In View */}
             {isLoggedIn && (
-              <div className="relative" ref={dropdownRef}>
-                <div
-                  className="cursor-pointer outline-none select-none tap-highlight-transparent p-1"
-                  onClick={handleProfileClick}
-                >
-                  <Image
-                    src="/user.svg"
-                    alt="User Profile"
-                    width={36}
-                    height={36}
-                    className="h-10 w-10 sm:h-11 sm:w-11 transition-transform duration-200 ease-in-out hover:brightness-105 active:scale-95"
-                  />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="relative" ref={dropdownRef}>
+                  <div
+                    className="cursor-pointer outline-none select-none tap-highlight-transparent p-1"
+                    onClick={handleProfileClick}
+                  >
+                    <Image
+                      src="/user.svg"
+                      alt="User Profile"
+                      width={36}
+                      height={36}
+                      className="h-10 w-10 sm:h-11 sm:w-11 transition-transform duration-200 ease-in-out hover:brightness-105 active:scale-95"
+                    />
+                  </div>
+
+                  {/* DROPDOWN */}
+                  {profileDropdownOpen && (
+                    <div className="absolute top-[125%] right-0 w-64 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 flex flex-col z-50 animate-in fade-in slide-in-from-top-3 duration-200 origin-top-right overflow-hidden">
+                      <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+                        <p className="text-[#373d47] font-bold text-sm truncate font-rubik leading-tight">
+                          {userName}
+                        </p>
+                        <p className="text-[#00a7ee] text-xs font-semibold font-raleway uppercase tracking-wider mt-1">
+                          {role.replace("-", " ")}
+                        </p>
+                      </div>
+                      <div className="py-2">
+                        <DropdownItem
+                          onClick={() => router.push("/profile")}
+                          text="My Profile"
+                          icon={
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                              <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                          }
+                        />
+                        <DropdownItem
+                          onClick={() => router.push("/contact")}
+                          text="Support"
+                          icon={
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                            </svg>
+                          }
+                        />
+                      </div>
+                      <div className="h-px bg-gray-100 mx-3"></div>
+                      <div className="py-2">
+                        <DropdownItem
+                          onClick={handleLogout}
+                          text="Sign Out"
+                          isDestructive={true}
+                          icon={
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                              <polyline points="16 17 21 12 16 7"></polyline>
+                              <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* DROPDOWN */}
-                {profileDropdownOpen && (
-                  <div className="absolute top-[125%] right-0 w-64 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 flex flex-col z-50 animate-in fade-in slide-in-from-top-3 duration-200 origin-top-right overflow-hidden">
-                    <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
-                      <p className="text-[#373d47] font-bold text-sm truncate font-rubik leading-tight">
-                        {userName}
-                      </p>
-                      <p className="text-[#00a7ee] text-xs font-semibold font-raleway uppercase tracking-wider mt-1">
-                        {role.replace("-", " ")}
-                      </p>
-                    </div>
-                    <div className="py-2">
-                      <DropdownItem
-                        onClick={() => router.push("/profile")}
-                        text="My Profile"
-                        icon={
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                          </svg>
-                        }
-                      />
-                      <DropdownItem
-                        onClick={() => router.push("/notifications")}
-                        text="Notifications"
-                        badge={unreadCount}
-                        icon={
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                          </svg>
-                        }
-                      />
-                      <DropdownItem
-                        onClick={() => router.push("/contact")}
-                        text="Support"
-                        icon={
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                          </svg>
-                        }
-                      />
-                    </div>
-                    <div className="h-px bg-gray-100 mx-3"></div>
-                    <div className="py-2">
-                      <DropdownItem
-                        onClick={handleLogout}
-                        text="Sign Out"
-                        isDestructive={true}
-                        icon={
-                          <svg
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                            <polyline points="16 17 21 12 16 7"></polyline>
-                            <line x1="21" y1="12" x2="9" y2="12"></line>
-                          </svg>
-                        }
-                      />
-                    </div>
+                {/* ── NOTIFICATION BUTTON ── */}
+                <div
+                  onClick={() => router.push("/notifications")}
+                  aria-label="Notifications"
+                  className="relative cursor-pointer select-none group"
+                >
+                  <style>{`
+                    @keyframes bell-ring {
+                      0%   { transform: rotate(0deg); }
+                      10%  { transform: rotate(18deg); }
+                      30%  { transform: rotate(-16deg); }
+                      50%  { transform: rotate(12deg); }
+                      70%  { transform: rotate(-8deg); }
+                      85%  { transform: rotate(4deg); }
+                      100% { transform: rotate(0deg); }
+                    }
+                    .bell-ring:hover svg {
+                      animation: bell-ring 0.6s ease-in-out;
+                      transform-origin: top center;
+                      drop-shadow: 0 0 10px rgba(0,167,238,0.75);
+                    }
+                  `}</style>
+                  <div className="relative flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 bell-ring">
+                    <svg
+                      width="34"
+                      height="34"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="text-[#00a7ee] transition-colors duration-300 ease-in-out group-hover:text-[#0096d6] group-hover:drop-shadow-[0_0_10px_rgba(0,167,238,0.75)]"
+                    >
+                      <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+                    </svg>
                   </div>
-                )}
+
+                  {/* Badge */}
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0.5 right-[-2.5] flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-[#ef4444] text-white text-[10px] font-bold rounded-full shadow-sm pointer-events-none border-2 border-white">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
+                </div>
+                {/* ───────────────────────── */}
               </div>
             )}
 
@@ -418,25 +456,14 @@ const Header = () => {
 
               {/* MOBILE TOGGLE */}
               <div className="md:hidden flex flex-col items-end justify-center gap-[6px] w-9 h-9">
-                {/* Top Line */}
                 <div
-                  className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${
-                    open ? "w-6" : "w-[26px]"
-                  }`}
+                  className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${open ? "w-6" : "w-[26px]"}`}
                 />
-
-                {/* Middle Line */}
                 <div
-                  className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${
-                    open ? "w-[26px]" : "w-[19px]"
-                  }`}
+                  className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${open ? "w-[26px]" : "w-[19px]"}`}
                 />
-
-                {/* Bottom Line */}
                 <div
-                  className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${
-                    open ? "w-6" : "w-[26px]"
-                  }`}
+                  className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${open ? "w-6" : "w-[26px]"}`}
                 />
               </div>
             </div>
