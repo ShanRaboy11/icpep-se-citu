@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { User } from "./utils/user";
 import Header from "../components/header";
 import Footer from "../components/footer";
@@ -111,7 +112,12 @@ const USERS_PER_PAGE = 100;
 // Helper functions
 const validateRole = (
   role: string,
-): "faculty" | "council-officer" | "committee-officer" | "student" | "admin" => {
+):
+  | "faculty"
+  | "council-officer"
+  | "committee-officer"
+  | "student"
+  | "admin" => {
   const roleMap: Record<
     string,
     "faculty" | "council-officer" | "committee-officer" | "student" | "admin"
@@ -215,7 +221,6 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
 
 export default function UsersListPage() {
   const router = useRouter();
-  const searchContainerRef = useRef<HTMLDivElement>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [displayedUsers, setDisplayedUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -234,7 +239,6 @@ export default function UsersListPage() {
 
   // 🔍 NEW: Search state
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
 
   // Upload progress state
   const [isUploading, setIsUploading] = useState(false);
@@ -396,23 +400,6 @@ export default function UsersListPage() {
     searchQuery,
   ]);
 
-  // 🔍 Close search suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchContainerRef.current &&
-        !searchContainerRef.current.contains(event.target as Node)
-      ) {
-        setShowSearchSuggestions(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   const fetchAllUsers = async () => {
     try {
       setIsLoading(true);
@@ -515,31 +502,11 @@ export default function UsersListPage() {
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1); // Reset to first page when searching
-    setShowSearchSuggestions(value.length > 0);
   };
 
   // 🔍 NEW: Clear search
   const handleClearSearch = () => {
     setSearchQuery("");
-    setShowSearchSuggestions(false);
-  };
-
-  // 🔍 NEW: Get search suggestions (top 10 matches)
-  const getSearchSuggestions = () => {
-    if (searchQuery.length === 0) return [];
-
-    const filtered = allUsers.filter((user) => {
-      return (
-        user.studentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (user.middleName &&
-          user.middleName.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    });
-
-    return filtered.slice(0, 10); // Limit to 10 suggestions
   };
 
   // 🔥 NEW: Handle sort changes from table
@@ -898,8 +865,8 @@ export default function UsersListPage() {
         <Header />
         <main className="flex-grow w-full max-w-[1600px] mx-auto px-8 pt-[9.5rem] pb-12">
           <div className="mb-8 flex justify-start">
-            <button
-              onClick={handleBackToHome}
+            <Link
+              href="/"
               title="Back to Home"
               className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
                          rounded-full border-2 border-primary1 text-primary1 
@@ -911,7 +878,7 @@ export default function UsersListPage() {
                          before:transition-transform before:duration-700"
             >
               <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
-            </button>
+            </Link>
           </div>
 
           <div className="mb-12 text-center">
@@ -936,7 +903,6 @@ export default function UsersListPage() {
           <div className="mb-6">
             <div
               className="relative max-w-3xl mx-auto"
-              ref={searchContainerRef}
             >
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
@@ -946,9 +912,6 @@ export default function UsersListPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  onFocus={() =>
-                    setShowSearchSuggestions(searchQuery.length > 0)
-                  }
                   placeholder="Search users by name, student number, role, or year level..."
                   className="w-full pl-14 pr-14 py-4 font-raleway text-base text-gray-900 placeholder-gray-500 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-primary1 transition-all duration-300 shadow-sm hover:shadow-md"
                 />
@@ -963,89 +926,8 @@ export default function UsersListPage() {
                 )}
               </div>
 
-              {/* Search Suggestions Dropdown - Redesigned */}
-              {showSearchSuggestions && searchQuery.length > 0 && (
-                <div className="absolute z-50 mt-3 w-full bg-white rounded-xl shadow-2xl border border-gray-200 max-h-[32rem] overflow-hidden">
-                  {getSearchSuggestions().length > 0 ? (
-                    <>
-                      <div className="px-5 py-3 bg-gradient-to-r from-primary1/5 to-primary1/10 border-b border-gray-200">
-                        <p className="font-raleway text-sm font-semibold text-primary3">
-                          Found {getSearchSuggestions().length} result
-                          {getSearchSuggestions().length !== 1 ? "s" : ""}
-                          {getSearchSuggestions().length === 10 &&
-                            " (showing top 10)"}
-                        </p>
-                      </div>
-                      <div className="overflow-y-auto max-h-[28rem]">
-                        {getSearchSuggestions().map((user, index) => (
-                          <div
-                            key={user.id}
-                            onClick={() => {
-                              handleViewUser(user);
-                              setShowSearchSuggestions(false);
-                            }}
-                            className="px-5 py-4 hover:bg-primary1/5 cursor-pointer transition-all duration-200 border-b border-gray-100 last:border-0 group"
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-3 mb-1">
-                                  <h4 className="font-raleway font-bold text-base text-gray-900 truncate group-hover:text-primary1 transition-colors">
-                                    {user.fullName}
-                                  </h4>
-                                  <div
-                                    className={`w-2 h-2 rounded-full flex-shrink-0 ${user.isActive ? "bg-green-500" : "bg-gray-400"}`}
-                                  ></div>
-                                </div>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-raleway text-sm text-gray-600 font-medium">
-                                    {user.studentNumber}
-                                  </span>
-                                  <span className="text-gray-400">•</span>
-                                  <span className="font-raleway text-sm text-gray-600 capitalize">
-                                    {user.role.replace("-", " ")}
-                                  </span>
-                                  {user.yearLevel && (
-                                    <>
-                                      <span className="text-gray-400">•</span>
-                                      <span className="font-raleway text-sm text-gray-600">
-                                        Year {user.yearLevel}
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="flex-shrink-0">
-                                {user.membershipStatus.isMember ? (
-                                  <span className="inline-block px-3 py-1 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-raleway font-bold rounded-full uppercase tracking-wide shadow-sm">
-                                    {user.membershipStatus.membershipType ||
-                                      "Member"}
-                                  </span>
-                                ) : (
-                                  <span className="inline-block px-3 py-1 bg-gray-100 text-gray-600 text-xs font-raleway font-semibold rounded-full">
-                                    Non-Member
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="px-5 py-12 text-center">
-                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-                        <Search className="w-8 h-8 text-gray-400" />
-                      </div>
-                      <p className="font-raleway text-base font-semibold text-gray-700 mb-1">
-                        No users found
-                      </p>
-                      <p className="font-raleway text-sm text-gray-500">
-                        Try searching with a different keyword
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+
+              {/* Search Suggestions Dropdown - REMOVED */}
             </div>
           </div>
 

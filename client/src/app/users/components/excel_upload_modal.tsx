@@ -131,7 +131,7 @@ export default function ExcelUploadModal({
 
         const user: UploadedUser = {
           studentNumber: getStringValue(
-            row["Student Number"] || row["studentNumber"]
+            row["Student Number"] || row["studentNumber"],
           ),
           lastName: getStringValue(row["Last Name"] || row["lastName"]),
           firstName: getStringValue(row["First Name"] || row["firstName"]),
@@ -140,10 +140,10 @@ export default function ExcelUploadModal({
             undefined,
           yearLevel: getNumberValue(row["Year Level"] || row["yearLevel"]),
           role: getStringValue(
-            row["Role"] || row["role"] || "student"
+            row["Role"] || row["role"] || "student",
           ).toLowerCase(),
           membershipStatus: getStringValue(
-            row["Membership Status"] || row["membershipStatus"] || "non-member"
+            row["Membership Status"] || row["membershipStatus"] || "non-member",
           ).toLowerCase(),
           status: "valid",
         };
@@ -180,7 +180,7 @@ export default function ExcelUploadModal({
         if (
           user.membershipStatus &&
           !["local", "regional", "both", "non-member"].includes(
-            user.membershipStatus
+            user.membershipStatus,
           )
         ) {
           errors.push("Invalid membership status");
@@ -225,7 +225,7 @@ export default function ExcelUploadModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-primary1/5 to-secondary2/5">
           <div className="flex items-center gap-3">

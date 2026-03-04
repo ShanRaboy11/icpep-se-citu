@@ -68,14 +68,17 @@ export default function UserTableRow({
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY });
+    setContextMenu({ x: e.pageX, y: e.pageY });
     setShowMenu(true);
   };
 
   const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setContextMenu({ x: rect.left, y: rect.bottom + 5 });
+    setContextMenu({
+      x: rect.left + window.scrollX,
+      y: rect.bottom + 5 + window.scrollY,
+    });
     setShowMenu(true);
   };
 
@@ -84,6 +87,7 @@ export default function UserTableRow({
       <tr
         className="hover:bg-gray-50/50 transition-colors cursor-pointer"
         onContextMenu={handleContextMenu}
+        onClick={() => onView(user)}
       >
         <td className="px-4 py-4 whitespace-nowrap text-center">
           <span className="font-raleway text-sm font-medium text-primary3">
