@@ -366,9 +366,11 @@ export default function ExcelUploadModal({
                           <th className="px-4 py-2 text-left font-raleway font-semibold text-gray-700">
                             Membership
                           </th>
-                          <th className="px-4 py-2 text-left font-raleway font-semibold text-gray-700">
-                            Error
-                          </th>
+                          {errorCount > 0 && (
+                            <th className="px-4 py-2 text-left font-raleway font-semibold text-gray-700">
+                              Error
+                            </th>
+                          )}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
@@ -403,9 +405,11 @@ export default function ExcelUploadModal({
                             <td className="px-4 py-2 font-raleway text-gray-700">
                               {user.membershipStatus}
                             </td>
-                            <td className="px-4 py-2 font-raleway text-xs text-red-600">
-                              {user.error || ""}
-                            </td>
+                            {errorCount > 0 && (
+                              <td className="px-4 py-2 font-raleway text-xs text-red-600">
+                                {user.error || ""}
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -456,7 +460,7 @@ export default function ExcelUploadModal({
               </li>
               <li>
                 Role (optional) - student, council-officer, committee-officer,
-                faculty (Default: member)
+                faculty (Default: student)
               </li>
               <li>
                 <strong>Membership Status</strong> (optional) - member,
