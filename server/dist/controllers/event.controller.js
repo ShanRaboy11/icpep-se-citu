@@ -7,21 +7,22 @@ exports.getMyEvents = exports.getEventsByTag = exports.togglePublishStatus = exp
 const event_1 = __importDefault(require("../models/event"));
 const cloudinary_1 = require("../utils/cloudinary");
 const mongoose_1 = __importDefault(require("mongoose"));
+const notification_1 = require("../utils/notification");
 // Create a new event
 const createEvent = async (req, res, next) => {
     try {
-        console.log('🔵 CREATE EVENT - START');
-        console.log('📦 Request body:', JSON.stringify(req.body, null, 2));
-        console.log('📷 File present:', !!req.file);
-        console.log('👤 User:', req.user);
+        console.log("🔵 CREATE EVENT - START");
+        console.log("📦 Request body:", JSON.stringify(req.body, null, 2));
+        console.log("📷 File present:", !!req.file);
+        console.log("👤 User:", req.user);
         const { title, description, content, tags, priority, targetAudience, isPublished, publishDate, expiryDate, eventDate, time, location, organizer, contact, rsvpLink, admissions, registrationRequired, registrationStart, registrationEnd, mode, } = req.body;
         // Get author from authenticated user
         const author = req.user?.id;
         if (!author) {
-            console.error('❌ No author ID found');
+            console.error("❌ No author ID found");
             res.status(401).json({
                 success: false,
-                message: 'User not authenticated'
+                message: "User not authenticated",
             });
             return;
         }
@@ -37,28 +38,30 @@ const createEvent = async (req, res, next) => {
                     .filter((f) => !!f.buffer)
                     .map((f) => ({ buffer: f.buffer }));
                 if (buffers.length === 0) {
-                    throw new Error('No file buffers available for upload');
+                    throw new Error("No file buffers available for upload");
                 }
-                const results = await (0, cloudinary_1.uploadMultipleToCloudinary)(buffers, 'events');
-                galleryImages = results.map((r) => r.secure_url).filter(Boolean);
-                console.log('✅ Images uploaded:', galleryImages);
+                const results = await (0, cloudinary_1.uploadMultipleToCloudinary)(buffers, "events");
+                galleryImages = results
+                    .map((r) => r.secure_url)
+                    .filter(Boolean);
+                console.log("✅ Images uploaded:", galleryImages);
                 // Ensure coverImage is set to first uploaded image if not already
                 if (!coverImage && galleryImages.length > 0) {
                     coverImage = galleryImages[0];
                 }
             }
             catch (uploadError) {
-                console.error('❌ Cloudinary multiple upload failed:', uploadError);
-                console.error('Attempting individual uploads as fallback...');
+                console.error("❌ Cloudinary multiple upload failed:", uploadError);
+                console.error("Attempting individual uploads as fallback...");
                 // Try uploading individually to get partial results
                 try {
                     for (const f of multerFiles) {
                         try {
                             if (!f.buffer) {
-                                console.warn('Skipping file with empty buffer during fallback upload');
+                                console.warn("Skipping file with empty buffer during fallback upload");
                                 continue;
                             }
-                            const singleResult = await (0, cloudinary_1.uploadToCloudinary)(f.buffer, 'events');
+                            const singleResult = await (0, cloudinary_1.uploadToCloudinary)(f.buffer, "events");
                             const url = singleResult.secure_url;
                             if (url)
                                 galleryImages.push(url);
@@ -66,7 +69,7 @@ const createEvent = async (req, res, next) => {
                                 coverImage = url;
                         }
                         catch (singleErr) {
-                            console.error('Failed uploading one file in fallback:', singleErr);
+                            console.error("Failed uploading one file in fallback:", singleErr);
                             // continue with others
                         }
                     }
@@ -74,19 +77,23 @@ const createEvent = async (req, res, next) => {
                         // nothing uploaded successfully
                         res.status(500).json({
                             success: false,
-                            message: 'Failed to upload images',
-                            error: uploadError instanceof Error ? uploadError.message : 'Unknown error'
+                            message: "Failed to upload images",
+                            error: uploadError instanceof Error
+                                ? uploadError.message
+                                : "Unknown error",
                         });
                         return;
                     }
-                    console.log('✅ Fallback uploaded images:', galleryImages);
+                    console.log("✅ Fallback uploaded images:", galleryImages);
                 }
                 catch (fallbackErr) {
-                    console.error('❌ Fallback upload also failed:', fallbackErr);
+                    console.error("❌ Fallback upload also failed:", fallbackErr);
                     res.status(500).json({
                         success: false,
-                        message: 'Failed to upload images',
-                        error: fallbackErr instanceof Error ? fallbackErr.message : 'Unknown error'
+                        message: "Failed to upload images",
+                        error: fallbackErr instanceof Error
+                            ? fallbackErr.message
+                            : "Unknown error",
                     });
                     return;
                 }
@@ -95,24 +102,28 @@ const createEvent = async (req, res, next) => {
         else if (singleFile) {
             // Backwards compatible: if a single file was uploaded under req.file
             try {
-                console.log('📷 Uploading single cover image to Cloudinary...');
+                console.log("📷 Uploading single cover image to Cloudinary...");
                 const buf = singleFile.buffer;
                 if (!buf) {
-                    res.status(400).json({ success: false, message: 'Uploaded file has no data' });
+                    res
+                        .status(400)
+                        .json({ success: false, message: "Uploaded file has no data" });
                     return;
                 }
-                const result = await (0, cloudinary_1.uploadToCloudinary)(buf, 'events');
+                const result = await (0, cloudinary_1.uploadToCloudinary)(buf, "events");
                 const url = result.secure_url;
                 galleryImages = url ? [url] : [];
                 coverImage = url || coverImage;
-                console.log('✅ Image uploaded:', url);
+                console.log("✅ Image uploaded:", url);
             }
             catch (uploadError) {
-                console.error('❌ Cloudinary upload failed:', uploadError);
+                console.error("❌ Cloudinary upload failed:", uploadError);
                 res.status(500).json({
                     success: false,
-                    message: 'Failed to upload cover image',
-                    error: uploadError instanceof Error ? uploadError.message : 'Unknown error'
+                    message: "Failed to upload cover image",
+                    error: uploadError instanceof Error
+                        ? uploadError.message
+                        : "Unknown error",
                 });
                 return;
             }
@@ -122,32 +133,37 @@ const createEvent = async (req, res, next) => {
         try {
             parsedTags = tags ? JSON.parse(tags) : [];
             parsedAdmissions = admissions ? JSON.parse(admissions) : [];
-            parsedTargetAudience = targetAudience ? JSON.parse(targetAudience) : ['all'];
-            parsedDetails = (req.body.details && typeof req.body.details === 'string') ? JSON.parse(req.body.details) : req.body.details;
+            parsedTargetAudience = targetAudience
+                ? JSON.parse(targetAudience)
+                : ["all"];
+            parsedDetails =
+                req.body.details && typeof req.body.details === "string"
+                    ? JSON.parse(req.body.details)
+                    : req.body.details;
         }
         catch (parseError) {
-            console.error('❌ JSON parsing failed:', parseError);
+            console.error("❌ JSON parsing failed:", parseError);
             res.status(400).json({
                 success: false,
-                message: 'Invalid JSON data in request',
-                error: parseError instanceof Error ? parseError.message : 'Unknown error'
+                message: "Invalid JSON data in request",
+                error: parseError instanceof Error ? parseError.message : "Unknown error",
             });
             return;
         }
-        console.log('📝 Creating event with data:', {
+        console.log("📝 Creating event with data:", {
             title,
             author,
             eventDate,
-            isPublished: isPublished === 'true' || isPublished === true,
+            isPublished: String(isPublished) === "true",
             targetAudience: parsedTargetAudience,
             hasCoverImage: !!coverImage,
         });
         // Validate required fields
         if (!title || !description || !content || !eventDate) {
-            console.error('❌ Missing required fields');
+            console.error("❌ Missing required fields");
             res.status(400).json({
                 success: false,
-                message: 'Missing required fields: title, description, content, or eventDate'
+                message: "Missing required fields: title, description, content, or eventDate",
             });
             return;
         }
@@ -159,45 +175,63 @@ const createEvent = async (req, res, next) => {
             tags: parsedTags,
             priority,
             targetAudience: parsedTargetAudience,
-            isPublished: isPublished === 'true' || isPublished === true,
+            isPublished: String(isPublished) === "true",
             publishDate: publishDate || Date.now(),
             expiryDate,
             eventDate: new Date(eventDate),
             time,
-            mode: mode || 'Onsite',
+            mode: mode || "Onsite",
             location,
             organizer,
             contact,
             rsvpLink,
             admissions: parsedAdmissions,
-            registrationRequired: registrationRequired === 'true' || registrationRequired === true,
-            registrationStart: registrationStart ? new Date(registrationStart) : undefined,
+            registrationRequired: registrationRequired === "true" || registrationRequired === true,
+            registrationStart: registrationStart
+                ? new Date(registrationStart)
+                : undefined,
             registrationEnd: registrationEnd ? new Date(registrationEnd) : undefined,
             coverImage: coverImage || (galleryImages.length > 0 ? galleryImages[0] : null),
             galleryImages,
             details: parsedDetails,
         };
-        console.log('💾 Saving to database...');
+        // If a publishDate exists and it's in the future, ensure event remains unpublished until scheduler runs
+        // BUT if the user explicitly set isPublished=false (draft), respect that regardless of date.
+        const parsedPublishDate = publishDate ? new Date(publishDate) : undefined;
+        if (eventData.isPublished &&
+            parsedPublishDate &&
+            parsedPublishDate > new Date()) {
+            eventData.isPublished = false;
+            eventData.scheduled = true;
+        }
+        else if (!eventData.isPublished) {
+            eventData.scheduled = false;
+        }
+        console.log("💾 Saving to database...");
         const event = await event_1.default.create(eventData);
-        console.log('👥 Populating author...');
-        await event.populate('author', 'firstName lastName studentNumber');
-        console.log('✅ Event created successfully:', event._id);
+        console.log("👥 Populating author...");
+        await event.populate("author", "firstName lastName studentNumber");
+        console.log("✅ Event created successfully:", event._id);
+        // Send notification if published
+        if (event.isPublished) {
+            await (0, notification_1.notifyTargetAudience)(event.targetAudience || ["all"], `[NEW] ${event.title}`, `New event: ${event.title}`, "event", event._id, "Event", `/events/${event._id}`);
+        }
         res.status(201).json({
             success: true,
-            message: 'Event created successfully',
+            message: "Event created successfully",
             data: event,
         });
     }
     catch (error) {
-        console.error('❌ FATAL ERROR in createEvent:', error);
-        console.error('Error stack:', error instanceof Error ? error.stack : 'No stack');
+        console.error("❌ FATAL ERROR in createEvent:", error);
+        console.error("Error stack:", error instanceof Error ? error.stack : "No stack");
         res.status(500).json({
             success: false,
-            message: 'Failed to create event',
-            error: error instanceof Error ? error.message : 'Unknown error',
-            ...(process.env.NODE_ENV === 'development' && {
-                stack: error instanceof Error ? error.stack : undefined
-            })
+            message: "Failed to create event",
+            error: error instanceof Error ? error.message : "Unknown error",
+            ...(process.env.NODE_ENV === "development" && {
+                stack: error instanceof Error ? error.stack : undefined,
+            }),
         });
     }
 };
@@ -205,12 +239,12 @@ exports.createEvent = createEvent;
 // Get all events (with filters)
 const getEvents = async (req, res, next) => {
     try {
-        const { tags, isPublished, targetAudience, priority, startDate, endDate, page = 1, limit = 10, sort = '-eventDate', } = req.query;
+        const { tags, isPublished, targetAudience, priority, startDate, endDate, page = 1, limit = 10, sort = "-eventDate", } = req.query;
         const query = {};
         if (tags)
-            query.tags = { $in: tags.split(',') };
+            query.tags = { $in: tags.split(",") };
         if (isPublished !== undefined)
-            query.isPublished = isPublished === 'true';
+            query.isPublished = isPublished === "true";
         if (targetAudience)
             query.targetAudience = { $in: [targetAudience] };
         if (priority)
@@ -233,7 +267,7 @@ const getEvents = async (req, res, next) => {
         const limitNum = parseInt(limit);
         const skip = (pageNum - 1) * limitNum;
         const events = await event_1.default.find(query)
-            .populate('author', 'firstName lastName studentNumber')
+            .populate("author", "firstName lastName studentNumber")
             .sort(sort)
             .skip(skip)
             .limit(limitNum);
@@ -259,12 +293,12 @@ const getEventById = async (req, res, next) => {
     try {
         const { id } = req.params;
         if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
-            res.status(400).json({ message: 'Invalid event ID' });
+            res.status(400).json({ message: "Invalid event ID" });
             return;
         }
-        const event = await event_1.default.findById(id).populate('author', 'firstName lastName studentNumber');
+        const event = await event_1.default.findById(id).populate("author", "firstName lastName studentNumber");
         if (!event) {
-            res.status(404).json({ message: 'Event not found' });
+            res.status(404).json({ message: "Event not found" });
             return;
         }
         // Increment views
@@ -284,12 +318,12 @@ const updateEvent = async (req, res, next) => {
     try {
         const { id } = req.params;
         if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
-            res.status(400).json({ message: 'Invalid event ID' });
+            res.status(400).json({ message: "Invalid event ID" });
             return;
         }
         const event = await event_1.default.findById(id);
         if (!event) {
-            res.status(404).json({ message: 'Event not found' });
+            res.status(404).json({ message: "Event not found" });
             return;
         }
         // Handle new cover image upload
@@ -303,20 +337,30 @@ const updateEvent = async (req, res, next) => {
                     .filter((f) => !!f.buffer)
                     .map((f) => ({ buffer: f.buffer }));
                 if (buffers.length === 0) {
-                    throw new Error('No file buffers available for upload');
+                    throw new Error("No file buffers available for upload");
                 }
-                const results = await (0, cloudinary_1.uploadMultipleToCloudinary)(buffers, 'events');
-                const newUrls = results.map((r) => r.secure_url).filter(Boolean);
+                const results = await (0, cloudinary_1.uploadMultipleToCloudinary)(buffers, "events");
+                const newUrls = results
+                    .map((r) => r.secure_url)
+                    .filter(Boolean);
                 // Preserve existing galleryImages and append new ones
-                const existing = Array.isArray(event.galleryImages) ? event.galleryImages : [];
+                const existing = Array.isArray(event.galleryImages)
+                    ? event.galleryImages
+                    : [];
                 req.body.galleryImages = JSON.stringify([...existing, ...newUrls]);
                 if (!event.coverImage && newUrls.length > 0)
                     req.body.coverImage = newUrls[0];
-                console.log('✅ Uploaded and appended images:', newUrls);
+                console.log("✅ Uploaded and appended images:", newUrls);
             }
             catch (err) {
-                console.error('❌ Failed uploading images on update:', err);
-                res.status(500).json({ success: false, message: 'Failed to upload images', error: err instanceof Error ? err.message : undefined });
+                console.error("❌ Failed uploading images on update:", err);
+                res
+                    .status(500)
+                    .json({
+                    success: false,
+                    message: "Failed to upload images",
+                    error: err instanceof Error ? err.message : undefined,
+                });
                 return;
             }
         }
@@ -327,28 +371,31 @@ const updateEvent = async (req, res, next) => {
             }
             const buf = reqSingle.buffer;
             if (!buf) {
-                res.status(400).json({ success: false, message: 'Uploaded file has no data' });
+                res
+                    .status(400)
+                    .json({ success: false, message: "Uploaded file has no data" });
                 return;
             }
-            const result = await (0, cloudinary_1.uploadToCloudinary)(buf, 'events');
+            const result = await (0, cloudinary_1.uploadToCloudinary)(buf, "events");
             req.body.coverImage = result.secure_url;
         }
         // Parse arrays/objects if they are strings
-        if (req.body.tags && typeof req.body.tags === 'string') {
+        if (req.body.tags && typeof req.body.tags === "string") {
             req.body.tags = JSON.parse(req.body.tags);
         }
-        if (req.body.admissions && typeof req.body.admissions === 'string') {
+        if (req.body.admissions && typeof req.body.admissions === "string") {
             req.body.admissions = JSON.parse(req.body.admissions);
         }
-        if (req.body.targetAudience && typeof req.body.targetAudience === 'string') {
+        if (req.body.targetAudience &&
+            typeof req.body.targetAudience === "string") {
             req.body.targetAudience = JSON.parse(req.body.targetAudience);
         }
-        if (req.body.details && typeof req.body.details === 'string') {
+        if (req.body.details && typeof req.body.details === "string") {
             try {
                 req.body.details = JSON.parse(req.body.details);
             }
             catch (e) {
-                console.error('❌ Failed to parse details on update:', e);
+                console.error("❌ Failed to parse details on update:", e);
             }
         }
         // Convert date strings to Date objects
@@ -358,10 +405,50 @@ const updateEvent = async (req, res, next) => {
             req.body.registrationStart = new Date(req.body.registrationStart);
         if (req.body.registrationEnd)
             req.body.registrationEnd = new Date(req.body.registrationEnd);
-        const updatedEvent = await event_1.default.findByIdAndUpdate(id, req.body, { new: true, runValidators: true }).populate('author', 'firstName lastName studentNumber');
+        // If the request is attempting to publish the event, ensure at least one image exists
+        // But if the incoming publishDate is in the future, treat as scheduling (do not publish now)
+        const incomingPublishDate = req.body.publishDate
+            ? new Date(req.body.publishDate)
+            : null;
+        const requestWantsPublish = String(req.body.isPublished) === "true";
+        // Create a clean update object
+        const updateData = { ...req.body };
+        if (requestWantsPublish &&
+            incomingPublishDate &&
+            incomingPublishDate > new Date()) {
+            // ensure we don't publish immediately if scheduled for future
+            updateData.isPublished = false;
+            updateData.scheduled = true;
+        }
+        else if (!requestWantsPublish) {
+            updateData.scheduled = false;
+            // Explicitly set isPublished to false if it was sent as "false" string or boolean false
+            if (req.body.isPublished !== undefined) {
+                updateData.isPublished = false;
+            }
+        }
+        else {
+            // Publishing now
+            updateData.isPublished = true;
+            updateData.scheduled = false;
+        }
+        // Ensure galleryImages is an array if it was stringified
+        if (updateData.galleryImages &&
+            typeof updateData.galleryImages === "string") {
+            try {
+                updateData.galleryImages = JSON.parse(updateData.galleryImages);
+            }
+            catch (e) {
+                // ignore
+            }
+        }
+        const updatedEvent = await event_1.default.findByIdAndUpdate(id, updateData, {
+            new: true,
+            runValidators: true,
+        }).populate("author", "firstName lastName studentNumber");
         res.status(200).json({
             success: true,
-            message: 'Event updated successfully',
+            message: "Event updated successfully",
             data: updatedEvent,
         });
     }
@@ -375,12 +462,12 @@ const deleteEvent = async (req, res, next) => {
     try {
         const { id } = req.params;
         if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
-            res.status(400).json({ message: 'Invalid event ID' });
+            res.status(400).json({ message: "Invalid event ID" });
             return;
         }
         const event = await event_1.default.findById(id);
         if (!event) {
-            res.status(404).json({ message: 'Event not found' });
+            res.status(404).json({ message: "Event not found" });
             return;
         }
         // Delete cover image from cloudinary if exists
@@ -390,7 +477,7 @@ const deleteEvent = async (req, res, next) => {
         await event.deleteOne();
         res.status(200).json({
             success: true,
-            message: 'Event deleted successfully',
+            message: "Event deleted successfully",
         });
     }
     catch (error) {
@@ -403,12 +490,12 @@ const togglePublishStatus = async (req, res, next) => {
     try {
         const { id } = req.params;
         if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
-            res.status(400).json({ message: 'Invalid event ID' });
+            res.status(400).json({ message: "Invalid event ID" });
             return;
         }
         const event = await event_1.default.findById(id);
         if (!event) {
-            res.status(404).json({ message: 'Event not found' });
+            res.status(404).json({ message: "Event not found" });
             return;
         }
         event.isPublished = !event.isPublished;
@@ -419,7 +506,7 @@ const togglePublishStatus = async (req, res, next) => {
         await event.save();
         res.status(200).json({
             success: true,
-            message: `Event ${event.isPublished ? 'published' : 'unpublished'} successfully`,
+            message: `Event ${event.isPublished ? "published" : "unpublished"} successfully`,
             data: event,
         });
     }
@@ -445,8 +532,8 @@ const getEventsByTag = async (req, res, next) => {
                 { expiryDate: { $gt: new Date() } },
             ],
         })
-            .populate('author', 'firstName lastName studentNumber')
-            .sort('-eventDate')
+            .populate("author", "firstName lastName studentNumber")
+            .sort("-eventDate")
             .skip(skip)
             .limit(limitNum);
         const total = await event_1.default.countDocuments({
@@ -475,22 +562,22 @@ const getMyEvents = async (req, res, next) => {
         const userId = req.user?.id;
         const { page = 1, limit = 10, status } = req.query;
         if (!userId) {
-            res.status(401).json({ message: 'User not authenticated' });
+            res.status(401).json({ message: "User not authenticated" });
             return;
         }
         const query = { author: userId };
-        if (status === 'published') {
+        if (status === "published") {
             query.isPublished = true;
         }
-        else if (status === 'draft') {
+        else if (status === "draft") {
             query.isPublished = false;
         }
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
         const skip = (pageNum - 1) * limitNum;
         const events = await event_1.default.find(query)
-            .populate('author', 'firstName lastName studentNumber')
-            .sort('-createdAt')
+            .populate("author", "firstName lastName studentNumber")
+            .sort("-createdAt")
             .skip(skip)
             .limit(limitNum);
         const total = await event_1.default.countDocuments(query);

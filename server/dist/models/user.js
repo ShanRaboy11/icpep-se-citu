@@ -41,19 +41,19 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const userSchema = new mongoose_1.Schema({
     studentNumber: {
         type: String,
-        required: [true, 'Student number is required'],
+        required: [true, "Student number is required"],
         unique: true,
         trim: true,
         uppercase: true,
     },
     lastName: {
         type: String,
-        required: [true, 'Last name is required'],
+        required: [true, "Last name is required"],
         trim: true,
     },
     firstName: {
         type: String,
-        required: [true, 'First name is required'],
+        required: [true, "First name is required"],
         trim: true,
     },
     middleName: {
@@ -69,15 +69,19 @@ const userSchema = new mongoose_1.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Password is required'],
+        required: [true, "Password is required"],
         minlength: 6,
-        default: '123456',
+        default: "123456",
         select: false,
     },
     role: {
         type: String,
-        enum: ['student', 'council-officer', 'committee-officer', 'faculty'],
-        default: 'student',
+        enum: ["student", "council-officer", "committee-officer", "faculty", "admin"],
+        default: "student",
+    },
+    position: {
+        type: String,
+        default: null,
     },
     yearLevel: {
         type: Number,
@@ -88,7 +92,7 @@ const userSchema = new mongoose_1.Schema({
         isMember: { type: Boolean, default: false },
         membershipType: {
             type: String,
-            enum: ['local', 'regional', 'both', null],
+            enum: ["local", "regional", "both", null],
             default: null,
         },
         validUntil: Date,
@@ -103,12 +107,20 @@ const userSchema = new mongoose_1.Schema({
     },
     registeredBy: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: "User",
         default: null,
     },
     firstLogin: {
         type: Boolean,
         default: true,
+        select: false,
+    },
+    resetPasswordCode: {
+        type: String,
+        select: false,
+    },
+    resetPasswordExpire: {
+        type: Date,
         select: false,
     },
 }, {
@@ -117,23 +129,23 @@ const userSchema = new mongoose_1.Schema({
     toObject: { virtuals: true },
 });
 // Virtual for full name
-userSchema.virtual('fullName').get(function () {
+userSchema.virtual("fullName").get(function () {
     if (this.middleName) {
         return `${this.firstName} ${this.middleName} ${this.lastName}`;
     }
     return `${this.firstName} ${this.lastName}`;
 });
 // Virtual for registeredBy name
-userSchema.virtual('registeredByName').get(function () {
-    if (this.registeredBy && typeof this.registeredBy === 'object') {
+userSchema.virtual("registeredByName").get(function () {
+    if (this.registeredBy && typeof this.registeredBy === "object") {
         const registrar = this.registeredBy;
         return registrar.fullName || `${registrar.firstName} ${registrar.lastName}`;
     }
-    return 'Self-registered';
+    return "Self-registered";
 });
 // Pre-save middleware to hash password
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password'))
+userSchema.pre("save", async function (next) {
+    if (!this.isModified("password"))
         return next();
     this.password = await bcryptjs_1.default.hash(this.password, 10);
     next();
@@ -145,9 +157,9 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
 // Indexes
 // `unique: true` on studentNumber already creates an index — avoid duplicate index declarations
 userSchema.index({ role: 1 });
-userSchema.index({ 'membershipStatus.isMember': 1 });
-userSchema.index({ 'membershipStatus.membershipType': 1 });
+userSchema.index({ "membershipStatus.isMember": 1 });
+userSchema.index({ "membershipStatus.membershipType": 1 });
 userSchema.index({ createdAt: -1 });
 userSchema.index({ updatedAt: -1 });
-const User = mongoose_1.default.model('User', userSchema);
+const User = mongoose_1.default.model("User", userSchema);
 exports.default = User;

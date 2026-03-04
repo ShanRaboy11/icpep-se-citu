@@ -45,6 +45,10 @@ const authorizeRole = (...roles) => {
                 message: 'Authentication required.',
             });
         }
+        // Admin role has access to everything
+        if (req.user.role === 'admin') {
+            return next();
+        }
         if (!roles.includes(req.user.role)) {
             return res.status(403).json({
                 success: false,

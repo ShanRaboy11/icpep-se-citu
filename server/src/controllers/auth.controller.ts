@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken";
 import User, { IUser } from "../models/user";
 import { validatePassword } from "../utils/password_validator";
 import { sendNotification } from "../utils/notification";
+import sendEmail from "../utils/email";
+import crypto from "crypto";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -305,3 +307,183 @@ export const logout = async (req: Request, res: Response) => {
     message: "Logged out successfully",
   });
 };
+
+// Helper to generate 6-digit code
+const generateResetCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// @desc    Forgot Password
+// @route   POST /api/auth/forgot-password
+// @access  Public
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { studentNumber } = req.body;
+
+    if (!studentNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide your student number",
+      });
+    }
+
+    const user = await User.findOne({ studentNumber: studentNumber.toUpperCase() });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.email) {
+      return res.status(400).json({
+        success: false,
+        message: "No email address associated with your account. Please contact an administrator.",
+      });
+    }
+
+    // Generate reset code
+    const resetCode = generateResetCode();
+
+    user.resetPasswordCode = resetCode;
+    user.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await user.save({ validateBeforeSave: false });
+
+    // Create message
+    const message = `You requested a password reset. Here is your verification code: ${resetCode}`;
+    const html = `
+      <h1>Password Reset Request</h1>
+      <p>You requested a password reset. Here is your verification code:</p>
+      <h2 style="font-size: 32px; letter-spacing: 5px; color: #007bff;">${resetCode}</h2>
+      <p>This code will expire in 10 minutes.</p>
+      <p>If you did not make this request, please ignore this email.</p>
+    `;
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Password Reset Code - ICpEP SE',
+        message: message,
+        html: html
+      });
+
+      res.status(200).json({
+        success: true,
+        message: "Email sent",
+        email: user.email // sending back partially masked email could be good for UX if needed
+      });
+    } catch (error) {
+      user.resetPasswordCode = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+
+      console.error(error);
+      return res.status(500).json({
+        success: false,
+        message: "Email could not be sent",
+      });
+    }
+
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// @desc    Verify Reset Code
+// @route   POST /api/auth/verify-code
+// @access  Public
+export const verifyResetCode = async (req: Request, res: Response) => {
+  try {
+    const { studentNumber, code } = req.body;
+
+    if (!studentNumber || !code) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide student number and code",
+      });
+    }
+
+    const user = await User.findOne({
+      studentNumber: studentNumber.toUpperCase(),
+      resetPasswordCode: code,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired code",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Code verified",
+    });
+
+  } catch (error) {
+    console.error("Verify code error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// @desc    Reset Password
+// @route   POST /api/auth/reset-password
+// @access  Public
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { studentNumber, code, password } = req.body;
+
+    if (!studentNumber || !code || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields",
+      });
+    }
+
+    const user = await User.findOne({
+      studentNumber: studentNumber.toUpperCase(),
+      resetPasswordCode: code,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired code",
+      });
+    }
+
+    // Set new password
+    user.password = password;
+    user.resetPasswordCode = undefined;
+    user.resetPasswordExpire = undefined;
+    
+    // If they were locked out due to first login, this effectively handles it if we don't check firstLogin.
+    // user.firstLogin = false; 
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
+
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+

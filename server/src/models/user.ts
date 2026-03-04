@@ -26,6 +26,8 @@ export interface IUser extends Document {
   updatedAt: Date;
   fullName: string;
   registeredByName: string;
+  resetPasswordCode?: string;
+  resetPasswordExpire?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -110,6 +112,14 @@ const userSchema = new Schema<IUser>(
     firstLogin: {
       type: Boolean,
       default: true,
+      select: false,
+    },
+    resetPasswordCode: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpire: {
+      type: Date,
       select: false,
     },
   },

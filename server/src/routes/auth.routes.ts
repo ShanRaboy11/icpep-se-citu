@@ -4,7 +4,10 @@ import {
   changePassword, 
   firstLoginPasswordChange,
   getCurrentUser,
-  logout 
+  logout,
+  forgotPassword,
+  verifyResetCode,
+  resetPassword
 } from '../controllers/auth.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
@@ -19,6 +22,21 @@ router.post('/login', login);
 // @desc    Logout user (client-side token removal)
 // @access  Public
 router.post('/logout', logout);
+
+// @route   POST /api/auth/forgot-password
+// @desc    Request password reset code
+// @access  Public
+router.post('/forgot-password', forgotPassword);
+
+// @route   POST /api/auth/verify-code
+// @desc    Verify reset code
+// @access  Public
+router.post('/verify-code', verifyResetCode);
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password
+// @access  Public
+router.post('/reset-password', resetPassword);
 
 // @route   POST /api/auth/first-login-password
 // @desc    Change password on first login (no current password required)

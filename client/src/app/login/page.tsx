@@ -53,6 +53,10 @@ export default function Login() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotPasswordStep, setForgotPasswordStep] = useState(1); // 1: Email, 2: Code, 3: New Password
+  const [resetCode, setResetCode] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -218,16 +222,115 @@ export default function Login() {
     localStorage.removeItem('userId');
     localStorage.removeItem('userRole');
     setRequiresPasswordChange(false);
+    setIsForgotPassword(false);
+    setForgotPasswordStep(1);
     setStudentNumber("");
     setPassword("");
     setNewPassword("");
     setConfirmPassword("");
+    setResetCode("");
     setFieldErrors({
       studentNumber: false,
       password: false,
       newPassword: false,
       confirmPassword: false,
     });
+  };
+
+  // Forgot Password Handlers
+  const handleSendResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentNumber) {
+      setError("Please enter your student number.");
+      return;
+    }
+    
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const data = await apiCall('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ studentNumber }),
+      });
+      
+      if (data.email) {
+        // Mask email: j***@cit.edu.ph
+        const [user, domain] = data.email.split('@');
+        const masked = user.slice(0, 1) + "***" + user.slice(-1) + "@" + domain;
+        setMaskedEmail(masked);
+      }
+      
+      setForgotPasswordStep(2);
+    } catch (err: any) {
+      setError(err.message || "Failed to send reset code.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetCode) {
+      setError("Please enter the verification code.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await apiCall('/auth/verify-code', {
+        method: 'POST',
+        body: JSON.stringify({ studentNumber, code: resetCode }),
+      });
+      
+      setForgotPasswordStep(3);
+    } catch (err: any) {
+      setError(err.message || "Invalid code.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newPassword || !confirmPassword) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!passwordValidation.isValid) {
+      setError("Password does not meet requirements.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await apiCall('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          studentNumber, 
+          code: resetCode, 
+          password: newPassword 
+        }),
+      });
+      
+      alert("Password reset successfully! Please log in.");
+      handleSuccessModalClose();
+    } catch (err: any) {
+      setError(err.message || "Failed to reset password.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getInputClass = (hasError: boolean) =>
@@ -282,16 +385,191 @@ export default function Login() {
             className="w-16 h-16 mb-3"
           />
           <h1 className="text-2xl sm:text-3xl font-semibold text-center">
-            {requiresPasswordChange ? "Change Password" : "Welcome to ICpEP SE!"}
+            {isForgotPassword 
+              ? "Reset Password" 
+              : requiresPasswordChange 
+                ? "Change Password" 
+                : "Welcome to ICpEP SE!"}
           </h1>
           <p className="text-gray-500 text-md font-[Raleway] text-center mb-5">
-            {requiresPasswordChange
-              ? "For security reasons, you must change your password before accessing the system."
-              : "Please log in to access your account."}
+            {isForgotPassword
+              ? "Follow the steps to recover your account."
+              : requiresPasswordChange
+                ? "For security reasons, you must change your password before accessing the system."
+                : "Please log in to access your account."}
           </p>
         </div>
 
-        {!requiresPasswordChange ? (
+        {isForgotPassword ? (
+          // Forgot Password Flow
+          <div className="animate-fadeIn">
+            {forgotPasswordStep === 1 && (
+              <form onSubmit={handleSendResetCode} className="space-y-5">
+                <div>
+                  <label className="text-sm font-[Raleway]">Student Number</label>
+                  <input
+                    type="text"
+                    value={studentNumber}
+                    onChange={(e) => setStudentNumber(e.target.value.toUpperCase())}
+                    placeholder="xx-xxxx-xxx"
+                    className={getInputClass(false)}
+                    autoComplete="off"
+                    disabled={isLoading}
+                  />
+                </div>
+                {error && (
+                  <div className="flex items-center gap-2 text-red-600 bg-red-50 border-2 border-red-500 px-3 py-2 rounded-md text-sm">
+                    <AlertCircle size={16} />
+                    <span>{error}</span>
+                  </div>
+                )}
+                <Button
+                  variant="primary3"
+                  className="w-full rounded-full bg-sky-400 text-white font-medium hover:bg-[var(--primary3)]"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Sending..." : "Send Reset Code"}
+                </Button>
+                <div className="text-center">
+                  <Button 
+                    variant="primary3"
+                    className="w-full rounded-full bg-gray-400 text-white font-medium hover:bg-gray-500 mt-2"
+                    type="button" 
+                    onClick={() => {
+                      setIsForgotPassword(false);
+                      setForgotPasswordStep(1);
+                      setError("");
+                    }} 
+                  >
+                    Back to Login
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {forgotPasswordStep === 2 && (
+              <form onSubmit={handleVerifyResetCode} className="space-y-5">
+                <p className="text-sm text-center text-gray-600">
+                  We sent a 6-digit code to your institutional email ending in <br/>
+                  <span className="font-semibold text-gray-800">{maskedEmail}</span>
+                </p>
+                <div>
+                  <label className="text-sm font-[Raleway]">Verification Code</label>
+                  <input
+                    type="text"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value)}
+                    placeholder="Enter 6-digit code"
+                    className={getInputClass(false)}
+                    autoComplete="off"
+                    maxLength={6}
+                    disabled={isLoading}
+                  />
+                </div>
+                {error && (
+                  <div className="flex items-center gap-2 text-red-600 bg-red-50 border-2 border-red-500 px-3 py-2 rounded-md text-sm">
+                    <AlertCircle size={16} />
+                    <span>{error}</span>
+                  </div>
+                )}
+                <Button
+                  variant="primary3"
+                  className="w-full rounded-full bg-sky-400 text-white font-medium hover:bg-[var(--primary3)]"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Verifying..." : "Verify Code"}
+                </Button>
+                <div className="text-center">
+                  <Button 
+                    variant="primary3"
+                    className="w-full rounded-full bg-gray-400 text-white font-medium hover:bg-gray-500 mt-2"
+                    type="button" 
+                    onClick={() => {
+                      setForgotPasswordStep(1);
+                      setError("");
+                    }} 
+                  >
+                    Back
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {forgotPasswordStep === 3 && (
+              <form onSubmit={handleResetPassword} className="space-y-5">
+                <div className="relative">
+                  <label className="text-sm font-[Raleway]">New Password</label>
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className={getInputClass(false)}
+                    autoComplete="off"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 bottom-2.5 text-gray-500 hover:text-sky-500"
+                  >
+                    {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                <div className="relative">
+                  <label className="text-sm font-[Raleway]">Confirm Password</label>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={getInputClass(false)}
+                    autoComplete="off"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 bottom-2.5 text-gray-500 hover:text-sky-500"
+                  >
+                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                
+                <div className="bg-gray-50 border border-gray-200 rounded-md p-3">
+                  <p className="text-xs font-semibold text-gray-700 font-[Raleway] mb-2">
+                    Password Requirements:
+                  </p>
+                  <ul className="space-y-1">
+                    <li className="flex items-center gap-2 text-xs font-[Raleway]">
+                      {passwordValidation.checks.length ? <Check size={14} className="text-green-600" /> : <X size={14} className="text-gray-400" />}
+                      <span className={passwordValidation.checks.length ? "text-green-600" : "text-gray-600"}>At least 8 characters</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-xs font-[Raleway]">
+                      {passwordValidation.checks.uppercase ? <Check size={14} className="text-green-600" /> : <X size={14} className="text-gray-400" />}
+                      <span className={passwordValidation.checks.uppercase ? "text-green-600" : "text-gray-600"}>One uppercase letter</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {error && (
+                  <div className="flex items-center gap-2 text-red-600 bg-red-50 border-2 border-red-500 px-3 py-2 rounded-md text-sm">
+                    <AlertCircle size={16} />
+                    <span>{error}</span>
+                  </div>
+                )}
+                <Button
+                  variant="primary3"
+                  className="w-full rounded-full bg-sky-400 text-white font-medium hover:bg-[var(--primary3)]"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Resetting..." : "Reset Password"}
+                </Button>
+              </form>
+            )}
+          </div>
+        ) : !requiresPasswordChange ? (
           // Login Form
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
@@ -343,6 +621,13 @@ export default function Login() {
                 <input type="checkbox" className="accent-sky-500" />
                 Remember me
               </label>
+              <button
+                type="button"
+                className="text-primary3 hover:text-sky-600 underline cursor-pointer"
+                onClick={() => setIsForgotPassword(true)}
+              >
+                Forgot Password?
+              </button>
             </div>
 
             <Button

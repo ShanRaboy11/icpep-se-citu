@@ -6,36 +6,37 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.searchUsers = exports.getUserStats = exports.deleteUser = exports.toggleUserStatus = exports.updateUser = exports.bulkUploadUsers = exports.createUser = exports.getUserById = exports.getAllUsers = void 0;
 const user_1 = __importDefault(require("../models/user"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const notification_1 = require("../utils/notification");
 // Get all users with filtering and sorting
 const getAllUsers = async (req, res) => {
     try {
-        const { role, membershipType, isActive, sortBy = 'createdAt', sortOrder = 'desc', page = '1', limit = '50', } = req.query;
+        const { role, membershipType, isActive, sortBy = "createdAt", sortOrder = "desc", page = "1", limit = "50", } = req.query;
         // Build filter object
         const filter = {};
-        if (role && role !== 'all') {
+        if (role && role !== "all") {
             filter.role = role;
         }
-        if (membershipType && membershipType !== 'all') {
-            if (membershipType === 'non-member') {
-                filter['membershipStatus.isMember'] = false;
+        if (membershipType && membershipType !== "all") {
+            if (membershipType === "non-member") {
+                filter["membershipStatus.isMember"] = false;
             }
             else {
-                filter['membershipStatus.membershipType'] = membershipType;
+                filter["membershipStatus.membershipType"] = membershipType;
             }
         }
         if (isActive !== undefined) {
-            filter.isActive = isActive === 'true';
+            filter.isActive = isActive === "true";
         }
         // Build sort object
         const sort = {};
-        sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+        sort[sortBy] = sortOrder === "asc" ? 1 : -1;
         // Pagination
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
         const skip = (pageNum - 1) * limitNum;
         // Execute query
         const users = await user_1.default.find(filter)
-            .populate('registeredBy', 'firstName lastName middleName')
+            .populate("registeredBy", "firstName lastName middleName")
             .sort(sort)
             .skip(skip)
             .limit(limitNum)
@@ -56,7 +57,7 @@ const getAllUsers = async (req, res) => {
     catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error fetching users',
+            message: "Error fetching users",
             error: error.message,
         });
     }
@@ -69,15 +70,15 @@ const getUserById = async (req, res) => {
         if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
-                message: 'Invalid user ID',
+                message: "Invalid user ID",
             });
             return;
         }
-        const user = await user_1.default.findById(id).populate('registeredBy', 'firstName lastName middleName');
+        const user = await user_1.default.findById(id).populate("registeredBy", "firstName lastName middleName");
         if (!user) {
             res.status(404).json({
                 success: false,
-                message: 'User not found',
+                message: "User not found",
             });
             return;
         }
@@ -89,7 +90,7 @@ const getUserById = async (req, res) => {
     catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error fetching user',
+            message: "Error fetching user",
             error: error.message,
         });
     }
@@ -98,23 +99,25 @@ exports.getUserById = getUserById;
 // Create new user
 const createUser = async (req, res) => {
     try {
-        const { studentNumber, lastName, firstName, middleName, password = '123456', role = 'student', yearLevel, membershipStatus, } = req.body;
-        console.log('📝 CREATE USER - req.user:', req.user);
-        console.log('📝 CREATE USER - membershipStatus received:', membershipStatus);
+        const { studentNumber, lastName, firstName, middleName, password = "123456", role = "student", yearLevel, membershipStatus, } = req.body;
+        console.log("📝 CREATE USER - req.user:", req.user);
+        console.log("📝 CREATE USER - membershipStatus received:", membershipStatus);
         // Validation
         if (!studentNumber || !lastName || !firstName) {
             res.status(400).json({
                 success: false,
-                message: 'Student number, first name, and last name are required',
+                message: "Student number, first name, and last name are required",
             });
             return;
         }
         // Check if user already exists
-        const existingUser = await user_1.default.findOne({ studentNumber: studentNumber.toUpperCase() });
+        const existingUser = await user_1.default.findOne({
+            studentNumber: studentNumber.toUpperCase(),
+        });
         if (existingUser) {
             res.status(409).json({
                 success: false,
-                message: 'User with this student number already exists',
+                message: "User with this student number already exists",
             });
             return;
         }
@@ -124,34 +127,34 @@ const createUser = async (req, res) => {
             membershipType: null,
         };
         // Check if membershipStatus is already an object (from Excel upload)
-        if (membershipStatus && typeof membershipStatus === 'object') {
+        if (membershipStatus && typeof membershipStatus === "object") {
             membershipStatusObj = {
                 isMember: membershipStatus.isMember || false,
                 membershipType: membershipStatus.membershipType || null,
             };
         }
         // Handle string format (from manual add form)
-        else if (membershipStatus && typeof membershipStatus === 'string') {
+        else if (membershipStatus && typeof membershipStatus === "string") {
             const statusLower = membershipStatus.toLowerCase();
-            if (statusLower === 'local') {
+            if (statusLower === "local") {
                 membershipStatusObj = {
                     isMember: true,
-                    membershipType: 'local',
+                    membershipType: "local",
                 };
             }
-            else if (statusLower === 'regional') {
+            else if (statusLower === "regional") {
                 membershipStatusObj = {
                     isMember: true,
-                    membershipType: 'regional',
+                    membershipType: "regional",
                 };
             }
-            else if (statusLower === 'both') {
+            else if (statusLower === "both") {
                 membershipStatusObj = {
                     isMember: true,
-                    membershipType: 'both',
+                    membershipType: "both",
                 };
             }
-            else if (statusLower === 'member') {
+            else if (statusLower === "member") {
                 membershipStatusObj = {
                     isMember: true,
                     membershipType: null, // Generic member without specific type
@@ -159,7 +162,7 @@ const createUser = async (req, res) => {
             }
             // 'non-member' or any other value defaults to the initial values
         }
-        console.log('✅ Processed membershipStatus:', membershipStatusObj);
+        console.log("✅ Processed membershipStatus:", membershipStatusObj);
         // Create user
         const newUser = await user_1.default.create({
             studentNumber,
@@ -173,18 +176,18 @@ const createUser = async (req, res) => {
             registeredBy: req.user?.id || null,
         });
         // Populate registeredBy before sending response
-        await newUser.populate('registeredBy', 'firstName lastName middleName');
+        await newUser.populate("registeredBy", "firstName lastName middleName");
         res.status(201).json({
             success: true,
-            message: 'User created successfully',
+            message: "User created successfully",
             data: newUser,
         });
     }
     catch (error) {
-        console.error('Create user error:', error);
+        console.error("Create user error:", error);
         res.status(500).json({
             success: false,
-            message: 'Error creating user',
+            message: "Error creating user",
             error: error.message,
         });
     }
@@ -197,12 +200,12 @@ const bulkUploadUsers = async (req, res) => {
         if (!Array.isArray(users) || users.length === 0) {
             res.status(400).json({
                 success: false,
-                message: 'Users array is required',
+                message: "Users array is required",
             });
             return;
         }
         console.log(`📦 Processing bulk upload of ${users.length} users...`);
-        console.log('📦 BULK UPLOAD - req.user:', req.user);
+        console.log("📦 BULK UPLOAD - req.user:", req.user);
         const results = {
             success: [],
             failed: [],
@@ -210,22 +213,12 @@ const bulkUploadUsers = async (req, res) => {
         for (const userData of users) {
             try {
                 // Validate required fields
-                if (!userData.studentNumber || !userData.firstName || !userData.lastName) {
+                if (!userData.studentNumber ||
+                    !userData.firstName ||
+                    !userData.lastName) {
                     results.failed.push({
-                        studentNumber: userData.studentNumber || 'UNKNOWN',
-                        reason: 'Missing required fields (studentNumber, firstName, lastName)',
-                        data: userData,
-                    });
-                    continue;
-                }
-                // Check if user exists
-                const existingUser = await user_1.default.findOne({
-                    studentNumber: userData.studentNumber.toUpperCase(),
-                });
-                if (existingUser) {
-                    results.failed.push({
-                        studentNumber: userData.studentNumber,
-                        reason: 'User with this student number already exists',
+                        studentNumber: userData.studentNumber || "UNKNOWN",
+                        reason: "Missing required fields (studentNumber, firstName, lastName)",
                         data: userData,
                     });
                     continue;
@@ -236,34 +229,36 @@ const bulkUploadUsers = async (req, res) => {
                     membershipType: null,
                 };
                 // Check if membershipStatus is already an object (from frontend processing)
-                if (userData.membershipStatus && typeof userData.membershipStatus === 'object') {
+                if (userData.membershipStatus &&
+                    typeof userData.membershipStatus === "object") {
                     membershipStatusObj = {
                         isMember: userData.membershipStatus.isMember || false,
                         membershipType: userData.membershipStatus.membershipType || null,
                     };
                 }
                 // Handle string format (from Excel file)
-                else if (userData.membershipStatus && typeof userData.membershipStatus === 'string') {
+                else if (userData.membershipStatus &&
+                    typeof userData.membershipStatus === "string") {
                     const statusLower = userData.membershipStatus.toLowerCase().trim();
-                    if (statusLower === 'local') {
+                    if (statusLower === "local") {
                         membershipStatusObj = {
                             isMember: true,
-                            membershipType: 'local',
+                            membershipType: "local",
                         };
                     }
-                    else if (statusLower === 'regional') {
+                    else if (statusLower === "regional") {
                         membershipStatusObj = {
                             isMember: true,
-                            membershipType: 'regional',
+                            membershipType: "regional",
                         };
                     }
-                    else if (statusLower === 'both') {
+                    else if (statusLower === "both") {
                         membershipStatusObj = {
                             isMember: true,
-                            membershipType: 'both',
+                            membershipType: "both",
                         };
                     }
-                    else if (statusLower === 'member') {
+                    else if (statusLower === "member") {
                         membershipStatusObj = {
                             isMember: true,
                             membershipType: null, // Generic member
@@ -271,14 +266,40 @@ const bulkUploadUsers = async (req, res) => {
                     }
                     // 'non-member' or any other value defaults to initial values
                 }
+                // Check if user exists
+                const existingUser = await user_1.default.findOne({
+                    studentNumber: userData.studentNumber.toUpperCase(),
+                });
+                if (existingUser) {
+                    // Update existing user but keep password
+                    existingUser.firstName = userData.firstName;
+                    existingUser.lastName = userData.lastName;
+                    if (userData.middleName !== undefined)
+                        existingUser.middleName = userData.middleName || null;
+                    if (userData.role && existingUser.role !== "admin") {
+                        existingUser.role = userData.role;
+                    }
+                    if (userData.yearLevel)
+                        existingUser.yearLevel = userData.yearLevel;
+                    existingUser.membershipStatus = membershipStatusObj;
+                    // Do not update password
+                    await existingUser.save();
+                    results.success.push({
+                        studentNumber: userData.studentNumber,
+                        fullName: existingUser.fullName,
+                        id: existingUser._id.toString(),
+                    });
+                    console.log(`🔄 Updated user: ${existingUser.fullName} (${existingUser.studentNumber}) - Member: ${membershipStatusObj.isMember}`);
+                    continue;
+                }
                 // Create new user
                 const newUser = await user_1.default.create({
                     studentNumber: userData.studentNumber,
                     lastName: userData.lastName,
                     firstName: userData.firstName,
                     middleName: userData.middleName || null,
-                    password: userData.password || '123456',
-                    role: userData.role || 'student',
+                    password: userData.password || "123456",
+                    role: userData.role || "student",
                     yearLevel: userData.yearLevel || null,
                     membershipStatus: membershipStatusObj,
                     registeredBy: req.user?.id || null,
@@ -293,8 +314,8 @@ const bulkUploadUsers = async (req, res) => {
             catch (error) {
                 console.error(`❌ Failed to create user ${userData.studentNumber}:`, error.message);
                 results.failed.push({
-                    studentNumber: userData.studentNumber || 'UNKNOWN',
-                    reason: error.message || 'Unknown error occurred',
+                    studentNumber: userData.studentNumber || "UNKNOWN",
+                    reason: error.message || "Unknown error occurred",
                     data: userData,
                 });
             }
@@ -307,10 +328,10 @@ const bulkUploadUsers = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('❌ Bulk upload error:', error);
+        console.error("❌ Bulk upload error:", error);
         res.status(500).json({
             success: false,
-            message: 'Error during bulk upload',
+            message: "Error during bulk upload",
             error: error.message,
         });
     }
@@ -324,7 +345,16 @@ const updateUser = async (req, res) => {
         if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
-                message: 'Invalid user ID',
+                message: "Invalid user ID",
+            });
+            return;
+        }
+        // Fetch original user to compare changes
+        const originalUser = await user_1.default.findById(id);
+        if (!originalUser) {
+            res.status(404).json({
+                success: false,
+                message: "User not found",
             });
             return;
         }
@@ -332,24 +362,55 @@ const updateUser = async (req, res) => {
         delete updates.createdAt;
         delete updates.registeredBy;
         // If updating password, it will be hashed by pre-save middleware
-        const updatedUser = await user_1.default.findByIdAndUpdate(id, { ...updates, updatedAt: new Date() }, { new: true, runValidators: true }).populate('registeredBy', 'firstName lastName middleName');
+        const updatedUser = await user_1.default.findByIdAndUpdate(id, { ...updates, updatedAt: new Date() }, { new: true, runValidators: true }).populate("registeredBy", "firstName lastName middleName");
         if (!updatedUser) {
             res.status(404).json({
                 success: false,
-                message: 'User not found',
+                message: "User not found",
             });
             return;
         }
+        // Notification Logic
+        // 1. Membership Notification
+        // Check if membership status is being updated and the user is a member
+        if (updates.membershipStatus && updatedUser.membershipStatus.isMember) {
+            const isNewMember = !originalUser.membershipStatus.isMember;
+            await (0, notification_1.sendNotification)(updatedUser._id, isNewMember
+                ? "[MEMBERSHIP] Welcome to ICPEP-SE!"
+                : "[MEMBERSHIP] Membership Updated", isNewMember
+                ? "Your membership status has been updated to Member."
+                : `Your membership details have been updated. Type: ${updatedUser.membershipStatus.membershipType}`, "membership", updatedUser._id, "Membership");
+        }
+        // 2. Profile Update
+        if (updates.password) {
+            await (0, notification_1.sendNotification)(updatedUser._id, "[PROFILE] Password Updated", "Your password has been successfully updated.", "system", updatedUser._id, null);
+        }
+        else {
+            const profileFields = [
+                "firstName",
+                "lastName",
+                "middleName",
+                "studentNumber",
+                "yearLevel",
+                "email",
+                "profilePicture",
+            ];
+            const changedFields = profileFields.filter((field) => updates[field] !== undefined &&
+                updates[field] !== originalUser[field]);
+            if (changedFields.length > 0) {
+                await (0, notification_1.sendNotification)(updatedUser._id, "[PROFILE] Profile Updated", `Your profile information (${changedFields.join(", ")}) has been updated.`, "system", updatedUser._id, null);
+            }
+        }
         res.status(200).json({
             success: true,
-            message: 'User updated successfully',
+            message: "User updated successfully",
             data: updatedUser,
         });
     }
     catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error updating user',
+            message: "Error updating user",
             error: error.message,
         });
     }
@@ -362,7 +423,7 @@ const toggleUserStatus = async (req, res) => {
         if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
-                message: 'Invalid user ID',
+                message: "Invalid user ID",
             });
             return;
         }
@@ -370,23 +431,23 @@ const toggleUserStatus = async (req, res) => {
         if (!user) {
             res.status(404).json({
                 success: false,
-                message: 'User not found',
+                message: "User not found",
             });
             return;
         }
         user.isActive = !user.isActive;
         await user.save();
-        await user.populate('registeredBy', 'firstName lastName middleName');
+        await user.populate("registeredBy", "firstName lastName middleName");
         res.status(200).json({
             success: true,
-            message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+            message: `User ${user.isActive ? "activated" : "deactivated"} successfully`,
             data: user,
         });
     }
     catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error toggling user status',
+            message: "Error toggling user status",
             error: error.message,
         });
     }
@@ -399,7 +460,7 @@ const deleteUser = async (req, res) => {
         if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
             res.status(400).json({
                 success: false,
-                message: 'Invalid user ID',
+                message: "Invalid user ID",
             });
             return;
         }
@@ -407,20 +468,20 @@ const deleteUser = async (req, res) => {
         if (!deletedUser) {
             res.status(404).json({
                 success: false,
-                message: 'User not found',
+                message: "User not found",
             });
             return;
         }
         res.status(200).json({
             success: true,
-            message: 'User deleted successfully',
+            message: "User deleted successfully",
             data: { id },
         });
     }
     catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error deleting user',
+            message: "Error deleting user",
             error: error.message,
         });
     }
@@ -431,15 +492,25 @@ const getUserStats = async (req, res) => {
     try {
         const totalUsers = await user_1.default.countDocuments();
         const activeUsers = await user_1.default.countDocuments({ isActive: true });
-        const members = await user_1.default.countDocuments({ 'membershipStatus.isMember': true });
-        const localMembers = await user_1.default.countDocuments({ 'membershipStatus.membershipType': 'local' });
-        const regionalMembers = await user_1.default.countDocuments({ 'membershipStatus.membershipType': 'regional' });
-        const bothMembers = await user_1.default.countDocuments({ 'membershipStatus.membershipType': 'both' });
-        const nonMembers = await user_1.default.countDocuments({ 'membershipStatus.isMember': false });
+        const members = await user_1.default.countDocuments({
+            "membershipStatus.isMember": true,
+        });
+        const localMembers = await user_1.default.countDocuments({
+            "membershipStatus.membershipType": "local",
+        });
+        const regionalMembers = await user_1.default.countDocuments({
+            "membershipStatus.membershipType": "regional",
+        });
+        const bothMembers = await user_1.default.countDocuments({
+            "membershipStatus.membershipType": "both",
+        });
+        const nonMembers = await user_1.default.countDocuments({
+            "membershipStatus.isMember": false,
+        });
         const roleStats = await user_1.default.aggregate([
             {
                 $group: {
-                    _id: '$role',
+                    _id: "$role",
                     count: { $sum: 1 },
                 },
             },
@@ -447,7 +518,7 @@ const getUserStats = async (req, res) => {
         const yearLevelStats = await user_1.default.aggregate([
             {
                 $group: {
-                    _id: '$yearLevel',
+                    _id: "$yearLevel",
                     count: { $sum: 1 },
                 },
             },
@@ -476,7 +547,7 @@ const getUserStats = async (req, res) => {
     catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error fetching user statistics',
+            message: "Error fetching user statistics",
             error: error.message,
         });
     }
@@ -489,11 +560,11 @@ const searchUsers = async (req, res) => {
         if (!query) {
             res.status(400).json({
                 success: false,
-                message: 'Search query is required',
+                message: "Search query is required",
             });
             return;
         }
-        const searchRegex = new RegExp(query, 'i');
+        const searchRegex = new RegExp(query, "i");
         const users = await user_1.default.find({
             $or: [
                 { studentNumber: searchRegex },
@@ -502,7 +573,7 @@ const searchUsers = async (req, res) => {
                 { middleName: searchRegex },
             ],
         })
-            .populate('registeredBy', 'firstName lastName middleName')
+            .populate("registeredBy", "firstName lastName middleName")
             .limit(20);
         res.status(200).json({
             success: true,
@@ -512,7 +583,7 @@ const searchUsers = async (req, res) => {
     catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error searching users',
+            message: "Error searching users",
             error: error.message,
         });
     }

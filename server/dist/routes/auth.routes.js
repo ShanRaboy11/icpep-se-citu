@@ -15,6 +15,18 @@ router.post('/login', auth_controller_1.login);
 // @desc    Logout user (client-side token removal)
 // @access  Public
 router.post('/logout', auth_controller_1.logout);
+// @route   POST /api/auth/forgot-password
+// @desc    Request password reset code
+// @access  Public
+router.post('/forgot-password', auth_controller_1.forgotPassword);
+// @route   POST /api/auth/verify-code
+// @desc    Verify reset code
+// @access  Public
+router.post('/verify-code', auth_controller_1.verifyResetCode);
+// @route   POST /api/auth/reset-password
+// @desc    Reset password
+// @access  Public
+router.post('/reset-password', auth_controller_1.resetPassword);
 // @route   POST /api/auth/first-login-password
 // @desc    Change password on first login (no current password required)
 // @access  Private (requires valid token)
