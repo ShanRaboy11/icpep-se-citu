@@ -59,9 +59,6 @@ export default function AddUserModal({
     ) {
       newErrors.yearLevel = "Year level must be between 1 and 5";
     }
-    if (!formData.password.trim() || formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -249,27 +246,17 @@ export default function AddUserModal({
               </div>
 
               <div>
-                <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
-                  Password <span className="text-red-500">*</span>
+                <label className="block font-raleway text-sm font-semibold text-gray-500 mb-2">
+                  Password <span className="text-gray-400 font-normal">(Default)</span>
                 </label>
                 <input
                   type="text"
                   name="password"
                   value={formData.password}
-                  onChange={handleChange}
-                  placeholder="123456"
-                  className={`w-full px-4 py-2 border rounded-lg font-raleway text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  }`}
+                  readOnly
+                  disabled
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg font-raleway text-gray-400 bg-gray-50 cursor-not-allowed select-none"
                 />
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600 font-raleway">
-                    {errors.password}
-                  </p>
-                )}
-                <p className="mt-1 text-xs text-gray-500 font-raleway">
-                  Default: 123456
-                </p>
               </div>
             </div>
 
