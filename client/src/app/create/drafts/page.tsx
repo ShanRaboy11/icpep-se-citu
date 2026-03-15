@@ -1,17 +1,17 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import announcementService from "../services/announcement";
-import eventService from "../services/event";
-import merchService, { MerchItem } from "../services/merch";
-import testimonialService from "../services/testimonial";
-import sponsorService from "../services/sponsor";
+import announcementService from "../../services/announcement";
+import eventService from "../../services/event";
+import merchService, { MerchItem } from "../../services/merch";
+import testimonialService from "../../services/testimonial";
+import sponsorService from "../../services/sponsor";
 import Link from "next/link";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Sidebar from "@/app/create/components/sidebar";
 import Grid from "@/app/components/grid";
-import { GlassCard } from "../create/components/glass-card";
+import { GlassCard } from "../components/glass-card";
 import {
   Megaphone,
   CalendarDays,
