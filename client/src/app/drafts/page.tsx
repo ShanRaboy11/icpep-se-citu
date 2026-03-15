@@ -63,14 +63,14 @@ const TAB_CONFIG = [
     id: "announcements" as TabType,
     label: "Announcements",
     icon: Megaphone,
-    href: "/announcements/create",
+    href: "/create/announcements",
     emptyLabel: "announcement",
   },
   {
     id: "events" as TabType,
     label: "Events",
     icon: CalendarDays,
-    href: "/events/create",
+    href: "/create/events",
     emptyLabel: "event",
   },
   {
@@ -299,10 +299,15 @@ export default function DraftsPage() {
     const tabId = type === "announcement" ? "announcements" : "events";
     const tabCfg = TAB_CONFIG.find((t) => t.id === tabId)!;
     const Icon = tabCfg.icon;
+
+    const basePath =
+      type === "announcement" ? "/create/announcements" : "/create/events";
+
     if (filtered.length === 0)
       return (
-        <EmptyState icon={Icon} label={tabCfg.emptyLabel} href={tabCfg.href} />
+        <EmptyState icon={Icon} label={tabCfg.emptyLabel} href={basePath} />
       );
+
     return (
       <div>
         {filtered.map((it) => {
@@ -312,10 +317,11 @@ export default function DraftsPage() {
           const meta = it.type
             ? TYPE_BADGE[it.type] || TYPE_BADGE.General
             : null;
+
           return (
             <DraftRow
               key={it._id}
-              editHref={`/${type === "announcement" ? "announcements" : "events"}/create?edit=${it._id}`}
+              editHref={`${basePath}?edit=${it._id}`}
               onDelete={() => confirmDelete(it._id, tabId)}
             >
               <div className="flex items-start gap-3">

@@ -30,10 +30,10 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     const baseItems: MenuItem[] = [
       { label: "Home", href: "/home" },
       { label: "About", href: "/about" },
-      
+
       // --- NEW SECTION: Updates (Announcements & Events) ---
       {
-        label: "Updates", 
+        label: "Updates",
         children: [
           { label: "Announcements", href: "/announcements" },
           { label: "Events", href: "/events" },
@@ -54,8 +54,8 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
       baseItems.push({
         label: "Manage",
         children: [
-          { label: "Announcements", href: "/announcements/create" },
-          { label: "Events", href: "/events/create" },
+          { label: "Announcements", href: "/create/announcements" },
+          { label: "Events", href: "/create/events" },
           { label: "Merch", href: "/create/merch" },
           { label: "Testimonials", href: "/create/testimonials" },
           { label: "Sponsors", href: "/create/sponsors" },
@@ -66,7 +66,11 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
       });
     }
 
-    if (userRole === "council-officer" || userRole === "committee-officer" || userRole === "admin") {
+    if (
+      userRole === "council-officer" ||
+      userRole === "committee-officer" ||
+      userRole === "admin"
+    ) {
       baseItems.push({ label: "ComMeet", href: "/commeet" });
     }
 
@@ -350,7 +354,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
               <div
                 onClick={() =>
                   handleNavigate(
-                    navItems.find((i) => i.label === activeItem)?.href
+                    navItems.find((i) => i.label === activeItem)?.href,
                   )
                 }
                 className="px-8 py-3 border border-white/30 rounded-full w-fit hover:bg-white hover:text-[#00609c] transition-all cursor-pointer font-semibold"
