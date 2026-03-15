@@ -23,8 +23,8 @@ import {
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
-import Sidebar from "@/app/components/sidebar";
-import { GlassCard } from "../../components/glass-card";
+import Sidebar from "@/app/create/components/sidebar";
+import { GlassCard } from "../components/glass-card";
 import officerService, { Officer as IOfficer } from "@/app/services/officer";
 
 // --- DATA CONFIGURATION ---

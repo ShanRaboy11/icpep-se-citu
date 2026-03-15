@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Sidebar from "../../components/sidebar";
+import Sidebar from "../components/sidebar";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "../../components/grid";
-import { GlassCard } from "../../components/glass-card";
+import { GlassCard } from "../components/glass-card";
 import {
   Pencil,
   Trash2,

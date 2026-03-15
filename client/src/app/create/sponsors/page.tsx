@@ -3,8 +3,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { GlassCard } from "../../components/glass-card";
-import Sidebar from "@/app/components/sidebar";
+import { GlassCard } from "../components/glass-card";
+import Sidebar from "@/app/create/components/sidebar";
 import Button from "@/app/components/button";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
