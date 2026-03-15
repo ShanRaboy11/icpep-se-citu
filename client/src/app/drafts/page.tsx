@@ -523,130 +523,136 @@ export default function DraftsPage() {
   const activeCount = draftCounts[activeTab];
 
   return (
-    <section className="min-h-screen bg-[#f8f9fc] flex flex-col relative overflow-x-hidden">
-      <Grid />
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+      <main className="relative z-10 bg-[#f8f9fc] rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+        <Grid />
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <Header />
 
-        <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-32 pb-20">
-          {/* PAGE HEADER */}
-          <div className="mb-14">
-            <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-primary2 uppercase font-raleway mb-3">
-              <span className="w-8 h-px bg-primary2 inline-block" />
-              Content Management
-            </div>
-            <h1 className="text-4xl sm:text-7xl font-black font-rubik leading-[0.9] tracking-tight">
-              <span className="bg-gradient-to-br from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent">
-                Drafts &{"\n"}Scheduled
-              </span>
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 mt-4">
-              <p className="text-gray-500 font-raleway text-sm sm:text-base">
-                Manage unpublished content and scheduled posts
-              </p>
-              {totalDrafts > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary2/10 text-primary2 border border-primary2/20">
-                  <FileText size={10} />
-                  {totalDrafts} total
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
+            {/* PAGE HEADER */}
+            <div className="mb-14">
+              <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-primary2 uppercase font-raleway mb-3">
+                <span className="w-8 h-px bg-primary2 inline-block" />
+                Content Management
+              </div>
+              <h1 className="text-4xl sm:text-7xl font-black font-rubik leading-[0.9] tracking-tight">
+                <span className="bg-gradient-to-br from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent">
+                  Drafts &{"\n"}Scheduled
                 </span>
-              )}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 mt-4">
+                <p className="text-gray-500 font-raleway text-sm sm:text-base">
+                  Manage unpublished content and scheduled posts
+                </p>
+                {totalDrafts > 0 && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary2/10 text-primary2 border border-primary2/20">
+                    <FileText size={10} />
+                    {totalDrafts} total
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
-            <aside className="w-full lg:w-64 flex-shrink-0">
-              <div className="sticky top-24">
-                <Sidebar />
-              </div>
-            </aside>
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+              <aside className="w-full lg:w-64 flex-shrink-0">
+                <div className="sticky top-24">
+                  <Sidebar />
+                </div>
+              </aside>
 
-            <div className="flex-1 min-w-0 space-y-6">
-              {/* TABS */}
-              <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none -mx-1 px-1">
-                {TAB_CONFIG.map((tab) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-                  const count = draftCounts[tab.id];
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`relative flex items-center gap-2 px-3 sm:px-5 py-3 rounded-xl font-bold font-rubik text-xs transition-all duration-200 flex-shrink-0 ${
-                        isActive
-                          ? "bg-gradient-to-r from-primary1 to-primary2 text-white shadow-lg shadow-primary2/25"
-                          : "bg-white text-gray-400 border border-gray-200 hover:text-gray-700 hover:border-gray-300 hover:shadow-sm"
-                      }`}
-                    >
-                      <Icon
-                        size={13}
-                        className={isActive ? "text-white/80" : "text-gray-400"}
-                      />
-                      <span className="hidden sm:inline">{tab.label}</span>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-black min-w-[20px] text-center ${isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}
+              <div className="flex-1 min-w-0 space-y-6">
+                {/* TABS */}
+                <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none -mx-1 px-1">
+                  {TAB_CONFIG.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    const count = draftCounts[tab.id];
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`relative flex items-center gap-2 px-3 sm:px-5 py-3 rounded-xl font-bold font-rubik text-xs transition-all duration-200 flex-shrink-0 ${
+                          isActive
+                            ? "bg-gradient-to-r from-primary1 to-primary2 text-white shadow-lg shadow-primary2/25"
+                            : "bg-white text-gray-400 border border-gray-200 hover:text-gray-700 hover:border-gray-300 hover:shadow-sm"
+                        }`}
                       >
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* CONTENT CARD */}
-              <GlassCard>
-                <div className="bg-white rounded-2xl overflow-hidden">
-                  {/* Card Header */}
-                  <div className="px-4 sm:px-8 py-4 sm:py-5 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
-                    <div>
-                      <h2 className="text-lg sm:text-xl font-black font-rubik text-primary3">
-                        {activeConfig.label}
-                      </h2>
-                      <p className="text-gray-400 text-xs font-raleway mt-0.5">
-                        {activeCount} unpublished{" "}
-                        {activeCount === 1 ? "draft" : "drafts"}
-                      </p>
-                    </div>
-                    <Link href={activeConfig.href}>
-                      <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold font-rubik text-primary2 border border-primary2/20 hover:border-primary2/50 hover:bg-primary2/5 rounded-full transition-all duration-200">
-                        + New{" "}
-                        <span className="hidden sm:inline">
-                          {activeConfig.emptyLabel}
+                        <Icon
+                          size={13}
+                          className={
+                            isActive ? "text-white/80" : "text-gray-400"
+                          }
+                        />
+                        <span className="hidden sm:inline">{tab.label}</span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-black min-w-[20px] text-center ${isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}
+                        >
+                          {count}
                         </span>
                       </button>
-                    </Link>
-                  </div>
-
-                  {/* Content */}
-                  {loading ? (
-                    <div className="p-4 sm:p-8 space-y-3 sm:space-y-4">
-                      {[1, 2, 3].map((i) => (
-                        <div
-                          key={i}
-                          className="h-14 sm:h-16 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl animate-pulse"
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <>
-                      {activeTab === "announcements" &&
-                        renderAnnouncementsEvents(
-                          announcements,
-                          "announcement",
-                        )}
-                      {activeTab === "events" &&
-                        renderAnnouncementsEvents(events, "event")}
-                      {activeTab === "testimonials" && renderTestimonials()}
-                      {activeTab === "sponsors" && renderSponsors()}
-                      {activeTab === "merch" && renderMerch()}
-                    </>
-                  )}
+                    );
+                  })}
                 </div>
-              </GlassCard>
+
+                {/* CONTENT CARD */}
+                <GlassCard>
+                  <div className="bg-white rounded-2xl overflow-hidden">
+                    {/* Card Header */}
+                    <div className="px-4 sm:px-8 py-4 sm:py-5 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+                      <div>
+                        <h2 className="text-lg sm:text-xl font-black font-rubik text-primary3">
+                          {activeConfig.label}
+                        </h2>
+                        <p className="text-gray-400 text-xs font-raleway mt-0.5">
+                          {activeCount} unpublished{" "}
+                          {activeCount === 1 ? "draft" : "drafts"}
+                        </p>
+                      </div>
+                      <Link href={activeConfig.href}>
+                        <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold font-rubik text-primary2 border border-primary2/20 hover:border-primary2/50 hover:bg-primary2/5 rounded-full transition-all duration-200">
+                          + New{" "}
+                          <span className="hidden sm:inline">
+                            {activeConfig.emptyLabel}
+                          </span>
+                        </button>
+                      </Link>
+                    </div>
+
+                    {/* Content */}
+                    {loading ? (
+                      <div className="p-4 sm:p-8 space-y-3 sm:space-y-4">
+                        {[1, 2, 3].map((i) => (
+                          <div
+                            key={i}
+                            className="h-14 sm:h-16 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <>
+                        {activeTab === "announcements" &&
+                          renderAnnouncementsEvents(
+                            announcements,
+                            "announcement",
+                          )}
+                        {activeTab === "events" &&
+                          renderAnnouncementsEvents(events, "event")}
+                        {activeTab === "testimonials" && renderTestimonials()}
+                        {activeTab === "sponsors" && renderSponsors()}
+                        {activeTab === "merch" && renderMerch()}
+                      </>
+                    )}
+                  </div>
+                </GlassCard>
+              </div>
             </div>
           </div>
-        </main>
+        </div>
+      </main>
 
+      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
         <Footer />
       </div>
 
@@ -731,6 +737,6 @@ export default function DraftsPage() {
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }
