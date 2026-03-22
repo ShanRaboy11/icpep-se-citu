@@ -492,8 +492,8 @@ const Header = () => {
                           </div>
                         ) : !isNotifLoading ? (
                           <div className="py-16 px-6 text-center">
-                            <Bell className="w-10 h-10 text-gray-100 mx-auto mb-3" />
-                            <p className="text-sm text-gray-400 font-rubik font-medium">
+                            <Bell className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                            <p className="text-sm text-gray-300 font-rubik font-medium">
                               Your inbox is empty
                             </p>
                           </div>

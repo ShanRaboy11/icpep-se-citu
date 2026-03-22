@@ -538,19 +538,13 @@ export default function DraftsPage() {
 
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
             {/* PAGE HEADER */}
-            <div className="mb-14">
-              <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-primary2 uppercase font-raleway mb-3">
-                <span className="w-8 h-px bg-primary2 inline-block" />
-                Content Management
-              </div>
-              <h1 className="text-4xl sm:text-7xl font-black font-rubik leading-[0.9] tracking-tight">
-                <span className="bg-gradient-to-br from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent">
-                  Drafts &{"\n"}Scheduled
-                </span>
+            <div className="mb-16 text-left">
+              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+                Manage Drafts
               </h1>
-              <div className="flex flex-wrap items-center gap-2 mt-4">
-                <p className="text-gray-500 font-raleway text-sm sm:text-base">
-                  Manage unpublished content and scheduled posts
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl">
+                  Manage unpublished content and scheduled posts.
                 </p>
                 {totalDrafts > 0 && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-primary2/10 text-primary2 border border-primary2/20">

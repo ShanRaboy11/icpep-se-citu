@@ -342,20 +342,12 @@ export default function MerchPage() {
 
           <div className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
             {/* ── PAGE HEADER ── */}
-            <div className="mb-14">
-              <div className="flex items-center gap-2 text-xs font-semibold tracking-widest text-primary2 uppercase font-raleway mb-3">
-                <span className="w-8 h-px bg-primary2 inline-block" />
-                Merchandise Management
-              </div>
-              <h1 className="text-4xl sm:text-7xl font-black font-rubik leading-[0.9] tracking-tight">
-                <span className="bg-gradient-to-br from-primary3 via-primary1 to-primary2 bg-clip-text text-transparent">
-                  {editingId ? "Edit\nMerchandise" : "Compose\nMerchandise"}
-                </span>
+            <div className="mb-16 text-left">
+              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+                Manage Merchandise
               </h1>
-              <p className="text-gray-500 font-raleway text-base mt-4 max-w-md">
-                {editingId
-                  ? "Update product details and republish"
-                  : "Add and showcase your official chapter merchandise"}
+              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl">
+                Add and showcase your official chapter merchandise.
               </p>
             </div>
 
