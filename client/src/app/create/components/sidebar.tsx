@@ -11,29 +11,33 @@ import {
   Users,
   FileText,
   ChevronRight,
+  Check,
 } from "lucide-react";
 import clsx from "clsx";
 
 const sections = [
   {
-    label: "Content",
+    label: "Engagement",
     links: [
       { name: "Announcements", href: "/create/announcements", icon: Megaphone },
       { name: "Events", href: "/create/events", icon: CalendarDays },
-      { name: "Testimonials", href: "/create/testimonials", icon: Quote },
-      { name: "Sponsors", href: "/create/sponsors", icon: Handshake },
     ],
   },
   {
-    label: "Store",
+    label: "Community",
     links: [
-      { name: "Merch", href: "/create/merch", icon: ShoppingBag },
+      { name: "Testimonials", href: "/create/testimonials", icon: Quote },
+      { name: "Sponsors", href: "/create/sponsors", icon: Handshake },
       { name: "Officers", href: "/create/officers", icon: Users },
     ],
   },
   {
-    label: "System",
-    links: [{ name: "Drafts", href: "/drafts", icon: FileText }],
+    label: "Commerce",
+    links: [{ name: "Merch", href: "/create/merch", icon: ShoppingBag }],
+  },
+  {
+    label: "Admin",
+    links: [{ name: "Drafts", href: "/create/drafts", icon: FileText }],
   },
 ];
 
@@ -44,73 +48,62 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* ── Desktop: vertical card ── */}
-      <aside className="hidden lg:flex flex-col w-56 shrink-0 rounded-2xl border border-gray-200 bg-white shadow-sm py-4 px-2.5 gap-0.5 relative overflow-hidden">
-        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-primary1 to-primary2 rounded-t-2xl" />
-
+      <aside className="hidden lg:flex flex-col w-60 shrink-0 rounded-3xl border border-gray-100 bg-white shadow-sm py-6 px-4 gap-1 relative overflow-hidden">
         {sections.map((section, si) => (
-          <div key={section.label}>
-            {si > 0 && <div className="h-px bg-gray-100 my-2 mx-1" />}
-
-            <p className="text-[9px] font-bold tracking-[0.12em] uppercase text-gray-400 px-3 pt-2 pb-1 font-rubik">
+          <div key={section.label} className={clsx(si > 0 && "mt-4")}>
+            <p className="font-rubik font-semibold text-primary3 text-sm px-3 mb-2">
               {section.label}
             </p>
 
-            {section.links.map((link) => {
-              const Icon = link.icon;
-              // Check if pathname starts with href to keep active state during editing
-              const active =
-                pathname === link.href || pathname.startsWith(`${link.href}/`);
+            <div className="flex flex-col gap-1">
+              {section.links.map((link) => {
+                const Icon = link.icon;
+                const active =
+                  pathname === link.href ||
+                  pathname.startsWith(`${link.href}/`);
 
-              return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className={clsx(
-                    "group relative flex items-center gap-2.5 px-3 py-2 rounded-xl border text-[13px] font-medium font-rubik transition-all duration-150",
-                    active
-                      ? "bg-primary1/8 border-primary1/20 text-primary3"
-                      : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-200 hover:text-gray-800",
-                  )}
-                >
-                  {active && (
-                    <span className="absolute left-0 top-1/4 bottom-1/4 w-[3px] rounded-full bg-gradient-to-b from-primary1 to-primary2" />
-                  )}
-
-                  <span
+                return (
+                  <Link
+                    key={link.name}
+                    href={link.href}
                     className={clsx(
-                      "flex items-center justify-center w-7 h-7 rounded-lg border shrink-0 transition-all duration-150",
+                      "group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 font-rubik cursor-pointer",
                       active
-                        ? "bg-gradient-to-br from-primary1 to-primary2 border-transparent text-white shadow-md shadow-primary1/25"
-                        : "bg-gray-100 border-gray-200 text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-600",
+                        ? "bg-primary1 text-white shadow-md shadow-primary1/25 font-semibold"
+                        : "text-gray-600 hover:bg-primary1/5 hover:text-primary1 hover:translate-x-1",
                     )}
                   >
-                    <Icon size={13} strokeWidth={2} />
-                  </span>
+                    <span
+                      className={clsx(
+                        "flex items-center justify-center shrink-0 transition-colors",
+                        active ? "text-white" : "text-primary1",
+                      )}
+                    >
+                      <Icon size={18} strokeWidth={active ? 2.5 : 2} />
+                    </span>
 
-                  <span className="flex-1">{link.name}</span>
+                    <span className="flex-1">{link.name}</span>
 
-                  <ChevronRight
-                    size={11}
-                    className={clsx(
-                      "transition-all duration-150 text-gray-300",
-                      active
-                        ? "opacity-60 text-primary1"
-                        : "opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0",
+                    {active ? (
+                      <Check size={14} className="text-white" />
+                    ) : (
+                      <ChevronRight
+                        size={14}
+                        className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+                      />
                     )}
-                  />
-                </Link>
-              );
-            })}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         ))}
       </aside>
 
-      {/* ── Mobile: horizontal pill scroll bar ── */}
       <nav className="lg:hidden w-full">
         <div
-          className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 px-0.5
-          [mask-image:linear-gradient(90deg,transparent_0%,black_4%,black_96%,transparent_100%)]"
+          className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 px-1
+          [mask-image:linear-gradient(90deg,transparent_0%,black_5%,black_95%,transparent_100%)]"
         >
           {allLinks.map((link) => {
             const Icon = link.icon;
@@ -121,13 +114,13 @@ const Sidebar = () => {
                 key={link.name}
                 href={link.href}
                 className={clsx(
-                  "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-medium font-rubik whitespace-nowrap shrink-0 transition-all duration-150",
+                  "inline-flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold font-rubik whitespace-nowrap shrink-0 transition-all duration-200",
                   active
                     ? "bg-primary1 border-primary1 text-white shadow-md shadow-primary1/25"
-                    : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700",
+                    : "bg-white border-gray-200 text-gray-500 hover:border-primary1/30 hover:bg-primary1/5 hover:text-primary1",
                 )}
               >
-                <Icon size={12} strokeWidth={2} />
+                <Icon size={14} strokeWidth={2} />
                 {link.name}
               </Link>
             );
