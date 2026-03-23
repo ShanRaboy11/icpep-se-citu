@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Button from "./button";
 import Menu from "./menu";
@@ -43,6 +43,7 @@ const Header = () => {
   const notifDropdownRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // handle body scroll locking
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -54,6 +55,7 @@ const Header = () => {
     };
   }, [open]);
 
+  // escape key to close menu
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && open) {
@@ -64,16 +66,46 @@ const Header = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
+  // handle header scroll state
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // check auth status on mount
   useEffect(() => {
+    const checkAuthStatus = () => {
+      const token = localStorage.getItem("authToken");
+      const userRole = localStorage.getItem("userRole");
+      if (token && userRole) {
+        setIsLoggedIn(true);
+        setRole(userRole as UserRole);
+        const storedUserName = localStorage.getItem("userName");
+        setUserName(storedUserName || "ICPEP Member");
+      } else {
+        setIsLoggedIn(false);
+        setRole("guest");
+      }
+    };
     checkAuthStatus();
   }, []);
 
+  // handle logout logic
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userName");
+    setIsLoggedIn(false);
+    setRole("guest");
+    setUserName("");
+    setProfileDropdownOpen(false);
+    setNotifDropdownOpen(false);
+    router.push("/");
+  }, [router]);
+
+  // fetch unread notifications count
   useEffect(() => {
     if (isLoggedIn) {
       const fetchUnreadCount = async () => {
@@ -82,8 +114,10 @@ const Header = () => {
           if (response?.success) {
             setUnreadCount(response.unreadCount);
           }
-        } catch (error) {
-          console.error("Failed to fetch notifications count", error);
+        } catch (error: any) {
+          if (error.message === "expired_session") {
+            handleLogout();
+          }
         }
       };
 
@@ -91,8 +125,9 @@ const Header = () => {
       const interval = setInterval(fetchUnreadCount, 60000);
       return () => clearInterval(interval);
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, handleLogout]);
 
+  // close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -112,20 +147,7 @@ const Header = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const checkAuthStatus = () => {
-    const token = localStorage.getItem("authToken");
-    const userRole = localStorage.getItem("userRole");
-    if (token && userRole) {
-      setIsLoggedIn(true);
-      setRole(userRole as UserRole);
-      const storedUserName = localStorage.getItem("userName");
-      setUserName(storedUserName || "ICPEP Member");
-    } else {
-      setIsLoggedIn(false);
-      setRole("guest");
-    }
-  };
-
+  // fetch notification list from db
   const fetchNotificationsFromDB = async (page: number, append = false) => {
     if (isNotifLoading) return;
     setIsNotifLoading(true);
@@ -133,9 +155,7 @@ const Header = () => {
       const response = await notificationService.getAll(page, 5);
       if (response?.success) {
         const mapped = response.data.map((n: any) => {
-          // Logic to determine redirect link directly in dropdown
           let link = n.link || "/home";
-
           if (!n.link) {
             if (n.type === "announcement" && n.relatedId)
               link = `/announcements/${n.relatedId}`;
@@ -167,8 +187,10 @@ const Header = () => {
         setHasMore(mapped.length === 5);
         setUnreadCount(response.unreadCount);
       }
-    } catch (error) {
-      console.error("Failed to fetch notifications", error);
+    } catch (error: any) {
+      if (error.message === "expired_session") {
+        handleLogout();
+      }
     } finally {
       setIsNotifLoading(false);
     }
@@ -215,7 +237,7 @@ const Header = () => {
         await notificationService.markAsRead(n.id);
         setUnreadCount((prev) => Math.max(0, prev - 1));
       } catch (error) {
-        console.error("Failed to mark as read on click", error);
+        console.error(error);
       }
     }
     router.push(n.link);
@@ -230,18 +252,6 @@ const Header = () => {
     }
     setNotifDropdownOpen(!notifDropdownOpen);
     setProfileDropdownOpen(false);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userName");
-    setIsLoggedIn(false);
-    setRole("guest");
-    setUserName("");
-    setProfileDropdownOpen(false);
-    router.push("/");
   };
 
   const handleLogin = () => router.push("/login");
