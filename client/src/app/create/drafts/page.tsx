@@ -11,7 +11,7 @@ import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Sidebar from "@/app/create/components/sidebar";
 import Grid from "@/app/components/grid";
-import { GlassCard } from "../components/glass-card";
+import { GlassCard } from "../../components/glass-card";
 import {
   Megaphone,
   CalendarDays,
