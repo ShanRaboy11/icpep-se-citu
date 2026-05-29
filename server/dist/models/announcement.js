@@ -48,42 +48,55 @@ const awardeeSchema = new mongoose_1.Schema({
 const announcementSchema = new mongoose_1.Schema({
     title: {
         type: String,
-        required: [true, 'Title is required'],
+        required: [true, "Title is required"],
         trim: true,
     },
     description: {
         type: String,
-        required: [true, 'Description is required'],
-        maxlength: [300, 'Description cannot exceed 300 characters'],
+        required: [true, "Description is required"],
+        maxlength: [300, "Description cannot exceed 300 characters"],
     },
     content: {
         type: String,
-        required: [true, 'Content is required'],
+        required: [true, "Content is required"],
     },
     author: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: "User",
         required: true,
     },
     type: {
         type: String,
-        enum: ['Event', 'Award', 'Workshop', 'Meeting', 'Seminar', 'Achievement', 'General', 'News'],
-        default: 'General',
+        enum: [
+            "Event",
+            "Award",
+            "Workshop",
+            "Meeting",
+            "Seminar",
+            "Achievement",
+            "General",
+            "News",
+        ],
+        default: "General",
         required: true,
     },
     priority: {
         type: String,
-        enum: ['normal', 'important', 'urgent'],
-        default: 'normal',
+        enum: ["normal", "important", "urgent"],
+        default: "normal",
     },
     targetAudience: [
         {
             type: String,
-            enum: ['all', 'members', 'officers', 'faculty'],
-            default: 'all',
+            enum: ["all", "members", "officers", "faculty"],
+            default: "all",
         },
     ],
     isPublished: {
+        type: Boolean,
+        default: false,
+    },
+    scheduled: {
         type: Boolean,
         default: false,
     },
@@ -127,7 +140,7 @@ const announcementSchema = new mongoose_1.Schema({
     },
     galleryImages: {
         type: [String],
-        default: []
+        default: [],
     },
     attachments: [attachmentSchema],
     views: {
@@ -141,23 +154,23 @@ announcementSchema.index({ isPublished: 1, publishDate: -1 });
 announcementSchema.index({ type: 1 });
 announcementSchema.index({ targetAudience: 1 });
 // Virtual to check if announcement is expired
-announcementSchema.virtual('isExpired').get(function () {
+announcementSchema.virtual("isExpired").get(function () {
     if (!this.expiryDate)
         return false;
     return new Date() > this.expiryDate;
 });
 // Virtual to format date
-announcementSchema.virtual('formattedDate').get(function () {
-    return this.publishDate?.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    }) || '';
+announcementSchema.virtual("formattedDate").get(function () {
+    return (this.publishDate?.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    }) || "");
 });
 // Method to increment views
 announcementSchema.methods.incrementViews = function () {
     this.views = (this.views || 0) + 1;
     return this.save();
 };
-const Announcement = mongoose_1.default.model('Announcement', announcementSchema);
+const Announcement = mongoose_1.default.model("Announcement", announcementSchema);
 exports.default = Announcement;

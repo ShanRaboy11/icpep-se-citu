@@ -65,35 +65,38 @@ const MerchPage: FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
-      <Grid />
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
-        <main className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
-          {/* Section Header */}
-          <div className="mb-20 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-              <div className="h-2 w-2 rounded-full bg-primary1"></div>
-              <span className="font-raleway text-sm font-semibold text-primary1">
-                Official Gear
-              </span>
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+      <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+        <Grid />
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <Header />
+          <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
+            <div className="mb-20 text-center">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+                <div className="h-2 w-2 rounded-full bg-primary1"></div>
+                <span className="font-raleway text-sm font-semibold text-primary1">
+                  Official Gear
+                </span>
+              </div>
+              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+                Wear Your Pride
+              </h1>
+              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
+                Show your support for the ICPEP SE CIT-U Chapter with our
+                exclusive collection of high-quality merchandise.
+              </p>
             </div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-              Wear Your Pride
-            </h1>
-            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
-              Show your support for the ICPEP SE CIT-U Chapter with our
-              exclusive collection of high-quality merchandise.
-            </p>
-          </div>
 
-          {/* Merchandise Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {merchandise.map((item) => (
-              <MerchCard key={item.name} {...item} />
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {merchandise.map((item) => (
+                <MerchCard key={item.name} {...item} />
+              ))}
+            </div>
           </div>
-        </main>
+        </div>
+      </main>
+
+      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
         <Footer />
       </div>
     </div>

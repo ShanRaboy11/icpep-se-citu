@@ -41,37 +41,41 @@ const admissionSchema = new mongoose_1.Schema({
 const eventSchema = new mongoose_1.Schema({
     title: {
         type: String,
-        required: [true, 'Title is required'],
+        required: [true, "Title is required"],
         trim: true,
     },
     description: {
         type: String,
-        required: [true, 'Description is required'],
-        maxlength: [300, 'Description cannot exceed 300 characters'],
+        required: [true, "Description is required"],
+        maxlength: [300, "Description cannot exceed 300 characters"],
     },
     content: {
         type: String,
-        required: [true, 'Content is required'],
+        required: [true, "Content is required"],
     },
     author: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: 'User',
+        ref: "User",
         required: true,
     },
     tags: [String],
     priority: {
         type: String,
-        enum: ['normal', 'important', 'urgent'],
-        default: 'normal',
+        enum: ["normal", "important", "urgent"],
+        default: "normal",
     },
     targetAudience: [
         {
             type: String,
-            enum: ['all', 'members', 'officers', 'faculty'],
-            default: 'all',
+            enum: ["all", "members", "officers", "faculty"],
+            default: "all",
         },
     ],
     isPublished: {
+        type: Boolean,
+        default: false,
+    },
+    scheduled: {
         type: Boolean,
         default: false,
     },
@@ -83,7 +87,7 @@ const eventSchema = new mongoose_1.Schema({
     // Event specific fields
     eventDate: {
         type: Date,
-        required: [true, 'Event date is required'],
+        required: [true, "Event date is required"],
     },
     time: {
         type: String,
@@ -92,8 +96,8 @@ const eventSchema = new mongoose_1.Schema({
     // Online / Onsite mode
     mode: {
         type: String,
-        enum: ['Online', 'Onsite'],
-        default: 'Onsite',
+        enum: ["Online", "Onsite"],
+        default: "Onsite",
     },
     location: {
         type: String,
@@ -148,23 +152,23 @@ eventSchema.index({ isPublished: 1, eventDate: -1 });
 eventSchema.index({ tags: 1 });
 eventSchema.index({ targetAudience: 1 });
 // Virtual to check if event is expired
-eventSchema.virtual('isExpired').get(function () {
+eventSchema.virtual("isExpired").get(function () {
     if (!this.expiryDate)
         return false;
     return new Date() > this.expiryDate;
 });
 // Virtual to format date
-eventSchema.virtual('formattedDate').get(function () {
-    return this.eventDate?.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    }) || '';
+eventSchema.virtual("formattedDate").get(function () {
+    return (this.eventDate?.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    }) || "");
 });
 // Method to increment views
 eventSchema.methods.incrementViews = function () {
     this.views = (this.views || 0) + 1;
     return this.save();
 };
-const Event = mongoose_1.default.model('Event', eventSchema);
+const Event = mongoose_1.default.model("Event", eventSchema);
 exports.default = Event;

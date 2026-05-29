@@ -10,7 +10,6 @@ import FacultySection from "./sections/faculty";
 
 import { Home } from "lucide-react";
 import { useRouter } from "next/navigation";
-
 import { FC } from "react";
 
 interface OfficerTerm {
@@ -67,30 +66,27 @@ const departmentFaculty: FacultyMember[] = [
 const AboutPage: FC = () => {
   const router = useRouter();
 
-  const pillText = "About Our Chapter";
-  const title = "The ICpEP SE CIT-U Story";
-  const subtitle =
-    "Get to know our mission, values, and the dedicated individuals who bring ICPEP SE CIT-U Chapter to life and carry its legacy forward.";
-
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
-      <Grid />
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
-        <div className="flex-grow">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+      <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+        <Grid />
+
+        <div className="relative z-10 flex flex-col">
+          <Header />
+
           <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem]">
             <div className="mb-8 flex justify-start">
               <button
                 onClick={() => router.push("/")}
                 title="Back to Home"
                 className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
-                         rounded-full border-2 border-primary1 text-primary1 
-                         overflow-hidden transition-all duration-300 ease-in-out 
-                         active:scale-95 before:absolute before:inset-0 
-                         before:bg-gradient-to-r before:from-transparent 
-                         before:via-white/40 before:to-transparent 
-                         before:translate-x-[-100%] hover:before:translate-x-[100%] 
-                         before:transition-transform before:duration-700"
+               rounded-full border-2 border-primary1 text-primary1 
+               overflow-hidden transition-all duration-300 ease-in-out 
+               active:scale-95 before:absolute before:inset-0 
+               before:bg-gradient-to-r before:from-transparent 
+               before:via-white/40 before:to-transparent 
+               before:translate-x-[-100%] hover:before:translate-x-[100%] 
+               before:transition-transform before:duration-700"
               >
                 <Home className="h-6 w-6" />
               </button>
@@ -100,25 +96,30 @@ const AboutPage: FC = () => {
               <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
                 <div className="h-2 w-2 rounded-full bg-primary1"></div>
                 <span className="font-raleway text-sm font-semibold text-primary1">
-                  {pillText}
+                  About Our Chapter
                 </span>
               </div>
               <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-                {title}
+                The ICpEP SE CIT-U Story
               </h1>
               <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
-                {subtitle}
+                Get to know our mission, values, and the dedicated individuals
+                who bring ICPEP SE CIT-U Chapter to life.
               </p>
             </div>
+
             <InfoSection />
           </div>
 
           <AdvisorsSection />
-
           <StudentLeadersSection history={officerHistory} />
-
           <FacultySection faculty={departmentFaculty} />
+
+          <div className="h-20 md:h-32" />
         </div>
+      </main>
+
+      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
         <Footer />
       </div>
     </div>

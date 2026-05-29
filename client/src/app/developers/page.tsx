@@ -69,36 +69,40 @@ export default function DevelopersPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
-      <Grid />
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+      <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+        <Grid />
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <Header />
 
-        <main className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12 w-full flex-grow">
-          <div className="mb-16 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-              <div className="h-2 w-2 rounded-full bg-primary1"></div>
-              <span className="font-raleway text-sm font-semibold text-primary1">
-                Project Team
-              </span>
+          <div className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12 w-full flex-grow">
+            <div className="mb-16 text-center">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+                <div className="h-2 w-2 rounded-full bg-primary1"></div>
+                <span className="font-raleway text-sm font-semibold text-primary1">
+                  Project Team
+                </span>
+              </div>
+              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+                Meet the Developers
+              </h1>
+              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+                The student developers who created the official ICPEP SE CIT-U
+                Chapter website as part of the Software Design course.
+              </p>
             </div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-              Meet the Developers
-            </h1>
-            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-              The student developers who created the official ICPEP SE CIT-U
-              Chapter website as part of the Software Design course.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[0px] gap-y-14 justify-items-center max-w-[845px] mx-auto mb-16">
-            {developers.map((dev, index) => (
-              <DeveloperCard key={index} {...dev} />
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[0px] gap-y-14 justify-items-center max-w-[845px] mx-auto mb-16">
+              {developers.map((dev, index) => (
+                <DeveloperCard key={index} {...dev} />
+              ))}
+            </div>
           </div>
-        </main>
+        </div>
+      </main>
 
+      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
         <Footer />
       </div>
     </div>

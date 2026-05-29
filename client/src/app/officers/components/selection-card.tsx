@@ -43,10 +43,8 @@ const SelectionCard: FC<SelectionCardProps> = ({
         }}
       />
 
-      {/* Lighting Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/10 pointer-events-none z-0" />
 
-      {/* Glass Border */}
       <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/20 pointer-events-none z-20" />
 
       <div
@@ -55,12 +53,13 @@ const SelectionCard: FC<SelectionCardProps> = ({
         <button
           className="
             absolute top-4 left-4 h-10 w-10 sm:top-6 sm:left-6 sm:h-14 sm:w-14 
-            border border-white/30 
+            border-2 border-white/20 
             bg-transparent 
             rounded-full flex items-center justify-center text-white 
-            transition-colors duration-300 
+            transition-all duration-300 
             shadow-sm z-30 cursor-pointer 
-            hover:bg-white/20
+            hover:bg-white/10 hover:backdrop-blur-sm
+            focus:outline-none focus:ring-2 focus:ring-white/50
           "
           aria-label={`View ${title}`}
         >

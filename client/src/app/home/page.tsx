@@ -14,10 +14,10 @@ import { FAQSection } from "./sections/faq";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-transparent">
       <Header />
 
-      <main className="pt-20" style={{ backgroundColor: "#FEFEFF" }}>
+      <main className="relative z-10 pt-20 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <section id="hero">
           <Hero />
         </section>
@@ -30,11 +30,11 @@ export default function LandingPage() {
           <WhyJoinSection />
         </section>
 
-        <section id="announcements" className="bg-primary1">
+        <section id="announcements">
           <AnnouncementsSection />
         </section>
 
-        <section id="events" className="bg-white">
+        <section id="events">
           <EventsSection />
         </section>
 
@@ -42,20 +42,22 @@ export default function LandingPage() {
           <TestimonialsSection />
         </section>
 
-        <section id="faculty-officers" className="bg-white">
+        <section id="faculty-officers">
           <FacultyOfficersSection />
         </section>
 
-        <section id="partners" className="bg-white">
+        <section id="partners">
           <PartnersSection />
         </section>
 
-        <section id="faq" className="bg-white">
+        <section id="faq">
           <FAQSection />
         </section>
       </main>
 
-      <Footer />
+      <div className="mt-[-35px] md:mt-[-80px]">
+        <Footer />
+      </div>
     </div>
   );
 }

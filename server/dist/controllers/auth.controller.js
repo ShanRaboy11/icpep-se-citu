@@ -7,11 +7,12 @@ exports.logout = exports.getCurrentUser = exports.changePassword = exports.first
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_1 = __importDefault(require("../models/user"));
 const password_validator_1 = require("../utils/password_validator");
+const notification_1 = require("../utils/notification");
 // JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 // Generate JWT Token
 const generateToken = (userId, role) => {
-    return jsonwebtoken_1.default.sign({ id: userId, role }, JWT_SECRET, { expiresIn: '7d' });
+    return jsonwebtoken_1.default.sign({ id: userId, role }, JWT_SECRET, { expiresIn: "7d" });
 };
 // @desc    Login user
 // @route   POST /api/auth/login
@@ -23,24 +24,24 @@ const login = async (req, res) => {
         if (!studentNumber || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide student number and password',
+                message: "Please provide student number and password",
             });
         }
         // Find user and include password and firstLogin fields
         const user = await user_1.default.findOne({
-            studentNumber: studentNumber.toUpperCase()
-        }).select('+password +firstLogin');
+            studentNumber: studentNumber.toUpperCase(),
+        }).select("+password +firstLogin");
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials',
+                message: "Invalid credentials",
             });
         }
         // Check if user is active
         if (!user.isActive) {
             return res.status(403).json({
                 success: false,
-                message: 'Your account has been deactivated. Please contact an administrator.',
+                message: "Your account has been deactivated. Please contact an administrator.",
             });
         }
         // Check password
@@ -48,7 +49,7 @@ const login = async (req, res) => {
         if (!isPasswordCorrect) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials',
+                message: "Invalid credentials",
             });
         }
         // Generate token
@@ -62,6 +63,7 @@ const login = async (req, res) => {
             middleName: user.middleName,
             fullName: user.fullName,
             role: user.role,
+            position: user.position,
             yearLevel: user.yearLevel,
             membershipStatus: user.membershipStatus,
             profilePicture: user.profilePicture,
@@ -72,16 +74,16 @@ const login = async (req, res) => {
         };
         res.status(200).json({
             success: true,
-            message: 'Login successful',
+            message: "Login successful",
             token,
             user: userData,
         });
     }
     catch (error) {
-        console.error('Login error:', error);
+        console.error("Login error:", error);
         res.status(500).json({
             success: false,
-            message: 'Server error during login',
+            message: "Server error during login",
         });
     }
 };
@@ -95,7 +97,7 @@ const firstLoginPasswordChange = async (req, res) => {
         if (!newPassword) {
             res.status(400).json({
                 success: false,
-                message: 'Please provide new password',
+                message: "Please provide new password",
             });
             return;
         }
@@ -104,17 +106,17 @@ const firstLoginPasswordChange = async (req, res) => {
         if (!validation.isValid) {
             res.status(400).json({
                 success: false,
-                message: 'Password does not meet security requirements',
+                message: "Password does not meet security requirements",
                 errors: validation.errors,
             });
             return;
         }
         // Get user with password
-        const user = await user_1.default.findById(req.user?.id).select('+password +firstLogin');
+        const user = await user_1.default.findById(req.user?.id).select("+password +firstLogin");
         if (!user) {
             res.status(404).json({
                 success: false,
-                message: 'User not found',
+                message: "User not found",
             });
             return;
         }
@@ -122,7 +124,7 @@ const firstLoginPasswordChange = async (req, res) => {
         if (!user.firstLogin) {
             res.status(400).json({
                 success: false,
-                message: 'This endpoint is only for first login password change',
+                message: "This endpoint is only for first login password change",
             });
             return;
         }
@@ -130,15 +132,17 @@ const firstLoginPasswordChange = async (req, res) => {
         user.password = newPassword;
         user.firstLogin = false;
         await user.save();
+        // Send notification
+        await (0, notification_1.sendNotification)(user._id, "[PROFILE] Password Updated", "Your password has been successfully updated.", "system", user._id, null);
         res.status(200).json({
             success: true,
-            message: 'Password changed successfully',
+            message: "Password changed successfully",
         });
     }
     catch (error) {
         res.status(500).json({
             success: false,
-            message: 'Error changing password',
+            message: "Error changing password",
             error: error.message,
         });
     }
@@ -154,7 +158,7 @@ const changePassword = async (req, res) => {
         if (!currentPassword || !newPassword) {
             res.status(400).json({
                 success: false,
-                message: 'Please provide current password and new password',
+                message: "Please provide current password and new password",
             });
             return;
         }
@@ -163,17 +167,17 @@ const changePassword = async (req, res) => {
         if (!validation.isValid) {
             res.status(400).json({
                 success: false,
-                message: 'Password does not meet security requirements',
+                message: "Password does not meet security requirements",
                 errors: validation.errors,
             });
             return;
         }
         // Find user
-        const user = await user_1.default.findById(req.user?.id).select('+password +firstLogin');
+        const user = await user_1.default.findById(req.user?.id).select("+password +firstLogin");
         if (!user) {
             res.status(404).json({
                 success: false,
-                message: 'User not found',
+                message: "User not found",
             });
             return;
         }
@@ -182,7 +186,7 @@ const changePassword = async (req, res) => {
         if (!isPasswordCorrect) {
             res.status(401).json({
                 success: false,
-                message: 'Current password is incorrect',
+                message: "Current password is incorrect",
             });
             return;
         }
@@ -190,16 +194,18 @@ const changePassword = async (req, res) => {
         user.password = newPassword;
         user.firstLogin = false;
         await user.save();
+        // Send notification
+        await (0, notification_1.sendNotification)(user._id, "[PROFILE] Password Updated", "Your password has been successfully updated.", "system", user._id, null);
         res.status(200).json({
             success: true,
-            message: 'Password changed successfully',
+            message: "Password changed successfully",
         });
     }
     catch (error) {
-        console.error('Change password error:', error);
+        console.error("Change password error:", error);
         res.status(500).json({
             success: false,
-            message: 'Server error during password change',
+            message: "Server error during password change",
             error: error.message,
         });
     }
@@ -211,11 +217,11 @@ exports.changePassword = changePassword;
 const getCurrentUser = async (req, res) => {
     try {
         const userId = req.user?.id;
-        const user = await user_1.default.findById(userId).select('-password');
+        const user = await user_1.default.findById(userId).select("-password");
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found',
+                message: "User not found",
             });
         }
         res.status(200).json({
@@ -224,10 +230,10 @@ const getCurrentUser = async (req, res) => {
         });
     }
     catch (error) {
-        console.error('Get current user error:', error);
+        console.error("Get current user error:", error);
         res.status(500).json({
             success: false,
-            message: 'Server error',
+            message: "Server error",
         });
     }
 };
@@ -238,7 +244,7 @@ exports.getCurrentUser = getCurrentUser;
 const logout = async (req, res) => {
     res.status(200).json({
         success: true,
-        message: 'Logged out successfully',
+        message: "Logged out successfully",
     });
 };
 exports.logout = logout;

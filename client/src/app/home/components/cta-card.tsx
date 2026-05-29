@@ -36,7 +36,9 @@ export const CallToActionCard = () => {
           </a>
           <a
             href="/primer.pdf"
-            download
+            download="Sponsorship_Primer.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
             className="font-raleway cursor-pointer text-center bg-transparent text-white border border-white/80 font-bold py-3 px-6 rounded-xl shadow-md transition-all hover:scale-105 hover:bg-white/10"
           >
             Download Primer

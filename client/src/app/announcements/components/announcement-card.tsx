@@ -33,8 +33,6 @@ export function AnnouncementCard({
     >
       <div className="md:flex h-full">
         <div className="md:w-1/3 h-48 md:h-full">
-          {/* show a fallback image when none provided */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl ?? "/gle.png"}
             alt={title}
@@ -46,7 +44,6 @@ export function AnnouncementCard({
           <div>
             <div className="mb-3 sm:mb-4">
               <span
-                // This now uses the IMPORTED getTypeColor function
                 className={`inline-block px-3 py-1 sm:px-4 sm:py-2 rounded-[10px] text-xs sm:text-sm font-raleway font-medium ${getTypeColor(
                   type
                 )}`}
@@ -59,7 +56,6 @@ export function AnnouncementCard({
               {title}
             </h3>
 
-            {/* MODIFICATION 3: Increased line-clamp for description */}
             <p className="font-raleway text-gray-700 text-sm sm:text-base mb-2 sm:mb-4 leading-relaxed line-clamp-3">
               {description}
             </p>
@@ -67,7 +63,6 @@ export function AnnouncementCard({
 
           <div className="mt-2">
             <p className="font-raleway text-primary1 font-medium text-sm sm:text-base">
-              {/* This now uses the IMPORTED formatDate function */}
               {formatDate(date)}
             </p>
           </div>

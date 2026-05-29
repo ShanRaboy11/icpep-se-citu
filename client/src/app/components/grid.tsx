@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 
 const Grid: React.FC = () => {
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -8,26 +8,33 @@ const Grid: React.FC = () => {
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       if (gridRef.current) {
-        // We use requestAnimationFrame for a smoother, more performant animation
+        // Calculate mouse position relative to the grid container
+        // This ensures the FX stays under the mouse even when scrolling
+        const rect = gridRef.current.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
         requestAnimationFrame(() => {
-          // Set CSS custom properties (--mouse-x and --mouse-y) to the cursor's position
-          gridRef.current?.style.setProperty('--mouse-x', `${event.clientX}px`);
-          gridRef.current?.style.setProperty('--mouse-y', `${event.clientY}px`);
+          gridRef.current?.style.setProperty("--mouse-x", `${x}px`);
+          gridRef.current?.style.setProperty("--mouse-y", `${y}px`);
         });
       }
     };
 
-    // Add the event listener to the window
-    window.addEventListener('mousemove', handleMouseMove);
+    // Attach to window to track mouse even if it leaves the specific grid area
+    window.addEventListener("mousemove", handleMouseMove);
 
-    // Cleanup function to remove the listener when the component unmounts
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, []); // Empty dependency array ensures this runs only once
+  }, []);
 
   return (
-    <div ref={gridRef} className="interactive-grid fixed inset-0 z-0"></div>
+    /* 
+       Changed 'fixed' to 'absolute'. 
+       This allows 'overflow-hidden' on the parent to clip the corners.
+    */
+    <div ref={gridRef} className="interactive-grid absolute inset-0 z-0 pointer-events-none"></div>
   );
 };
 
