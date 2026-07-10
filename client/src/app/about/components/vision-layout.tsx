@@ -10,38 +10,41 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
       iconUrl: "/rocket.png",
       title: "Fostering Innovators",
       description: "Leading and inspiring technological advancement.",
-      sizeClass: "w-[90%] h-[90%]",
+      sizeClass: "w-[85%] h-[85%] md:w-3/4 md:h-3/4",
     },
     {
       iconUrl: "/target.png",
       title: "Ethical Leadership",
       description: "Impacting society with technical prowess and integrity.",
-      sizeClass: "w-[90%] h-[90%]",
+      sizeClass: "w-[85%] h-[85%] md:w-3/4 md:h-3/4",
     },
     {
       iconUrl: "/megaphone.png",
       title: "Community Driven",
       description: "Building a collaborative and supportive student network.",
-      sizeClass: "w-[85%] h-[85%]",
+      sizeClass: "w-[80%] h-[80%] md:w-2/3 md:h-2/3",
     },
   ];
 
   return (
-    <div className="content-fade text-left sm:text-center">
-      <div className="max-w-3xl mx-0 sm:mx-auto">
-        <h3 className="font-rubik text-2xl sm:text-4xl font-bold mb-3 sm:mb-4 text-secondary2">
+    <div className="content-fade text-left md:text-center">
+      <div className="max-w-3xl mx-0 md:mx-auto">
+        <h3 className="font-rubik text-2xl md:text-4xl font-bold mb-3 md:mb-4 text-secondary2 leading-tight">
           {section.title}
         </h3>
-        <p className="font-raleway text-sm sm:text-xl leading-relaxed text-gray-300">
+        <p className="font-raleway text-sm md:text-xl leading-relaxed text-gray-300">
           {section.content}
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-3 sm:gap-6 mt-6 sm:mt-10">
+      <div className="flex flex-col md:grid md:grid-cols-3 gap-4 md:gap-8 mt-8 md:mt-12">
         {visionPoints.map((point, index) => (
-          <div key={index} className="text-left sm:text-center group">
+          <div
+            key={index}
+            className="flex flex-row md:flex-col items-center md:items-center gap-4 md:gap-0 group"
+          >
             <div
-              className="w-full h-16 sm:h-28 rounded-xl sm:rounded-2xl overflow-hidden bg-white/5 mb-2 border border-white/10 transition-colors duration-300 group-hover:bg-white/10
+              className="w-12 h-12 md:w-full md:h-40 flex-shrink-0 rounded-xl md:rounded-2xl overflow-hidden bg-white/5 md:mb-4 border border-white/10 transition-colors duration-300 group-hover:bg-white/10
                          flex items-center justify-center"
               style={{
                 backgroundImage:
@@ -59,13 +62,14 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
               </div>
             </div>
 
-            <h4 className="font-rubik text-sm sm:text-lg font-bold text-white mb-1">
-              {point.title}
-            </h4>
-
-            <p className="font-raleway text-[10px] sm:text-sm text-gray-300 leading-tight">
-              {point.description}
-            </p>
+            <div className="flex flex-col text-left md:text-center">
+              <h4 className="font-rubik text-sm md:text-xl font-bold text-white leading-snug md:mb-1">
+                {point.title}
+              </h4>
+              <p className="font-raleway text-[10px] md:text-base text-gray-300 leading-relaxed">
+                {point.description}
+              </p>
+            </div>
           </div>
         ))}
       </div>

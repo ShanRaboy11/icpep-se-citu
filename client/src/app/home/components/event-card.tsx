@@ -6,9 +6,10 @@ import { CalendarPlus } from "lucide-react";
 
 interface Props {
   event: Event;
+  hideRSVP?: boolean;
 }
 
-export default function EventCard({ event }: Props) {
+export default function EventCard({ event, hideRSVP = false }: Props) {
   const eventDate = new Date(event.date);
   const formattedDate = eventDate.toLocaleDateString("en-US", {
     month: "long",
@@ -28,13 +29,14 @@ export default function EventCard({ event }: Props) {
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
 
-        <div className="absolute top-3 right-3 z-10 flex h-9 items-center rounded-full bg-black/50 px-2.5 text-white backdrop-blur-sm transition-colors duration-300 ease-in-out group-hover:bg-primary1">
-          <CalendarPlus size={20} className="flex-shrink-0" />
-
-          <span className="font-raleway whitespace-nowrap text-sm font-semibold opacity-0 max-w-0 group-hover:opacity-100 group-hover:max-w-xs group-hover:ml-1.5 transition-[max-width,opacity,margin] duration-300 ease-in-out">
-            RSVP
-          </span>
-        </div>
+        {!hideRSVP && (
+          <div className="absolute top-3 right-3 z-10 flex h-9 items-center rounded-full bg-black/50 px-2.5 text-white backdrop-blur-sm transition-colors duration-300 ease-in-out group-hover:bg-primary1">
+            <CalendarPlus size={20} className="flex-shrink-0" />
+            <span className="font-raleway whitespace-nowrap text-sm font-semibold opacity-0 max-w-0 group-hover:opacity-100 group-hover:max-w-xs group-hover:ml-1.5 transition-[max-width,opacity,margin] duration-300 ease-in-out">
+              RSVP
+            </span>
+          </div>
+        )}
       </Link>
 
       <div className="flex flex-1 flex-col p-6">

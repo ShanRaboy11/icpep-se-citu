@@ -1,4 +1,3 @@
-// components/rsvp-card.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +5,7 @@ import { useState, useEffect } from "react";
 interface Props {
   status?: "Upcoming" | "Ongoing" | "Ended";
   date: string;
-  rsvpLink?: string; // Optional external RSVP link
+  rsvpLink?: string;
 }
 
 const CountdownPill = ({ days, hours }: { days: number; hours: number }) => (
@@ -40,7 +39,7 @@ export default function RsvpCard({ status, date, rsvpLink }: Props) {
 
   const handleRsvp = () => {
     if (rsvpLink) {
-      window.open(rsvpLink, '_blank', 'noopener,noreferrer');
+      window.open(rsvpLink, "_blank", "noopener,noreferrer");
     } else {
       setHasRsvpd(true);
     }

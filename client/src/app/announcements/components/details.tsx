@@ -19,7 +19,6 @@ interface AnnouncementDetailsProps {
 }
 
 const formatYearLevel = (year: string) => {
-  // If it already contains "Year", assume it's formatted or custom text
   if (year.toLowerCase().includes("year")) return year;
 
   const num = parseInt(year);
@@ -42,25 +41,26 @@ const formatYearLevel = (year: string) => {
   return `${num}${suffix(num)} Year`;
 };
 
-export default function AnnouncementDetails({ announcement }: AnnouncementDetailsProps) {
+export default function AnnouncementDetails({
+  announcement,
+}: AnnouncementDetailsProps) {
   if (!announcement) return null;
 
-  // Normalize the date field. Prefer `date` (static samples), then `publishDate`.
   const announcementType = announcement.type?.toLowerCase() || "";
 
-  // Determine if we should show agenda (only for meetings)
   const showAgenda = announcementType === "meeting" && announcement.agenda;
-  
-  // Determine if we should show awardees (only for awards or achievements)
-  const showAwardees = (announcementType === "award" || announcementType === "achievement") && announcement.awardees;
+
+  const showAwardees =
+    (announcementType === "award" || announcementType === "achievement") &&
+    announcement.awardees;
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg">
-      <div className="pb-6 mb-6 border-b border-gray-200">
+      <div className="pb-6 mb-6 border-b border-gray-100">
         <div className="mb-4">
           <span
             className={`inline-block px-4 py-1.5 rounded-lg text-sm font-rubik font-semibold text-white ${getTypeColor(
-              announcement.type ?? ""
+              announcement.type ?? "",
             )}`}
           >
             {announcement.type}
@@ -71,7 +71,9 @@ export default function AnnouncementDetails({ announcement }: AnnouncementDetail
         </h1>
         <div className="flex flex-col gap-1">
           {announcement.publishDate && (
-            <p className="text-sm text-gray-500">Posted on {formatDate(announcement.publishDate as string)}</p>
+            <p className="font-raleway text-sm text-gray-500">
+              Posted on {formatDate(announcement.publishDate as string)}
+            </p>
           )}
         </div>
       </div>

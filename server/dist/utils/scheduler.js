@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.startAnnouncementScheduler = startAnnouncementScheduler;
 const announcement_1 = __importDefault(require("../models/announcement"));
 const event_1 = __importDefault(require("../models/event"));
-const notification_1 = require("./notification");
 /**
  * Start a simple scheduler that publishes announcements whose publishDate has arrived.
  * This runs in-process and polls the database periodically (every 30s).
@@ -38,8 +37,6 @@ function startAnnouncementScheduler(intervalMs = 30000) {
                             ann.publishDate = new Date();
                         await ann.save();
                         console.log('✅ Published scheduled announcement', ann._id, 'at', new Date().toISOString());
-                        // Notify target audience
-                        await (0, notification_1.notifyTargetAudience)(ann.targetAudience || ["all"], `[ANNOUNCEMENT] ${ann.title}`, `New announcement: ${ann.title}`, "announcement", ann._id, "Announcement", `/announcements/${ann._id}`);
                     }
                     catch (err) {
                         console.error('❌ Failed to publish scheduled announcement', ann._id, err);
@@ -67,8 +64,6 @@ function startAnnouncementScheduler(intervalMs = 30000) {
                             evt.publishDate = new Date();
                         await evt.save();
                         console.log('✅ Published scheduled event', evt._id, 'at', new Date().toISOString());
-                        // Notify target audience
-                        await (0, notification_1.notifyTargetAudience)(evt.targetAudience || ["all"], `[NEW] ${evt.title}`, `New event: ${evt.title}`, "event", evt._id, "Event", `/events/${evt._id}`);
                     }
                     catch (err) {
                         console.error('❌ Failed to publish scheduled event', evt._id, err);

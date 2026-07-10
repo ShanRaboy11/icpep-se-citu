@@ -28,7 +28,7 @@ const Hero = () => {
 
   return (
     <section className="light-dark-background relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 isolate -translate-y-[4vh]">
-      {/* Floating skill boxes */}
+      {/* pills */}
       <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
         <SkillBox
           icon={<Code size={20} />}
@@ -52,7 +52,6 @@ const Hero = () => {
         />
       </div>
 
-      {/* Main Content */}
       <div className="relative z-10 text-center px-4 w-full max-w-7xl mx-auto">
         <div className="mb-8">
           <div className="inline-block bg-buttonbg1 border border-primary1/30 rounded-full px-6 py-2">
@@ -77,7 +76,7 @@ const Hero = () => {
           Unlocking Potential, One Bit at a Time
         </p>
 
-        {/* Buttons */}
+        {/* buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
           <button
             className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer w-[220px] sm:w-auto"
@@ -93,7 +92,7 @@ const Hero = () => {
           </button>
         </div>
 
-        {/* Stats */}
+        {/* stats */}
         <div className="flex justify-center">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-lg">
             <div className="text-center">

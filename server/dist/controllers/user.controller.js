@@ -223,6 +223,18 @@ const bulkUploadUsers = async (req, res) => {
                     });
                     continue;
                 }
+                // Check if user exists
+                const existingUser = await user_1.default.findOne({
+                    studentNumber: userData.studentNumber.toUpperCase(),
+                });
+                if (existingUser) {
+                    results.failed.push({
+                        studentNumber: userData.studentNumber,
+                        reason: "User with this student number already exists",
+                        data: userData,
+                    });
+                    continue;
+                }
                 // ✅ NEW: Handle membership status - supports both string and object formats
                 let membershipStatusObj = {
                     isMember: false,

@@ -41,8 +41,16 @@ export default function AttendanceModal({
       year: "numeric",
       month: "long",
       day: "numeric",
-    }
+    },
   );
+
+  const eventDate = new Date(announcement.date);
+
+  const formattedTime = eventDate.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   const subtitleParts = [formattedDate];
   if (announcement.time) {
@@ -60,26 +68,44 @@ export default function AttendanceModal({
       />
 
       <div className="relative flex flex-col w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl bg-white text-gray-800 shadow-2xl">
-        <div className="relative flex flex-col items-center justify-center p-5 sm:p-8 text-center border-b border-gray-200">
-          <Image
-            src="/icpep logo.png"
-            alt="ICpEP Logo"
-            width={64}
-            height={64}
-            className="mb-4 rounded-full"
-          />
-          <h2 className="font-rubik text-[1.6rem] sm:text-3xl font-bold text-primary3">
-            {`${announcement.title}`}
-          </h2>
-          <p className="font-raleway text-gray-500 text-sm sm:text-lg">
-            {subtitleParts.join(" • ")}
-          </p>
+        <div className="relative border-b border-gray-100 px-5 sm:px-8 py-4 sm:py-5">
+          <div className="flex items-center gap-4">
+            {/* logo */}
+            <div className="flex-shrink-0">
+              <Image
+                src="/icpep logo.png"
+                alt="ICpEP Logo"
+                width={70}
+                height={70}
+                className="rounded-full"
+              />
+            </div>
 
+            {/* title */}
+            <div className="flex flex-col justify-center">
+              <h2 className="font-rubik text-xl sm:text-2xl font-bold text-primary3 leading-tight">
+                {announcement.title}
+              </h2>
+
+              {/* pills */}
+              <div className="mt-2 flex flex-wrap gap-2">
+                <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs sm:text-sm font-raleway font-semibold">
+                  {formattedDate}
+                </span>
+
+                <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs sm:text-sm font-raleway font-semibold">
+                  {formattedTime}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* close */}
           <button
             onClick={onClose}
-            className="group absolute top-4 right-4 rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 cursor-pointer"
+            className="group absolute top-3 right-3 rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 cursor-pointer"
           >
-            <X className="h-6 w-6 transition-transform duration-300 ease-in-out group-hover:rotate-90" />
+            <X className="h-5 w-5 transition-transform duration-300 ease-in-out group-hover:rotate-90" />
           </button>
         </div>
 
@@ -89,7 +115,7 @@ export default function AttendanceModal({
             style={{
               background: `linear-gradient(to right, ${lightenColor(
                 "#003599",
-                15
+                15,
               )}, #003599)`,
             }}
           >
@@ -121,7 +147,7 @@ export default function AttendanceModal({
               style={{
                 background: `linear-gradient(to right, ${lightenColor(
                   committee.color,
-                  25
+                  25,
                 )}, ${committee.color})`,
               }}
             >

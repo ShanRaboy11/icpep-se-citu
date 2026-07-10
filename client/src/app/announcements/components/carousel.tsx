@@ -64,7 +64,7 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
         </div>
       </div>
 
-      {/* Navigation Buttons */}
+      {/* nav */}
       <button
         onClick={scrollPrev}
         aria-label="Previous image"
@@ -84,7 +84,6 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
         <ChevronRight className="h-6 w-6" />
       </button>
 
-      {/* Dot Indicators */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
         {imageUrls.map((_, index) => (
           <button

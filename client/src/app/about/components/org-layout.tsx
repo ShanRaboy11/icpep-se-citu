@@ -36,18 +36,18 @@ const OrgLayout: FC<{ section: SectionType }> = ({ section }) => {
           </p>
         </div>
 
-        <div className="mt-6 sm:mt-10 flex items-center gap-3 sm:gap-4 flex-wrap">
+        <div className="mt-4 sm:mt-10 flex items-center gap-3 sm:gap-4 flex-wrap">
           {iconSquares.map((iconUrl, index) => (
             <div
               key={index}
-              className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center transition-colors duration-300 hover:bg-white/10"
+              className="w-12 h-12 sm:w-24 sm:h-24 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center transition-colors duration-300 hover:bg-white/10"
               style={{
                 backgroundImage:
                   "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
                 backgroundSize: "1rem 1rem",
               }}
             >
-              <div className="relative w-8 h-8 sm:w-14 sm:h-14">
+              <div className="relative w-7 h-7 sm:w-14 sm:h-14">
                 <Image
                   src={iconUrl}
                   alt={`Feature icon ${index + 1}`}
@@ -60,7 +60,7 @@ const OrgLayout: FC<{ section: SectionType }> = ({ section }) => {
         </div>
       </div>
 
-      <div className="w-full h-64 sm:h-96 flex items-center justify-center [perspective:1000px] mt-8 sm:mt-0">
+      <div className="w-full h-64 sm:h-96 flex items-center justify-center [perspective:1000px] mt-4 sm:mt-0">
         <div
           className="relative w-40 h-40 sm:w-72 sm:h-72 [transform-style:preserve-3d] 
                      animate-spin-3d hover:[animation-play-state:paused]

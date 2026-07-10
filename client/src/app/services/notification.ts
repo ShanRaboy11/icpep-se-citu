@@ -19,101 +19,95 @@ const api = axios.create({
   timeout: 30000,
 });
 
+// request interceptor: attach token
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
   return config;
 });
 
+// response interceptor: handle expired tokens & logging
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error: AxiosError) => {
-    // Safe error logging
+    const status = error.response?.status;
+    const responseData = error.response?.data as any;
+
+    // handle invalid/expired token (401 or 403)
+    if (status === 401 || status === 403) {
+      const isTokenError = responseData?.message
+        ?.toLowerCase()
+        .includes("token");
+
+      if (isTokenError && typeof window !== "undefined") {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("userName");
+        localStorage.removeItem("userId");
+      }
+    }
+
     const errorDetails = {
-      status: error.response?.status,
+      status: status,
       url: error.config?.url,
       method: error.config?.method,
       message: error.message,
-      data: error.response?.data,
+      data: responseData,
     };
-    
-    // Log only if it's not a cancelled request
-    if (error.code !== "ERR_CANCELED") {
+
+    // fix: do not log console error for auth failures (401/403) to prevent console spam
+    if (error.code !== "ERR_CANCELED" && status !== 401 && status !== 403) {
       console.error("❌ API Error:", JSON.stringify(errorDetails, null, 2));
     }
-    
-    return Promise.reject(error);
-  }
-);
 
-export interface Notification {
-  _id: string;
-  recipient: string;
-  type: "announcement" | "event" | "membership" | "system" | "rsvp";
-  title: string;
-  message: string;
-  relatedId?: string;
-  relatedModel?: "Announcement" | "Event" | "Membership" | null;
-  isRead: boolean;
-  readAt?: string;
-  link?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+    return Promise.reject(error);
+  },
+);
 
 export interface NotificationResponse {
   success: boolean;
-  data: Notification[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    pages: number;
-  };
+  data: any[];
+  pagination: any;
   unreadCount: number;
 }
 
 const handleError = (error: unknown): never => {
   if (axios.isAxiosError(error)) {
     const axiosError = error as AxiosError<{ message: string }>;
-    // Friendly message for timeouts
-    let errorMessage =
+
+    if (
+      axiosError.response?.status === 403 ||
+      axiosError.response?.status === 401
+    ) {
+      throw new Error("expired_session");
+    }
+
+    // fixed eslint warning: used const instead of let
+    const errorMessage =
       axiosError.response?.data?.message ||
       axiosError.message ||
       "An unknown error occurred";
 
-    if (
-      axiosError.code === "ECONNABORTED" ||
-      (axiosError.message &&
-        axiosError.message.toLowerCase().includes("timeout"))
-    ) {
-      errorMessage =
-        "Request timed out. The network may be slow — please try again.";
-    }
-
-    const statusCode = axiosError.response?.status;
-
-    throw new Error(`${statusCode ? `[${statusCode}] ` : ""}${errorMessage}`);
+    throw new Error(errorMessage);
   }
-  if (error instanceof Error) {
-    throw error;
-  }
+
+  if (error instanceof Error) throw error;
   throw new Error("An unknown error occurred");
 };
 
 export const notificationService = {
-  getAll: async (page = 1, limit = 20, filter = "all") => {
+  getAll: async (page = 1, limit = 20) => {
     try {
       const response = await api.get<NotificationResponse>("/notifications", {
-        params: { page, limit, filter },
+        params: { page, limit },
       });
       return response.data;
     } catch (error) {
-      handleError(error);
+      return handleError(error);
     }
   },
 
@@ -122,7 +116,7 @@ export const notificationService = {
       const response = await api.put(`/notifications/${id}/read`);
       return response.data;
     } catch (error) {
-      handleError(error);
+      return handleError(error);
     }
   },
 
@@ -131,7 +125,7 @@ export const notificationService = {
       const response = await api.put("/notifications/read-all");
       return response.data;
     } catch (error) {
-      handleError(error);
+      return handleError(error);
     }
   },
 
@@ -140,7 +134,7 @@ export const notificationService = {
       const response = await api.delete(`/notifications/${id}`);
       return response.data;
     } catch (error) {
-      handleError(error);
+      return handleError(error);
     }
   },
 };

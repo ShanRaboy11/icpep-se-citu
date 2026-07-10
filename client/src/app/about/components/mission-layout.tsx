@@ -33,20 +33,20 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
 
   return (
     <div className="content-fade flex flex-col md:flex-row gap-6 md:gap-12 items-start justify-center">
-      <div className="text-left w-full sm:max-w-xs flex-shrink-0">
-        <h3 className="font-rubik text-2xl sm:text-4xl font-bold mb-3 text-secondary2">
+      <div className="text-left w-full md:max-w-xs flex-shrink-0">
+        <h3 className="font-rubik text-2xl md:text-4xl font-bold mb-3 text-secondary2">
           {section.title}
         </h3>
-        <p className="font-raleway text-sm sm:text-xl leading-relaxed text-gray-300">
+        <p className="font-raleway text-sm md:text-xl leading-relaxed text-gray-300">
           {section.content}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 w-full max-w-4xl">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5 w-full max-w-4xl">
         {missionPoints.map((point, index) => (
           <div
             key={index}
-            className="flex items-center gap-3 sm:gap-4 p-3 sm:p-5 rounded-xl sm:rounded-2xl border border-white/10
+            className="flex items-center gap-3 md:gap-6 p-3 md:px-5 md:py-6 rounded-xl md:rounded-2xl border border-white/10
                        bg-white/5 transition-all duration-300 group hover:bg-white/10"
             style={{
               backgroundImage:
@@ -54,7 +54,7 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
               backgroundSize: "1rem 1rem",
             }}
           >
-            <div className="relative flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16">
+            <div className="relative flex-shrink-0 w-12 h-12 md:w-24 md:h-24">
               <Image
                 src={point.imageUrl}
                 alt={point.title}
@@ -64,10 +64,10 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
             </div>
 
             <div className="flex flex-col justify-center text-left">
-              <h4 className="font-rubik text-sm sm:text-lg font-bold text-white leading-snug">
+              <h4 className="font-rubik text-sm md:text-xl font-bold text-white leading-snug">
                 {point.title}
               </h4>
-              <p className="font-raleway text-[10px] sm:text-sm text-gray-300 mt-0.5 leading-relaxed">
+              <p className="font-raleway text-[10px] md:text-base text-gray-300 mt-0.5 md:mt-1 leading-relaxed">
                 {point.description}
               </p>
             </div>

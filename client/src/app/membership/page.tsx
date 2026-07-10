@@ -21,8 +21,7 @@ interface MembershipTier {
 }
 
 const MembershipPage: FC = () => {
-  // control state here heh
-  const isMembershipOpen = false;
+  const isMembershipOpen = true;
 
   const membershipTiers: MembershipTier[] = [
     {
@@ -76,53 +75,60 @@ const MembershipPage: FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
-      <Grid />
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
-        <main className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
-          <div className="mb-20 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-              <div className="h-2 w-2 rounded-full bg-primary1"></div>
-              <span className="font-raleway text-sm font-semibold text-primary1">
-                {isMembershipOpen ? "Join Our Community" : "Membership Closed"}
-              </span>
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+      <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+        <Grid />
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <Header />
+          <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
+            <div className="mb-20 text-center">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
+                <div className="h-2 w-2 rounded-full bg-primary1"></div>
+                <span className="font-raleway text-sm font-semibold text-primary1">
+                  {isMembershipOpen
+                    ? "Join Our Community"
+                    : "Membership Closed"}
+                </span>
+              </div>
+              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+                Unlock Your Potential
+              </h1>
+              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
+                Become a member and gain access to exclusive events, workshops,
+                and resources designed to boost your career in computer
+                engineering.
+              </p>
             </div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-              Unlock Your Potential
-            </h1>
-            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
-              Become a member and gain access to exclusive events, workshops,
-              and resources designed to boost your career in computer
-              engineering.
-            </p>
-          </div>
 
-          <div className="w-full">
-            <div className="group flex flex-col lg:flex-row justify-center items-center gap-16 lg:gap-8 lg:pt-12">
-              <div className="order-2 lg:order-1 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-8 group-hover:lg:-translate-x-8">
-                <MembershipCard
-                  {...membershipTiers[0]}
-                  isOpen={isMembershipOpen}
-                />
-              </div>
-              <div className="order-1 lg:order-2 w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
-                <MembershipCard
-                  {...membershipTiers[1]}
-                  isOpen={isMembershipOpen}
-                />
-              </div>
-              <div className="order-3 lg:order-3 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
-                <MembershipCard
-                  {...membershipTiers[2]}
-                  isOpen={isMembershipOpen}
-                />
+            <div className="w-full">
+              <div className="group flex flex-col lg:flex-row justify-center items-center gap-16 lg:gap-8 lg:pt-12">
+                <div className="order-2 lg:order-1 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-8 group-hover:lg:-translate-x-8">
+                  <MembershipCard
+                    {...membershipTiers[0]}
+                    isOpen={isMembershipOpen}
+                  />
+                </div>
+                <div className="order-1 lg:order-2 w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
+                  <MembershipCard
+                    {...membershipTiers[1]}
+                    isOpen={isMembershipOpen}
+                  />
+                </div>
+                <div className="order-3 lg:order-3 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
+                  <MembershipCard
+                    {...membershipTiers[2]}
+                    isOpen={isMembershipOpen}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <InteractiveCta isOpen={isMembershipOpen} />
-        </main>
+            <InteractiveCta isOpen={isMembershipOpen} />
+          </div>
+        </div>
+      </main>
+
+      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
         <Footer />
       </div>
     </div>

@@ -1,13 +1,21 @@
 "use client";
 import Link from "next/link";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Button from "./button";
 import Menu from "./menu";
 import { useRouter } from "next/navigation";
 import { notificationService } from "@/app/services/notification";
+import {
+  Loader2,
+  CheckCheck,
+  Megaphone,
+  Calendar,
+  User,
+  Bell,
+  Check,
+} from "lucide-react";
 
-// UserRole types
 type UserRole =
   | "guest"
   | "student"
@@ -22,12 +30,20 @@ const Header = () => {
   const [userName, setUserName] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifPage, setNotifPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isNotifLoading, setIsNotifLoading] = useState(false);
 
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notifDropdownRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // --- NEW: Prevent Body Scroll when Menu is Open ---
+  // handle body scroll locking
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -39,6 +55,7 @@ const Header = () => {
     };
   }, [open]);
 
+  // escape key to close menu
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && open) {
@@ -49,16 +66,46 @@ const Header = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
+  // handle header scroll state
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // check auth status on mount
   useEffect(() => {
+    const checkAuthStatus = () => {
+      const token = localStorage.getItem("authToken");
+      const userRole = localStorage.getItem("userRole");
+      if (token && userRole) {
+        setIsLoggedIn(true);
+        setRole(userRole as UserRole);
+        const storedUserName = localStorage.getItem("userName");
+        setUserName(storedUserName || "ICPEP Member");
+      } else {
+        setIsLoggedIn(false);
+        setRole("guest");
+      }
+    };
     checkAuthStatus();
   }, []);
 
+  // handle logout logic
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userName");
+    setIsLoggedIn(false);
+    setRole("guest");
+    setUserName("");
+    setProfileDropdownOpen(false);
+    setNotifDropdownOpen(false);
+    router.push("/");
+  }, [router]);
+
+  // fetch unread notifications count
   useEffect(() => {
     if (isLoggedIn) {
       const fetchUnreadCount = async () => {
@@ -67,8 +114,10 @@ const Header = () => {
           if (response?.success) {
             setUnreadCount(response.unreadCount);
           }
-        } catch (error) {
-          console.error("Failed to fetch notifications count", error);
+        } catch (error: any) {
+          if (error.message === "expired_session") {
+            handleLogout();
+          }
         }
       };
 
@@ -76,8 +125,9 @@ const Header = () => {
       const interval = setInterval(fetchUnreadCount, 60000);
       return () => clearInterval(interval);
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, handleLogout]);
 
+  // close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -86,85 +136,146 @@ const Header = () => {
       ) {
         setProfileDropdownOpen(false);
       }
+      if (
+        notifDropdownRef.current &&
+        !notifDropdownRef.current.contains(event.target as Node)
+      ) {
+        setNotifDropdownOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const checkAuthStatus = () => {
-    const token = localStorage.getItem("authToken");
-    const userRole = localStorage.getItem("userRole");
+  // fetch notification list from db
+  const fetchNotificationsFromDB = async (page: number, append = false) => {
+    if (isNotifLoading) return;
+    setIsNotifLoading(true);
+    try {
+      const response = await notificationService.getAll(page, 5);
+      if (response?.success) {
+        const mapped = response.data.map((n: any) => {
+          let link = n.link || "/home";
+          if (!n.link) {
+            if (n.type === "announcement" && n.relatedId)
+              link = `/announcements/${n.relatedId}`;
+            else if (n.type === "announcement") link = "/announcements";
+            else if (n.type === "event" && n.relatedId)
+              link = `/events/${n.relatedId}`;
+            else if (n.type === "event") link = "/events";
+            else if (n.type === "membership") link = "/profile";
+            else if (n.type === "rsvp") link = "/commeet";
+            else if (n.type === "system" || n.title.includes("Password"))
+              link = "/profile";
+          }
 
-    if (token && userRole) {
-      setIsLoggedIn(true);
-      setRole(userRole as UserRole);
-      const storedUserName = localStorage.getItem("userName");
-      setUserName(storedUserName || "ICPEP Member");
-    } else {
-      setIsLoggedIn(false);
-      setRole("guest");
+          return {
+            id: n._id,
+            title: n.title,
+            date: new Date(n.createdAt).toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
+            type: n.type,
+            read: n.isRead,
+            link: link,
+          };
+        });
+
+        setNotifications((prev) => (append ? [...prev, ...mapped] : mapped));
+        setHasMore(mapped.length === 5);
+        setUnreadCount(response.unreadCount);
+      }
+    } catch (error: any) {
+      if (error.message === "expired_session") {
+        handleLogout();
+      }
+    } finally {
+      setIsNotifLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userName");
+  const handleNotifScroll = () => {
+    if (!scrollContainerRef.current || isNotifLoading || !hasMore) return;
+    const { scrollTop, scrollHeight, clientHeight } =
+      scrollContainerRef.current;
+    if (scrollTop + clientHeight >= scrollHeight - 20) {
+      const nextPage = notifPage + 1;
+      setNotifPage(nextPage);
+      fetchNotificationsFromDB(nextPage, true);
+    }
+  };
 
-    setIsLoggedIn(false);
-    setRole("guest");
-    setUserName("");
+  const handleMarkAllRead = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleMarkRead = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleNotifClick = async (n: any) => {
+    if (!n.read) {
+      try {
+        await notificationService.markAsRead(n.id);
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    router.push(n.link);
+    setNotifDropdownOpen(false);
+  };
+
+  const toggleNotifDropdown = () => {
+    if (!notifDropdownOpen) {
+      setNotifPage(1);
+      setHasMore(true);
+      fetchNotificationsFromDB(1);
+    }
+    setNotifDropdownOpen(!notifDropdownOpen);
     setProfileDropdownOpen(false);
-
-    router.push("/");
   };
 
-  const handleLogin = () => {
-    router.push("/login");
-  };
+  const handleLogin = () => router.push("/login");
 
-  const handleProfileClick = () => {
-    setProfileDropdownOpen(!profileDropdownOpen);
-  };
-
-  // Helper for Dropdown Items
   const DropdownItem = ({
     icon,
     text,
     onClick,
     isDestructive = false,
     badge,
-  }: {
-    icon: React.ReactNode;
-    text: string;
-    onClick: () => void;
-    isDestructive?: boolean;
-    badge?: number;
-  }) => (
+  }: any) => (
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-4 px-5 py-3 text-left transition-all duration-200 group cursor-pointer
         ${isDestructive ? "hover:bg-red-50" : "hover:bg-[#f0f9ff]"}`}
     >
       <div
-        className={`transition-colors duration-200 
-        ${
-          isDestructive
-            ? "text-[#64748b] group-hover:text-red-500"
-            : "text-[#64748b] group-hover:text-[#00a7ee]"
-        }`}
+        className={`transition-colors duration-200 ${isDestructive ? "text-[#64748b] group-hover:text-red-500" : "text-[#64748b] group-hover:text-[#00a7ee]"}`}
       >
         {icon}
       </div>
-      <div className="flex-1 flex items-center justify-between">
+      <div className="flex-1 flex items-center justify-between font-rubik">
         <span
-          className={`text-sm font-medium font-rubik tracking-wide transition-colors duration-200
-          ${
-            isDestructive
-              ? "text-[#373d47] group-hover:text-red-500"
-              : "text-[#373d47] group-hover:text-[#00a7ee]"
-          }`}
+          className={`text-sm font-medium tracking-wide transition-colors duration-200 ${isDestructive ? "text-[#373d47] group-hover:text-red-500" : "text-[#373d47] group-hover:text-[#00a7ee]"}`}
         >
           {text}
         </span>
@@ -181,14 +292,9 @@ const Header = () => {
     <>
       <header
         className={`w-full fixed top-0 left-0 right-0 z-40 border-b border-foreground cursor-default transition-all duration-500
-        ${
-          scrolled
-            ? "bg-white/85 backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.05)]"
-            : "bg-[#fefeff]"
-        }`}
+        ${scrolled ? "bg-white/85 backdrop-blur-sm shadow-[0_2px_8px_rgba(0,0,0,0.05)]" : "bg-[#fefeff]"}`}
       >
         <div className="flex items-center justify-between py-3 px-4 md:max-w-[88%] md:mx-auto md:px-8 lg:px-10">
-          {/* Logo Section */}
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <Link
               href="/home"
@@ -200,9 +306,7 @@ const Header = () => {
                 alt="ICPEP Logo"
                 width={55}
                 height={55}
-                className="md:h-15 md:w-auto sm:h-25 sm:w-auto rounded-full cursor-pointer 
-                         transition-all duration-300 ease-in-out 
-                         group-hover:drop-shadow-[0_0_8px_rgba(0,167,238,0.7)]"
+                className="md:h-15 md:w-auto sm:h-25 sm:w-auto rounded-full cursor-pointer transition-all duration-300 ease-in-out group-hover:drop-shadow-[0_0_8px_rgba(0,167,238,0.7)]"
               />
               <div className="flex items-end gap-0.5">
                 <Image
@@ -274,43 +378,162 @@ const Header = () => {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-5">
-            {/* Guest View - Login Only */}
             {role === "guest" && (
-              <>
-                <Button
-                  className="sm:block border-2 border-[#00a7ee] relative overflow-hidden 
-                outline-none focus:outline-none focus:ring-0 active:ring-0 ring-0
-                transition-all duration-300 ease-in-out active:scale-95 
-                before:absolute before:inset-0 before:bg-gradient-to-r 
-                before:from-transparent before:via-white/40 before:to-transparent 
-                before:translate-x-[-100%] hover:before:translate-x-[100%] 
-                before:transition-transform before:duration-700 
-                text-[#00a7ee] hover:bg-[#dbeeff]"
-                  onClick={handleLogin}
-                >
-                  Log In
-                </Button>
-              </>
+              <Button
+                className="sm:block border-2 border-[#00a7ee] text-[#00a7ee] hover:bg-[#dbeeff]"
+                onClick={handleLogin}
+              >
+                Log In
+              </Button>
             )}
 
-            {/* Logged In View */}
             {isLoggedIn && (
-              <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {/* notification btn */}
+                <div className="relative" ref={notifDropdownRef}>
+                  <style>{`
+                    @keyframes bell-ring {
+                      0% { transform: rotate(0deg); }
+                      10% { transform: rotate(18deg); }
+                      30% { transform: rotate(-16deg); }
+                      50% { transform: rotate(12deg); }
+                      70% { transform: rotate(-8deg); }
+                      85% { transform: rotate(4deg); }
+                      100% { transform: rotate(0deg); }
+                    }
+                    .bell-ring:hover svg { animation: bell-ring 0.6s ease-in-out; transform-origin: top center; }
+                    .themed-scrollbar::-webkit-scrollbar { width: 6px; }
+                    .themed-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                    .themed-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+                    .themed-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+                  `}</style>
+                  <div
+                    onClick={toggleNotifDropdown}
+                    className="relative flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 bell-ring cursor-pointer group select-none"
+                  >
+                    <svg
+                      width="34"
+                      height="34"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="text-[#00a7ee] transition-colors duration-300 ease-in-out group-hover:text-[#0096d6] group-hover:drop-shadow-[0_0_10px_rgba(0,167,238,0.75)]"
+                    >
+                      <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
+                    </svg>
+                    {unreadCount > 0 && (
+                      <span className="absolute top-[2px] right-[1px] flex items-center justify-center min-w-[18px] h-[18px] px-[3px] bg-[#ef4444] text-white text-[10px] font-normal font-rubik rounded-full shadow-sm border-[1px] border-white leading-none">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </div>
+
+                  {notifDropdownOpen && (
+                    <div className="absolute top-[125%] right-[-60px] sm:right-0 w-[320px] sm:w-[400px] bg-white rounded-2xl shadow-[0_15px_50px_-12px_rgba(0,0,0,0.15)] border border-gray-100 z-50 animate-in fade-in slide-in-from-top-3 duration-200 origin-top-right overflow-hidden">
+                      <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
+                        <h3 className="text-[#373d47] font-bold text-sm font-rubik tracking-tight">
+                          Notifications
+                        </h3>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={handleMarkAllRead}
+                            className="text-[11px] font-bold text-[#00a7ee] font-rubik flex items-center gap-1.5 hover:text-[#0096d6] cursor-pointer transition-colors"
+                          >
+                            <CheckCheck size={16} /> Mark all as read
+                          </button>
+                        )}
+                      </div>
+
+                      <div
+                        ref={scrollContainerRef}
+                        onScroll={handleNotifScroll}
+                        className="max-h-[380px] themed-scrollbar overflow-y-auto overflow-x-hidden bg-white"
+                      >
+                        {notifications.length > 0 ? (
+                          <div className="flex flex-col">
+                            {notifications.map((n) => (
+                              <div
+                                key={n.id}
+                                onClick={() => handleNotifClick(n)}
+                                className={`group relative flex gap-4 px-6 py-4 border-b border-gray-50 cursor-pointer transition-all duration-200 ${!n.read ? "bg-blue-50/30" : "hover:bg-gray-50/80"}`}
+                              >
+                                <div className="shrink-0 flex items-center">
+                                  {n.type === "announcement" ? (
+                                    <Megaphone className="w-6 h-6 text-orange-500" />
+                                  ) : n.type === "event" ? (
+                                    <Calendar className="w-6 h-6 text-blue-500" />
+                                  ) : n.type === "membership" ? (
+                                    <User className="w-6 h-6 text-green-500" />
+                                  ) : (
+                                    <Bell className="w-6 h-6 text-primary1" />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                  <p
+                                    className={`text-xs leading-tight font-rubik ${!n.read ? "text-[#373d47] font-bold" : "text-gray-500 font-medium"}`}
+                                  >
+                                    {n.title}
+                                  </p>
+                                  <p className="text-[12px] text-gray-400 font-raleway mt-0.5 font-medium tracking-tight">
+                                    {n.date}
+                                  </p>
+                                </div>
+                                <div className="flex flex-col items-center justify-center">
+                                  {!n.read ? (
+                                    <div className="flex flex-col items-center gap-3">
+                                      <div className="w-2 h-2 bg-primary1 rounded-full"></div>
+                                      <button
+                                        onClick={(e) => handleMarkRead(e, n.id)}
+                                        className="opacity-0 group-hover:opacity-100 transition-all p-1.5 bg-white text-gray-400 hover:text-green-500 rounded-lg border border-gray-100 shadow-sm cursor-pointer"
+                                      >
+                                        <Check size={14} strokeWidth={3} />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="w-5" />
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                            {isNotifLoading && (
+                              <div className="py-6 flex justify-center">
+                                <Loader2 className="w-5 h-5 text-primary1 animate-spin" />
+                              </div>
+                            )}
+                          </div>
+                        ) : !isNotifLoading ? (
+                          <div className="py-16 px-6 text-center">
+                            <Bell className="w-10 h-10 text-gray-200 mx-auto mb-3" />
+                            <p className="text-sm text-gray-300 font-rubik font-medium">
+                              Your inbox is empty
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="py-24 flex justify-center">
+                            <Loader2 className="w-6 h-6 text-primary1 animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* profile btn */}
                 <div className="relative" ref={dropdownRef}>
                   <div
                     className="cursor-pointer outline-none select-none tap-highlight-transparent p-1"
-                    onClick={handleProfileClick}
+                    onClick={() => {
+                      setProfileDropdownOpen(!profileDropdownOpen);
+                      setNotifDropdownOpen(false);
+                    }}
                   >
                     <Image
                       src="/user.svg"
-                      alt="User Profile"
+                      alt="User"
                       width={36}
                       height={36}
                       className="h-10 w-10 sm:h-11 sm:w-11 transition-transform duration-200 ease-in-out hover:brightness-105 active:scale-95"
                     />
                   </div>
-
-                  {/* DROPDOWN */}
                   {profileDropdownOpen && (
                     <div className="absolute top-[125%] right-0 w-64 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 flex flex-col z-50 animate-in fade-in slide-in-from-top-3 duration-200 origin-top-right overflow-hidden">
                       <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50">
@@ -325,21 +548,7 @@ const Header = () => {
                         <DropdownItem
                           onClick={() => router.push("/profile")}
                           text="My Profile"
-                          icon={
-                            <svg
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                              <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                          }
+                          icon={<User size={20} />}
                         />
                         <DropdownItem
                           onClick={() => router.push("/contact")}
@@ -387,64 +596,18 @@ const Header = () => {
                     </div>
                   )}
                 </div>
-
-                {/* ── NOTIFICATION BUTTON ── */}
-                <div
-                  onClick={() => router.push("/notifications")}
-                  aria-label="Notifications"
-                  className="relative cursor-pointer select-none group"
-                >
-                  <style>{`
-                    @keyframes bell-ring {
-                      0%   { transform: rotate(0deg); }
-                      10%  { transform: rotate(18deg); }
-                      30%  { transform: rotate(-16deg); }
-                      50%  { transform: rotate(12deg); }
-                      70%  { transform: rotate(-8deg); }
-                      85%  { transform: rotate(4deg); }
-                      100% { transform: rotate(0deg); }
-                    }
-                    .bell-ring:hover svg {
-                      animation: bell-ring 0.6s ease-in-out;
-                      transform-origin: top center;
-                      drop-shadow: 0 0 10px rgba(0,167,238,0.75);
-                    }
-                  `}</style>
-                  <div className="relative flex items-center justify-center h-10 w-10 sm:h-11 sm:w-11 bell-ring">
-                    <svg
-                      width="34"
-                      height="34"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className="text-[#00a7ee] transition-colors duration-300 ease-in-out group-hover:text-[#0096d6] group-hover:drop-shadow-[0_0_10px_rgba(0,167,238,0.75)]"
-                    >
-                      <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
-                    </svg>
-                  </div>
-
-                  {/* Badge */}
-                  {unreadCount > 0 && (
-                    <span className="absolute top-0.5 right-[-2.5] flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-[#ef4444] text-white text-[10px] font-bold rounded-full shadow-sm pointer-events-none border-2 border-white">
-                      {unreadCount > 99 ? "99+" : unreadCount}
-                    </span>
-                  )}
-                </div>
-                {/* ───────────────────────── */}
               </div>
             )}
 
-            {/* MENU TOGGLE WRAPPER */}
+            {/* menu */}
             <div
               aria-label="Open menu"
               aria-expanded={open}
               onClick={() => setOpen((v) => !v)}
               className="cursor-pointer"
             >
-              {/* DESKTOP TOGGLE (9 DOTS) */}
               <div
-                className={`hidden md:grid grid-cols-3 gap-1 transition-transform duration-500 ease-in-out hover:rotate-90 ${
-                  open ? "rotate-[360deg]" : ""
-                }`}
+                className={`hidden md:grid grid-cols-3 gap-1 transition-transform duration-500 ease-in-out hover:rotate-90 ${open ? "rotate-[360deg]" : ""}`}
               >
                 {Array.from({ length: 9 }).map((_, i) => (
                   <div
@@ -453,8 +616,6 @@ const Header = () => {
                   />
                 ))}
               </div>
-
-              {/* MOBILE TOGGLE */}
               <div className="md:hidden flex flex-col items-end justify-center gap-[6px] w-9 h-9">
                 <div
                   className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${open ? "w-6" : "w-[26px]"}`}
@@ -471,14 +632,8 @@ const Header = () => {
         </div>
       </header>
 
-      {/* FULL SCREEN MENU OVERLAY - MOVED OUTSIDE HEADER */}
       <div
-        className={`fixed inset-0 z-50 overflow-y-auto transition-transform duration-700 ease-in-out 
-          ${
-            open
-              ? "translate-x-0 md:translate-y-0"
-              : "translate-x-full md:translate-x-0 md:-translate-y-full"
-          }`}
+        className={`fixed inset-0 z-50 overflow-y-auto transition-transform duration-700 ease-in-out ${open ? "translate-x-0 md:translate-y-0" : "translate-x-full md:translate-x-0 md:-translate-y-full"}`}
       >
         <Menu userRole={role} onExit={() => setOpen(false)} />
       </div>

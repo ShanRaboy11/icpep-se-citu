@@ -21,86 +21,93 @@ const OfficersPage = () => {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
-        <Grid />
-        <Header />
-        <div className="flex-grow flex flex-col items-center justify-center pt-[9.5rem]">
-          <h1 className="text-3xl font-bold text-gray-800 font-rubik">
-            Department Not Found
-          </h1>
-          <button
-            onClick={() => router.back()}
-            className="mt-4 text-primary1 underline font-raleway"
-          >
-            Go Back
-          </button>
+      <div className="min-h-screen bg-[#004e89] flex flex-col relative overflow-x-hidden">
+        <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden flex-grow">
+          <Grid />
+          <Header />
+          <div className="flex-grow flex flex-col items-center justify-center pt-[9.5rem] pb-32">
+            <h1 className="text-3xl font-bold text-gray-800 font-rubik">
+              Department Not Found
+            </h1>
+            <button
+              onClick={() => router.back()}
+              className="mt-4 text-primary1 underline font-raleway"
+            >
+              Go Back
+            </button>
+          </div>
+        </main>
+        <div className="mt-[-35px] md:mt-[-80px] relative z-0">
+          <Footer />
         </div>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
-      {/* Background Grid */}
-      <Grid />
+    <div className="min-h-screen bg-[#004e89] flex flex-col relative overflow-x-hidden">
+      <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden flex-grow">
+        {/* Background Grid */}
+        <Grid />
 
-      {/* Decorative Blobs */}
-      <div className="absolute top-[-10rem] left-[-15rem] w-[35rem] h-[35rem] bg-primary1/10 rounded-full filter blur-3xl opacity-60"></div>
-      <div className="absolute top-1/4 right-[-18rem] w-[35rem] h-[35rem] bg-secondary2/10 rounded-full filter blur-3xl opacity-60"></div>
+        <div className="absolute top-[-10rem] left-[-15rem] w-[35rem] h-[35rem] bg-primary1/10 rounded-full filter blur-3xl opacity-60"></div>
+        <div className="absolute top-1/4 right-[-18rem] w-[35rem] h-[35rem] bg-secondary2/10 rounded-full filter blur-3xl opacity-60"></div>
 
-      {/* Main Content */}
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
+        <div className="relative z-10 flex flex-col">
+          <Header />
 
-        <main className="flex-grow w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24">
-          {/* Back Button */}
-          <div className="mb-8 flex justify-start">
-            <button
-              onClick={() => router.back()}
-              title="Go Back"
-              className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
-                         rounded-full border-2 border-primary1 text-primary1 
-                         overflow-hidden transition-all duration-300 ease-in-out 
-                         active:scale-95 before:absolute before:inset-0 
-                         before:bg-gradient-to-r before:from-transparent 
-                         before:via-white/40 before:to-transparent 
-                         before:translate-x-[-100%] hover:before:translate-x-[100%] 
-                         before:transition-transform before:duration-700"
-            >
-              <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
-            </button>
-          </div>
+          <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem]">
+            {/* back */}
+            <div className="mb-8 flex justify-start">
+              <button
+                onClick={() => router.back()}
+                title="Go Back"
+                className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
+                           rounded-full border-2 border-primary1 text-primary1 
+                           overflow-hidden transition-all duration-300 ease-in-out 
+                           active:scale-95 before:absolute before:inset-0 
+                           before:bg-gradient-to-r before:from-transparent 
+                           before:via-white/40 before:to-transparent 
+                           before:translate-x-[-100%] hover:before:translate-x-[100%] 
+                           before:transition-transform before:duration-700"
+              >
+                <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
+              </button>
+            </div>
 
-          {/* Header Section */}
-          <div className="mb-16 text-left">
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-              {data.title}
-            </h1>
+            {/* header */}
+            <div className="mb-16 text-left">
+              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
+                {data.title}
+              </h1>
 
-            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl">
-              {data.description}
-            </p>
-          </div>
+              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl">
+                {data.description}
+              </p>
+            </div>
 
-          {/* Officers Grid */}
-          <div className="w-full">
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8 justify-items-center">
-              {data.officers.map((officer, index) => (
-                <OfficerCard
-                  key={index}
-                  position={officer.position}
-                  role={officer.role}
-                  name={officer.name}
-                  image="/faculty.png"
-                  gradient={data.gradient}
-                  shadow={data.shadow}
-                />
-              ))}
+            {/* officers */}
+            <div className="w-full mb-24">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8 justify-items-center">
+                {data.officers.map((officer, index) => (
+                  <OfficerCard
+                    key={index}
+                    position={officer.position}
+                    role={officer.role}
+                    name={officer.name}
+                    image="/faculty.png"
+                    gradient={data.gradient}
+                    shadow={data.shadow}
+                  />
+                ))}
+              </div>
             </div>
           </div>
-        </main>
+          <div className="h-20 md:h-32" />
+        </div>
+      </main>
 
+      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
         <Footer />
       </div>
     </div>
