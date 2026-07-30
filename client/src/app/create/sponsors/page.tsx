@@ -403,27 +403,18 @@ export default function SponsorsPage() {
 
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               <aside className="w-full lg:w-64 flex-shrink-0">
-                <div className="sticky top-24">
-                  <Sidebar />
-                </div>
+                <Sidebar />
               </aside>
 
               {/* Main Content */}
               <div className="flex-1 min-w-0 space-y-8">
                 {/* ── FORM CARD ── */}
-                <GlassCard>
-                  <div
-                    className={`relative rounded-2xl overflow-hidden transition-all duration-500 ${
-                      editingId ? "ring-2 ring-primary1" : ""
-                    }`}
-                  >
-                    {/* Card background */}
-                    <div className="absolute inset-0 bg-white" />
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/30 to-primary2/5 pointer-events-none" />
-
+                <div className={`bg-white rounded-[2rem] border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                  editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
+                }`}>
                     {/* Edit banner */}
                     {editingId && (
-                      <div className="relative z-10 bg-gradient-to-r from-primary1 to-primary2 px-6 py-3 flex items-center justify-between">
+                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-gradient-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-[2rem]">
                         <div className="flex items-center gap-2 text-white">
                           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                           <span className="text-sm font-bold font-rubik tracking-wide">
@@ -439,19 +430,13 @@ export default function SponsorsPage() {
                       </div>
                     )}
 
-                    <div className="relative z-10 p-6 sm:p-10">
-                      {/* Section label */}
-                      <div className="flex items-center justify-between mb-8">
-                        <div>
-                          <h2 className="text-2xl font-black font-rubik text-primary3">
-                            {editingId ? "Edit Details" : "New Sponsor"}
-                          </h2>
-                          <p className="text-gray-400 text-sm font-raleway mt-0.5">
-                            Fill in the fields below and choose a sponsorship
-                            tier
-                          </p>
-                        </div>
-                        <div className="hidden sm:flex items-center gap-1.5 bg-primary2/8 rounded-full px-4 py-2">
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                        <p className="text-gray-400 text-sm font-raleway mt-0.5">
+                          Fill in the fields below and choose a sponsorship tier
+                        </p>
+                      </div>
+                      <div className="hidden sm:flex items-center gap-1.5 bg-primary2/8 rounded-full px-4 py-2">
                           <Star
                             size={12}
                             className="text-primary2 fill-primary2"
@@ -465,7 +450,7 @@ export default function SponsorsPage() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* LEFT — Upload */}
                         <div className="space-y-3">
-                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                             Logo <span className="text-red-400">*</span>
                           </label>
 
@@ -560,9 +545,9 @@ export default function SponsorsPage() {
                         <div className="space-y-6">
                           {/* Name */}
                           <div className="space-y-2">
-                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                               Sponsor Name{" "}
-                              <span className="text-red-400">*</span>
+                              <span className="text-red-500">*</span>
                             </label>
                             <input
                               id="name"
@@ -570,15 +555,9 @@ export default function SponsorsPage() {
                               value={formData.name}
                               onChange={handleInputChange}
                               placeholder="e.g., Tech Company Inc."
-                              className={`
-                            w-full font-raleway text-primary3 font-medium rounded-xl px-4 py-3.5 border-2 bg-white/80
-                            transition-all duration-200 outline-none placeholder:text-gray-300
-                            ${
-                              errors.name
-                                ? "border-red-300 focus:border-red-400 bg-red-50/30"
-                                : "border-gray-200 focus:border-primary2 focus:bg-white"
-                            }
-                          `}
+                              className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
+                                errors.name ? "border-red-300 ring-2 ring-red-100" : ""
+                              }`}
                             />
                             {errors.name && (
                               <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
@@ -590,9 +569,9 @@ export default function SponsorsPage() {
 
                           {/* Tier Selector */}
                           <div className="space-y-2">
-                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                               Sponsorship Tier{" "}
-                              <span className="text-red-400">*</span>
+                              <span className="text-red-500">*</span>
                             </label>
                             <div className="grid grid-cols-2 gap-2">
                               {tabs.map((tab) => {
@@ -608,7 +587,7 @@ export default function SponsorsPage() {
                                   transition-all duration-200 group
                                   ${
                                     isActive
-                                      ? `${cfg.bg} ${cfg.color} ${cfg.border} shadow-sm scale-[1.02]`
+                                      ? `${cfg.bg} ${cfg.color} ${cfg.border} scale-[1.02]`
                                       : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"
                                   }
                                 `}
@@ -636,11 +615,10 @@ export default function SponsorsPage() {
                       </div>
 
                       {/* ── ACTIONS ── */}
-                      <div className="mt-10 pt-6 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
                         {showGlobalError && (
                           <p className="text-red-400 text-xs font-bold font-raleway flex items-center gap-1.5">
-                            <AlertTriangle size={12} /> Please fill all required
-                            fields
+                            <AlertTriangle size={12} /> Please fill all required fields
                           </p>
                         )}
 
@@ -649,7 +627,7 @@ export default function SponsorsPage() {
                             <button
                               type="button"
                               onClick={handleCancelEdit}
-                              className="px-5 py-2.5 text-sm font-bold font-rubik text-gray-400 hover:text-red-400 border-2 border-gray-200 hover:border-red-200 rounded-xl transition-all duration-200"
+                              className="px-6 py-3 font-rubik font-bold text-gray-500 border-2 border-gray-200 hover:border-red-200 hover:text-red-400 rounded-2xl transition-all duration-300"
                             >
                               Cancel
                             </button>
@@ -659,7 +637,7 @@ export default function SponsorsPage() {
                             <button
                               type="button"
                               onClick={handleSaveDraft}
-                              className="px-5 py-2.5 text-sm font-bold font-rubik text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-xl transition-all duration-200"
+                              className="px-6 py-3 font-rubik font-bold text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-2xl transition-all duration-300"
                             >
                               {editingId ? "Update Draft" : "Save Draft"}
                             </button>
@@ -669,7 +647,7 @@ export default function SponsorsPage() {
                             type="button"
                             onClick={handlePublish}
                             disabled={isSubmitting}
-                            className="px-7 py-2.5 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg shadow-primary2/25 hover:shadow-primary2/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            className="px-8 py-3 bg-gradient-to-r from-primary3 to-primary1 rounded-2xl font-rubik font-bold text-white shadow-lg shadow-primary1/20 hover:shadow-primary1/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {editingId && !isEditingDraft
                               ? "Update Sponsor"
@@ -677,15 +655,12 @@ export default function SponsorsPage() {
                           </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </GlassCard>
+                </div>
 
                 {/* ── MANAGE LIST ── */}
-                <GlassCard>
-                  <div className=" bg-white rounded-2xl overflow-hidden">
+                <div className="bg-white rounded-[2rem] border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200">
                     {/* List Header */}
-                    <div className="px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                    <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                       <div>
                         <h2 className="text-xl font-black font-rubik text-primary3">
                           Manage Sponsors
@@ -708,7 +683,7 @@ export default function SponsorsPage() {
                     </div>
 
                     {/* Tier legend */}
-                    <div className="px-8 py-3 border-b border-gray-50 flex flex-wrap gap-3">
+                    <div className="px-6 sm:px-8 py-3 border-b border-gray-50 flex flex-wrap gap-3">
                       {tabs.map((tab) => {
                         const cfg = TIER_CONFIG[tab];
                         const count = publishedItems.filter(
@@ -757,7 +732,7 @@ export default function SponsorsPage() {
                         <table className="w-full text-left min-w-[580px]">
                           <thead>
                             <tr className="bg-gray-50/80">
-                              <th className="px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Logo
                               </th>
                               <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
@@ -766,7 +741,7 @@ export default function SponsorsPage() {
                               <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Tier
                               </th>
-                              <th className="px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Actions
                               </th>
                             </tr>
@@ -793,7 +768,7 @@ export default function SponsorsPage() {
                                     }`}
                                   >
                                     {/* Logo */}
-                                    <td className="px-8 py-4">
+                                    <td className="px-6 sm:px-8 py-4">
                                       <div className="w-14 h-10 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
                                         {item.image ? (
                                           <img
@@ -835,7 +810,7 @@ export default function SponsorsPage() {
                                     </td>
 
                                     {/* Actions */}
-                                    <td className="px-8 py-4 text-right">
+                                    <td className="px-6 sm:px-8 py-4 text-right">
                                       <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
                                         <button
                                           onClick={() => handleEditClick(item)}
@@ -862,8 +837,7 @@ export default function SponsorsPage() {
                         </table>
                       </div>
                     )}
-                  </div>
-                </GlassCard>
+                </div>
               </div>
             </div>
           </div>

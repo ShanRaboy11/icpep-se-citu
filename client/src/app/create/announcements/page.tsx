@@ -1034,12 +1034,12 @@ export default function AnnouncementsPage() {
 
               <div className="flex-1 min-w-0 space-y-8">
                 {/* FORM CARD */}
-                <div className={`bg-white rounded-[2rem] border transition-all duration-300 shadow-lg p-8 sm:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                <div className={`bg-white rounded-[2rem] border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
                   editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
                 }`}>
                     {/* Edit Banner */}
                     {editingId && (
-                      <div className="-mx-8 sm:-mx-12 -mt-8 sm:-mt-12 mb-8 bg-gradient-to-r from-primary1 to-primary3 px-10 py-5 flex items-center justify-between rounded-t-[2rem]">
+                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-gradient-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-[2rem]">
                         <div className="flex items-center gap-2 text-white">
                           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                           <span className="text-sm font-bold font-rubik tracking-wide">
@@ -1057,11 +1057,17 @@ export default function AnnouncementsPage() {
 
                     <div className="flex flex-col gap-6">
                       {/* Section Header */}
-                      <div className="text-left">
-                        <p className="font-raleway text-gray-500 text-sm">
-                          Fill in the fields below
-                        </p>
-                      </div>
+                     <div className="flex items-center justify-between">
+                                             <p className="font-raleway text-gray-500 text-sm">
+                                               Fill in the fields below
+                                             </p>
+                                             <div className="hidden sm:flex items-center gap-1.5 bg-primary2/8 rounded-full px-4 py-2">
+                                               <Megaphone size={12} className="text-primary2" />
+                                               <span className="text-xs font-bold text-primary2 font-rubik uppercase tracking-wider">
+                                                 Announcements
+                                               </span>
+                                             </div>
+                                           </div>
 
                       {/* FEATURED IMAGE */}
                       <div className="w-full">
@@ -1232,7 +1238,7 @@ export default function AnnouncementsPage() {
                                 if (errors.date) setErrors((prev) => ({ ...prev, date: false }));
                               },
                               errors.date,
-                              "Select date..."
+                              "Select date"
                             )}
                             {errors.date && (
                               <p className="text-red-500 text-xs mt-1 ml-2 font-raleway">Required</p>
@@ -1595,7 +1601,7 @@ export default function AnnouncementsPage() {
                                     {opt.label}
                                   </p>
                                   <p
-                                    className={`text-[10px] font-raleway mt-0.5 truncate ${isActive ? "opacity-70" : "text-gray-300"}`}
+                                    className={`text-[14px] font-raleway font-semibold mt-0.5 truncate ${isActive ? "opacity-90" : "text-gray-300"}`}
                                   >
                                     {opt.sublabel}
                                   </p>
@@ -1720,7 +1726,7 @@ export default function AnnouncementsPage() {
 
                 {/* MANAGE LIST */}
                   <div className="bg-white rounded-[2rem] border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200">
-                    <div className="px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                    <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                       <div>
                         <h2 className="text-xl font-black font-rubik text-primary3">
                           Published Announcements

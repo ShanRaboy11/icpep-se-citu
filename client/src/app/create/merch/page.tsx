@@ -353,25 +353,17 @@ export default function MerchPage() {
 
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               <aside className="w-full lg:w-64 flex-shrink-0">
-                <div className="sticky top-24">
-                  <Sidebar />
-                </div>
+                <Sidebar />
               </aside>
 
               <div className="flex-1 min-w-0 space-y-8">
                 {/* ── FORM CARD ── */}
-                <GlassCard>
-                  <div
-                    className={`relative rounded-2xl overflow-hidden transition-all duration-500 ${
-                      editingId ? "ring-2 ring-primary1" : ""
-                    }`}
-                  >
-                    <div className="absolute inset-0 bg-white" />
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/30 to-primary2/5 pointer-events-none" />
-
+                <div className={`bg-white rounded-[2rem] border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                  editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
+                }`}>
                     {/* Edit Banner */}
                     {editingId && (
-                      <div className="relative z-10 bg-gradient-to-r from-primary1 to-primary2 px-6 py-3 flex items-center justify-between">
+                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-gradient-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-[2rem]">
                         <div className="flex items-center gap-2 text-white">
                           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                           <span className="text-sm font-bold font-rubik tracking-wide">
@@ -387,30 +379,25 @@ export default function MerchPage() {
                       </div>
                     )}
 
-                    <div className="relative z-10 p-6 sm:p-10">
-                      {/* Section label */}
-                      <div className="flex items-center justify-between mb-8">
-                        <div>
-                          <h2 className="text-2xl font-black font-rubik text-primary3">
-                            {editingId ? "Edit Details" : "New Merchandise"}
-                          </h2>
-                          <p className="text-gray-400 text-sm font-raleway mt-0.5">
-                            Fill in the fields below to add a merchandise item
-                          </p>
-                        </div>
-                        <div className="hidden sm:flex items-center gap-1.5 bg-primary2/8 rounded-full px-4 py-2">
-                          <ShoppingBag size={12} className="text-primary2" />
-                          <span className="text-xs font-bold text-primary2 font-rubik uppercase tracking-wider">
-                            Merch
-                          </span>
-                        </div>
-                      </div>
+                    <div className="flex flex-col gap-6">
+                      {/* Section Header */}
+                      <div className="flex items-center justify-between">
+                                             <p className="font-raleway text-gray-500 text-sm">
+                                               Fill in the fields below
+                                             </p>
+                                             <div className="hidden sm:flex items-center gap-1.5 bg-primary2/8 rounded-full px-4 py-2">
+                                               <ShoppingBag size={12} className="text-primary2" />
+                                               <span className="text-xs font-bold text-primary2 font-rubik uppercase tracking-wider">
+                                                 Merch
+                                               </span>
+                                             </div>
+                                           </div>
 
                       {/* Top grid: image + core fields */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* LEFT — Image Upload */}
                         <div className="space-y-3">
-                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                             Product Image{" "}
                             <span className="text-red-400">*</span>
                           </label>
@@ -502,8 +489,8 @@ export default function MerchPage() {
                         <div className="space-y-5">
                           {/* Name */}
                           <div className="space-y-2">
-                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
-                              Item Name <span className="text-red-400">*</span>
+                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                              Item Name <span className="text-red-500">*</span>
                             </label>
                             <input
                               id="name"
@@ -511,10 +498,8 @@ export default function MerchPage() {
                               value={formData.name}
                               onChange={handleInputChange}
                               placeholder="e.g., ICPEP.SE Lanyard"
-                              className={`w-full font-raleway text-primary3 font-medium rounded-xl px-4 py-3.5 border-2 bg-white/80 transition-all duration-200 outline-none placeholder:text-gray-300 ${
-                                errors.name
-                                  ? "border-red-300 focus:border-red-400 bg-red-50/30"
-                                  : "border-gray-200 focus:border-primary2 focus:bg-white"
+                              className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
+                                errors.name ? "border-red-300 ring-2 ring-red-100" : ""
                               }`}
                             />
                             {errors.name && (
@@ -527,9 +512,9 @@ export default function MerchPage() {
 
                           {/* Description */}
                           <div className="space-y-2">
-                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                               Description{" "}
-                              <span className="text-red-400">*</span>
+                              <span className="text-red-500">*</span>
                             </label>
                             <input
                               id="descrip"
@@ -537,10 +522,8 @@ export default function MerchPage() {
                               value={formData.descrip}
                               onChange={handleInputChange}
                               placeholder="e.g., Keep your essentials close..."
-                              className={`w-full font-raleway text-primary3 font-medium rounded-xl px-4 py-3.5 border-2 bg-white/80 transition-all duration-200 outline-none placeholder:text-gray-300 ${
-                                errors.descrip
-                                  ? "border-red-300 focus:border-red-400 bg-red-50/30"
-                                  : "border-gray-200 focus:border-primary2 focus:bg-white"
+                              className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
+                                errors.descrip ? "border-red-300 ring-2 ring-red-100" : ""
                               }`}
                             />
                             {errors.descrip && (
@@ -553,9 +536,9 @@ export default function MerchPage() {
 
                           {/* Order Link */}
                           <div className="space-y-2">
-                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                               Order Form Link{" "}
-                              <span className="text-red-400">*</span>
+                              <span className="text-red-500">*</span>
                             </label>
                             <input
                               id="orderlink"
@@ -564,10 +547,8 @@ export default function MerchPage() {
                               value={formData.orderlink}
                               onChange={handleInputChange}
                               placeholder="https://example.com/order"
-                              className={`w-full font-raleway text-primary3 font-medium rounded-xl px-4 py-3.5 border-2 bg-white/80 transition-all duration-200 outline-none placeholder:text-gray-300 ${
-                                errors.orderlink
-                                  ? "border-red-300 focus:border-red-400 bg-red-50/30"
-                                  : "border-gray-200 focus:border-primary2 focus:bg-white"
+                              className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
+                                errors.orderlink ? "border-red-300 ring-2 ring-red-100" : ""
                               }`}
                             />
                             {errors.orderlink && (
@@ -583,9 +564,9 @@ export default function MerchPage() {
                       {/* ── PRICES SECTION ── */}
                       <div className="mt-8 space-y-4">
                         <div className="flex items-center gap-2">
-                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                             Pricing Tiers{" "}
-                            <span className="text-red-400">*</span>
+                            <span className="text-red-500">*</span>
                           </label>
                           <span className="text-[10px] font-semibold text-gray-300 font-raleway">
                             (Add at least one)
@@ -668,11 +649,10 @@ export default function MerchPage() {
                       </div>
 
                       {/* ── ACTIONS ── */}
-                      <div className="mt-10 pt-6 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
                         {showGlobalError && (
-                          <p className="text-red-400 text-xs font-bold font-raleway flex items-center gap-1.5">
-                            <AlertTriangle size={12} /> Please fill all required
-                            fields
+                          <p className="text-red-500 text-sm font-raleway flex items-center gap-1.5">
+                            <AlertTriangle size={14} /> Please fill all required fields
                           </p>
                         )}
                         <div className="flex flex-wrap gap-3 ml-auto">
@@ -680,7 +660,7 @@ export default function MerchPage() {
                             <button
                               type="button"
                               onClick={handleCancelEdit}
-                              className="px-5 py-2.5 text-sm font-bold font-rubik text-gray-400 hover:text-red-400 border-2 border-gray-200 hover:border-red-200 rounded-xl transition-all duration-200"
+                              className="px-6 py-3 font-rubik font-bold text-gray-500 border-2 border-gray-200 hover:border-red-200 hover:text-red-400 rounded-2xl transition-all duration-300"
                             >
                               Cancel
                             </button>
@@ -689,7 +669,7 @@ export default function MerchPage() {
                             <button
                               type="button"
                               onClick={() => handleSubmit(true)}
-                              className="px-5 py-2.5 text-sm font-bold font-rubik text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-xl transition-all duration-200"
+                              className="px-6 py-3 font-rubik font-bold text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               {editingId ? "Update Draft" : "Save Draft"}
                             </button>
@@ -698,26 +678,26 @@ export default function MerchPage() {
                             type="button"
                             onClick={() => handleSubmit(false)}
                             disabled={isSubmitting}
-                            className="px-7 py-2.5 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg shadow-primary2/25 hover:shadow-primary2/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            className="group relative px-8 py-3 bg-gradient-to-r from-primary3 to-primary1 rounded-2xl font-rubik font-bold text-white shadow-lg shadow-primary1/20 hover:shadow-primary1/40 transition-all duration-300 flex items-center gap-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            {editingId && !isEditingDraft
-                              ? "Update Merch"
-                              : "Publish Merch"}
+                            <span>
+                              {editingId && !isEditingDraft
+                                ? "Update Merch"
+                                : "Publish Merch"}
+                            </span>
                           </button>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </GlassCard>
+                </div>
 
                 {/* ── MANAGE LIST ── */}
-                <GlassCard>
-                  <div className="bg-white rounded-2xl overflow-hidden">
+                <div className="bg-white rounded-[2rem] border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200">
                     {/* List Header */}
-                    <div className="px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                    <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                       <div>
                         <h2 className="text-xl font-black font-rubik text-primary3">
-                          Manage Merchandise
+                          Published Merchandise
                         </h2>
                         <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
                           {publishedItems.length} active{" "}
@@ -763,7 +743,7 @@ export default function MerchPage() {
                         <table className="w-full text-left min-w-[680px]">
                           <thead>
                             <tr className="bg-gray-50/80">
-                              <th className="px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Image
                               </th>
                               <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
@@ -775,7 +755,7 @@ export default function MerchPage() {
                               <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Link
                               </th>
-                              <th className="px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Actions
                               </th>
                             </tr>
@@ -793,8 +773,8 @@ export default function MerchPage() {
                                   }`}
                                 >
                                   {/* Image */}
-                                  <td className="px-8 py-4">
-                                    <div className="w-14 h-14 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
+                                  <td className="px-6 sm:px-8 py-4">
+                                    <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center flex-shrink-0">
                                       {item.image ? (
                                         <img
                                           src={item.image}
@@ -820,20 +800,21 @@ export default function MerchPage() {
                                         {item.name}
                                       </span>
                                     </div>
-                                    <p className="text-xs text-gray-400 font-raleway mt-0.5 max-w-[160px] truncate">
-                                      {item.description}
-                                    </p>
+                                    {item.description && (
+                                      <p className="text-xs text-gray-400 font-raleway mt-0.5 max-w-[200px] truncate">
+                                        {item.description}
+                                      </p>
+                                    )}
                                   </td>
 
                                   {/* Prices */}
                                   <td className="px-4 py-4">
-                                    <div className="flex flex-col gap-1">
-                                      {item.prices.map((p, idx) => (
+                                    <div className="flex flex-wrap gap-1">
+                                      {item.prices?.map((p, idx) => (
                                         <span
                                           key={idx}
-                                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-primary2/8 text-primary2 border border-primary2/20 w-fit"
+                                          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary2/10 text-primary2 border border-primary2/20"
                                         >
-                                          <Tag size={9} />
                                           {p.category}: ₱{p.price}
                                         </span>
                                       ))}
@@ -845,14 +826,15 @@ export default function MerchPage() {
                                     <a
                                       href={item.orderLink}
                                       target="_blank"
-                                      className="text-xs font-bold text-primary1 hover:text-primary2 underline underline-offset-2 transition-colors font-rubik"
+                                      rel="noreferrer"
+                                      className="text-xs font-bold text-primary2 hover:underline font-rubik truncate max-w-[140px] block"
                                     >
                                       View Form ↗
                                     </a>
                                   </td>
 
                                   {/* Actions */}
-                                  <td className="px-8 py-4 text-right">
+                                  <td className="px-6 sm:px-8 py-4 text-right">
                                     <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
                                       <button
                                         onClick={() => handleEditClick(item)}
@@ -877,8 +859,7 @@ export default function MerchPage() {
                         </table>
                       </div>
                     )}
-                  </div>
-                </GlassCard>
+                </div>
               </div>
             </div>
           </div>

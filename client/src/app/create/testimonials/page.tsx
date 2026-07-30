@@ -71,6 +71,11 @@ export default function TestimonialsPage() {
   const [cover, setCover] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
+    const labelStyle =
+    "block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1";
+  const titlelabelStyle =
+    "block text-sm font-bold font-raleway text-primary3 mb-2 ml-1";
+
   // --- FETCH ---
   const fetchTestimonials = async () => {
     try {
@@ -339,25 +344,17 @@ export default function TestimonialsPage() {
 
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               <aside className="w-full lg:w-64 flex-shrink-0">
-                <div className="sticky top-24">
-                  <Sidebar />
-                </div>
+                <Sidebar />
               </aside>
 
               <div className="flex-1 min-w-0 space-y-8">
                 {/* ── FORM CARD ── */}
-                <GlassCard>
-                  <div
-                    className={`relative rounded-2xl overflow-hidden transition-all duration-500 ${
-                      editingId ? "ring-2 ring-primary1" : ""
-                    }`}
-                  >
-                    <div className="absolute inset-0 bg-white" />
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/30 to-primary2/5 pointer-events-none" />
-
+                <div className={`bg-white rounded-[2rem] border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                  editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
+                }`}>
                     {/* Edit Banner */}
                     {editingId && (
-                      <div className="relative z-10 bg-gradient-to-r from-primary1 to-primary2 px-6 py-3 flex items-center justify-between">
+                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-gradient-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-[2rem]">
                         <div className="flex items-center gap-2 text-white">
                           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                           <span className="text-sm font-bold font-rubik tracking-wide">
@@ -373,30 +370,25 @@ export default function TestimonialsPage() {
                       </div>
                     )}
 
-                    <div className="relative z-10 p-6 sm:p-10">
-                      {/* Section label */}
-                      <div className="flex items-center justify-between mb-8">
-                        <div>
-                          <h2 className="text-2xl font-black font-rubik text-primary3">
-                            {editingId ? "Edit Details" : "New Testimonial"}
-                          </h2>
-                          <p className="text-gray-400 text-sm font-raleway mt-0.5">
+                    <div className="flex items-center justify-between mb-8">
+                      <div>
+                      <p className="text-gray-400 text-sm font-raleway mt-0.5">
                             Fill in the fields below to add a testimonial
                           </p>
-                        </div>
-                        <div className="hidden sm:flex items-center gap-1.5 bg-primary2/8 rounded-full px-4 py-2">
-                          <Quote size={12} className="text-primary2" />
-                          <span className="text-xs font-bold text-primary2 font-rubik uppercase tracking-wider">
-                            Testimonial
-                          </span>
-                        </div>
                       </div>
+                      <div className="hidden sm:flex items-center gap-1.5 bg-primary2/8 rounded-full px-4 py-2">
+                        <Quote size={12} className="text-primary2" />
+                        <span className="text-xs font-bold text-primary2 font-rubik uppercase tracking-wider">
+                          Testimonial
+                        </span>
+                      </div>
+                    </div>
 
                       {/* Top grid: photo + name/role */}
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* LEFT — Photo Upload */}
                         <div className="space-y-3">
-                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          <label className={`${labelStyle}`}>
                             Profile Photo
                           </label>
                           <input
@@ -485,8 +477,11 @@ export default function TestimonialsPage() {
                         <div className="space-y-5">
                           {/* Full Name */}
                           <div className="space-y-2">
-                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
-                              Full Name <span className="text-red-400">*</span>
+                            <label
+                              htmlFor="name"
+                              className={`${labelStyle}`}
+                            >
+                              Full Name <span className="text-red-500">*</span>
                             </label>
                             <input
                               id="name"
@@ -495,10 +490,8 @@ export default function TestimonialsPage() {
                               value={formData.name}
                               onChange={handleInputChange}
                               placeholder="e.g., John Smith"
-                              className={`w-full font-raleway text-primary3 font-medium rounded-xl px-4 py-3.5 border-2 bg-white/80 transition-all duration-200 outline-none placeholder:text-gray-300 ${
-                                errors.name
-                                  ? "border-red-300 focus:border-red-400 bg-red-50/30"
-                                  : "border-gray-200 focus:border-primary2 focus:bg-white"
+                              className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
+                                errors.name ? "border-red-300 ring-2 ring-red-100" : ""
                               }`}
                             />
                             {errors.name && (
@@ -511,9 +504,9 @@ export default function TestimonialsPage() {
 
                           {/* Position / Title */}
                           <div className="space-y-2">
-                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                               Position / Title{" "}
-                              <span className="text-red-400">*</span>
+                              <span className="text-red-500">*</span>
                             </label>
                             <input
                               id="position"
@@ -522,10 +515,8 @@ export default function TestimonialsPage() {
                               value={formData.position}
                               onChange={handleInputChange}
                               placeholder="e.g., CEO at Tech Company"
-                              className={`w-full font-raleway text-primary3 font-medium rounded-xl px-4 py-3.5 border-2 bg-white/80 transition-all duration-200 outline-none placeholder:text-gray-300 ${
-                                errors.position
-                                  ? "border-red-300 focus:border-red-400 bg-red-50/30"
-                                  : "border-gray-200 focus:border-primary2 focus:bg-white"
+                              className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
+                                errors.position ? "border-red-300 ring-2 ring-red-100" : ""
                               }`}
                             />
                             {errors.position && (
@@ -548,9 +539,9 @@ export default function TestimonialsPage() {
                           <div className="flex-1 h-px bg-gray-200" />
                         </div>
                         <div className="flex items-center justify-between">
-                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                             Testimonial Message{" "}
-                            <span className="text-red-400">*</span>
+                            <span className="text-red-500">*</span>
                           </label>
                           <span className="text-[11px] text-gray-300 font-raleway">
                             {formData.message.length} characters
@@ -569,10 +560,8 @@ export default function TestimonialsPage() {
                             onChange={handleInputChange}
                             placeholder="Share your experience, feedback, or thoughts here..."
                             rows={5}
-                            className={`w-full font-raleway text-primary3 font-medium rounded-xl pl-12 pr-4 py-3.5 border-2 bg-white/80 transition-all duration-200 outline-none placeholder:text-gray-300 resize-none ${
-                              errors.message
-                                ? "border-red-300 focus:border-red-400 bg-red-50/30"
-                                : "border-gray-200 focus:border-primary2 focus:bg-white"
+                            className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl pl-12 pr-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 resize-none ${
+                              errors.message ? "border-red-300 ring-2 ring-red-100" : ""
                             }`}
                           />
                         </div>
@@ -585,11 +574,10 @@ export default function TestimonialsPage() {
                       </div>
 
                       {/* ── ACTIONS ── */}
-                      <div className="mt-10 pt-6 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+                      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
                         {showGlobalError && (
                           <p className="text-red-400 text-xs font-bold font-raleway flex items-center gap-1.5">
-                            <AlertTriangle size={12} /> Please fill all required
-                            fields
+                            <AlertTriangle size={12} /> Please fill all required fields
                           </p>
                         )}
                         <div className="flex flex-wrap gap-3 ml-auto">
@@ -597,7 +585,7 @@ export default function TestimonialsPage() {
                             <button
                               type="button"
                               onClick={handleCancelEdit}
-                              className="px-5 py-2.5 text-sm font-bold font-rubik text-gray-400 hover:text-red-400 border-2 border-gray-200 hover:border-red-200 rounded-xl transition-all duration-200"
+                              className="px-6 py-3 font-rubik font-bold text-gray-500 border-2 border-gray-200 hover:border-red-200 hover:text-red-400 rounded-2xl transition-all duration-300"
                             >
                               Cancel
                             </button>
@@ -606,7 +594,7 @@ export default function TestimonialsPage() {
                             <button
                               type="button"
                               onClick={handleSaveDraft}
-                              className="px-5 py-2.5 text-sm font-bold font-rubik text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-xl transition-all duration-200"
+                              className="px-6 py-3 font-rubik font-bold text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-2xl transition-all duration-300"
                             >
                               {editingId ? "Update Draft" : "Save Draft"}
                             </button>
@@ -615,7 +603,7 @@ export default function TestimonialsPage() {
                             type="button"
                             onClick={handlePublish}
                             disabled={isSubmitting}
-                            className="px-7 py-2.5 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg shadow-primary2/25 hover:shadow-primary2/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            className="px-8 py-3 bg-gradient-to-r from-primary3 to-primary1 rounded-2xl font-rubik font-bold text-white shadow-lg shadow-primary1/20 hover:shadow-primary1/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {editingId && !isEditingDraft
                               ? "Update Testimonial"
@@ -623,15 +611,12 @@ export default function TestimonialsPage() {
                           </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </GlassCard>
+                </div>
 
                 {/* ── MANAGE LIST ── */}
-                <GlassCard>
-                  <div className="bg-white rounded-2xl overflow-hidden">
+                <div className="bg-white rounded-[2rem] border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200">
                     {/* List Header */}
-                    <div className="px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                    <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                       <div>
                         <h2 className="text-xl font-black font-rubik text-primary3">
                           Manage Testimonials
@@ -682,13 +667,13 @@ export default function TestimonialsPage() {
                         <table className="w-full text-left min-w-[580px]">
                           <thead>
                             <tr className="bg-gray-50/80">
-                              <th className="px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Author
                               </th>
                               <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Message
                               </th>
-                              <th className="px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Actions
                               </th>
                             </tr>
@@ -706,7 +691,7 @@ export default function TestimonialsPage() {
                                   }`}
                                 >
                                   {/* Author */}
-                                  <td className="px-8 py-4">
+                                  <td className="px-6 sm:px-8 py-4">
                                     <div className="flex items-center gap-3">
                                       <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-100 flex-shrink-0">
                                         {item.image ? (
@@ -749,7 +734,7 @@ export default function TestimonialsPage() {
                                   </td>
 
                                   {/* Actions */}
-                                  <td className="px-8 py-4 text-right">
+                                  <td className="px-6 sm:px-8 py-4 text-right">
                                     <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
                                       <button
                                         onClick={() => handleEditClick(item)}
@@ -774,8 +759,7 @@ export default function TestimonialsPage() {
                         </table>
                       </div>
                     )}
-                  </div>
-                </GlassCard>
+                </div>
               </div>
             </div>
           </div>

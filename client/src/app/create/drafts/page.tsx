@@ -557,14 +557,12 @@ export default function DraftsPage() {
 
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               <aside className="w-full lg:w-64 flex-shrink-0">
-                <div className="sticky top-24">
-                  <Sidebar />
-                </div>
+                <Sidebar />
               </aside>
 
               <div className="flex-1 min-w-0 space-y-6">
                 {/* TABS */}
-                <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-none -mx-1 px-1">
+                <div className="flex flex-wrap items-center gap-2">
                   {TAB_CONFIG.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
@@ -573,21 +571,18 @@ export default function DraftsPage() {
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`relative flex items-center gap-2 px-3 sm:px-5 py-3 rounded-xl font-bold font-rubik text-xs transition-all duration-200 flex-shrink-0 ${
+                        className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold font-rubik border-2 transition-all duration-200 select-none flex items-center gap-2 ${
                           isActive
-                            ? "bg-gradient-to-r from-primary1 to-primary2 text-white shadow-lg shadow-primary2/25"
-                            : "bg-white text-gray-400 border border-gray-200 hover:text-gray-700 hover:border-gray-300 hover:shadow-sm"
+                            ? "border-primary1 bg-primary1/10 text-primary1 shadow-sm"
+                            : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700"
                         }`}
                       >
-                        <Icon
-                          size={13}
-                          className={
-                            isActive ? "text-white/80" : "text-gray-400"
-                          }
-                        />
-                        <span className="hidden sm:inline">{tab.label}</span>
+                        <Icon size={14} className={isActive ? "text-primary1" : "text-gray-400"} />
+                        <span>{tab.label}</span>
                         <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-black min-w-[20px] text-center ${isActive ? "bg-white/20 text-white" : "bg-gray-100 text-gray-500"}`}
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-black min-w-[20px] text-center ${
+                            isActive ? "bg-primary1 text-white" : "bg-gray-100 text-gray-500"
+                          }`}
                         >
                           {count}
                         </span>
@@ -597,21 +592,20 @@ export default function DraftsPage() {
                 </div>
 
                 {/* CONTENT CARD */}
-                <GlassCard>
-                  <div className="bg-white rounded-2xl overflow-hidden">
+                <div className="bg-white rounded-[2rem] border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200">
                     {/* Card Header */}
-                    <div className="px-4 sm:px-8 py-4 sm:py-5 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
+                    <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
                       <div>
-                        <h2 className="text-lg sm:text-xl font-black font-rubik text-primary3">
+                        <h2 className="text-xl font-black font-rubik text-primary3">
                           {activeConfig.label}
                         </h2>
-                        <p className="text-gray-400 text-xs font-raleway mt-0.5">
+                        <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
                           {activeCount} unpublished{" "}
                           {activeCount === 1 ? "draft" : "drafts"}
                         </p>
                       </div>
                       <Link href={activeConfig.href}>
-                        <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold font-rubik text-primary2 border border-primary2/20 hover:border-primary2/50 hover:bg-primary2/5 rounded-full transition-all duration-200">
+                        <button className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 rounded-full transition-all duration-200">
                           + New{" "}
                           <span className="hidden sm:inline">
                             {activeConfig.emptyLabel}
@@ -622,7 +616,7 @@ export default function DraftsPage() {
 
                     {/* Content */}
                     {loading ? (
-                      <div className="p-4 sm:p-8 space-y-3 sm:space-y-4">
+                      <div className="p-6 sm:p-8 space-y-3 sm:space-y-4">
                         {[1, 2, 3].map((i) => (
                           <div
                             key={i}
@@ -644,8 +638,7 @@ export default function DraftsPage() {
                         {activeTab === "merch" && renderMerch()}
                       </>
                     )}
-                  </div>
-                </GlassCard>
+                </div>
               </div>
             </div>
           </div>
