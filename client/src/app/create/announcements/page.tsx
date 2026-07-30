@@ -1064,7 +1064,7 @@ export default function AnnouncementsPage() {
                                              <div className="hidden sm:flex items-center gap-1.5 bg-primary2/8 rounded-full px-4 py-2">
                                                <Megaphone size={12} className="text-primary2" />
                                                <span className="text-xs font-bold text-primary2 font-rubik uppercase tracking-wider">
-                                                 Announcements
+                                                 Announcement
                                                </span>
                                              </div>
                                            </div>
