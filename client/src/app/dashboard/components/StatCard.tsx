@@ -12,17 +12,17 @@ interface StatCardProps {
 
 const colorStyles = {
   blue: {
-    bg: "bg-blue-50/50 hover:bg-blue-50 border-blue-100 hover:border-blue-200",
+    bg: "bg-white hover:bg-blue-50 border-blue-100 hover:border-blue-200",
     iconBg: "bg-blue-100/80 text-[#003599]",
     badge: "text-[#003599] border-blue-200 bg-white/70",
   },
   cyan: {
-    bg: "bg-cyan-50/50 hover:bg-cyan-50 border-cyan-100 hover:border-cyan-200",
+    bg: "bg-white hover:bg-cyan-50 border-cyan-100 hover:border-cyan-200",
     iconBg: "bg-cyan-100/80 text-[#006fa1]",
     badge: "text-[#006fa1] border-cyan-200 bg-white/70",
   },
   sky: {
-    bg: "bg-sky-50/50 hover:bg-sky-50 border-sky-100 hover:border-sky-200",
+    bg: "bg-white hover:bg-sky-50 border-sky-100 hover:border-sky-200",
     iconBg: "bg-sky-100/80 text-[#0073AD]",
     badge: "text-[#0073AD] border-sky-200 bg-white/70",
   },
@@ -48,7 +48,7 @@ export const StatCard: FC<StatCardProps> = ({
     >
       <div className="flex items-center justify-between mb-3">
         <span
-          className={`inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-semibold font-raleway transition-all duration-300 ${styles.badge}`}
+          className={`inline-block rounded-md py-0.5 text-[14px] font-semibold font-raleway transition-all duration-300 `}
         >
           {title}
         </span>

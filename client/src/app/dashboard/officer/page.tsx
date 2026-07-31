@@ -163,7 +163,7 @@ export default function OfficerDashboardPage() {
                   variants={fadeUp}
                   initial="hidden"
                   animate="visible"
-                  className="flex flex-col gap-4"
+                  className="flex flex-col gap-4 mt-5"
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="font-rubik text-lg font-bold text-primary3 tracking-tight">
@@ -199,7 +199,7 @@ export default function OfficerDashboardPage() {
                   variants={fadeUp}
                   initial="hidden"
                   animate="visible"
-                  className="flex flex-col gap-4"
+                  className="flex flex-col gap-4 mt-5"
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="font-rubik text-lg font-bold text-primary3 tracking-tight">
@@ -234,7 +234,7 @@ export default function OfficerDashboardPage() {
                 variants={fadeUp}
                 initial="hidden"
                 animate="visible"
-                className="lg:col-span-1 flex flex-col gap-4 bg-white/70 border border-slate-100 rounded-3xl p-6 shadow-sm min-h-[500px]"
+                className="lg:col-span-1 flex flex-col gap-4 bg-white/70 border border-slate-100 rounded-3xl p-6 shadow-sm min-h-[500px] mt-5"
               >
                 <h3 className="font-rubik text-lg font-bold text-primary3 tracking-tight">
                   Recent Activities

@@ -14,13 +14,13 @@ interface QuickActionCardProps {
 const accentStyles = {
   primary: {
     border: "border-blue-100 hover:border-blue-300",
-    bg: "bg-blue-50/30 hover:bg-blue-50/80",
+    bg: "bg-white hover:bg-blue-50/80",
     icon: "text-[#003599] bg-blue-100/60",
     button: "bg-[#003599] hover:bg-[#004ab3] text-white",
   },
   steel: {
     border: "border-cyan-100 hover:border-cyan-300",
-    bg: "bg-cyan-50/30 hover:bg-cyan-50/80",
+    bg: "bg-white hover:bg-cyan-50/80",
     icon: "text-[#006fa1] bg-cyan-100/60",
     button: "bg-[#006fa1] hover:bg-[#007fb8] text-white",
   },
@@ -52,7 +52,7 @@ export const QuickActionCard: FC<QuickActionCardProps> = ({
         >
           {icon}
         </div>
-        <h4 className="font-rubik text-sm font-bold text-slate-800 tracking-tight truncate">
+        <h4 className="font-rubik text-sm font-medium text-slate-800 tracking-tight truncate">
           {title}
         </h4>
       </div>

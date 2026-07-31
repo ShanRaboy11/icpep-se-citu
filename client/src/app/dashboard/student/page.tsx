@@ -121,7 +121,7 @@ export default function StudentDashboardPage() {
                 variants={fadeUp}
                 initial="hidden"
                 animate="visible"
-                className="lg:col-span-2 flex flex-col gap-4"
+                className="lg:col-span-2 flex flex-col gap-4 mt-5"
               >
                 <div className="flex items-center justify-between">
                   <h3 className="font-rubik text-lg font-bold text-primary3 tracking-tight">
@@ -155,7 +155,7 @@ export default function StudentDashboardPage() {
                 variants={fadeUp}
                 initial="hidden"
                 animate="visible"
-                className="lg:col-span-1 flex flex-col gap-4 bg-white/70 border border-slate-100 rounded-3xl p-6 shadow-sm"
+                className="lg:col-span-1 flex flex-col gap-4 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm mt-5"
               >
                 <div className="flex items-center justify-between">
                   <h3 className="font-rubik text-base font-bold text-primary3 tracking-tight">
@@ -169,7 +169,8 @@ export default function StudentDashboardPage() {
                     <ArrowRight className="h-3 w-3" />
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 mt-3
+                ">
                   {featuredMerch.slice(0, 2).map((item) => (
                     <MerchandiseCard
                       key={item.id}

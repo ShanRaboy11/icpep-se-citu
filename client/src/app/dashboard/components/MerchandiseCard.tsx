@@ -24,7 +24,7 @@ export const MerchandiseCard: FC<MerchandiseCardProps> = ({
       onClick={onClick}
       className="flex flex-col rounded-3xl border border-slate-100 bg-white overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 group cursor-pointer"
     >
-      <div className="relative h-48 w-full overflow-hidden bg-slate-50">
+      <div className="relative h-35 w-full overflow-hidden bg-slate-50">
         <Image
           src={imageUrl}
           alt={name}
