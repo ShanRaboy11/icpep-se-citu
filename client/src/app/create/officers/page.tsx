@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Shield,
   Layers,
+  Check, User
 } from "lucide-react";
 
 // --- IMPORTS ---
@@ -115,6 +116,9 @@ export default function OfficersPage() {
     description: "",
   });
 
+  // Dropdown State
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
   // Search State
   const [searchResults, setSearchResults] = useState<IOfficer[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -130,6 +134,14 @@ export default function OfficersPage() {
   });
   const [preview, setPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Shared dropdown styles
+  const dropdownContainerStyle =
+    "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-1 p-2 max-h-56 overflow-y-auto";
+  const dropdownItemStyle =
+    "flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
+  const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
+  const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
 
   const currentDeptData = departments[activeTab];
   const displayedOfficers = officers.filter(
@@ -419,26 +431,18 @@ export default function OfficersPage() {
 
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               <aside className="w-full lg:w-64 flex-shrink-0">
-                <div className="sticky top-24">
-                  <Sidebar />
-                </div>
+                <Sidebar />
               </aside>
 
               {/* Main Content */}
               <div className="flex-1 min-w-0 space-y-8">
                 {/* ── FORM CARD ── */}
-                <GlassCard>
-                  <div
-                    className={`relative rounded-2xl overflow-hidden transition-all duration-500 ${
-                      editingId ? "ring-2 ring-primary1" : ""
-                    }`}
-                  >
-                    <div className="absolute inset-0 bg-white" />
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/30 to-primary2/5 pointer-events-none" />
-
+                <div className={`bg-white rounded-[2rem] border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                  editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
+                }`}>
                     {/* Edit Banner */}
                     {editingId && (
-                      <div className="relative z-10 bg-gradient-to-r from-primary1 to-primary2 px-6 py-3 flex items-center justify-between">
+                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-gradient-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-[2rem]">
                         <div className="flex items-center gap-2 text-white">
                           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                           <span className="text-sm font-bold font-rubik tracking-wide">
@@ -454,26 +458,17 @@ export default function OfficersPage() {
                       </div>
                     )}
 
-                    <div className="relative z-10 p-6 sm:p-10">
-                      {/* Section label */}
-                      <div className="flex items-center justify-between mb-8">
-                        <div>
-                          <h2 className="text-2xl font-black font-rubik text-primary3">
-                            {editingId ? "Edit Details" : "Compose Officer"}
-                          </h2>
-                          <p className="text-gray-400 text-sm font-raleway mt-0.5">
-                            {editingId
-                              ? "Modify officer details below"
-                              : "Select a student and assign their role"}
-                          </p>
-                        </div>
-                        {/* Active Dept Badge */}
-                        <div
+                    <div className="flex flex-col gap-6">
+                      {/* Section Header */}
+                      <div className="flex items-center justify-between">
+                        <p className="font-raleway text-gray-500 text-sm">
+                          Fill in the fields below
+                        </p>
+                        
+                          <div
                           className={`hidden sm:flex items-center gap-1.5 rounded-full px-4 py-2 ${currentDeptData.bg}`}
                         >
-                          <span
-                            className={`w-2 h-2 rounded-full ${currentDeptData.dot}`}
-                          />
+                          <User className="w-4 h-4 text-primary2" />
                           <span
                             className={`text-xs font-bold font-rubik uppercase tracking-wider ${currentDeptData.color}`}
                           >
@@ -481,10 +476,14 @@ export default function OfficersPage() {
                           </span>
                         </div>
                       </div>
+                      
+                        {/* Active Dept Badge */}
+                        
+                      </div>
 
                       {/* Department Selector */}
-                      <div className="mb-8 space-y-3">
-                        <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                      <div className="my-5 space-y-3">
+                        <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                           Department <span className="text-red-400">*</span>
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -525,9 +524,7 @@ export default function OfficersPage() {
                                 <div>
                                   <p className="leading-tight">{dept.title}</p>
                                   <p
-                                    className={`text-xs font-normal font-raleway mt-0.5 ${
-                                      isActive ? "opacity-70" : "text-gray-300"
-                                    }`}
+                                    className={`text-[14px] font-raleway font-semibold mt-0.5 truncate ${isActive ? "opacity-90" : "text-gray-300"}`}
                                   >
                                     {dept.subtitle}
                                   </p>
@@ -560,7 +557,7 @@ export default function OfficersPage() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* LEFT — Photo */}
                         <div className="space-y-3">
-                          <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                          <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                             Officer Photo
                           </label>
                           <input
@@ -635,8 +632,8 @@ export default function OfficersPage() {
                         <div className="space-y-6">
                           {/* Full Name / Search */}
                           <div className="space-y-2">
-                            <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
-                              Full Name <span className="text-red-400">*</span>
+                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                              Full Name <span className="text-red-500">*</span>
                             </label>
 
                             {editingId ? (
@@ -644,10 +641,10 @@ export default function OfficersPage() {
                                 type="text"
                                 disabled
                                 value={formData.name}
-                                className="w-full h-12 px-4 rounded-xl bg-gray-100 border-2 border-gray-200 text-gray-500 font-rubik cursor-not-allowed"
+                                className="w-full font-rubik text-base bg-gray-100 border border-gray-200 rounded-2xl px-4 py-3 text-gray-500 cursor-not-allowed"
                               />
                             ) : selectedUser ? (
-                              <div className="flex items-center justify-between w-full h-12 px-4 rounded-xl bg-primary1/10 border-2 border-primary1/30 text-primary3 font-rubik">
+                              <div className="flex items-center justify-between w-full font-rubik text-base bg-primary1/10 border-2 border-primary1/30 rounded-2xl px-4 py-3 text-primary3">
                                 <span>{formData.name}</span>
                                 <button
                                   type="button"
@@ -667,7 +664,7 @@ export default function OfficersPage() {
                                   value={searchQuery}
                                   onChange={(e) => handleSearch(e.target.value)}
                                   placeholder="Search for a student..."
-                                  className="w-full h-12 pl-12 pr-4 rounded-xl bg-white/80 border-2 border-gray-200 focus:border-primary2 focus:ring-2 focus:ring-primary2/20 outline-none transition-all font-rubik"
+                                  className="w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl pl-12 pr-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10"
                                 />
                                 {searchResults.length > 0 && (
                                   <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 max-h-60 overflow-y-auto z-50">
@@ -715,73 +712,131 @@ export default function OfficersPage() {
                           {/* Executive Fields */}
                           {activeTab === "executive" ? (
                             <>
+                              {/* Position Dropdown */}
                               <div className="space-y-2">
-                                <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                                <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                                   Position{" "}
-                                  <span className="text-red-400">*</span>
+                                  <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
-                                  <select
-                                    required
-                                    value={formData.position}
-                                    onChange={(e) =>
-                                      setFormData({
-                                        ...formData,
-                                        position: e.target.value,
-                                        role:
-                                          e.target.value ===
-                                          "Batch Representative"
-                                            ? formData.role
-                                            : "",
-                                      })
+                                  <div
+                                    className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
+                                      activeDropdown === "position"
+                                        ? "bg-white border-primary1 ring-4 ring-primary1/10"
+                                        : ""
+                                    }`}
+                                    onClick={() =>
+                                      setActiveDropdown(
+                                        activeDropdown === "position" ? null : "position"
+                                      )
                                     }
-                                    className="w-full h-12 px-4 rounded-xl bg-white/80 border-2 border-gray-200 focus:border-primary2 outline-none transition-all font-rubik appearance-none cursor-pointer"
                                   >
-                                    <option value="" disabled>
-                                      Select Position
-                                    </option>
-                                    {EXECUTIVE_POSITIONS.map((pos) => (
-                                      <option key={pos} value={pos}>
-                                        {pos}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                    <ChevronDown className="h-4 w-4" />
+                                    <span className="font-rubik text-base">
+                                      {formData.position || <span className="text-gray-400">Select Position</span>}
+                                    </span>
+                                    <ChevronDown
+                                      className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                                        activeDropdown === "position" ? "rotate-180" : ""
+                                      }`}
+                                    />
                                   </div>
+                                  {activeDropdown === "position" && (
+                                    <>
+                                      <div
+                                        className="fixed inset-0 z-20"
+                                        onClick={() => setActiveDropdown(null)}
+                                      />
+                                      <div className={dropdownContainerStyle}>
+                                        {EXECUTIVE_POSITIONS.map((pos) => (
+                                          <div
+                                            key={pos}
+                                            className={`${dropdownItemStyle} ${
+                                              formData.position === pos
+                                                ? dropdownItemSelectedStyle
+                                                : dropdownItemHoverStyle
+                                            }`}
+                                            onClick={() => {
+                                              setFormData({
+                                                ...formData,
+                                                position: pos,
+                                                role:
+                                                  pos === "Batch Representative"
+                                                    ? formData.role
+                                                    : "",
+                                              });
+                                              setActiveDropdown(null);
+                                            }}
+                                          >
+                                            <span>{pos}</span>
+                                            {formData.position === pos && (
+                                              <Check className="w-4 h-4 text-primary1" />
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               </div>
 
+                              {/* Year Level Dropdown — only for Batch Representative */}
                               {formData.position === "Batch Representative" && (
                                 <div className="space-y-2">
-                                  <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                                  <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                                     Year Level{" "}
-                                    <span className="text-red-400">*</span>
+                                    <span className="text-red-500">*</span>
                                   </label>
                                   <div className="relative">
-                                    <select
-                                      required
-                                      value={formData.role}
-                                      onChange={(e) =>
-                                        setFormData({
-                                          ...formData,
-                                          role: e.target.value,
-                                        })
+                                    <div
+                                      className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
+                                        activeDropdown === "yearLevel"
+                                          ? "bg-white border-primary1 ring-4 ring-primary1/10"
+                                          : ""
+                                      }`}
+                                      onClick={() =>
+                                        setActiveDropdown(
+                                          activeDropdown === "yearLevel" ? null : "yearLevel"
+                                        )
                                       }
-                                      className="w-full h-12 px-4 rounded-xl bg-white/80 border-2 border-gray-200 focus:border-primary2 outline-none transition-all font-rubik appearance-none cursor-pointer"
                                     >
-                                      <option value="" disabled>
-                                        Select Year
-                                      </option>
-                                      {YEAR_LEVELS.map((yr) => (
-                                        <option key={yr} value={yr}>
-                                          {yr}
-                                        </option>
-                                      ))}
-                                    </select>
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                      <ChevronDown className="h-4 w-4" />
+                                      <span className="font-rubik text-base">
+                                        {formData.role || <span className="text-gray-400">Select Year</span>}
+                                      </span>
+                                      <ChevronDown
+                                        className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                                          activeDropdown === "yearLevel" ? "rotate-180" : ""
+                                        }`}
+                                      />
                                     </div>
+                                    {activeDropdown === "yearLevel" && (
+                                      <>
+                                        <div
+                                          className="fixed inset-0 z-20"
+                                          onClick={() => setActiveDropdown(null)}
+                                        />
+                                        <div className={dropdownContainerStyle}>
+                                          {YEAR_LEVELS.map((yr) => (
+                                            <div
+                                              key={yr}
+                                              className={`${dropdownItemStyle} ${
+                                                formData.role === yr
+                                                  ? dropdownItemSelectedStyle
+                                                  : dropdownItemHoverStyle
+                                              }`}
+                                              onClick={() => {
+                                                setFormData({ ...formData, role: yr });
+                                                setActiveDropdown(null);
+                                              }}
+                                            >
+                                              <span>{yr}</span>
+                                              {formData.role === yr && (
+                                                <Check className="w-4 h-4 text-primary1" />
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
                                 </div>
                               )}
@@ -789,103 +844,158 @@ export default function OfficersPage() {
                           ) : (
                             /* Committee Fields */
                             <>
+                              {/* Committee Name Dropdown */}
                               <div className="space-y-2">
-                                <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                                <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                                   Committee Name{" "}
-                                  <span className="text-red-400">*</span>
+                                  <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
-                                  <select
-                                    required
-                                    value={formData.role}
-                                    onChange={(e) =>
-                                      setFormData({
-                                        ...formData,
-                                        role: e.target.value,
-                                      })
+                                  <div
+                                    className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
+                                      activeDropdown === "committee"
+                                        ? "bg-white border-primary1 ring-4 ring-primary1/10"
+                                        : ""
+                                    }`}
+                                    onClick={() =>
+                                      setActiveDropdown(
+                                        activeDropdown === "committee" ? null : "committee"
+                                      )
                                     }
-                                    className="w-full h-12 px-4 rounded-xl bg-white/80 border-2 border-gray-200 focus:border-primary2 outline-none transition-all font-rubik appearance-none cursor-pointer"
                                   >
-                                    <option value="" disabled>
-                                      Select Committee
-                                    </option>
-                                    {COMMITTEES_LIST.map((comm) => (
-                                      <option key={comm} value={comm}>
-                                        {comm}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                    <ChevronDown className="h-4 w-4" />
+                                    <span className="font-rubik text-base truncate pr-2">
+                                      {formData.role || <span className="text-gray-400">Select Committee</span>}
+                                    </span>
+                                    <ChevronDown
+                                      className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-300 ${
+                                        activeDropdown === "committee" ? "rotate-180" : ""
+                                      }`}
+                                    />
                                   </div>
+                                  {activeDropdown === "committee" && (
+                                    <>
+                                      <div
+                                        className="fixed inset-0 z-20"
+                                        onClick={() => setActiveDropdown(null)}
+                                      />
+                                      <div className={dropdownContainerStyle}>
+                                        {COMMITTEES_LIST.map((comm) => (
+                                          <div
+                                            key={comm}
+                                            className={`${dropdownItemStyle} ${
+                                              formData.role === comm
+                                                ? dropdownItemSelectedStyle
+                                                : dropdownItemHoverStyle
+                                            }`}
+                                            onClick={() => {
+                                              setFormData({ ...formData, role: comm });
+                                              setActiveDropdown(null);
+                                            }}
+                                          >
+                                            <span>{comm}</span>
+                                            {formData.role === comm && (
+                                              <Check className="w-4 h-4 text-primary1" />
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               </div>
 
+                              {/* Specific Title Dropdown */}
                               <div className="space-y-2">
-                                <label className="text-xs font-bold tracking-widest uppercase text-gray-400 font-rubik">
+                                <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                                   Specific Title{" "}
-                                  <span className="text-red-400">*</span>
+                                  <span className="text-red-500">*</span>
                                 </label>
                                 <div className="relative">
-                                  <select
-                                    required
-                                    value={formData.position}
-                                    onChange={(e) =>
-                                      setFormData({
-                                        ...formData,
-                                        position: e.target.value,
-                                      })
+                                  <div
+                                    className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
+                                      activeDropdown === "title"
+                                        ? "bg-white border-primary1 ring-4 ring-primary1/10"
+                                        : ""
+                                    }`}
+                                    onClick={() =>
+                                      setActiveDropdown(
+                                        activeDropdown === "title" ? null : "title"
+                                      )
                                     }
-                                    className="w-full h-12 px-4 rounded-xl bg-white/80 border-2 border-gray-200 focus:border-primary2 outline-none transition-all font-rubik appearance-none cursor-pointer"
                                   >
-                                    <option value="" disabled>
-                                      Select Role
-                                    </option>
-                                    {COMMITTEE_ROLES.map((role) => (
-                                      <option key={role} value={role}>
-                                        {role}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                    <ChevronDown className="h-4 w-4" />
+                                    <span className="font-rubik text-base">
+                                      {formData.position || <span className="text-gray-400">Select Role</span>}
+                                    </span>
+                                    <ChevronDown
+                                      className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                                        activeDropdown === "title" ? "rotate-180" : ""
+                                      }`}
+                                    />
                                   </div>
+                                  {activeDropdown === "title" && (
+                                    <>
+                                      <div
+                                        className="fixed inset-0 z-20"
+                                        onClick={() => setActiveDropdown(null)}
+                                      />
+                                      <div className={dropdownContainerStyle}>
+                                        {COMMITTEE_ROLES.map((role) => (
+                                          <div
+                                            key={role}
+                                            className={`${dropdownItemStyle} ${
+                                              formData.position === role
+                                                ? dropdownItemSelectedStyle
+                                                : dropdownItemHoverStyle
+                                            }`}
+                                            onClick={() => {
+                                              setFormData({ ...formData, position: role });
+                                              setActiveDropdown(null);
+                                            }}
+                                          >
+                                            <span>{role}</span>
+                                            {formData.position === role && (
+                                              <Check className="w-4 h-4 text-primary1" />
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </>
                           )}
                         </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="mt-10 pt-6 border-t border-gray-100 flex flex-wrap items-center justify-end gap-3">
-                        {editingId && (
-                          <button
-                            type="button"
-                            onClick={handleCancelEdit}
-                            className="px-5 py-2.5 text-sm font-bold font-rubik text-gray-400 hover:text-red-400 border-2 border-gray-200 hover:border-red-200 rounded-xl transition-all duration-200"
-                          >
-                            Cancel
-                          </button>
-                        )}
-                        <button
-                          onClick={handleSubmit}
-                          disabled={isSubmitting}
-                          className="px-7 py-2.5 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg shadow-primary2/25 hover:shadow-primary2/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-2"
-                        >
-                          <Save className="h-4 w-4" />
-                          {editingId ? "Update Officer" : "Add Officer"}
-                        </button>
-                      </div>
+                                  {/* Actions */}
+                      
                     </div>
-                  </div>
-                </GlassCard>
+                    <div className="mt-10 flex flex-wrap justify-end gap-4">
+                        <div className="flex flex-wrap gap-3 ml-auto">
+                          {editingId && (
+                            <button
+                              type="button"
+                              onClick={handleCancelEdit}
+                              className="px-6 py-3 font-rubik font-bold text-gray-500 border-2 border-gray-200 hover:border-red-200 hover:text-red-400 rounded-2xl transition-all duration-300"
+                            >
+                              Cancel
+                            </button>
+                          )}
+                          <button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                            className="group relative px-8 py-3 bg-gradient-to-r from-primary3 to-primary1 rounded-2xl font-rubik font-bold text-white shadow-lg shadow-primary1/20 hover:shadow-primary1/40 transition-all duration-300 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Save className="h-4 w-4" />
+                            <span>{editingId ? "Update Officer" : "Add Officer"}</span>
+                          </button>
+                        </div>
+                      </div>
+                </div>
 
                 {/* ── MANAGE LIST ── */}
-                <GlassCard>
-                  <div className="bg-white rounded-2xl overflow-hidden">
+                <div className="bg-white rounded-[2rem] border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200">
                     {/* List Header */}
-                    <div className="px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
+                    <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                       <div>
                         <h2 className="text-xl font-black font-rubik text-primary3">
                           {currentDeptData.title} List
@@ -911,7 +1021,7 @@ export default function OfficersPage() {
                     </div>
 
                     {/* Dept Legend */}
-                    <div className="px-8 py-3 border-b border-gray-50 flex flex-wrap gap-3">
+                    <div className="px-6 sm:px-8 py-3 border-b border-gray-50 flex flex-wrap gap-3">
                       {Object.keys(departments).map((key) => {
                         const dept = departments[key];
                         const count = officers.filter(
@@ -967,7 +1077,7 @@ export default function OfficersPage() {
                         <table className="w-full text-left min-w-[580px]">
                           <thead>
                             <tr className="bg-gray-50/80">
-                              <th className="px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Photo
                               </th>
                               <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
@@ -981,7 +1091,7 @@ export default function OfficersPage() {
                                   Committee
                                 </th>
                               )}
-                              <th className="px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
                                 Actions
                               </th>
                             </tr>
@@ -1000,7 +1110,7 @@ export default function OfficersPage() {
                                   }`}
                                 >
                                   {/* Photo */}
-                                  <td className="px-8 py-4">
+                                  <td className="px-6 sm:px-8 py-4">
                                     <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
                                       <img
                                         src={officer.image}
@@ -1052,14 +1162,14 @@ export default function OfficersPage() {
                                   )}
 
                                   {/* Actions */}
-                                  <td className="px-8 py-4 text-right">
+                                  <td className="px-6 sm:px-8 py-4 text-right">
                                     <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
                                       <button
                                         onClick={() => handleEditClick(officer)}
                                         className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150"
                                         title="Edit"
                                       >
-                                        <Edit2 size={15} />
+                                        <Pencil size={15} />
                                       </button>
                                       <button
                                         onClick={() =>
@@ -1079,8 +1189,7 @@ export default function OfficersPage() {
                         </table>
                       </div>
                     )}
-                  </div>
-                </GlassCard>
+                </div>
               </div>
             </div>
           </div>
