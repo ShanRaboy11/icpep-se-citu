@@ -278,6 +278,32 @@ const bulkUploadUsers = async (req, res) => {
                     }
                     // 'non-member' or any other value defaults to initial values
                 }
+                // Check if user exists
+                const existingUser = await user_1.default.findOne({
+                    studentNumber: userData.studentNumber.toUpperCase(),
+                });
+                if (existingUser) {
+                    // Update existing user but keep password
+                    existingUser.firstName = userData.firstName;
+                    existingUser.lastName = userData.lastName;
+                    if (userData.middleName !== undefined)
+                        existingUser.middleName = userData.middleName || null;
+                    if (userData.role && existingUser.role !== "admin") {
+                        existingUser.role = userData.role;
+                    }
+                    if (userData.yearLevel)
+                        existingUser.yearLevel = userData.yearLevel;
+                    existingUser.membershipStatus = membershipStatusObj;
+                    // Do not update password
+                    await existingUser.save();
+                    results.success.push({
+                        studentNumber: userData.studentNumber,
+                        fullName: existingUser.fullName,
+                        id: existingUser._id.toString(),
+                    });
+                    console.log(`🔄 Updated user: ${existingUser.fullName} (${existingUser.studentNumber}) - Member: ${membershipStatusObj.isMember}`);
+                    continue;
+                }
                 // Create new user
                 const newUser = await user_1.default.create({
                     studentNumber: userData.studentNumber,

@@ -91,7 +91,7 @@ const createAnnouncement = async (req, res, next) => {
             }
         }
         // Parse arrays if sent as strings with error handling
-        let parsedAgenda, parsedAwardees, parsedAttachments, parsedTargetAudience;
+        let parsedAgenda, parsedAwardees, parsedTargetAudience;
         try {
             parsedAgenda = agenda ? JSON.parse(agenda) : undefined;
             parsedAwardees = awardees ? JSON.parse(awardees) : undefined;
@@ -153,7 +153,6 @@ const createAnnouncement = async (req, res, next) => {
             awardees: parsedAwardees,
             imageUrl,
             galleryImages,
-            attachments: parsedAttachments,
         };
         // If a publishDate exists and it's in the future, ensure announcement remains unpublished until scheduler runs
         // BUT if the user explicitly set isPublished=false (draft), respect that regardless of date.

@@ -34,11 +34,6 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const attachmentSchema = new mongoose_1.Schema({
-    name: { type: String, required: true },
-    url: { type: String, required: true },
-    fileType: String,
-}, { _id: false });
 const awardeeSchema = new mongoose_1.Schema({
     name: { type: String, required: true },
     program: String,
@@ -142,7 +137,6 @@ const announcementSchema = new mongoose_1.Schema({
         type: [String],
         default: [],
     },
-    attachments: [attachmentSchema],
     views: {
         type: Number,
         default: 0,

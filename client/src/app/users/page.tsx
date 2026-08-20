@@ -72,6 +72,7 @@ interface UploadUserData {
   lastName: string;
   middleName?: string;
   role: string;
+  position?: string;
   yearLevel?: number;
   membershipStatus?: string;
 }
@@ -107,7 +108,7 @@ const getApiUrl = (): string => {
 };
 
 const API_BASE_URL = getApiUrl();
-const USERS_PER_PAGE = 100;
+const USERS_PER_PAGE = 20;
 
 // Helper functions
 const validateRole = (
@@ -234,8 +235,8 @@ export default function UsersListPage() {
   // Filter and Sort state - MOVED FROM UsersTable
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterMembership, setFilterMembership] = useState<string>("all");
-  const [sortField, setSortField] = useState<SortField>("createdAt");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortField, setSortField] = useState<SortField>("yearLevel");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   // 🔍 NEW: Search state
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -562,62 +563,81 @@ export default function UsersListPage() {
   const handleExcelUpload = async (uploadedUsers: UploadUserData[]) => {
     try {
       setIsUploading(true);
+      const totalUsers = uploadedUsers.length;
       setUploadStats({
-        total: uploadedUsers.length,
+        total: totalUsers,
         current: 0,
         successful: 0,
         failed: 0,
       });
-      setUploadProgress("Preparing upload...");
+      setUploadProgress("Removing users not in the file...");
 
-      // Transform data
-      const usersToUpload = uploadedUsers.map((userData) => ({
-        studentNumber: userData.studentNumber,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        middleName: userData.middleName,
-        role: userData.role,
-        yearLevel: userData.yearLevel,
-        membershipStatus: userData.membershipStatus,
-      }));
+      // Phase 1: Send all student numbers so backend can delete users not in the Excel
+      const studentNumbers = uploadedUsers.map((u) => u.studentNumber);
 
-      // Send bulk request
-      setUploadProgress("Uploading users...");
-
-      const response: ApiResponse<any> = await fetchWithAuth(
-        `${API_BASE_URL}/users/bulk-upload`,
-        {
-          method: "POST",
-          body: JSON.stringify({ users: usersToUpload }),
-        },
-      );
-
-      let successCount = 0;
-      let failedCount = 0;
-      let failedUsers: any[] = [];
-      const totalUsers = uploadedUsers.length;
-
-      if (response.success && response.data) {
-        successCount = response.data.success.length;
-        failedCount = response.data.failed.length;
-        failedUsers = response.data.failed.map((fail: any) => ({
-          studentNumber: fail.studentNumber,
-          reason: fail.reason,
-          data: fail.data,
-        }));
-      } else {
-        throw new Error(response.message || "Upload failed");
-      }
-
-      setUploadStats({
-        total: totalUsers,
-        current: totalUsers,
-        successful: successCount,
-        failed: failedCount,
+      await fetchWithAuth(`${API_BASE_URL}/users/sync-delete`, {
+        method: "POST",
+        body: JSON.stringify({ studentNumbers }),
       });
 
-      setUploadProgress("Upload complete! Refreshing user list...");
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setUploadProgress("Syncing user data...");
+
+      // Phase 2: Process users in batches of 5 for real-time progress
+      const BATCH_SIZE = 5;
+      let totalSuccessful = 0;
+      let totalFailed = 0;
+      const allFailedUsers: FailedUser[] = [];
+
+      for (let i = 0; i < totalUsers; i += BATCH_SIZE) {
+        const batch = uploadedUsers.slice(i, i + BATCH_SIZE).map((userData) => ({
+          studentNumber: userData.studentNumber,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          middleName: userData.middleName,
+          role: userData.role,
+          position: userData.position,
+          yearLevel: userData.yearLevel,
+          membershipStatus: userData.membershipStatus,
+        }));
+
+        const response: ApiResponse<any> = await fetchWithAuth(
+          `${API_BASE_URL}/users/sync-upsert-batch`,
+          {
+            method: "POST",
+            body: JSON.stringify({ users: batch }),
+          },
+        );
+
+        if (response.success && response.data) {
+          totalSuccessful += response.data.successful || 0;
+          totalFailed += response.data.failed || 0;
+
+          if (response.data.failedUsers) {
+            allFailedUsers.push(
+              ...response.data.failedUsers.map((fail: any) => ({
+                studentNumber: fail.studentNumber,
+                reason: fail.reason,
+                data: fail.data,
+              })),
+            );
+          }
+        }
+
+        // Update progress in real-time
+        const processed = Math.min(i + BATCH_SIZE, totalUsers);
+        setUploadStats({
+          total: totalUsers,
+          current: processed,
+          successful: totalSuccessful,
+          failed: totalFailed,
+        });
+        setUploadProgress(
+          `Processing users... (${processed}/${totalUsers})`,
+        );
+      }
+
+      setUploadProgress("Sync complete! Refreshing user list...");
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       await fetchAllUsers();
 
@@ -627,14 +647,14 @@ export default function UsersListPage() {
 
       setUploadResult({
         show: true,
-        success: successCount,
-        failed: failedCount,
-        failedUsers: failedUsers,
+        success: totalSuccessful,
+        failed: totalFailed,
+        failedUsers: allFailedUsers,
       });
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred.";
-      console.error("❌ Bulk upload error:", error);
+      console.error("❌ Sync upload error:", error);
       setIsUploading(false);
       setUploadProgress("");
 

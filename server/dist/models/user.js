@@ -119,6 +119,14 @@ const userSchema = new mongoose_1.Schema({
         default: true,
         select: false,
     },
+    resetPasswordCode: {
+        type: String,
+        select: false,
+    },
+    resetPasswordExpire: {
+        type: Date,
+        select: false,
+    },
 }, {
     timestamps: true,
     toJSON: { virtuals: true },

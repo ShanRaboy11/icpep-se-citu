@@ -49,6 +49,10 @@ export default function Login() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [requiresPasswordChange, setRequiresPasswordChange] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotPasswordStep, setForgotPasswordStep] = useState(1); // 1: Email, 2: Code, 3: New Password
+  const [resetCode, setResetCode] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -210,16 +214,115 @@ export default function Login() {
     localStorage.removeItem("userId");
     localStorage.removeItem("userRole");
     setRequiresPasswordChange(false);
+    setIsForgotPassword(false);
+    setForgotPasswordStep(1);
     setStudentNumber("");
     setPassword("");
     setNewPassword("");
     setConfirmPassword("");
+    setResetCode("");
     setFieldErrors({
       studentNumber: false,
       password: false,
       newPassword: false,
       confirmPassword: false,
     });
+  };
+
+  // Forgot Password Handlers
+  const handleSendResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentNumber) {
+      setError("Please enter your student number.");
+      return;
+    }
+    
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const data = await apiCall('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ studentNumber }),
+      });
+      
+      if (data.email) {
+        // Mask email: j***@cit.edu.ph
+        const [user, domain] = data.email.split('@');
+        const masked = user.slice(0, 1) + "***" + user.slice(-1) + "@" + domain;
+        setMaskedEmail(masked);
+      }
+      
+      setForgotPasswordStep(2);
+    } catch (err: any) {
+      setError(err.message || "Failed to send reset code.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetCode) {
+      setError("Please enter the verification code.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await apiCall('/auth/verify-code', {
+        method: 'POST',
+        body: JSON.stringify({ studentNumber, code: resetCode }),
+      });
+      
+      setForgotPasswordStep(3);
+    } catch (err: any) {
+      setError(err.message || "Invalid code.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newPassword || !confirmPassword) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (!passwordValidation.isValid) {
+      setError("Password does not meet requirements.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await apiCall('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          studentNumber, 
+          code: resetCode, 
+          password: newPassword 
+        }),
+      });
+      
+      alert("Password reset successfully! Please log in.");
+      handleSuccessModalClose();
+    } catch (err: any) {
+      setError(err.message || "Failed to reset password.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getInputClass = (hasError: boolean) =>
@@ -282,9 +385,11 @@ export default function Login() {
               : "Welcome to ICpEP SE!"}
           </h1>
           <p className="text-gray-500 text-md font-[Raleway] text-center mb-5">
-            {requiresPasswordChange
-              ? "For security reasons, you must change your password before accessing the system."
-              : "Please log in to access your account."}
+            {isForgotPassword
+              ? "Follow the steps to recover your account."
+              : requiresPasswordChange
+                ? "For security reasons, you must change your password before accessing the system."
+                : "Please log in to access your account."}
           </p>
         </div>
 
@@ -354,6 +459,13 @@ export default function Login() {
                   Remember me
                 </span>
               </label>
+              <button
+                type="button"
+                className="text-primary3 hover:text-sky-600 underline cursor-pointer"
+                onClick={() => setIsForgotPassword(true)}
+              >
+                Forgot Password?
+              </button>
             </div>
 
             <Button
