@@ -8,6 +8,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_1 = __importDefault(require("../models/user"));
 const password_validator_1 = require("../utils/password_validator");
 const notification_1 = require("../utils/notification");
+const email_1 = __importDefault(require("../utils/email"));
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 // Generate JWT Token
