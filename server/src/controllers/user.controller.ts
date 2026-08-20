@@ -445,8 +445,75 @@ export const bulkUploadUsers = async (
   }
 };
 
-// Sync upload users - deletes users not in Excel, updates existing, protects admins
-export const syncUploadUsers = async (
+// Sync upload users - Phase 1: Delete users not in the Excel (protect admin accounts from deletion)
+export const syncDeleteUsers = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { studentNumbers } = req.body;
+
+    if (!Array.isArray(studentNumbers) || studentNumbers.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: "studentNumbers array is required",
+      });
+      return;
+    }
+
+    console.log(`🗑️ Sync delete phase: ${studentNumbers.length} student numbers in Excel...`);
+
+    const uploadedStudentNumbers = new Set(
+      studentNumbers.map((sn: string) => sn.toUpperCase())
+    );
+
+    const deleted: { studentNumber: string; fullName: string; id: string }[] = [];
+    const skippedAdmins: { studentNumber: string; fullName: string; id: string }[] = [];
+
+    // Find all non-admin users NOT in the uploaded list and delete them
+    const allExistingUsers = await User.find({});
+
+    for (const existingUser of allExistingUsers) {
+      if (!uploadedStudentNumbers.has(existingUser.studentNumber.toUpperCase())) {
+        if (existingUser.role === "admin") {
+          // Never delete admins
+          skippedAdmins.push({
+            studentNumber: existingUser.studentNumber,
+            fullName: existingUser.fullName,
+            id: existingUser._id.toString(),
+          });
+          continue;
+        }
+
+        await User.findByIdAndDelete(existingUser._id);
+        deleted.push({
+          studentNumber: existingUser.studentNumber,
+          fullName: existingUser.fullName,
+          id: existingUser._id.toString(),
+        });
+        console.log(`🗑️ Deleted user: ${existingUser.fullName} (${existingUser.studentNumber})`);
+      }
+    }
+
+    console.log(`✅ Delete phase complete: ${deleted.length} deleted, ${skippedAdmins.length} admins protected`);
+
+    res.status(200).json({
+      success: true,
+      message: `Delete phase complete. ${deleted.length} deleted, ${skippedAdmins.length} admins protected.`,
+      data: { deleted, skippedAdmins },
+    });
+  } catch (error: any) {
+    console.error("❌ Sync delete error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error during sync delete",
+      error: error.message,
+    });
+  }
+};
+
+// Sync upload users - Phase 2: Create or update a batch of users
+export const syncUpsertBatch = async (
   req: AuthRequest,
   res: Response,
 ): Promise<void> => {
@@ -461,62 +528,17 @@ export const syncUploadUsers = async (
       return;
     }
 
-    console.log(`🔄 Processing sync upload of ${users.length} users...`);
-
-    interface SyncResult {
-      created: { studentNumber: string; fullName: string; id: string }[];
-      updated: { studentNumber: string; fullName: string; id: string; changes: string[] }[];
-      deleted: { studentNumber: string; fullName: string; id: string }[];
-      skippedAdmins: { studentNumber: string; fullName: string; id: string }[];
-      failed: { studentNumber: string; reason: string; data?: any }[];
-    }
-
-    const results: SyncResult = {
-      created: [],
-      updated: [],
-      deleted: [],
-      skippedAdmins: [],
-      failed: [],
+    const results = {
+      successful: 0,
+      failed: 0,
+      failedUsers: [] as { studentNumber: string; reason: string; data?: any }[],
     };
 
-    // Build a set of student numbers from the uploaded Excel for quick lookup
-    const uploadedStudentNumbers = new Set(
-      users.map((u: any) => u.studentNumber?.toUpperCase()).filter(Boolean)
-    );
-
-    // Step 1: Delete users NOT in the uploaded Excel (protect admins)
-    const allExistingUsers = await User.find({});
-
-    for (const existingUser of allExistingUsers) {
-      if (existingUser.role === "admin") {
-        // Never delete admins
-        if (!uploadedStudentNumbers.has(existingUser.studentNumber.toUpperCase())) {
-          results.skippedAdmins.push({
-            studentNumber: existingUser.studentNumber,
-            fullName: existingUser.fullName,
-            id: existingUser._id.toString(),
-          });
-        }
-        continue;
-      }
-
-      if (!uploadedStudentNumbers.has(existingUser.studentNumber.toUpperCase())) {
-        // User is not in the Excel file — delete them
-        await User.findByIdAndDelete(existingUser._id);
-        results.deleted.push({
-          studentNumber: existingUser.studentNumber,
-          fullName: existingUser.fullName,
-          id: existingUser._id.toString(),
-        });
-        console.log(`🗑️ Deleted user: ${existingUser.fullName} (${existingUser.studentNumber})`);
-      }
-    }
-
-    // Step 2: Create or update users from the Excel
     for (const userData of users) {
       try {
         if (!userData.studentNumber || !userData.firstName || !userData.lastName) {
-          results.failed.push({
+          results.failed++;
+          results.failedUsers.push({
             studentNumber: userData.studentNumber || "UNKNOWN",
             reason: "Missing required fields (studentNumber, firstName, lastName)",
             data: userData,
@@ -557,94 +579,75 @@ export const syncUploadUsers = async (
         });
 
         if (existingUser) {
-          // Admin accounts: skip role modification entirely
           if (existingUser.role === "admin") {
-            results.skippedAdmins.push({
-              studentNumber: existingUser.studentNumber,
-              fullName: existingUser.fullName,
-              id: existingUser._id.toString(),
-            });
-            console.log(`🛡️ Skipped admin: ${existingUser.fullName} (${existingUser.studentNumber})`);
+            // Admin: only update membership status and clear position (role stays admin)
+            existingUser.membershipStatus = membershipStatusObj;
+            existingUser.position = null; // Admins don't need a position
+            await existingUser.save();
+            results.successful++;
+            console.log(`🛡️ Updated admin membership: ${existingUser.fullName} (${existingUser.studentNumber})`);
             continue;
           }
 
-          // Update existing non-admin user: Year Level, Position, Membership Status, and Role
-          const changes: string[] = [];
-
-          if (userData.yearLevel && existingUser.yearLevel !== userData.yearLevel) {
-            existingUser.yearLevel = userData.yearLevel;
-            changes.push(`yearLevel: ${userData.yearLevel}`);
-          }
-
-          if (userData.position !== undefined && existingUser.position !== userData.position) {
-            existingUser.position = userData.position || null;
-            changes.push(`position: ${userData.position || "none"}`);
-          }
+          // Non-admin user: update Year Level, Position, Membership Status, Role, and name fields
+          if (userData.yearLevel) existingUser.yearLevel = userData.yearLevel;
 
           // Update membership status
-          const currentType = existingUser.membershipStatus?.membershipType;
-          const currentIsMember = existingUser.membershipStatus?.isMember;
-          if (currentIsMember !== membershipStatusObj.isMember || currentType !== membershipStatusObj.membershipType) {
-            existingUser.membershipStatus = membershipStatusObj;
-            changes.push(`membership: ${membershipStatusObj.membershipType || (membershipStatusObj.isMember ? "member" : "non-member")}`);
-          }
+          existingUser.membershipStatus = membershipStatusObj;
 
-          // Update role for officers and students only (admins already skipped above)
+          // Update role
           if (userData.role) {
             const newRole = userData.role.toLowerCase();
-            if (["student", "council-officer", "committee-officer", "faculty"].includes(newRole) && existingUser.role !== newRole) {
+            if (["student", "council-officer", "committee-officer", "faculty"].includes(newRole)) {
               existingUser.role = newRole as any;
-              changes.push(`role: ${newRole}`);
             }
           }
 
-          // Update name fields
-          if (userData.firstName && existingUser.firstName !== userData.firstName) {
-            existingUser.firstName = userData.firstName;
-            changes.push(`firstName: ${userData.firstName}`);
-          }
-          if (userData.lastName && existingUser.lastName !== userData.lastName) {
-            existingUser.lastName = userData.lastName;
-            changes.push(`lastName: ${userData.lastName}`);
-          }
-          if (userData.middleName !== undefined && existingUser.middleName !== (userData.middleName || null)) {
-            existingUser.middleName = userData.middleName || null;
-            changes.push(`middleName: ${userData.middleName || "none"}`);
+          // Position: only keep for officers, clear for students/non-officers
+          const finalRole = existingUser.role;
+          if (finalRole === "council-officer" || finalRole === "committee-officer") {
+            existingUser.position = userData.position || null;
+          } else {
+            // Students, faculty, etc. don't need positions — clear it
+            existingUser.position = null;
           }
 
+          // Update name fields
+          if (userData.firstName) existingUser.firstName = userData.firstName;
+          if (userData.lastName) existingUser.lastName = userData.lastName;
+          if (userData.middleName !== undefined) existingUser.middleName = userData.middleName || null;
+
           await existingUser.save();
-          results.updated.push({
-            studentNumber: userData.studentNumber,
-            fullName: existingUser.fullName,
-            id: existingUser._id.toString(),
-            changes,
-          });
-          console.log(`🔄 Updated user: ${existingUser.fullName} (${existingUser.studentNumber}) - Changes: ${changes.join(", ") || "none"}`);
+          results.successful++;
+          console.log(`🔄 Updated user: ${existingUser.fullName} (${existingUser.studentNumber})`);
         } else {
           // Create new user
-          const newUser = await User.create({
+          const role = userData.role?.toLowerCase() || "student";
+          // Only officers get positions
+          const position = (role === "council-officer" || role === "committee-officer")
+            ? (userData.position || null)
+            : null;
+
+          await User.create({
             studentNumber: userData.studentNumber,
             lastName: userData.lastName,
             firstName: userData.firstName,
             middleName: userData.middleName || null,
             password: userData.password || "123456",
-            role: userData.role || "student",
+            role: role,
             yearLevel: userData.yearLevel || null,
-            position: userData.position || null,
+            position: position,
             membershipStatus: membershipStatusObj,
             registeredBy: req.user?.id || null,
           });
 
-          results.created.push({
-            studentNumber: userData.studentNumber,
-            fullName: newUser.fullName,
-            id: newUser._id.toString(),
-          });
-          console.log(`✅ Created user: ${newUser.fullName} (${newUser.studentNumber})`);
+          results.successful++;
+          console.log(`✅ Created user: ${userData.firstName} ${userData.lastName} (${userData.studentNumber})`);
         }
       } catch (error: any) {
         console.error(`❌ Failed to process user ${userData.studentNumber}:`, error.message);
-        results.failed.push({
+        results.failed++;
+        results.failedUsers.push({
           studentNumber: userData.studentNumber || "UNKNOWN",
           reason: error.message || "Unknown error occurred",
           data: userData,
@@ -652,20 +655,15 @@ export const syncUploadUsers = async (
       }
     }
 
-    console.log(
-      `✅ Sync upload complete: ${results.created.length} created, ${results.updated.length} updated, ${results.deleted.length} deleted, ${results.skippedAdmins.length} admins skipped, ${results.failed.length} failed`
-    );
-
     res.status(200).json({
       success: true,
-      message: `Sync complete. ${results.created.length} created, ${results.updated.length} updated, ${results.deleted.length} deleted, ${results.skippedAdmins.length} admins protected.`,
       data: results,
     });
   } catch (error: any) {
-    console.error("❌ Sync upload error:", error);
+    console.error("❌ Sync upsert batch error:", error);
     res.status(500).json({
       success: false,
-      message: "Error during sync upload",
+      message: "Error during sync upsert batch",
       error: error.message,
     });
   }
