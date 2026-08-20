@@ -24,6 +24,8 @@ interface RawExcelRow {
   yearLevel?: string | number; // Alternate casing
   Role?: string;
   role?: string; // Alternate casing
+  Position?: string;
+  position?: string; // Alternate casing
   "Membership Status"?: string;
   membershipStatus?: string; // Alternate casing
   [key: string]: string | number | undefined; // More specific for other columns
@@ -36,6 +38,7 @@ interface UploadedUser {
   middleName?: string;
   yearLevel?: number;
   role: string;
+  position?: string;
   membershipStatus: string;
   status?: "valid" | "error";
   error?: string;
@@ -142,6 +145,8 @@ export default function ExcelUploadModal({
           role: getStringValue(
             row["Role"] || row["role"] || "student",
           ).toLowerCase(),
+          position:
+            getStringValue(row["Position"] || row["position"]) || undefined,
           membershipStatus: getStringValue(
             row["Membership Status"] || row["membershipStatus"] || "non-member",
           ).toLowerCase(),

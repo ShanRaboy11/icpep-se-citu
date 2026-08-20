@@ -4,6 +4,7 @@ import {
   getUserById,
   createUser,
   bulkUploadUsers,
+  syncUploadUsers,
   updateUser,
   toggleUserStatus,
   deleteUser,
@@ -21,6 +22,7 @@ router.get('/stats', protect as RequestHandler, getUserStats);
 
 // Bulk upload route - MUST be before /:id routes!
 router.post('/bulk-upload', protect as RequestHandler, bulkUploadUsers as RequestHandler); 
+router.post('/sync-upload', protect as RequestHandler, syncUploadUsers as RequestHandler); 
 
 // Standard CRUD routes
 router.get('/', protect as RequestHandler, getAllUsers); 

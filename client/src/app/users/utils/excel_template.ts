@@ -11,6 +11,7 @@ export function downloadExcelTemplate() {
       "Year Level": 1,
       "Password": "123456",
       "Role": "member",
+      "Position": "",
       "Membership Status": "member",
     },
     {
@@ -21,6 +22,7 @@ export function downloadExcelTemplate() {
       "Year Level": 3,
       "Password": "123456",
       "Role": "council-officer",
+      "Position": "President",
       "Membership Status": "regional",
     },
     {
@@ -31,6 +33,7 @@ export function downloadExcelTemplate() {
       "Year Level": 2,
       "Password": "123456",
       "Role": "committee-officer",
+      "Position": "Finance Head",
       "Membership Status": "local",
     },
   ];
@@ -49,6 +52,7 @@ export function downloadExcelTemplate() {
     { wch: 12 }, // Year Level
     { wch: 12 }, // Password
     { wch: 12 }, // Role
+    { wch: 18 }, // Position
     { wch: 18 }, // Membership Status
   ];
 
@@ -64,7 +68,8 @@ export function downloadExcelTemplate() {
     ["5. Year Level - OPTIONAL - Single number: 1, 2, 3, 4, or 5"],
     ["6. Password - OPTIONAL - Default: 123456 (will be hashed)"],
     ["7. Role - OPTIONAL - Valid values: member, non-member, council-officer, committee-officer, faculty (Default: member)"],
-    ["8. Membership Status - OPTIONAL - Valid values: member, non-member, local, regional (Default: non-member)"],
+    ["8. Position - OPTIONAL - Officer position title (e.g., President, Finance Head)"],
+    ["9. Membership Status - OPTIONAL - Valid values: member, non-member, local, regional, both (Default: non-member)"],
     [""],
     ["Notes:"],
     ["- Remove the sample data before uploading"],
@@ -74,6 +79,7 @@ export function downloadExcelTemplate() {
     ["- Empty cells will use default values where applicable"],
     ["- Year Level should be a single number (1-5)"],
     ["- Password will default to 123456 if left empty"],
+    ["- This upload SYNCS the database: users not in this file will be REMOVED (admins are protected)"],
   ];
 
   const instructionsSheet = XLSX.utils.aoa_to_sheet(instructions);

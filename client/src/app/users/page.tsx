@@ -72,6 +72,7 @@ interface UploadUserData {
   lastName: string;
   middleName?: string;
   role: string;
+  position?: string;
   yearLevel?: number;
   membershipStatus?: string;
 }
@@ -107,7 +108,7 @@ const getApiUrl = (): string => {
 };
 
 const API_BASE_URL = getApiUrl();
-const USERS_PER_PAGE = 100;
+const USERS_PER_PAGE = 20;
 
 // Helper functions
 const validateRole = (
@@ -568,24 +569,25 @@ export default function UsersListPage() {
         successful: 0,
         failed: 0,
       });
-      setUploadProgress("Preparing upload...");
+      setUploadProgress("Preparing sync upload...");
 
-      // Transform data
+      // Transform data (include position field)
       const usersToUpload = uploadedUsers.map((userData) => ({
         studentNumber: userData.studentNumber,
         firstName: userData.firstName,
         lastName: userData.lastName,
         middleName: userData.middleName,
         role: userData.role,
+        position: userData.position,
         yearLevel: userData.yearLevel,
         membershipStatus: userData.membershipStatus,
       }));
 
-      // Send bulk request
-      setUploadProgress("Uploading users...");
+      // Send sync request (replaces bulk-upload with full sync logic)
+      setUploadProgress("Syncing users...");
 
       const response: ApiResponse<any> = await fetchWithAuth(
-        `${API_BASE_URL}/users/bulk-upload`,
+        `${API_BASE_URL}/users/sync-upload`,
         {
           method: "POST",
           body: JSON.stringify({ users: usersToUpload }),
@@ -598,15 +600,20 @@ export default function UsersListPage() {
       const totalUsers = uploadedUsers.length;
 
       if (response.success && response.data) {
-        successCount = response.data.success.length;
-        failedCount = response.data.failed.length;
-        failedUsers = response.data.failed.map((fail: any) => ({
+        const { created, updated, deleted, skippedAdmins, failed } = response.data;
+        successCount = (created?.length || 0) + (updated?.length || 0) + (deleted?.length || 0);
+        failedCount = failed?.length || 0;
+        failedUsers = (failed || []).map((fail: any) => ({
           studentNumber: fail.studentNumber,
           reason: fail.reason,
           data: fail.data,
         }));
+
+        console.log(
+          `✅ Sync complete: ${created?.length || 0} created, ${updated?.length || 0} updated, ${deleted?.length || 0} deleted, ${skippedAdmins?.length || 0} admins protected, ${failedCount} failed`
+        );
       } else {
-        throw new Error(response.message || "Upload failed");
+        throw new Error(response.message || "Sync failed");
       }
 
       setUploadStats({
@@ -616,7 +623,7 @@ export default function UsersListPage() {
         failed: failedCount,
       });
 
-      setUploadProgress("Upload complete! Refreshing user list...");
+      setUploadProgress("Sync complete! Refreshing user list...");
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       await fetchAllUsers();
@@ -634,7 +641,7 @@ export default function UsersListPage() {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred.";
-      console.error("❌ Bulk upload error:", error);
+      console.error("❌ Sync upload error:", error);
       setIsUploading(false);
       setUploadProgress("");
 
