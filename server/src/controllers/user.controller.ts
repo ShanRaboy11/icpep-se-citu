@@ -589,8 +589,8 @@ export const syncUploadUsers = async (
             changes.push(`membership: ${membershipStatusObj.membershipType || (membershipStatusObj.isMember ? "member" : "non-member")}`);
           }
 
-          // Update role for officers and students only
-          if (userData.role && existingUser.role !== "admin") {
+          // Update role for officers and students only (admins already skipped above)
+          if (userData.role) {
             const newRole = userData.role.toLowerCase();
             if (["student", "council-officer", "committee-officer", "faculty"].includes(newRole) && existingUser.role !== newRole) {
               existingUser.role = newRole as any;
