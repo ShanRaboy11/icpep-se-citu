@@ -16,7 +16,7 @@ const createAnnouncement = async (req, res, next) => {
         console.log("📷 File present:", !!req.file);
         console.log("📷 Files present:", !!req.files && req.files.length);
         console.log("👤 User:", req.user);
-        const { title, description, content, type, priority, targetAudience, isPublished, publishDate, date, expiryDate, time, location, organizer, contact, attendees, agenda, awardees, attachments, } = req.body;
+        const { title, description, content, type, priority, targetAudience, isPublished, publishDate, date, expiryDate, time, location, organizer, contact, attendees, agenda, awardees, } = req.body;
         // Get author from authenticated user
         const author = req.user?.id;
         if (!author) {
@@ -95,7 +95,6 @@ const createAnnouncement = async (req, res, next) => {
         try {
             parsedAgenda = agenda ? JSON.parse(agenda) : undefined;
             parsedAwardees = awardees ? JSON.parse(awardees) : undefined;
-            parsedAttachments = attachments ? JSON.parse(attachments) : undefined;
             parsedTargetAudience = targetAudience
                 ? JSON.parse(targetAudience)
                 : ["all"];
@@ -194,7 +193,7 @@ const createAnnouncement = async (req, res, next) => {
         console.log("✅ Announcement created successfully:", announcement._id);
         // Send notification if published
         if (announcement.isPublished) {
-            await (0, notification_1.notifyAllUsers)(`[ANNOUNCEMENT] ${announcement.title}`, `New announcement: ${announcement.title}`, "announcement", announcement._id, "Announcement");
+            await (0, notification_1.notifyTargetAudience)(announcement.targetAudience || ["all"], `[ANNOUNCEMENT] ${announcement.title}`, `New announcement: ${announcement.title}`, "announcement", announcement._id, "Announcement", `/announcements/${announcement._id}`);
         }
         res.status(201).json({
             success: true,

@@ -12,6 +12,8 @@ router.get('/search', auth_middleware_1.protect, user_controller_1.searchUsers);
 router.get('/stats', auth_middleware_1.protect, user_controller_1.getUserStats);
 // Bulk upload route - MUST be before /:id routes!
 router.post('/bulk-upload', auth_middleware_1.protect, user_controller_1.bulkUploadUsers);
+router.post('/sync-delete', auth_middleware_1.protect, user_controller_1.syncDeleteUsers);
+router.post('/sync-upsert-batch', auth_middleware_1.protect, user_controller_1.syncUpsertBatch);
 // Standard CRUD routes
 router.get('/', auth_middleware_1.protect, user_controller_1.getAllUsers);
 router.post('/', auth_middleware_1.protect, user_controller_1.createUser);

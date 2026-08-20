@@ -214,7 +214,7 @@ const createEvent = async (req, res, next) => {
         console.log("✅ Event created successfully:", event._id);
         // Send notification if published
         if (event.isPublished) {
-            await (0, notification_1.notifyAllUsers)(`[NEW] ${event.title}`, `New event: ${event.title}`, "event", event._id, "Event");
+            await (0, notification_1.notifyTargetAudience)(event.targetAudience || ["all"], `[NEW] ${event.title}`, `New event: ${event.title}`, "event", event._id, "Event", `/events/${event._id}`);
         }
         res.status(201).json({
             success: true,

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.searchUsers = exports.getUserStats = exports.deleteUser = exports.toggleUserStatus = exports.updateUser = exports.bulkUploadUsers = exports.createUser = exports.getUserById = exports.getAllUsers = void 0;
+exports.searchUsers = exports.getUserStats = exports.deleteUser = exports.toggleUserStatus = exports.updateUser = exports.syncUpsertBatch = exports.syncDeleteUsers = exports.bulkUploadUsers = exports.createUser = exports.getUserById = exports.getAllUsers = void 0;
 const user_1 = __importDefault(require("../models/user"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const notification_1 = require("../utils/notification");
@@ -223,18 +223,6 @@ const bulkUploadUsers = async (req, res) => {
                     });
                     continue;
                 }
-                // Check if user exists
-                const existingUser = await user_1.default.findOne({
-                    studentNumber: userData.studentNumber.toUpperCase(),
-                });
-                if (existingUser) {
-                    results.failed.push({
-                        studentNumber: userData.studentNumber,
-                        reason: "User with this student number already exists",
-                        data: userData,
-                    });
-                    continue;
-                }
                 // ✅ NEW: Handle membership status - supports both string and object formats
                 let membershipStatusObj = {
                     isMember: false,
@@ -349,6 +337,209 @@ const bulkUploadUsers = async (req, res) => {
     }
 };
 exports.bulkUploadUsers = bulkUploadUsers;
+// Sync upload users - Phase 1: Delete users not in the Excel (protect admin accounts from deletion)
+const syncDeleteUsers = async (req, res) => {
+    try {
+        const { studentNumbers } = req.body;
+        if (!Array.isArray(studentNumbers) || studentNumbers.length === 0) {
+            res.status(400).json({
+                success: false,
+                message: "studentNumbers array is required",
+            });
+            return;
+        }
+        console.log(`🗑️ Sync delete phase: ${studentNumbers.length} student numbers in Excel...`);
+        const uploadedStudentNumbers = new Set(studentNumbers.map((sn) => sn.toUpperCase()));
+        const deleted = [];
+        const skippedAdmins = [];
+        // Find all non-admin users NOT in the uploaded list and delete them
+        const allExistingUsers = await user_1.default.find({});
+        for (const existingUser of allExistingUsers) {
+            if (!uploadedStudentNumbers.has(existingUser.studentNumber.toUpperCase())) {
+                if (existingUser.role === "admin") {
+                    // Never delete admins
+                    skippedAdmins.push({
+                        studentNumber: existingUser.studentNumber,
+                        fullName: existingUser.fullName,
+                        id: existingUser._id.toString(),
+                    });
+                    continue;
+                }
+                await user_1.default.findByIdAndDelete(existingUser._id);
+                deleted.push({
+                    studentNumber: existingUser.studentNumber,
+                    fullName: existingUser.fullName,
+                    id: existingUser._id.toString(),
+                });
+                console.log(`🗑️ Deleted user: ${existingUser.fullName} (${existingUser.studentNumber})`);
+            }
+        }
+        console.log(`✅ Delete phase complete: ${deleted.length} deleted, ${skippedAdmins.length} admins protected`);
+        res.status(200).json({
+            success: true,
+            message: `Delete phase complete. ${deleted.length} deleted, ${skippedAdmins.length} admins protected.`,
+            data: { deleted, skippedAdmins },
+        });
+    }
+    catch (error) {
+        console.error("❌ Sync delete error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error during sync delete",
+            error: error.message,
+        });
+    }
+};
+exports.syncDeleteUsers = syncDeleteUsers;
+// Sync upload users - Phase 2: Create or update a batch of users
+const syncUpsertBatch = async (req, res) => {
+    try {
+        const { users } = req.body;
+        if (!Array.isArray(users) || users.length === 0) {
+            res.status(400).json({
+                success: false,
+                message: "Users array is required",
+            });
+            return;
+        }
+        const results = {
+            successful: 0,
+            failed: 0,
+            failedUsers: [],
+        };
+        for (const userData of users) {
+            try {
+                if (!userData.studentNumber || !userData.firstName || !userData.lastName) {
+                    results.failed++;
+                    results.failedUsers.push({
+                        studentNumber: userData.studentNumber || "UNKNOWN",
+                        reason: "Missing required fields (studentNumber, firstName, lastName)",
+                        data: userData,
+                    });
+                    continue;
+                }
+                // Parse membership status
+                let membershipStatusObj = {
+                    isMember: false,
+                    membershipType: null,
+                };
+                if (userData.membershipStatus && typeof userData.membershipStatus === "object") {
+                    membershipStatusObj = {
+                        isMember: userData.membershipStatus.isMember || false,
+                        membershipType: userData.membershipStatus.membershipType || null,
+                    };
+                }
+                else if (userData.membershipStatus && typeof userData.membershipStatus === "string") {
+                    const statusLower = userData.membershipStatus.toLowerCase().trim();
+                    if (statusLower === "local") {
+                        membershipStatusObj = { isMember: true, membershipType: "local" };
+                    }
+                    else if (statusLower === "regional") {
+                        membershipStatusObj = { isMember: true, membershipType: "regional" };
+                    }
+                    else if (statusLower === "both") {
+                        membershipStatusObj = { isMember: true, membershipType: "both" };
+                    }
+                    else if (statusLower === "member") {
+                        membershipStatusObj = { isMember: true, membershipType: null };
+                    }
+                }
+                // Check if user exists
+                const existingUser = await user_1.default.findOne({
+                    studentNumber: userData.studentNumber.toUpperCase(),
+                });
+                if (existingUser) {
+                    if (existingUser.role === "admin") {
+                        // Admin: update membership status and year level, clear position (role stays admin)
+                        existingUser.membershipStatus = membershipStatusObj;
+                        existingUser.position = undefined; // Admins don't need a position
+                        if (userData.yearLevel)
+                            existingUser.yearLevel = userData.yearLevel;
+                        await existingUser.save();
+                        results.successful++;
+                        console.log(`🛡️ Updated admin membership: ${existingUser.fullName} (${existingUser.studentNumber})`);
+                        continue;
+                    }
+                    // Non-admin user: update Year Level, Position, Membership Status, Role, and name fields
+                    if (userData.yearLevel)
+                        existingUser.yearLevel = userData.yearLevel;
+                    // Update membership status
+                    existingUser.membershipStatus = membershipStatusObj;
+                    // Update role
+                    if (userData.role) {
+                        const newRole = userData.role.toLowerCase();
+                        if (["student", "council-officer", "committee-officer", "faculty"].includes(newRole)) {
+                            existingUser.role = newRole;
+                        }
+                    }
+                    // Position: only keep for officers, clear for students/non-officers
+                    const finalRole = existingUser.role;
+                    if (finalRole === "council-officer" || finalRole === "committee-officer") {
+                        existingUser.position = userData.position || null;
+                    }
+                    else {
+                        // Students, faculty, etc. don't need positions — clear it
+                        existingUser.position = undefined;
+                    }
+                    // Update name fields
+                    if (userData.firstName)
+                        existingUser.firstName = userData.firstName;
+                    if (userData.lastName)
+                        existingUser.lastName = userData.lastName;
+                    if (userData.middleName !== undefined)
+                        existingUser.middleName = userData.middleName || null;
+                    await existingUser.save();
+                    results.successful++;
+                    console.log(`🔄 Updated user: ${existingUser.fullName} (${existingUser.studentNumber})`);
+                }
+                else {
+                    // Create new user
+                    const role = userData.role?.toLowerCase() || "student";
+                    // Only officers get positions
+                    const position = (role === "council-officer" || role === "committee-officer")
+                        ? (userData.position || null)
+                        : null;
+                    await user_1.default.create({
+                        studentNumber: userData.studentNumber,
+                        lastName: userData.lastName,
+                        firstName: userData.firstName,
+                        middleName: userData.middleName || null,
+                        password: userData.password || "123456",
+                        role: role,
+                        yearLevel: userData.yearLevel || null,
+                        position: position,
+                        membershipStatus: membershipStatusObj,
+                        registeredBy: req.user?.id || null,
+                    });
+                    results.successful++;
+                    console.log(`✅ Created user: ${userData.firstName} ${userData.lastName} (${userData.studentNumber})`);
+                }
+            }
+            catch (error) {
+                console.error(`❌ Failed to process user ${userData.studentNumber}:`, error.message);
+                results.failed++;
+                results.failedUsers.push({
+                    studentNumber: userData.studentNumber || "UNKNOWN",
+                    reason: error.message || "Unknown error occurred",
+                    data: userData,
+                });
+            }
+        }
+        res.status(200).json({
+            success: true,
+            data: results,
+        });
+    }
+    catch (error) {
+        console.error("❌ Sync upsert batch error:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error during sync upsert batch",
+            error: error.message,
+        });
+    }
+};
+exports.syncUpsertBatch = syncUpsertBatch;
 // Update user
 const updateUser = async (req, res) => {
     try {

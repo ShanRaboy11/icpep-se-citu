@@ -76,7 +76,7 @@ const userSchema = new mongoose_1.Schema({
     },
     role: {
         type: String,
-        enum: ["student", "council-officer", "committee-officer", "faculty"],
+        enum: ["student", "council-officer", "committee-officer", "faculty", "admin"],
         default: "student",
     },
     position: {
