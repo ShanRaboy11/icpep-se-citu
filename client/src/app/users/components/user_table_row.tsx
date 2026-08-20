@@ -140,17 +140,17 @@ export default function UserTableRow({
           </span>
         </td>
         
-        <td className="px-4 py-4 whitespace-nowrap">
+        <td className="px-4 py-4 whitespace-nowrap text-center">
           <span className="font-raleway text-sm text-gray-600">
             {user.registeredBy?.fullName || "Self-registered"}
           </span>
         </td>
-        <td className="px-4 py-4 whitespace-nowrap">
+        <td className="px-4 py-4 whitespace-nowrap text-center">
           <span className="font-raleway text-sm text-gray-600">
             {formatDate(user.createdAt)}
           </span>
         </td>
-        <td className="px-4 py-4 whitespace-nowrap">
+        <td className="px-4 py-4 whitespace-nowrap text-center">
           <span className="font-raleway text-sm text-gray-600">
             {formatDate(user.updatedAt)}
           </span>

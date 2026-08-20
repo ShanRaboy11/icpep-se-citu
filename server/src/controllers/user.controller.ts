@@ -580,9 +580,10 @@ export const syncUpsertBatch = async (
 
         if (existingUser) {
           if (existingUser.role === "admin") {
-            // Admin: only update membership status and clear position (role stays admin)
+            // Admin: update membership status and year level, clear position (role stays admin)
             existingUser.membershipStatus = membershipStatusObj;
-            existingUser.position = null; // Admins don't need a position
+            existingUser.position = undefined; // Admins don't need a position
+            if (userData.yearLevel) existingUser.yearLevel = userData.yearLevel;
             await existingUser.save();
             results.successful++;
             console.log(`🛡️ Updated admin membership: ${existingUser.fullName} (${existingUser.studentNumber})`);
@@ -609,7 +610,7 @@ export const syncUpsertBatch = async (
             existingUser.position = userData.position || null;
           } else {
             // Students, faculty, etc. don't need positions — clear it
-            existingUser.position = null;
+            existingUser.position = undefined;
           }
 
           // Update name fields
