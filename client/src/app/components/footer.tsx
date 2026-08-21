@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 const Footer = () => {
   const scrollToTop = () => {
@@ -149,9 +150,12 @@ const Footer = () => {
               Mobile: 'mb-6' 
             */}
             <div className="flex flex-col items-center sm:items-end gap-3 mb-6 sm:mb-0">
-              <p className="font-medium text-sky-100 cursor-default">
+              <Link
+                href="/contact-us"
+                className="font-medium text-sky-100 hover:text-white transition-colors"
+              >
                 Contact Us
-              </p>
+              </Link>
               <div className="flex gap-4">
                 <a
                   href="https://www.facebook.com/cituicpep"
