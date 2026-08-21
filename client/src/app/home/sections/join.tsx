@@ -15,7 +15,7 @@ const BenefitCard = ({
     <div
       className="absolute -inset-0.5 rounded-2xl bg-gradient-to-r from-primary1/40 via-secondary2/40 to-primary1/40 
                  bg-[length:200%_100%] blur-sm opacity-0 group-hover:opacity-50 
-                 transition duration-1000 animate-shimmer"
+                 transition duration-1000 animate-shimmer-bg"
     ></div>
 
     <div className="absolute inset-0 rounded-2xl border border-white/20 bg-white/5 backdrop-blur-lg"></div>

@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { User } from "../utils/user";
 import UserTableRow from "./user_table_row";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, Check } from "lucide-react";
 
 type SortField =
   | "studentNumber"
@@ -50,14 +51,41 @@ export default function UsersTable({
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      // Toggle direction
       const newDirection = sortDirection === "asc" ? "desc" : "asc";
       onSortChange(field, newDirection);
     } else {
-      // New field, start with asc
       onSortChange(field, "asc");
     }
   };
+
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  const dropdownContainerStyle =
+    "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-1 p-2 max-h-56 overflow-y-auto";
+  const dropdownItemStyle =
+    "flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
+  const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
+  const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
+
+  const ROLE_OPTIONS = [
+    { value: "all", label: "All Roles" },
+    { value: "student", label: "Student" },
+    { value: "council-officer", label: "Council Officer" },
+    { value: "committee-officer", label: "Committee Officer" },
+    { value: "faculty", label: "Faculty" },
+    { value: "admin", label: "Admin" },
+  ];
+
+  const MEMBERSHIP_OPTIONS = [
+    { value: "all", label: "All" },
+    { value: "local", label: "Local" },
+    { value: "regional", label: "Regional" },
+    { value: "both", label: "Both (Local & Regional)" },
+    { value: "non-member", label: "Non-Member" },
+  ];
+
+  const selectedRoleLabel = ROLE_OPTIONS.find((o) => o.value === filterRole)?.label ?? "All Roles";
+  const selectedMembershipLabel = MEMBERSHIP_OPTIONS.find((o) => o.value === filterMembership)?.label ?? "All";
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null;
@@ -71,39 +99,117 @@ export default function UsersTable({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 items-center bg-gray-50 p-4 rounded-lg border border-gray-200">
+      <div className="flex flex-wrap gap-4 items-center bg-gray-50 p-4 rounded-xl border border-gray-200">
+        {/* Role Filter */}
         <div className="flex items-center gap-2">
           <label className="font-raleway text-sm font-medium text-gray-700">
             Role:
           </label>
-          <select
-            value={filterRole}
-            onChange={(e) => onFilterChange('role', e.target.value)}
-            className="font-raleway text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
-          >
-            <option value="all">All Roles</option>
-            <option value="student">Student</option>
-            <option value="council-officer">Council Officer</option>
-            <option value="committee-officer">Committee Officer</option>
-            <option value="faculty">Faculty</option>
-          </select>
+          <div className="relative w-44">
+            <div
+              className={`w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-50 ${
+                activeDropdown === "filterRole"
+                  ? "border-primary1 ring-4 ring-primary1/10"
+                  : ""
+              }`}
+              onClick={() =>
+                setActiveDropdown(activeDropdown === "filterRole" ? null : "filterRole")
+              }
+            >
+              <span className="font-raleway text-sm truncate">{selectedRoleLabel}</span>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 ml-1 flex-shrink-0 transition-transform duration-300 ${
+                  activeDropdown === "filterRole" ? "rotate-180" : ""
+                }`}
+              />
+            </div>
+            {activeDropdown === "filterRole" && (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setActiveDropdown(null)}
+                />
+                <div className={dropdownContainerStyle}>
+                  {ROLE_OPTIONS.map((opt) => (
+                    <div
+                      key={opt.value}
+                      className={`${dropdownItemStyle} ${
+                        filterRole === opt.value
+                          ? dropdownItemSelectedStyle
+                          : dropdownItemHoverStyle
+                      }`}
+                      onClick={() => {
+                        onFilterChange("role", opt.value);
+                        setActiveDropdown(null);
+                      }}
+                    >
+                      <span>{opt.label}</span>
+                      {filterRole === opt.value && (
+                        <Check className="w-4 h-4 text-primary1" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
+        {/* Membership Filter */}
         <div className="flex items-center gap-2">
           <label className="font-raleway text-sm font-medium text-gray-700">
             Membership:
           </label>
-          <select
-            value={filterMembership}
-            onChange={(e) => onFilterChange('membership', e.target.value)}
-            className="font-raleway text-sm text-gray-700 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
-          >
-            <option value="all">All</option>
-            <option value="local">Local</option>
-            <option value="regional">Regional</option>
-            <option value="both">Both (Local & Regional)</option>
-            <option value="non-member">Non-Member</option>
-          </select>
+          <div className="relative w-48">
+            <div
+              className={`w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-50 ${
+                activeDropdown === "filterMembership"
+                  ? "border-primary1 ring-4 ring-primary1/10"
+                  : ""
+              }`}
+              onClick={() =>
+                setActiveDropdown(
+                  activeDropdown === "filterMembership" ? null : "filterMembership"
+                )
+              }
+            >
+              <span className="font-raleway text-sm truncate">{selectedMembershipLabel}</span>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 ml-1 flex-shrink-0 transition-transform duration-300 ${
+                  activeDropdown === "filterMembership" ? "rotate-180" : ""
+                }`}
+              />
+            </div>
+            {activeDropdown === "filterMembership" && (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setActiveDropdown(null)}
+                />
+                <div className={dropdownContainerStyle}>
+                  {MEMBERSHIP_OPTIONS.map((opt) => (
+                    <div
+                      key={opt.value}
+                      className={`${dropdownItemStyle} ${
+                        filterMembership === opt.value
+                          ? dropdownItemSelectedStyle
+                          : dropdownItemHoverStyle
+                      }`}
+                      onClick={() => {
+                        onFilterChange("membership", opt.value);
+                        setActiveDropdown(null);
+                      }}
+                    >
+                      <span>{opt.label}</span>
+                      {filterMembership === opt.value && (
+                        <Check className="w-4 h-4 text-primary1" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="ml-auto font-raleway text-sm text-gray-600 font-medium">

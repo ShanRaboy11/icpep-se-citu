@@ -8,12 +8,12 @@ import MeetingAttendanceCard from "../components/attendance-card";
 import AttendanceModal from "../components/attendance-modal";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
+import Grid from "..//../components/grid";
 import { ArrowLeft } from "lucide-react";
 import AnnouncementMedia from "../components/media";
 import announcementService from "../../services/announcement";
 import { Announcement as UtilAnnouncement } from "../utils/announcements";
 
-// Local/raw announcement type coming from the API
 interface RawAnnouncement {
   _id: string;
   id?: string;
@@ -49,7 +49,6 @@ interface RawAnnouncement {
   expiryDate?: string;
 }
 
-// Helper function to format date
 const formatDate = (dateString: string): string => {
   try {
     const date = new Date(dateString);
@@ -65,12 +64,10 @@ const formatDate = (dateString: string): string => {
   }
 };
 
-// Helper function to format time from 24h to 12h format
 const formatTime = (timeString: string | undefined): string => {
   if (!timeString) return "Time not specified";
 
   try {
-    // Handle time formats like "14:30" or "14:30:00"
     const [hours, minutes] = timeString.split(":");
     const hour = parseInt(hours, 10);
     const min = minutes || "00";
@@ -91,13 +88,12 @@ export default function AnnouncementDetailPage() {
   const id = params?.id as string;
   const [showFullAttendance, setShowFullAttendance] = useState(false);
   const [announcement, setAnnouncement] = useState<RawAnnouncement | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Fetch announcement from database
   useEffect(() => {
     const fetchAnnouncement = async () => {
       try {
@@ -128,7 +124,6 @@ export default function AnnouncementDetailPage() {
     router.back();
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex flex-col">
@@ -156,7 +151,6 @@ export default function AnnouncementDetailPage() {
     );
   }
 
-  // Error or not found state
   if (error || !announcement) {
     return (
       <div className="min-h-screen bg-white">
@@ -188,7 +182,6 @@ export default function AnnouncementDetailPage() {
   const galleryImageUrls: string[] = announcement.galleryImages ?? [];
   const isMeeting = announcement.type.toLowerCase() === "meeting";
 
-  // Map RawAnnouncement to the UI Announcement shape expected by shared components
   let utilAnnouncement: UtilAnnouncement | undefined = undefined;
   if (announcement) {
     const typeKey = (announcement.type || "").toLowerCase();
@@ -196,15 +189,17 @@ export default function AnnouncementDetailPage() {
       typeKey === "meeting"
         ? "Meeting"
         : typeKey === "achievement"
-        ? "Achievement"
-        : "News";
+          ? "Achievement"
+          : "News";
 
     const organizerStr =
       typeof announcement.organizer === "string"
         ? announcement.organizer
         : announcement.organizer && typeof announcement.organizer === "object"
-        ? String((announcement.organizer as Record<string, unknown>).name ?? "")
-        : "";
+          ? String(
+              (announcement.organizer as Record<string, unknown>).name ?? "",
+            )
+          : "";
 
     utilAnnouncement = {
       id: announcement._id || announcement.id || "",
@@ -229,18 +224,20 @@ export default function AnnouncementDetailPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white relative overflow-hidden font-sans">
-      <div className="absolute top-[-10rem] left-[-15rem] w-[35rem] h-[35rem] bg-primary1/20 rounded-full filter blur-3xl opacity-90"></div>
-      <div className="absolute top-1/4 right-[-18rem] w-[35rem] h-[35rem] bg-secondary2/20 rounded-full filter blur-3xl opacity-90"></div>
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+      <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+        <Grid />
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-12">
-          <div className="mb-8 flex justify-start">
-            <button
-              onClick={handleBack}
-              title="Back to Announcements"
-              className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <Header />
+
+          <div className="w-full max-w-6xl mx-auto px-6 pt-[9.5rem] pb-16">
+            {/* back */}
+            <div className="mb-8 flex justify-start">
+              <button
+                onClick={handleBack}
+                title="Back to Announcements"
+                className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
                          rounded-full border-2 border-primary1 text-primary1 
                          overflow-hidden transition-all duration-300 ease-in-out 
                          active:scale-95 before:absolute before:inset-0 
@@ -248,40 +245,46 @@ export default function AnnouncementDetailPage() {
                          before:via-white/40 before:to-transparent 
                          before:translate-x-[-100%] hover:before:translate-x-[100%] 
                          before:transition-transform before:duration-700"
-            >
-              <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-            <div className="lg:col-span-2 space-y-6">
-              <AnnouncementMedia
-                title={title}
-                imageUrl={imageUrl}
-                galleryImageUrls={galleryImageUrls}
-              />
-              <AnnouncementDetails announcement={announcement} />
+              >
+                <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
+              </button>
             </div>
 
-            <div className="lg:col-span-1 space-y-6">
-              <DetailsSidebar announcement={utilAnnouncement} />
-
-              {isMeeting && announcement.attendees && (
-                <MeetingAttendanceCard
-                  onViewFull={() => setShowFullAttendance(true)}
+            {/* content */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
+                <AnnouncementMedia
+                  title={title}
+                  imageUrl={imageUrl}
+                  galleryImageUrls={galleryImageUrls}
                 />
-              )}
+                <AnnouncementDetails announcement={announcement} />
+              </div>
+
+              <div className="lg:col-span-1 space-y-6">
+                <DetailsSidebar announcement={utilAnnouncement} />
+
+                {isMeeting && announcement.attendees && (
+                  <MeetingAttendanceCard
+                    onViewFull={() => setShowFullAttendance(true)}
+                  />
+                )}
+              </div>
             </div>
           </div>
-        </main>
+        </div>
+      </main>
 
-        <AttendanceModal
-          isOpen={showFullAttendance}
-          onClose={() => setShowFullAttendance(false)}
-          announcement={utilAnnouncement ?? null}
-        />
+      {/* footer */}
+      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
         <Footer />
       </div>
+
+      <AttendanceModal
+        isOpen={showFullAttendance}
+        onClose={() => setShowFullAttendance(false)}
+        announcement={utilAnnouncement ?? null}
+      />
     </div>
   );
 }

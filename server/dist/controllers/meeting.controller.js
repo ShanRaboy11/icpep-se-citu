@@ -1,0 +1,212 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.deleteMeeting = exports.updateMeeting = exports.getMeetingById = exports.getMeetings = exports.createMeeting = void 0;
+const mongoose_1 = __importDefault(require("mongoose"));
+const meeting_1 = __importDefault(require("../models/meeting"));
+const notification_1 = require("../utils/notification");
+const officers_history_1 = __importDefault(require("../models/officers_history"));
+const availability_1 = __importDefault(require("../models/availability"));
+const createMeeting = async (req, res, next) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            res
+                .status(401)
+                .json({ success: false, message: "User not authenticated" });
+            return;
+        }
+        const { title, agenda, departments = [], selectedDates = [], startTime, endTime, timeLimit = "No Limit", } = req.body;
+        if (!title ||
+            !agenda ||
+            !startTime ||
+            !endTime ||
+            !Array.isArray(selectedDates) ||
+            selectedDates.length === 0) {
+            res
+                .status(400)
+                .json({ success: false, message: "Missing required fields" });
+            return;
+        }
+        const meeting = await meeting_1.default.create({
+            title,
+            agenda,
+            departments,
+            selectedDates,
+            startTime,
+            endTime,
+            timeLimit,
+            createdBy: new mongoose_1.default.Types.ObjectId(userId),
+            isPublished: true,
+        });
+        await meeting.populate("createdBy", "firstName lastName studentNumber");
+        // Notify officers of the included departments
+        if (departments && departments.length > 0) {
+            // Find current officers history
+            const currentOfficersHistory = await officers_history_1.default.findOne({
+                isCurrent: true,
+            });
+            if (currentOfficersHistory) {
+                // Filter officers belonging to the target departments
+                const officersToNotify = currentOfficersHistory.officers
+                    .filter((officer) => departments.includes(officer.department))
+                    .map((officer) => officer.user);
+                if (officersToNotify.length > 0) {
+                    // Create empty availability records for these officers
+                    const availabilityRecords = officersToNotify.map((userId) => ({
+                        meeting: meeting._id,
+                        user: userId,
+                        slots: [], // Empty slots means pending/not submitted
+                    }));
+                    try {
+                        await availability_1.default.insertMany(availabilityRecords);
+                        console.log(`✅ Created ${availabilityRecords.length} availability records.`);
+                    }
+                    catch (err) {
+                        console.error("Error creating availability records:", err);
+                    }
+                    await (0, notification_1.sendBulkNotifications)(officersToNotify, `[COMMEET] Availability Request`, `Please add your availability schedule for the meeting: ${title}. Status: Pending`, "system", meeting._id, null);
+                }
+            }
+        }
+        res
+            .status(201)
+            .json({ success: true, message: "Meeting created", data: meeting });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to create meeting",
+            error: error.message,
+        });
+    }
+};
+exports.createMeeting = createMeeting;
+const getMeetings = async (req, res) => {
+    try {
+        const { upcoming, me, q } = req.query;
+        const query = {};
+        if (me === "true" && req.user?.id) {
+            query.createdBy = req.user.id;
+        }
+        if (q) {
+            query.$or = [
+                { title: { $regex: q, $options: "i" } },
+                { agenda: { $regex: q, $options: "i" } },
+            ];
+        }
+        // Fetch all meetings first
+        let meetings = await meeting_1.default.find(query).sort({ createdAt: -1 }).lean();
+        console.log(`[GET /meetings] Found ${meetings.length} total meetings in DB.`);
+        if (upcoming === "true") {
+            // Use local date string (Philippines time)
+            const today = new Date();
+            // 'en-CA' gives YYYY-MM-DD format
+            const todayStr = today.toLocaleDateString("en-CA");
+            console.log(`[Filtering] Checking for meetings on or after: ${todayStr}`);
+            meetings = meetings.filter((m) => {
+                // --- FIX IS HERE ---
+                // We fallback to [] if selectedDates is undefined or null
+                const dates = m.selectedDates || [];
+                // Check if ANY selected date is in the future or today
+                return dates.some((d) => d >= todayStr);
+            });
+            console.log(`[Filtering] ${meetings.length} meetings remain after filter.`);
+        }
+        res.json({ success: true, data: meetings });
+    }
+    catch (error) {
+        console.error("Error in getMeetings:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch meetings",
+            error: error.message,
+        });
+    }
+};
+exports.getMeetings = getMeetings;
+const getMeetingById = async (req, res) => {
+    try {
+        const meeting = await meeting_1.default.findById(req.params.id).populate("createdBy", "firstName lastName studentNumber");
+        if (!meeting) {
+            res.status(404).json({ success: false, message: "Meeting not found" });
+            return;
+        }
+        res.json({ success: true, data: meeting });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to fetch meeting",
+            error: error.message,
+        });
+    }
+};
+exports.getMeetingById = getMeetingById;
+const updateMeeting = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        const meeting = await meeting_1.default.findById(req.params.id);
+        if (!meeting) {
+            res.status(404).json({ success: false, message: "Meeting not found" });
+            return;
+        }
+        // Only creator can update
+        if (!userId || meeting.createdBy.toString() !== userId) {
+            res.status(403).json({ success: false, message: "Forbidden" });
+            return;
+        }
+        const allowed = [
+            "title",
+            "agenda",
+            "departments",
+            "selectedDates",
+            "startTime",
+            "endTime",
+            "timeLimit",
+            "isPublished",
+        ];
+        for (const key of allowed) {
+            if (key in req.body) {
+                // @ts-ignore
+                meeting[key] = req.body[key];
+            }
+        }
+        await meeting.save();
+        res.json({ success: true, message: "Meeting updated", data: meeting });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to update meeting",
+            error: error.message,
+        });
+    }
+};
+exports.updateMeeting = updateMeeting;
+const deleteMeeting = async (req, res) => {
+    try {
+        const userId = req.user?.id;
+        const meeting = await meeting_1.default.findById(req.params.id);
+        if (!meeting) {
+            res.status(404).json({ success: false, message: "Meeting not found" });
+            return;
+        }
+        if (!userId || meeting.createdBy.toString() !== userId) {
+            res.status(403).json({ success: false, message: "Forbidden" });
+            return;
+        }
+        await meeting.deleteOne();
+        res.json({ success: true, message: "Meeting deleted" });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Failed to delete meeting",
+            error: error.message,
+        });
+    }
+};
+exports.deleteMeeting = deleteMeeting;

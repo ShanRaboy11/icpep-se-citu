@@ -41,9 +41,11 @@ const tierData: Record<
 export const TierCard = ({
   tier,
   partners,
+  loading,
 }: {
   tier: Tier;
   partners: Partner[];
+  loading: boolean;
 }) => {
   const data = tierData[tier];
   const logoContainerSize = data.logoSize + 20;
@@ -93,44 +95,55 @@ export const TierCard = ({
         </h3>
 
         <div className="flex justify-start items-center space-x-4 h-[120px] pl-2">
-          {partners.map((partner) => (
-            <motion.div
-              key={partner.id}
-              whileHover={{ scale: 1.1, zIndex: 10 }}
-              className="group relative"
-            >
-              <div
-                className="flex items-center justify-center rounded-2xl p-2 shadow-md ring-2 transition-all duration-300 hover:ring-white/50 bg-white/80 ring-white/20"
-                style={{
-                  width: `${logoContainerSize}px`,
-                  height: `${logoContainerSize}px`,
-                }}
-              >
-                <Image
-                  src={partner.logo}
-                  alt={`${partner.name} logo`}
-                  width={data.logoSize}
-                  height={data.logoSize}
-                  className="object-contain"
+          {loading
+            ? [1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="rounded-2xl bg-white/40 animate-pulse border border-white/20"
+                  style={{
+                    width: `${logoContainerSize}px`,
+                    height: `${logoContainerSize}px`,
+                  }}
                 />
-              </div>
-              <span
-                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 rounded-lg px-2 py-1 text-xs text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 whitespace-nowrap font-raleway shadow-lg"
-                style={{
-                  background:
-                    tier === "platinum"
-                      ? "#0c4a6e"
-                      : tier === "gold"
-                      ? "#78350f"
-                      : tier === "silver"
-                      ? "#4b5563"
-                      : "#7c2d12",
-                }}
-              >
-                {partner.name}
-              </span>
-            </motion.div>
-          ))}
+              ))
+            : partners.map((partner) => (
+                <motion.div
+                  key={partner.id}
+                  whileHover={{ scale: 1.1, zIndex: 10 }}
+                  className="group relative"
+                >
+                  <div
+                    className="flex items-center justify-center rounded-2xl p-2 shadow-md ring-2 transition-all duration-300 hover:ring-white/50 bg-white/80 ring-white/20"
+                    style={{
+                      width: `${logoContainerSize}px`,
+                      height: `${logoContainerSize}px`,
+                    }}
+                  >
+                    <Image
+                      src={partner.logo}
+                      alt={`${partner.name} logo`}
+                      width={data.logoSize}
+                      height={data.logoSize}
+                      className="object-contain"
+                    />
+                  </div>
+                  <span
+                    className="absolute top-full mt-2 left-1/2 -translate-x-1/2 rounded-lg px-2 py-1 text-xs text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100 whitespace-nowrap font-raleway shadow-lg"
+                    style={{
+                      background:
+                        tier === "platinum"
+                          ? "#0c4a6e"
+                          : tier === "gold"
+                          ? "#78350f"
+                          : tier === "silver"
+                          ? "#4b5563"
+                          : "#7c2d12",
+                    }}
+                  >
+                    {partner.name}
+                  </span>
+                </motion.div>
+              ))}
         </div>
       </div>
     </div>

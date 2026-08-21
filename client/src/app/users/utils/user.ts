@@ -5,7 +5,7 @@ export interface User {
   firstName: string;
   middleName?: string | null;
   fullName: string;
-  role: 'student' | 'council-officer' | 'committee-officer' | 'faculty';
+  role: 'student' | 'council-officer' | 'committee-officer' | 'faculty' | 'admin';
   yearLevel?: number;
   membershipStatus: {
     isMember: boolean;

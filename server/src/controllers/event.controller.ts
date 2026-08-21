@@ -297,7 +297,8 @@ export const createEvent = async (
         `New event: ${event.title}`,
         "event",
         event._id,
-        "Event"
+        "Event",
+        `/events/${event._id}`
       );
     }
 

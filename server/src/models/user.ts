@@ -10,8 +10,9 @@ export interface IUser extends Document {
   email?: string;
   middleName?: string;
   password: string;
-  role: 'student' | 'council-officer' | 'committee-officer' | 'faculty';
+  role: 'student' | 'council-officer' | 'committee-officer' | 'faculty' | 'admin';
   position?: string;
+  department?: string;
   yearLevel?: number;
   membershipStatus: {
     isMember: boolean;
@@ -26,6 +27,8 @@ export interface IUser extends Document {
   updatedAt: Date;
   fullName: string;
   registeredByName: string;
+  resetPasswordCode?: string;
+  resetPasswordExpire?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -73,10 +76,14 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ["student", "council-officer", "committee-officer", "faculty"],
+      enum: ["student", "council-officer", "committee-officer", "faculty", "admin"],
       default: "student",
     },
     position: {
+      type: String,
+      default: null,
+    },
+    department: {
       type: String,
       default: null,
     },
@@ -112,6 +119,14 @@ const userSchema = new Schema<IUser>(
       default: true,
       select: false,
     },
+    resetPasswordCode: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpire: {
+      type: Date,
+      select: false,
+    },
   },
   {
     timestamps: true,
@@ -140,7 +155,6 @@ userSchema.virtual("registeredByName").get(function (this: IUser) {
 // Pre-save middleware to hash password
 userSchema.pre("save", async function (this: IUser, next) {
   if (!this.isModified("password")) return next();
-
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });

@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Clock, Users } from "lucide-react";
+import { Calendar, MapPin, Clock, Users, Monitor } from "lucide-react";
 import { Announcement } from "../utils/announcements";
 import { formatDate, formatTime } from "../utils/announcements";
 
@@ -31,6 +31,14 @@ const DetailRow = ({
 export default function DetailsSidebar({ announcement }: DetailsSidebarProps) {
   if (!announcement) return null;
 
+  const isOnline =
+    announcement.location &&
+    /zoom|google meet|gmeet|meet|ms teams|teams|online|discord|webinar/i.test(
+      announcement.location,
+    );
+
+  const locationLabel = isOnline ? "Platform" : "Location";
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-lg">
       <h3 className="font-rubik text-xl sm:text-2xl font-bold text-primary3 mb-4 pb-2 border-b border-gray-100">
@@ -54,8 +62,14 @@ export default function DetailsSidebar({ announcement }: DetailsSidebarProps) {
 
         {announcement.location && (
           <DetailRow
-            icon={<MapPin className="h-6 w-6" />}
-            label="Location"
+            icon={
+              isOnline ? (
+                <Monitor className="h-6 w-6" />
+              ) : (
+                <MapPin className="h-6 w-6" />
+              )
+            }
+            label={locationLabel}
             value={announcement.location}
           />
         )}

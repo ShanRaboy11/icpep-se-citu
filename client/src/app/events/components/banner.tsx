@@ -1,4 +1,3 @@
-// components/event-banner.tsx
 "use client";
 
 import { useState } from "react";

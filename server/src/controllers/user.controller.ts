@@ -15,7 +15,7 @@ export interface AuthRequest extends Request {
 // Get all users with filtering and sorting
 export const getAllUsers = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const {
@@ -89,7 +89,7 @@ export const getAllUsers = async (
 // Get single user by ID
 export const getUserById = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -104,7 +104,7 @@ export const getUserById = async (
 
     const user = await User.findById(id).populate(
       "registeredBy",
-      "firstName lastName middleName"
+      "firstName lastName middleName",
     );
 
     if (!user) {
@@ -131,7 +131,7 @@ export const getUserById = async (
 // Create new user
 export const createUser = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const {
@@ -148,7 +148,7 @@ export const createUser = async (
     console.log("📝 CREATE USER - req.user:", req.user);
     console.log(
       "📝 CREATE USER - membershipStatus received:",
-      membershipStatus
+      membershipStatus,
     );
 
     // Validation
@@ -252,7 +252,7 @@ export const createUser = async (
 // Bulk upload users
 export const bulkUploadUsers = async (
   req: AuthRequest,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { users } = req.body;
@@ -300,20 +300,6 @@ export const bulkUploadUsers = async (
             studentNumber: userData.studentNumber || "UNKNOWN",
             reason:
               "Missing required fields (studentNumber, firstName, lastName)",
-            data: userData,
-          });
-          continue;
-        }
-
-        // Check if user exists
-        const existingUser = await User.findOne({
-          studentNumber: userData.studentNumber.toUpperCase(),
-        });
-
-        if (existingUser) {
-          results.failed.push({
-            studentNumber: userData.studentNumber,
-            reason: "User with this student number already exists",
             data: userData,
           });
           continue;
@@ -369,6 +355,41 @@ export const bulkUploadUsers = async (
           // 'non-member' or any other value defaults to initial values
         }
 
+        // Check if user exists
+        const existingUser = await User.findOne({
+          studentNumber: userData.studentNumber.toUpperCase(),
+        });
+
+        if (existingUser) {
+          // Update existing user but keep password
+          existingUser.firstName = userData.firstName;
+          existingUser.lastName = userData.lastName;
+          if (userData.middleName !== undefined)
+            existingUser.middleName = userData.middleName || null;
+          
+          if (userData.role && existingUser.role !== "admin") {
+            existingUser.role = userData.role;
+          }
+
+          if (userData.yearLevel) existingUser.yearLevel = userData.yearLevel;
+
+          existingUser.membershipStatus = membershipStatusObj;
+          // Do not update password
+
+          await existingUser.save();
+
+          results.success.push({
+            studentNumber: userData.studentNumber,
+            fullName: existingUser.fullName,
+            id: existingUser._id.toString(),
+          });
+
+          console.log(
+            `🔄 Updated user: ${existingUser.fullName} (${existingUser.studentNumber}) - Member: ${membershipStatusObj.isMember}`,
+          );
+          continue;
+        }
+
         // Create new user
         const newUser = await User.create({
           studentNumber: userData.studentNumber,
@@ -389,12 +410,12 @@ export const bulkUploadUsers = async (
         });
 
         console.log(
-          `✅ Created user: ${newUser.fullName} (${newUser.studentNumber}) - Member: ${membershipStatusObj.isMember}, Type: ${membershipStatusObj.membershipType}`
+          `✅ Created user: ${newUser.fullName} (${newUser.studentNumber}) - Member: ${membershipStatusObj.isMember}, Type: ${membershipStatusObj.membershipType}`,
         );
       } catch (error: any) {
         console.error(
           `❌ Failed to create user ${userData.studentNumber}:`,
-          error.message
+          error.message,
         );
 
         results.failed.push({
@@ -406,7 +427,7 @@ export const bulkUploadUsers = async (
     }
 
     console.log(
-      `✅ Bulk upload complete: ${results.success.length} succeeded, ${results.failed.length} failed`
+      `✅ Bulk upload complete: ${results.success.length} succeeded, ${results.failed.length} failed`,
     );
 
     res.status(201).json({
@@ -424,10 +445,235 @@ export const bulkUploadUsers = async (
   }
 };
 
+// Sync upload users - Phase 1: Delete users not in the Excel (protect admin accounts from deletion)
+export const syncDeleteUsers = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { studentNumbers } = req.body;
+
+    if (!Array.isArray(studentNumbers) || studentNumbers.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: "studentNumbers array is required",
+      });
+      return;
+    }
+
+    console.log(`🗑️ Sync delete phase: ${studentNumbers.length} student numbers in Excel...`);
+
+    const uploadedStudentNumbers = new Set(
+      studentNumbers.map((sn: string) => sn.toUpperCase())
+    );
+
+    const deleted: { studentNumber: string; fullName: string; id: string }[] = [];
+    const skippedAdmins: { studentNumber: string; fullName: string; id: string }[] = [];
+
+    // Find all non-admin users NOT in the uploaded list and delete them
+    const allExistingUsers = await User.find({});
+
+    for (const existingUser of allExistingUsers) {
+      if (!uploadedStudentNumbers.has(existingUser.studentNumber.toUpperCase())) {
+        if (existingUser.role === "admin") {
+          // Never delete admins
+          skippedAdmins.push({
+            studentNumber: existingUser.studentNumber,
+            fullName: existingUser.fullName,
+            id: existingUser._id.toString(),
+          });
+          continue;
+        }
+
+        await User.findByIdAndDelete(existingUser._id);
+        deleted.push({
+          studentNumber: existingUser.studentNumber,
+          fullName: existingUser.fullName,
+          id: existingUser._id.toString(),
+        });
+        console.log(`🗑️ Deleted user: ${existingUser.fullName} (${existingUser.studentNumber})`);
+      }
+    }
+
+    console.log(`✅ Delete phase complete: ${deleted.length} deleted, ${skippedAdmins.length} admins protected`);
+
+    res.status(200).json({
+      success: true,
+      message: `Delete phase complete. ${deleted.length} deleted, ${skippedAdmins.length} admins protected.`,
+      data: { deleted, skippedAdmins },
+    });
+  } catch (error: any) {
+    console.error("❌ Sync delete error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error during sync delete",
+      error: error.message,
+    });
+  }
+};
+
+// Sync upload users - Phase 2: Create or update a batch of users
+export const syncUpsertBatch = async (
+  req: AuthRequest,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { users } = req.body;
+
+    if (!Array.isArray(users) || users.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: "Users array is required",
+      });
+      return;
+    }
+
+    const results = {
+      successful: 0,
+      failed: 0,
+      failedUsers: [] as { studentNumber: string; reason: string; data?: any }[],
+    };
+
+    for (const userData of users) {
+      try {
+        if (!userData.studentNumber || !userData.firstName || !userData.lastName) {
+          results.failed++;
+          results.failedUsers.push({
+            studentNumber: userData.studentNumber || "UNKNOWN",
+            reason: "Missing required fields (studentNumber, firstName, lastName)",
+            data: userData,
+          });
+          continue;
+        }
+
+        // Parse membership status
+        let membershipStatusObj: {
+          isMember: boolean;
+          membershipType: "local" | "regional" | "both" | null;
+        } = {
+          isMember: false,
+          membershipType: null,
+        };
+
+        if (userData.membershipStatus && typeof userData.membershipStatus === "object") {
+          membershipStatusObj = {
+            isMember: userData.membershipStatus.isMember || false,
+            membershipType: userData.membershipStatus.membershipType || null,
+          };
+        } else if (userData.membershipStatus && typeof userData.membershipStatus === "string") {
+          const statusLower = userData.membershipStatus.toLowerCase().trim();
+          if (statusLower === "local") {
+            membershipStatusObj = { isMember: true, membershipType: "local" };
+          } else if (statusLower === "regional") {
+            membershipStatusObj = { isMember: true, membershipType: "regional" };
+          } else if (statusLower === "both") {
+            membershipStatusObj = { isMember: true, membershipType: "both" };
+          } else if (statusLower === "member") {
+            membershipStatusObj = { isMember: true, membershipType: null };
+          }
+        }
+
+        // Check if user exists
+        const existingUser = await User.findOne({
+          studentNumber: userData.studentNumber.toUpperCase(),
+        });
+
+        if (existingUser) {
+          if (existingUser.role === "admin") {
+            // Admin: update membership status and year level, clear position (role stays admin)
+            existingUser.membershipStatus = membershipStatusObj;
+            existingUser.position = undefined; // Admins don't need a position
+            if (userData.yearLevel) existingUser.yearLevel = userData.yearLevel;
+            await existingUser.save();
+            results.successful++;
+            console.log(`🛡️ Updated admin membership: ${existingUser.fullName} (${existingUser.studentNumber})`);
+            continue;
+          }
+
+          // Non-admin user: update Year Level, Position, Membership Status, Role, and name fields
+          if (userData.yearLevel) existingUser.yearLevel = userData.yearLevel;
+
+          // Update membership status
+          existingUser.membershipStatus = membershipStatusObj;
+
+          // Update role
+          if (userData.role) {
+            const newRole = userData.role.toLowerCase();
+            if (["student", "council-officer", "committee-officer", "faculty"].includes(newRole)) {
+              existingUser.role = newRole as any;
+            }
+          }
+
+          // Position: only keep for officers, clear for students/non-officers
+          const finalRole = existingUser.role;
+          if (finalRole === "council-officer" || finalRole === "committee-officer") {
+            existingUser.position = userData.position || null;
+          } else {
+            // Students, faculty, etc. don't need positions — clear it
+            existingUser.position = undefined;
+          }
+
+          // Update name fields
+          if (userData.firstName) existingUser.firstName = userData.firstName;
+          if (userData.lastName) existingUser.lastName = userData.lastName;
+          if (userData.middleName !== undefined) existingUser.middleName = userData.middleName || null;
+
+          await existingUser.save();
+          results.successful++;
+          console.log(`🔄 Updated user: ${existingUser.fullName} (${existingUser.studentNumber})`);
+        } else {
+          // Create new user
+          const role = userData.role?.toLowerCase() || "student";
+          // Only officers get positions
+          const position = (role === "council-officer" || role === "committee-officer")
+            ? (userData.position || null)
+            : null;
+
+          await User.create({
+            studentNumber: userData.studentNumber,
+            lastName: userData.lastName,
+            firstName: userData.firstName,
+            middleName: userData.middleName || null,
+            password: userData.password || "123456",
+            role: role,
+            yearLevel: userData.yearLevel || null,
+            position: position,
+            membershipStatus: membershipStatusObj,
+            registeredBy: req.user?.id || null,
+          });
+
+          results.successful++;
+          console.log(`✅ Created user: ${userData.firstName} ${userData.lastName} (${userData.studentNumber})`);
+        }
+      } catch (error: any) {
+        console.error(`❌ Failed to process user ${userData.studentNumber}:`, error.message);
+        results.failed++;
+        results.failedUsers.push({
+          studentNumber: userData.studentNumber || "UNKNOWN",
+          reason: error.message || "Unknown error occurred",
+          data: userData,
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: results,
+    });
+  } catch (error: any) {
+    console.error("❌ Sync upsert batch error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error during sync upsert batch",
+      error: error.message,
+    });
+  }
+};
+
 // Update user
 export const updateUser = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -460,7 +706,7 @@ export const updateUser = async (
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { ...updates, updatedAt: new Date() },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     ).populate("registeredBy", "firstName lastName middleName");
 
     if (!updatedUser) {
@@ -487,7 +733,7 @@ export const updateUser = async (
           : `Your membership details have been updated. Type: ${updatedUser.membershipStatus.membershipType}`,
         "membership",
         updatedUser._id,
-        "Membership" as any
+        "Membership" as any,
       );
     }
 
@@ -499,7 +745,7 @@ export const updateUser = async (
         "Your password has been successfully updated.",
         "system",
         updatedUser._id,
-        null
+        null,
       );
     } else {
       const profileFields = [
@@ -514,7 +760,7 @@ export const updateUser = async (
       const changedFields = profileFields.filter(
         (field) =>
           updates[field] !== undefined &&
-          updates[field] !== (originalUser as any)[field]
+          updates[field] !== (originalUser as any)[field],
       );
 
       if (changedFields.length > 0) {
@@ -522,11 +768,11 @@ export const updateUser = async (
           updatedUser._id,
           "[PROFILE] Profile Updated",
           `Your profile information (${changedFields.join(
-            ", "
+            ", ",
           )}) has been updated.`,
           "system",
           updatedUser._id,
-          null
+          null,
         );
       }
     }
@@ -548,7 +794,7 @@ export const updateUser = async (
 // Toggle user active status
 export const toggleUserStatus = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -595,7 +841,7 @@ export const toggleUserStatus = async (
 // Delete user
 export const deleteUser = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -635,7 +881,7 @@ export const deleteUser = async (
 // Get user statistics
 export const getUserStats = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const totalUsers = await User.countDocuments();
@@ -706,7 +952,7 @@ export const getUserStats = async (
 // Search users
 export const searchUsers = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<void> => {
   try {
     const { query } = req.query;

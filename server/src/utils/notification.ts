@@ -8,7 +8,8 @@ export const sendNotification = async (
   message: string,
   type: "announcement" | "event" | "membership" | "system" | "rsvp",
   relatedId?: string | mongoose.Types.ObjectId,
-  relatedModel?: "Announcement" | "Event" | "Membership" | null
+  relatedModel?: "Announcement" | "Event" | "Membership" | null,
+  link?: string
 ) => {
   try {
     await Notification.create({
@@ -18,6 +19,7 @@ export const sendNotification = async (
       type,
       relatedId,
       relatedModel,
+      link,
     });
   } catch (error) {
     console.error("Error sending notification:", error);
@@ -30,7 +32,8 @@ export const sendBulkNotifications = async (
   message: string,
   type: "announcement" | "event" | "membership" | "system" | "rsvp",
   relatedId?: string | mongoose.Types.ObjectId,
-  relatedModel?: "Announcement" | "Event" | "Membership" | null
+  relatedModel?: "Announcement" | "Event" | "Membership" | null,
+  link?: string
 ) => {
   try {
     if (recipientIds.length === 0) {
@@ -49,6 +52,7 @@ export const sendBulkNotifications = async (
       type,
       relatedId,
       relatedModel,
+      link,
     }));
 
     const result = await Notification.insertMany(notifications);
@@ -63,7 +67,8 @@ export const notifyAllUsers = async (
   message: string,
   type: "announcement" | "event" | "membership" | "system" | "rsvp",
   relatedId?: string | mongoose.Types.ObjectId,
-  relatedModel?: "Announcement" | "Event" | "Membership" | null
+  relatedModel?: "Announcement" | "Event" | "Membership" | null,
+  link?: string
 ) => {
   try {
     console.log("🔍 Finding all active users for notification...");
@@ -77,7 +82,8 @@ export const notifyAllUsers = async (
       message,
       type,
       relatedId,
-      relatedModel
+      relatedModel,
+      link
     );
   } catch (error) {
     console.error("Error notifying all users:", error);
@@ -90,14 +96,15 @@ export const notifyTargetAudience = async (
   message: string,
   type: "announcement" | "event" | "membership" | "system" | "rsvp",
   relatedId?: string | mongoose.Types.ObjectId,
-  relatedModel?: "Announcement" | "Event" | "Membership" | null
+  relatedModel?: "Announcement" | "Event" | "Membership" | null,
+  link?: string
 ) => {
   try {
     console.log(`🔍 Notifying target audience: ${targetAudience.join(", ")}`);
 
     // If 'all' is in the target audience, notify everyone
     if (targetAudience.includes("all")) {
-      await notifyAllUsers(title, message, type, relatedId, relatedModel);
+      await notifyAllUsers(title, message, type, relatedId, relatedModel, link);
       return;
     }
 
@@ -142,7 +149,8 @@ export const notifyTargetAudience = async (
       message,
       type,
       relatedId,
-      relatedModel
+      relatedModel,
+      link
     );
 
   } catch (error) {

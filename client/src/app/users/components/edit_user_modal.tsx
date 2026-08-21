@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Save } from "lucide-react";
+import { X, Save, ChevronDown, Check } from "lucide-react";
 import { User } from "../utils/user"; // Ensure this path is correct
 import { useState } from "react";
 
@@ -32,7 +32,40 @@ export default function EditUserModal({
     isActive: user.isActive,
   });
 
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  const dropdownContainerStyle =
+    "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-1 p-2 max-h-56 overflow-y-auto";
+  const dropdownItemStyle =
+    "flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
+  const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
+  const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
+
+  const ROLE_OPTIONS = [
+    { value: "student", label: "Student" },
+    { value: "council-officer", label: "Council Officer" },
+    { value: "committee-officer", label: "Committee Officer" },
+    { value: "faculty", label: "Faculty" },
+    { value: "admin", label: "Admin" },
+  ];
+  const YEAR_OPTIONS = [
+    { value: "", label: "Select Year Level" },
+    { value: "1", label: "1st Year" },
+    { value: "2", label: "2nd Year" },
+    { value: "3", label: "3rd Year" },
+    { value: "4", label: "4th Year" },
+  ];
+  const MEMBERSHIP_OPTIONS = [
+    { value: "non-member", label: "Non-Member" },
+    { value: "local", label: "Local Member" },
+    { value: "regional", label: "Regional Member" },
+    { value: "both", label: "Both (Local & Regional)" },
+  ];
+
+  const selectedRoleLabel = ROLE_OPTIONS.find((o) => o.value === formData.role)?.label ?? "Select Role";
+  const selectedYearLabel = YEAR_OPTIONS.find((o) => o.value === formData.yearLevel)?.label ?? "Select Year Level";
+  const selectedMembershipLabel = MEMBERSHIP_OPTIONS.find((o) => o.value === formData.membershipStatus)?.label ?? "Non-Member";
 
   if (!isOpen) return null;
 
@@ -104,8 +137,8 @@ export default function EditUserModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden animate-in zoom-in duration-200">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-visible animate-scale-in">
         {/* Header */}
         <div className="bg-gradient-to-r from-primary1 to-primary1/90 px-6 py-5">
           <div className="flex items-center justify-between">
@@ -119,7 +152,7 @@ export default function EditUserModal({
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              className="p-2 hover:bg-white/20 rounded-full transition-colors cursor-pointer"
             >
               <X className="w-6 h-6 text-white" />
             </button>
@@ -129,7 +162,7 @@ export default function EditUserModal({
         {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="p-6 overflow-y-auto max-h-[calc(90vh-160px)]"
+          className="p-6 overflow-visible max-h-[calc(90vh-160px)]"
         >
           {/* Student Number */}
           <div className="mb-4">
@@ -220,49 +253,113 @@ export default function EditUserModal({
 
           {/* Role and Year Level */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Role Dropdown */}
             <div>
               <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
                 Role <span className="text-red-500">*</span>
               </label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className={`w-full px-4 py-2 text-gray-400 border-2 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
-                  errors.role
-                    ? "border-red-500"
-                    : "border-gray-300 focus:border-primary1"
-                }`}
-              >
-                <option value="">Select Role</option>
-                <option value="member">Student</option>
-                <option value="council-officer">Council Officer</option>
-                <option value="committee-officer">Committee Officer</option>
-                <option value="faculty">Faculty</option>
-              </select>
+              <div className="relative">
+                <div
+                  className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
+                    activeDropdown === "role"
+                      ? "bg-white border-primary1 ring-4 ring-primary1/10"
+                      : errors.role ? "border-red-500" : ""
+                  }`}
+                  onClick={() =>
+                    setActiveDropdown(activeDropdown === "role" ? null : "role")
+                  }
+                >
+                  <span className="font-rubik text-sm">{selectedRoleLabel}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
+                      activeDropdown === "role" ? "rotate-180" : ""
+                    }`}
+                  />
+                </div>
+                {activeDropdown === "role" && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setActiveDropdown(null)} />
+                    <div className={dropdownContainerStyle}>
+                      {ROLE_OPTIONS.map((opt) => {
+                        // Only show admin option if user already has admin role
+                        if (opt.value === "admin" && user.role !== "admin") return null;
+                        return (
+                          <div
+                            key={opt.value}
+                            className={`${dropdownItemStyle} ${
+                              formData.role === opt.value
+                                ? dropdownItemSelectedStyle
+                                : dropdownItemHoverStyle
+                            }`}
+                            onClick={() => {
+                              setFormData((prev) => ({ ...prev, role: opt.value as "council-officer" | "committee-officer" | "student" | "faculty" | "admin" }));
+                              setActiveDropdown(null);
+                            }}
+                          >
+                            <span>{opt.label}</span>
+                            {formData.role === opt.value && (
+                              <Check className="w-4 h-4 text-primary1" />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
               {errors.role && (
-                <p className="mt-1 text-sm text-red-500 font-raleway">
-                  {errors.role}
-                </p>
+                <p className="mt-1 text-sm text-red-500 font-raleway">{errors.role}</p>
               )}
             </div>
 
+            {/* Year Level Dropdown */}
             <div>
               <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
                 Year Level
               </label>
-              <select
-                name="yearLevel"
-                value={formData.yearLevel}
-                onChange={handleChange}
-                className="w-full px-4 py-2 border-2 text-gray-400 border-gray-300 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
-              >
-                <option value="">Select Year Level</option>
-                <option value="1">1st Year</option>
-                <option value="2">2nd Year</option>
-                <option value="3">3rd Year</option>
-                <option value="4">4th Year</option>
-              </select>
+              <div className="relative">
+                <div
+                  className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
+                    activeDropdown === "yearLevel" ? "bg-white border-primary1 ring-4 ring-primary1/10" : ""
+                  }`}
+                  onClick={() =>
+                    setActiveDropdown(activeDropdown === "yearLevel" ? null : "yearLevel")
+                  }
+                >
+                  <span className="font-rubik text-sm">{selectedYearLabel}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
+                      activeDropdown === "yearLevel" ? "rotate-180" : ""
+                    }`}
+                  />
+                </div>
+                {activeDropdown === "yearLevel" && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setActiveDropdown(null)} />
+                    <div className={dropdownContainerStyle}>
+                      {YEAR_OPTIONS.filter((o) => o.value !== "").map((opt) => (
+                        <div
+                          key={opt.value}
+                          className={`${dropdownItemStyle} ${
+                            formData.yearLevel === opt.value
+                              ? dropdownItemSelectedStyle
+                              : dropdownItemHoverStyle
+                          }`}
+                          onClick={() => {
+                            setFormData((prev) => ({ ...prev, yearLevel: opt.value }));
+                            setActiveDropdown(null);
+                          }}
+                        >
+                          <span>{opt.label}</span>
+                          {formData.yearLevel === opt.value && (
+                            <Check className="w-4 h-4 text-primary1" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
@@ -271,17 +368,49 @@ export default function EditUserModal({
             <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
               Membership Status
             </label>
-            <select
-              name="membershipStatus"
-              value={formData.membershipStatus}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border-2 text-gray-400 border-gray-300 rounded-lg font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 focus:border-primary1"
-            >
-              <option value="non-member">Non-Member</option>
-              <option value="local">Local Member</option>
-              <option value="regional">Regional Member</option>
-              <option value="both">Both (Local & Regional)</option>
-            </select>
+            <div className="relative">
+              <div
+                className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
+                  activeDropdown === "membership" ? "bg-white border-primary1 ring-4 ring-primary1/10" : ""
+                }`}
+                onClick={() =>
+                  setActiveDropdown(activeDropdown === "membership" ? null : "membership")
+                }
+              >
+                <span className="font-rubik text-sm">{selectedMembershipLabel}</span>
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
+                    activeDropdown === "membership" ? "rotate-180" : ""
+                  }`}
+                />
+              </div>
+              {activeDropdown === "membership" && (
+                <>
+                  <div className="fixed inset-0 z-20" onClick={() => setActiveDropdown(null)} />
+                  <div className={dropdownContainerStyle}>
+                    {MEMBERSHIP_OPTIONS.map((opt) => (
+                      <div
+                        key={opt.value}
+                        className={`${dropdownItemStyle} ${
+                          formData.membershipStatus === opt.value
+                            ? dropdownItemSelectedStyle
+                            : dropdownItemHoverStyle
+                        }`}
+                        onClick={() => {
+                          setFormData((prev) => ({ ...prev, membershipStatus: opt.value }));
+                          setActiveDropdown(null);
+                        }}
+                      >
+                        <span>{opt.label}</span>
+                        {formData.membershipStatus === opt.value && (
+                          <Check className="w-4 h-4 text-primary1" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Active Status */}
@@ -327,13 +456,13 @@ export default function EditUserModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="flex items-center gap-2 px-6 py-2 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors"
+            className="flex items-center gap-2 px-6 py-2 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors cursor-pointer"
           >
             <Save className="w-4 h-4" />
             Save Changes

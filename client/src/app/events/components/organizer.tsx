@@ -1,28 +1,28 @@
-// components/organizer-card.tsx
 "use client";
 
 import { useState } from "react";
 
 interface Props {
-  organizer?: {
-    name?: string;
-    avatarImageUrl?: string;
-    [key: string]: unknown; // Allow for additional properties
-  } | string; // organizer can be a string or object
+  organizer?:
+    | {
+        name?: string;
+        avatarImageUrl?: string;
+        [key: string]: unknown;
+      }
+    | string;
 }
 
 export default function OrganizerCard({ organizer }: Props) {
   const [imgError, setImgError] = useState(false);
-  
-  // Handle case where organizer is not provided
+
   if (!organizer) {
     return null;
   }
 
-  // Handle case where organizer is a string
-  const organizerData = typeof organizer === 'string' 
-    ? { name: organizer, avatarImageUrl: undefined }
-    : organizer;
+  const organizerData =
+    typeof organizer === "string"
+      ? { name: organizer, avatarImageUrl: undefined }
+      : organizer;
 
   const name = organizerData.name || "Event Organizer";
   const avatarUrl = organizerData.avatarImageUrl || "/placeholder-avatar.svg";
@@ -40,8 +40,18 @@ export default function OrganizerCard({ organizer }: Props) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-primary1/10 text-primary1">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
               </svg>
             </div>
           )}
@@ -55,7 +65,9 @@ export default function OrganizerCard({ organizer }: Props) {
       </div>
       <div className="space-y-3">
         <button
-          onClick={() => window.location.href = "mailto:icpep.seofficial2526@gmail.com"}
+          onClick={() =>
+            (window.location.href = "mailto:icpep.seofficial2526@gmail.com")
+          }
           className="w-full bg-transparent border border-primary1 text-primary1 
                      hover:bg-primary1 hover:text-white font-raleway font-semibold text-sm sm:text-base 
                      py-2 px-4 rounded-lg cursor-pointer relative overflow-hidden 

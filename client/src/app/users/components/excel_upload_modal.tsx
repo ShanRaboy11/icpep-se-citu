@@ -24,6 +24,8 @@ interface RawExcelRow {
   yearLevel?: string | number; // Alternate casing
   Role?: string;
   role?: string; // Alternate casing
+  Position?: string;
+  position?: string; // Alternate casing
   "Membership Status"?: string;
   membershipStatus?: string; // Alternate casing
   [key: string]: string | number | undefined; // More specific for other columns
@@ -36,6 +38,7 @@ interface UploadedUser {
   middleName?: string;
   yearLevel?: number;
   role: string;
+  position?: string;
   membershipStatus: string;
   status?: "valid" | "error";
   error?: string;
@@ -131,7 +134,7 @@ export default function ExcelUploadModal({
 
         const user: UploadedUser = {
           studentNumber: getStringValue(
-            row["Student Number"] || row["studentNumber"]
+            row["Student Number"] || row["studentNumber"],
           ),
           lastName: getStringValue(row["Last Name"] || row["lastName"]),
           firstName: getStringValue(row["First Name"] || row["firstName"]),
@@ -140,10 +143,12 @@ export default function ExcelUploadModal({
             undefined,
           yearLevel: getNumberValue(row["Year Level"] || row["yearLevel"]),
           role: getStringValue(
-            row["Role"] || row["role"] || "student"
+            row["Role"] || row["role"] || "student",
           ).toLowerCase(),
+          position:
+            getStringValue(row["Position"] || row["position"]) || undefined,
           membershipStatus: getStringValue(
-            row["Membership Status"] || row["membershipStatus"] || "non-member"
+            row["Membership Status"] || row["membershipStatus"] || "non-member",
           ).toLowerCase(),
           status: "valid",
         };
@@ -180,7 +185,7 @@ export default function ExcelUploadModal({
         if (
           user.membershipStatus &&
           !["local", "regional", "both", "non-member"].includes(
-            user.membershipStatus
+            user.membershipStatus,
           )
         ) {
           errors.push("Invalid membership status");
@@ -225,7 +230,7 @@ export default function ExcelUploadModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in">
         {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-primary1/5 to-secondary2/5">
           <div className="flex items-center gap-3">
@@ -243,7 +248,7 @@ export default function ExcelUploadModal({
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
           >
             <X className="w-5 h-5 text-gray-500" />
           </button>
@@ -280,7 +285,7 @@ export default function ExcelUploadModal({
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg transition-all"
+                className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg transition-all cursor-pointer"
               >
                 Select File
               </button>
@@ -305,7 +310,7 @@ export default function ExcelUploadModal({
                     setFile(null);
                     setUploadedUsers([]);
                   }}
-                  className="text-red-600 hover:text-red-700 font-raleway text-sm font-semibold"
+                  className="text-red-600 hover:text-red-700 font-raleway text-sm font-semibold cursor-pointer"
                 >
                   Remove
                 </button>
@@ -366,9 +371,11 @@ export default function ExcelUploadModal({
                           <th className="px-4 py-2 text-left font-raleway font-semibold text-gray-700">
                             Membership
                           </th>
-                          <th className="px-4 py-2 text-left font-raleway font-semibold text-gray-700">
-                            Error
-                          </th>
+                          {errorCount > 0 && (
+                            <th className="px-4 py-2 text-left font-raleway font-semibold text-gray-700">
+                              Error
+                            </th>
+                          )}
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100">
@@ -403,9 +410,11 @@ export default function ExcelUploadModal({
                             <td className="px-4 py-2 font-raleway text-gray-700">
                               {user.membershipStatus}
                             </td>
-                            <td className="px-4 py-2 font-raleway text-xs text-red-600">
-                              {user.error || ""}
-                            </td>
+                            {errorCount > 0 && (
+                              <td className="px-4 py-2 font-raleway text-xs text-red-600">
+                                {user.error || ""}
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -430,7 +439,7 @@ export default function ExcelUploadModal({
                   link.download = "user-upload-template.xlsx";
                   link.click();
                 }}
-                className="px-3 py-1 bg-blue-600 text-white text-xs font-raleway font-semibold rounded hover:bg-blue-700 transition-colors"
+                className="px-3 py-1 bg-blue-600 text-white text-xs font-raleway font-semibold rounded hover:bg-blue-700 transition-colors cursor-pointer"
               >
                 Download Template
               </button>
@@ -456,7 +465,7 @@ export default function ExcelUploadModal({
               </li>
               <li>
                 Role (optional) - student, council-officer, committee-officer,
-                faculty (Default: member)
+                faculty (Default: student)
               </li>
               <li>
                 <strong>Membership Status</strong> (optional) - member,
@@ -470,14 +479,14 @@ export default function ExcelUploadModal({
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
           <button
             onClick={handleClose}
-            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             onClick={handleUpload}
             disabled={validCount === 0 || isProcessing}
-            className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             {isProcessing
               ? "Processing..."

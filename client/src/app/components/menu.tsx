@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -10,7 +11,8 @@ interface MenuProps {
     | "student"
     | "council-officer"
     | "committee-officer"
-    | "faculty";
+    | "faculty"
+    | "admin";
   onExit: () => void;
 }
 
@@ -24,15 +26,13 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   const router = useRouter();
   const [activeItem, setActiveItem] = useState<string | null>(null);
 
-  // -- Navigation Structure Definition --
   const getNavItems = (): MenuItem[] => {
     const baseItems: MenuItem[] = [
       { label: "Home", href: "/home" },
       { label: "About", href: "/about" },
-      
-      // --- NEW SECTION: Updates (Announcements & Events) ---
+
       {
-        label: "Updates", 
+        label: "Updates",
         children: [
           { label: "Announcements", href: "/announcements" },
           { label: "Events", href: "/events" },
@@ -49,12 +49,12 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
       { label: "Developers", href: "/developers" },
     ];
 
-    if (userRole === "council-officer") {
+    if (userRole === "council-officer" || userRole === "admin") {
       baseItems.push({
         label: "Manage",
         children: [
-          { label: "Announcements", href: "/announcements/create" },
-          { label: "Events", href: "/events/create" },
+          { label: "Announcements", href: "/create/announcements" },
+          { label: "Events", href: "/create/events" },
           { label: "Merch", href: "/create/merch" },
           { label: "Testimonials", href: "/create/testimonials" },
           { label: "Sponsors", href: "/create/sponsors" },
@@ -65,7 +65,11 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
       });
     }
 
-    if (userRole === "council-officer" || userRole === "committee-officer") {
+    if (
+      userRole === "council-officer" ||
+      userRole === "committee-officer" ||
+      userRole === "admin"
+    ) {
       baseItems.push({ label: "ComMeet", href: "/commeet" });
     }
 
@@ -76,8 +80,8 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
 
   const handleNavigate = (href?: string) => {
     if (!href) return;
-    onExit();
     router.push(href);
+    onExit();
   };
 
   const handleMouseEnter = (label: string) => {
@@ -88,14 +92,12 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     setActiveItem(null);
   };
 
-  // Helper to determine active children for Desktop Right Panel
   const activeChildren = activeItem
     ? navItems.find((item) => item.label === activeItem)?.children
     : undefined;
 
   return (
     <div className="w-full min-h-screen bg-[#00609c] text-white font-rubik relative overflow-hidden flex flex-col">
-      {/* Background Decor */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <Image
           src="/gle.png"
@@ -106,14 +108,11 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
         />
       </div>
 
-      {/* Header Area */}
       <div className="relative z-20 flex items-center justify-between px-6 py-5 md:px-12 md:py-6">
-        {/* LOGO SECTION */}
         <div
           onClick={() => handleNavigate("/home")}
           className="flex items-center gap-3 cursor-pointer group opacity-90 hover:opacity-100 transition-opacity"
         >
-          {/* 1. Official Icon */}
           <Image
             src="/icpep logo.png"
             alt="ICPEP Logo"
@@ -122,71 +121,65 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
             className="w-12 h-12 md:w-[54px] md:h-[54px] object-contain"
           />
 
-          {/* 2. Vector Text & Chapter Name */}
           <div className="flex flex-col justify-center gap-[2px]">
-            {/* Top: Vector Letters */}
             <div className="flex items-start gap-[1px] h-[26px] md:h-[34px]">
               <Image
                 src="/Vector-ifooter.svg"
                 alt="I"
                 width={0}
                 height={34}
-                className="h-full w-auto pointer-events-none"
+                className="h-full w-auto"
               />
               <Image
                 src="/Vector-cfooter.svg"
                 alt="C"
                 width={0}
                 height={34}
-                className="h-full w-auto pointer-events-none"
+                className="h-full w-auto"
               />
               <Image
                 src="/Vector-p1footer.svg"
                 alt="P"
                 width={0}
                 height={34}
-                className="h-full w-auto pointer-events-none"
+                className="h-full w-auto"
               />
               <Image
                 src="/Vector-e1footer.svg"
                 alt="E"
                 width={0}
                 height={34}
-                className="h-full w-auto pointer-events-none"
+                className="h-full w-auto"
               />
               <Image
                 src="/Vector-p2footer.svg"
                 alt="P"
                 width={0}
                 height={34}
-                className="h-full w-auto pointer-events-none"
+                className="h-full w-auto"
               />
-
               <Image
                 src="/Vector-dotfooter.svg"
                 alt="."
                 width={0}
                 height={8}
-                className="h-[30%] w-auto -ml-[2px] mr-[2px] self-end pointer-events-none"
+                className="h-[30%] w-auto -ml-[2px] mr-[2px] self-end"
               />
-
               <Image
                 src="/Vector-sfooter.svg"
                 alt="S"
                 width={0}
                 height={34}
-                className="h-full w-auto pointer-events-none"
+                className="h-full w-auto"
               />
               <Image
                 src="/Vector-e2footer.svg"
                 alt="E"
                 width={0}
                 height={34}
-                className="h-full w-auto pointer-events-none"
+                className="h-full w-auto"
               />
             </div>
-
-            {/* Bottom: Chapter Text */}
             <div className="flex flex-row gap-2 leading-none font-rubik text-white/90">
               <span className="text-[11px] md:text-[13px] font-bold tracking-wide">
                 Region 7
@@ -198,7 +191,6 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
           </div>
         </div>
 
-        {/* Close Button */}
         <button
           onClick={onExit}
           className="group cursor-pointer flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-300"
@@ -220,12 +212,10 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
         </button>
       </div>
 
-      {/* Main Content Wrapper */}
       <div
         onMouseLeave={handleMouseLeaveNav}
         className="flex-1 relative z-10 flex flex-col md:flex-row px-6 md:px-12 pt-4 pb-12 max-w-7xl mx-auto w-full"
       >
-        {/* Left Column: Main Categories */}
         <div className="w-full md:w-5/12 lg:w-1/3 flex flex-col gap-2 md:gap-4 md:border-r border-white/10 md:pr-10">
           <h3 className="text-xs font-bold text-[#00a7ee] uppercase tracking-widest mb-2 md:mb-6 font-raleway">
             Navigation
@@ -233,71 +223,45 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
 
           {navItems.map((item) => (
             <div key={item.label} className="flex flex-col">
-              {/* PARENT NAV ITEM */}
               <div
                 onMouseEnter={() => handleMouseEnter(item.label)}
                 onClick={() => {
-                  if (activeItem === item.label) {
-                    // If already open, close it (Toggle)
-                    setActiveItem(null);
-                  } else {
-                    // If closed, open it
-                    setActiveItem(item.label);
-                  }
-
+                  if (activeItem === item.label) setActiveItem(null);
+                  else setActiveItem(item.label);
                   if (!item.children) handleNavigate(item.href);
                 }}
                 className="group cursor-pointer flex items-center justify-between py-1"
               >
                 <span
-                  className={`text-3xl md:text-4xl lg:text-5xl font-bold transition-all duration-300 ${
-                    activeItem === item.label
-                      ? "text-white translate-x-2 md:translate-x-4"
-                      : "text-white/40 hover:text-white/70"
-                  }`}
+                  className={`text-3xl md:text-4xl lg:text-5xl font-bold transition-all duration-300 ${activeItem === item.label ? "text-white translate-x-2 md:translate-x-4" : "text-white/40 hover:text-white/70"}`}
                 >
                   {item.label}
                 </span>
-
-                {/* Arrow for active state (Desktop only) */}
                 <span
-                  className={`hidden md:block text-2xl transition-opacity duration-300 ${
-                    activeItem === item.label
-                      ? "opacity-100 text-[#00a7ee]"
-                      : "opacity-0"
-                  }`}
+                  className={`hidden md:block text-2xl transition-opacity duration-300 ${activeItem === item.label ? "opacity-100 text-[#00a7ee]" : "opacity-0"}`}
                 >
                   &rarr;
                 </span>
-
-                {/* Mobile Expansion Indicator */}
                 {item.children && (
                   <span
-                    className={`md:hidden text-xl text-white/50 ${
-                      activeItem === item.label
-                        ? "rotate-90 text-[#00a7ee]"
-                        : ""
-                    } transition-transform duration-300`}
+                    className={`md:hidden text-xl text-white/50 ${activeItem === item.label ? "rotate-90 text-[#00a7ee]" : ""} transition-transform duration-300`}
                   >
                     &#8250;
                   </span>
                 )}
               </div>
 
-              {/* MOBILE ONLY: SUB-ITEMS (Directly below clicked item) */}
               {activeItem === item.label && item.children && (
                 <div className="md:hidden flex flex-col pl-6 mt-2 mb-4 border-l-2 border-[#00a7ee]/30 animate-in slide-in-from-top-2 duration-200">
                   {item.children.map((child) => (
-                    <div
+                    <Link
                       key={child.label}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleNavigate(child.href);
-                      }}
+                      href={child.href || "#"}
+                      onClick={() => onExit()}
                       className="py-2 text-xl text-white/80 hover:text-[#00a7ee] cursor-pointer font-raleway"
                     >
                       {child.label}
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -305,11 +269,8 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
           ))}
         </div>
 
-        {/* Right Column: Submenus & Details (Desktop Only) */}
         <div className="hidden md:flex flex-col w-full md:w-7/12 lg:w-2/3 md:pl-16 lg:pl-24 pt-12">
-          {/* Submenu Items / Details */}
           {!activeItem ? (
-            // Default State: Welcome Message for COMPanions
             <div className="flex flex-col justify-center h-full opacity-60 pb-20 animate-in fade-in duration-500">
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
                 Hello, COMPanion!
@@ -326,21 +287,21 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
               </h3>
               <div className="grid grid-cols-1 gap-6">
                 {activeChildren.map((child) => (
-                  <div
+                  <Link
                     key={child.label}
-                    onClick={() => handleNavigate(child.href)}
+                    href={child.href || "#"}
+                    onClick={() => onExit()}
                     className="group flex items-center gap-4 cursor-pointer w-fit"
                   >
                     <div className="w-12 h-[1px] bg-white/30 group-hover:w-20 group-hover:bg-[#00a7ee] transition-all duration-300"></div>
                     <span className="text-2xl font-raleway font-light text-white group-hover:text-[#00a7ee] transition-colors">
                       {child.label}
                     </span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
           ) : (
-            /* Information when no sub-items exist */
             <div className="flex flex-col justify-center h-full opacity-60 pb-20 animate-in fade-in duration-500">
               <h2 className="text-4xl font-bold mb-4">{activeItem}</h2>
               <p className="font-raleway text-xl max-w-md mb-6 text-white/80">
@@ -349,7 +310,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
               <div
                 onClick={() =>
                   handleNavigate(
-                    navItems.find((i) => i.label === activeItem)?.href
+                    navItems.find((i) => i.label === activeItem)?.href,
                   )
                 }
                 className="px-8 py-3 border border-white/30 rounded-full w-fit hover:bg-white hover:text-[#00609c] transition-all cursor-pointer font-semibold"
@@ -359,7 +320,6 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
             </div>
           )}
 
-          {/* Contact / Get in Touch Section */}
           <div className="mt-auto pt-10 border-t border-white/10 w-full">
             <div className="flex flex-col xl:flex-row items-start justify-between gap-6">
               <div>

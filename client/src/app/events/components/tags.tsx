@@ -1,4 +1,3 @@
-// components/event-tags.tsx
 interface Props {
   tags: string[];
 }

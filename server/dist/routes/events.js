@@ -149,7 +149,7 @@ router.post(
                 mode,
                 location,
                 bannerImageUrl,
-                isPublished: isPublished === 'true' || isPublished === true,
+                isPublished: String(isPublished) === 'true',
                 requiresApproval: requiresApproval === 'true' || requiresApproval === true,
             };
 

@@ -69,13 +69,13 @@ const OfficerSelectionPage: FC = () => {
     "Select a department to view the officers and members dedicated to serving our chapter.";
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
-      <Grid />
+    <div className="min-h-screen bg-[#004e89] flex flex-col relative overflow-x-hidden">
+      <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden flex-grow">
+        <Grid />
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
+        <div className="relative z-10 flex flex-col">
+          <Header />
 
-        <div className="flex-grow">
           <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem]">
             <div className="mb-8 flex justify-start">
               <button
@@ -94,7 +94,7 @@ const OfficerSelectionPage: FC = () => {
               </button>
             </div>
 
-            {/* Header Section */}
+            {/* header */}
             <div className="mb-16 text-center">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
                 <div className="h-2 w-2 rounded-full bg-primary1"></div>
@@ -113,7 +113,7 @@ const OfficerSelectionPage: FC = () => {
             </div>
 
             <section className="w-full max-w-6xl mx-auto flex flex-col gap-8 mb-24">
-              {/* Executive Council */}
+              {/* council */}
               <div className="w-full">
                 <SelectionCard
                   title="Executive Council"
@@ -125,7 +125,7 @@ const OfficerSelectionPage: FC = () => {
                 />
               </div>
 
-              {/* Divider */}
+              {/* divider */}
               <div className="flex items-center gap-4 py-8">
                 <div className="h-12 w-1.5 rounded-full bg-gradient-to-b from-primary3 to-secondary1 shadow-sm"></div>
                 <div className="flex flex-col">
@@ -138,7 +138,7 @@ const OfficerSelectionPage: FC = () => {
                 </div>
               </div>
 
-              {/* Committee Cards */}
+              {/* committees */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {committeeData.map((committee) => (
                   <SelectionCard
@@ -152,8 +152,11 @@ const OfficerSelectionPage: FC = () => {
               </div>
             </section>
           </div>
+          <div className="h-20 md:h-32" />
         </div>
+      </main>
 
+      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
         <Footer />
       </div>
     </div>

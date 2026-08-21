@@ -11,17 +11,16 @@ export function CardStack({ imageUrls }: CardStackProps) {
   const [cards, setCards] = useState(imageUrls);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // --- Auto-cycle effect ---
   useEffect(() => {
     const interval = setInterval(() => {
       setIsAnimating(true);
       setCards((prev) => {
         const newCards = [...prev];
-        newCards.push(newCards.shift()!); // Move first image to end
+        newCards.push(newCards.shift()!);
         return newCards;
       });
       setTimeout(() => setIsAnimating(false), 300);
-    }, 4000); // every 4 seconds
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -29,7 +28,7 @@ export function CardStack({ imageUrls }: CardStackProps) {
     <div className="relative h-full w-full flex items-center justify-center">
       <AnimatePresence initial={false}>
         {cards.map((url, index) => {
-          if (index > 2) return null; // Only top 3 cards visible
+          if (index > 2) return null;
 
           return (
             <motion.div

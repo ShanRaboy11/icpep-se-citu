@@ -18,7 +18,8 @@ export function RolenMembershipInformation({
   
   const isCouncilOfficer = role === 'council-officer';
   const isCommitteeOfficer = role === 'committee-officer';
-  const isOfficer = isCouncilOfficer || isCommitteeOfficer;
+  const isAdmin = role === 'admin';
+  const isOfficer = isCouncilOfficer || isCommitteeOfficer || isAdmin;
 
   const displayPosition = position || '—';
 
@@ -27,6 +28,7 @@ export function RolenMembershipInformation({
     'council-officer': 'Council Officer',
     'committee-officer': 'Committee Officer',
     'faculty': 'Faculty',
+    'admin': 'Administrator',
   };
 
   const displayRole = role ? (roleLabelMap[role] ?? role) : 'Student';
