@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent } from "react";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,6 @@ const FACEBOOK_URL = "https://www.facebook.com/cituicpep";
 
 export default function ContactUsPage() {
   const router = useRouter();
-  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -24,7 +23,6 @@ export default function ContactUsPage() {
 
     const body = `Name: ${name}\nEmail: ${email}\n\n${message}`;
     window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setSubmitted(true);
   };
 
   return (
@@ -146,6 +144,7 @@ export default function ContactUsPage() {
                       name="name"
                       type="text"
                       required
+                      placeholder="Elijah Montefalco"
                       className="mt-2 w-full rounded-xl border-2 border-gray-100 px-4 py-3 font-normal text-bodytext outline-none transition focus:border-primary1 focus:ring-4 focus:ring-buttonbg1"
                     />
                   </label>
@@ -155,6 +154,7 @@ export default function ContactUsPage() {
                       name="email"
                       type="email"
                       required
+                      placeholder="ejmontefalco@gmail.com"
                       className="mt-2 w-full rounded-xl border-2 border-gray-100 px-4 py-3 font-normal text-bodytext outline-none transition focus:border-primary1 focus:ring-4 focus:ring-buttonbg1"
                     />
                   </label>
@@ -165,6 +165,7 @@ export default function ContactUsPage() {
                     name="subject"
                     type="text"
                     required
+                    placeholder="What's this all about?"
                     className="mt-2 w-full rounded-xl border-2 border-gray-100 px-4 py-3 font-normal text-bodytext outline-none transition focus:border-primary1 focus:ring-4 focus:ring-buttonbg1"
                   />
                 </label>
@@ -174,6 +175,7 @@ export default function ContactUsPage() {
                     name="message"
                     required
                     rows={6}
+                    placeholder="Write your message here..."
                     className="mt-2 w-full resize-y rounded-xl border-2 border-gray-100 px-4 py-3 font-normal text-bodytext outline-none transition focus:border-primary1 focus:ring-4 focus:ring-buttonbg1"
                   />
                 </label>
@@ -181,13 +183,8 @@ export default function ContactUsPage() {
                   type="submit"
                   className="w-full rounded-xl bg-primary1 px-6 py-3.5 font-raleway font-semibold text-white transition hover:bg-primary3 focus:outline-none focus:ring-2 focus:ring-primary1 focus:ring-offset-2"
                 >
-                  Open email client
+                  Submit
                 </button>
-                {submitted && (
-                  <p role="status" className="font-raleway text-sm text-primary3">
-                    Your email draft is ready. Complete and send it from your email client.
-                  </p>
-                )}
               </form>
             </section>
           </div>
