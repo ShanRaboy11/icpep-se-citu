@@ -21,6 +21,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.9.2",
+    "@types/nodemailer": "^7.0.12",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^1.41.3",
     "cookie-parser": "^1.4.7",
@@ -35,7 +36,6 @@
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@types/nodemailer": "^7.0.12",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0"
