@@ -31,8 +31,57 @@ export default function ContactUsPage() {
     <div className="min-h-screen flex flex-col bg-white">
       <Header />
 
-      <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
+      <main
+        className="relative flex-1 overflow-hidden pb-[260px] md:pb-[220px]"
+        style={{ backgroundColor: "#FEFEFF" }}
+      >
+        <div className="absolute inset-0">
+          <div className="absolute top-3/4 left-1/2 w-64 h-64 md:w-96 md:h-96 lg:w-[50rem] lg:h-[60rem] bg-gradient-to-br from-primary1 to-white rounded-full mix-blend-multiply filter blur-3xl animate-orbit-1" />
+          <div className="absolute top-1/2 left-1/2 w-64 h-64 md:w-96 md:h-96 lg:w-[30rem] lg:h-[30rem] bg-gradient-to-br from-primary1 to-white rounded-full mix-blend-multiply filter blur-3xl animate-orbit-2" />
+          <div className="absolute top-1/2 left-1/2 w-64 h-64 md:w-96 md:h-96 lg:w-[60rem] lg:h-[60rem] bg-gradient-to-br from-primary1 to-white rounded-full mix-blend-multiply filter blur-3xl animate-orbit-3" />
+        </div>
+
+        <style>{`
+          @keyframes orbit {
+            0% {
+              transform: translate(-50%, -50%) rotate(0deg) translateX(40vw) rotate(0deg);
+            }
+            100% {
+              transform: translate(-50%, -50%) rotate(360deg) translateX(40vw) rotate(-360deg);
+            }
+          }
+
+          .animate-orbit-1 {
+            animation: orbit 20s linear infinite;
+          }
+
+          .animate-orbit-2 {
+            animation: orbit 20s linear infinite;
+            animation-delay: -6.66s;
+          }
+
+          .animate-orbit-3 {
+            animation: orbit 20s linear infinite;
+            animation-delay: -13.33s;
+          }
+
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(-10px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          .animate-fadeIn {
+            animation: fadeIn 0.3s ease-out;
+          }
+        `}</style>
+
+        <div className="relative z-10 mx-auto max-w-7xl px-6 md:px-12">
           <div className="pt-28 md:pt-36">
             <button
               onClick={() => router.back()}
@@ -54,8 +103,8 @@ export default function ContactUsPage() {
               Contact Us
             </h1>
             <p className="mx-auto mt-5 max-w-2xl font-raleway text-base leading-relaxed text-slate-600 md:text-lg">
-              Have a question, suggestion, or concern? Send us a message and our
-              team will get back to you through email.
+              Have questions  or any concerns about membership, events, or partnerships — 
+              reach us online or send a message through the form. 
             </p>
           </div>
 
