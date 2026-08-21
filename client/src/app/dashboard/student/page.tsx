@@ -169,8 +169,7 @@ export default function StudentDashboardPage() {
                     <ArrowRight className="h-3 w-3" />
                   </button>
                 </div>
-                <div className="grid grid-cols-2 gap-3 mt-3
-                ">
+                <div className="grid grid-cols-2 gap-3 mt-3">
                   {featuredMerch.slice(0, 2).map((item) => (
                     <MerchandiseCard
                       key={item.id}
