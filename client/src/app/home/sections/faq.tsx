@@ -114,8 +114,8 @@ export function FAQSection() {
           </p>
           <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
             <button
-              onClick={() => router.push("/contact")}
-              className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer"
+              onClick={() => router.push("/contact-us")}
+              className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer inline-flex items-center justify-center"
             >
               Contact Us
             </button>

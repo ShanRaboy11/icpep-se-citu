@@ -1,6 +1,8 @@
 "use client";
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 
 const Footer = () => {
   const scrollToTop = () => {
@@ -120,11 +122,19 @@ const Footer = () => {
               </div>
             </div>
 
-            <div className="flex flex-col items-center sm:items-end gap-3 mb-6 sm:mb-0">
-              <p className="font-medium text-sky-100 cursor-default">
-                Contact Us
-              </p>
-              <div className="flex gap-4">
+            {/* 
+              Contact Section 
+              Mobile: 'mb-6' 
+            */}
+            <div className="flex flex-col items-center gap-3 mb-6 sm:mb-0">
+              <Link
+                href="/contact-us"
+                className="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-sky-100 transition-all hover:border-white hover:bg-white hover:text-[#00609c]"
+              >
+                <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                <span>Get in Touch</span>
+              </Link>
+              <div className="flex items-center justify-center gap-4">
                 <a
                   href="https://www.facebook.com/cituicpep"
                   target="_blank"
