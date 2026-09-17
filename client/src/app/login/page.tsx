@@ -5,9 +5,16 @@ import { Eye, EyeOff, AlertCircle, X, Check, CheckCircle } from "lucide-react";
 import Button from "@/app/components/button";
 import { useRouter } from "next/navigation";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = (() => {
+  const raw = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+  let base = String(raw).replace(/\/+$/, "");
+  if (!base.endsWith("/api")) {
+    base = `${base}/api`;
+  }
+  return base;
+})();
 
-const validatePassword = (password: string) => {
+export const validatePassword = (password: string) => {
   const checks = {
     length: password.length >= 8,
     uppercase: /[A-Z]/.test(password),
@@ -22,7 +29,8 @@ const validatePassword = (password: string) => {
 };
 
 const apiCall = async (endpoint: string, options: RequestInit = {}) => {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+  const response = await fetch(`${API_BASE_URL}${cleanEndpoint}`, {
     headers: {
       "Content-Type": "application/json",
     },
