@@ -15,15 +15,15 @@ services:
       - mongo
     environment:
       NODE_ENV: development
+      MONGO_URI: mongodb://mongo:27017/icpep_db
     command: npm run dev # Starts nodemon for hot-reloading
 
   client:
     build:
       context: ./client
     volumes:
-      - ./client:/app
-      - /app/node_modules # Ensures node_modules from build are used
-      # REMOVED: - /app/.next - Let the Next.js dev server manage this internally
+      - ./client:/usr/src/app:delegated
+      - client_node_modules:/usr/src/app/node_modules # Use a named volume to preserve image-installed node_modules
     ports:
       - "3000:3000"
     env_file:
@@ -49,3 +49,4 @@ services:
 volumes:
   mongo-data:
   server_node_modules:
+  client_node_modules:
