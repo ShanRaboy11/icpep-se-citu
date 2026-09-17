@@ -151,8 +151,10 @@ const connectDB = async () => {
         process.exit(1);
     }
 };
-// Connect to database
-connectDB();
+// Connect to database (in test mode, tests handle DB connection)
+if (process.env.NODE_ENV !== "test") {
+    connectDB();
+}
 // Health check route
 app.get("/health", (req, res) => {
     res.status(200).json({
@@ -243,44 +245,51 @@ app.use((err, req, res, next) => {
         error: process.env.NODE_ENV === "development" ? err.message : undefined,
     });
 });
-// Start server
+// Start server (only in non-test mode)
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-    console.log(`🚀 Server running in ${process.env.NODE_ENV || "development"} mode on port ${PORT}`);
-    console.log(`📍 Health check: http://localhost:${PORT}/health`);
-    console.log(`📍 API: http://localhost:${PORT}/api`);
-    console.log(`📍 MongoDB: ${mongoose_1.default.connection.readyState === 1 ? "✅ Connected" : "⏳ Connecting..."}`);
-});
-// Start scheduler after successful DB connection
-mongoose_1.default.connection.once("open", () => {
-    try {
-        (0, scheduler_1.default)();
-    }
-    catch (err) {
-        console.error("❌ Failed to start announcement scheduler:", err);
-    }
-});
-// Graceful shutdown
-process.on("SIGTERM", () => {
-    console.log("👋 SIGTERM signal received: closing HTTP server");
-    server.close(() => {
-        console.log("💤 HTTP server closed");
-        mongoose_1.default.connection.close(false).then(() => {
-            console.log("💤 MongoDB connection closed");
-            process.exit(0);
-        });
+let server;
+if (process.env.NODE_ENV !== "test") {
+    server = app.listen(PORT, () => {
+        console.log(`🚀 Server running in ${process.env.NODE_ENV || "development"} mode on port ${PORT}`);
+        console.log(`📍 Health check: http://localhost:${PORT}/health`);
+        console.log(`📍 API: http://localhost:${PORT}/api`);
+        console.log(`📍 MongoDB: ${mongoose_1.default.connection.readyState === 1 ? "✅ Connected" : "⏳ Connecting..."}`);
     });
-});
-process.on("SIGINT", () => {
-    console.log("👋 SIGINT signal received: closing HTTP server");
-    server.close(() => {
-        console.log("💤 HTTP server closed");
-        mongoose_1.default.connection.close(false).then(() => {
-            console.log("💤 MongoDB connection closed");
-            process.exit(0);
-        });
+    // Start scheduler after successful DB connection
+    mongoose_1.default.connection.once("open", () => {
+        try {
+            (0, scheduler_1.default)();
+        }
+        catch (err) {
+            console.error("❌ Failed to start announcement scheduler:", err);
+        }
     });
-});
+    // Graceful shutdown
+    process.on("SIGTERM", () => {
+        console.log("👋 SIGTERM signal received: closing HTTP server");
+        if (server) {
+            server.close(() => {
+                console.log("💤 HTTP server closed");
+                mongoose_1.default.connection.close(false).then(() => {
+                    console.log("💤 MongoDB connection closed");
+                    process.exit(0);
+                });
+            });
+        }
+    });
+    process.on("SIGINT", () => {
+        console.log("👋 SIGINT signal received: closing HTTP server");
+        if (server) {
+            server.close(() => {
+                console.log("💤 HTTP server closed");
+                mongoose_1.default.connection.close(false).then(() => {
+                    console.log("💤 MongoDB connection closed");
+                    process.exit(0);
+                });
+            });
+        }
+    });
+}
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err) => {
     console.error(`❌ Unhandled Rejection: ${err.message}`);
