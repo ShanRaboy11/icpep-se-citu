@@ -72,7 +72,7 @@ export const announcements: Announcement[] = [
       "We are thrilled to announce the official launch of the new ICpEP.SE R7 CIT-U Chapter website, designed to be the central hub for all chapter activities, announcements, and resources.",
     date: "2024-10-20",
     type: "News",
-    imageUrl: "/gle.png",
+    imageUrl: "/content/gle.png",
   },
   {
     id: "2",
@@ -83,7 +83,7 @@ export const announcements: Announcement[] = [
     time: "6:00 PM",
     location: "Convention Center",
     type: "Achievement",
-    imageUrl: "/gle.png",
+    imageUrl: "/content/gle.png",
     galleryImageUrls: [
       "https://images.unsplash.com/photo-1511578314322-379afb476865?w=500&auto=format=fit=crop",
       "https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=500&auto=format=fit=crop",
@@ -112,7 +112,7 @@ export const announcements: Announcement[] = [
     time: "2:00 PM",
     location: "CIT-U Conference Room",
     type: "Meeting",
-    imageUrl: "/meeting.png",
+    imageUrl: "/content/meeting.png",
     agenda: [
       "Chapter Performance Review",
       "Financial Status & Budget Planning",
@@ -128,7 +128,7 @@ export const announcements: Announcement[] = [
     time: "9:00 AM",
     location: "Conference Hall B",
     type: "Achievement",
-    imageUrl: "/gle.png",
+    imageUrl: "/content/gle.png",
     galleryImageUrls: [
       "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=500&auto=format&fit=crop",
       "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=500&auto=format&fit=crop",

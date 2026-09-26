@@ -33,8 +33,7 @@ export function PartnersSection() {
         });
 
         setPartners(mappedPartners);
-      } catch (error) {
-        console.error("Failed to fetch sponsors:", error);
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -64,9 +63,9 @@ export function PartnersSection() {
       <div className="mt-8 relative z-10 mx-auto max-w-7xl">
         <div className="flex flex-col items-center justify-between gap-4 text-center mb-12 sm:flex-row sm:text-left">
           <div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
+            <h2 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
               Our Partners
-            </h1>
+            </h2>
             <p className="font-raleway text-base sm:text-lg text-bodytext mt-2 max-w-lg">
               Powering collaboration for growth and innovation.
             </p>

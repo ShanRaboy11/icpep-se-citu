@@ -8,6 +8,7 @@ import {
   Shield,
   Handshake,
 } from "lucide-react";
+import { StatCard } from "../../dashboard/components/StatCard";
 
 interface UserStatsProps {
   users: User[];
@@ -26,77 +27,59 @@ export default function UserStats({ users }: UserStatsProps) {
 
   const stats = [
     {
-      label: "Total Users",
-      value: totalUsers,
-      icon: Users,
-      color: "from-primary1 to-primary1/80",
-      bgColor: "bg-primary1/10",
-      textColor: "text-primary1",
+      id: "total",
+      title: "Total Users",
+      count: totalUsers,
+      subtitle: "All registered accounts",
+      icon: <Users className="h-4 w-4" />,
+      color: "blue" as const,
     },
     {
-      label: "Members",
-      value: activeMembers,
-      icon: UserCheck,
-      color: "from-green-400 to-green-500",
-      bgColor: "bg-secondary2/10",
-      textColor: "text-green-600",
+      id: "members",
+      title: "Members",
+      count: activeMembers,
+      subtitle: "Active local/regional members",
+      icon: <UserCheck className="h-4 w-4" />,
+      color: "cyan" as const,
     },
     {
-      label: "Committee Officers",
-      value: committee_officers,
-      icon: Handshake,
-      color: "from-secondary2 to-secondary2/80",
-      bgColor: "bg-green-50",
-      textColor: "text-secondary2",
+      id: "committee",
+      title: "Committee Officers",
+      count: committee_officers,
+      subtitle: "Committee leadership",
+      icon: <Handshake className="h-4 w-4" />,
+      color: "sky" as const,
     },
     {
-      label: "Council Officers",
-      value: council_officers,
-      icon: Shield,
-      color: "from-blue-500 to-blue-600",
-      bgColor: "bg-blue-50",
-      textColor: "text-blue-600",
+      id: "council",
+      title: "Council Officers",
+      count: council_officers,
+      subtitle: "Executive council",
+      icon: <Shield className="h-4 w-4" />,
+      color: "royal" as const,
     },
     {
-      label: "Faculty",
-      value: faculty,
-      icon: GraduationCap,
-      color: "from-purple-500 to-purple-600",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-600",
+      id: "faculty",
+      title: "Faculty",
+      count: faculty,
+      subtitle: "Faculty advisors",
+      icon: <GraduationCap className="h-4 w-4" />,
+      color: "violet" as const,
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-      {stats.map((stat, index) => {
-        const Icon = stat.icon;
-        return (
-          <div
-            key={index}
-            className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md hover:border-primary1/30"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-raleway text-sm font-medium text-gray-600 mb-1">
-                  {stat.label}
-                </p>
-                <p className="font-rubik text-3xl font-bold text-primary3">
-                  {stat.value}
-                </p>
-              </div>
-              <div
-                className={`${stat.bgColor} p-3 rounded-lg transition-transform group-hover:scale-110`}
-              >
-                <Icon className={`w-6 h-6 ${stat.textColor}`} />
-              </div>
-            </div>
-            <div
-              className={`absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r ${stat.color} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300`}
-            ></div>
-          </div>
-        );
-      })}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+      {stats.map((stat) => (
+        <StatCard
+          key={stat.id}
+          icon={stat.icon}
+          count={stat.count}
+          title={stat.title}
+          subtitle={stat.subtitle}
+          color={stat.color}
+        />
+      ))}
     </div>
   );
 }

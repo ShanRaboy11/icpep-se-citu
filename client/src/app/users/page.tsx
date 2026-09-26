@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { User } from "./utils/user";
+import Button from "../components/button";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import UsersTable from "./components/users_table";
@@ -14,8 +14,9 @@ import ConfirmDialog from "./components/confirm_dialog";
 import ViewUserModal from "./components/view_user_modal";
 import EditUserModal from "./components/edit_user_modal";
 import Grid from "../components/grid";
+import BackButton from "../components/back-button";
+import PageHeader from "../components/page-header";
 import {
-  ArrowLeft,
   UserPlus,
   Download,
   Upload,
@@ -28,6 +29,8 @@ import {
   X,
 } from "lucide-react";
 import { LoadingScreen } from "../components/loading";
+import { toTitleCase } from "../officers/utils/format-name";
+import { LoadingIndicator } from "@/app/components/loading";
 
 // Type definitions for API responses
 interface ApiUser {
@@ -86,24 +89,19 @@ type SortField =
   | "updatedAt";
 type SortDirection = "asc" | "desc";
 
-// API Configuration - Production Ready
 const getApiUrl = (): string => {
   if (process.env.NEXT_PUBLIC_API_URL) {
-    console.log("🔗 API URL from env:", process.env.NEXT_PUBLIC_API_URL);
     return process.env.NEXT_PUBLIC_API_URL;
   }
 
   if (typeof window !== "undefined") {
-    const { protocol, hostname } = window.location;
+    const { hostname } = window.location;
 
     if (hostname !== "localhost" && hostname !== "127.0.0.1") {
-      const productionApiUrl = "https://your-backend-url.com/api";
-      console.log("🔗 Production API URL:", productionApiUrl);
-      return productionApiUrl;
+      return "https://your-backend-url.com/api";
     }
   }
 
-  console.log("🔗 Development API URL: http://localhost:5000/api");
   return "http://localhost:5000/api";
 };
 
@@ -172,15 +170,6 @@ const parseMembershipStatus = (
   return { isMember: false, membershipType: null };
 };
 
-const capitalizeWords = (str: string): string => {
-  if (!str) return "";
-  return str
-    .toLowerCase()
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-};
-
 const getAuthToken = (): string | null => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("authToken");
@@ -231,6 +220,7 @@ export default function UsersListPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageInputValue, setPageInputValue] = useState("1");
 
   // Filter and Sort state - MOVED FROM UsersTable
   const [filterRole, setFilterRole] = useState<string>("all");
@@ -238,7 +228,6 @@ export default function UsersListPage() {
   const [sortField, setSortField] = useState<SortField>("yearLevel");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
-  // 🔍 NEW: Search state
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Upload progress state
@@ -299,7 +288,6 @@ export default function UsersListPage() {
           user.membershipStatus.membershipType === "both") ||
         (filterMembership === "non-member" && !user.membershipStatus.isMember);
 
-      // 🔍 Search filter - searches across multiple fields
       const searchMatch =
         searchQuery === "" ||
         user.studentNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -315,7 +303,6 @@ export default function UsersListPage() {
     });
   };
 
-  // 🔥 NEW: Sort users function
   const sortUsers = (users: User[]): User[] => {
     return [...users].sort((a, b) => {
       let aValue: string | number | Date | undefined;
@@ -401,25 +388,28 @@ export default function UsersListPage() {
     searchQuery,
   ]);
 
+  // Keep the "jump to page" input in sync when the page changes via the
+  // prev/next buttons (or a filter/search reset back to page 1).
+  useEffect(() => {
+    setPageInputValue(String(currentPage));
+  }, [currentPage]);
+
   const fetchAllUsers = async () => {
     try {
       setIsLoading(true);
-      console.log("🔍 Fetching all users...");
 
       const response: ApiResponse<ApiUser[]> = await fetchWithAuth(
         `${API_BASE_URL}/users?limit=10000&page=1`,
       );
 
-      console.log("📊 Response:", response);
-
       if (response.success) {
         const transformedUsers: User[] = response.data.map((user: ApiUser) => ({
           id: user._id,
           studentNumber: user.studentNumber,
-          lastName: capitalizeWords(user.lastName),
-          firstName: capitalizeWords(user.firstName),
-          middleName: user.middleName ? capitalizeWords(user.middleName) : "",
-          fullName: capitalizeWords(
+          lastName: toTitleCase(user.lastName),
+          firstName: toTitleCase(user.firstName),
+          middleName: user.middleName ? toTitleCase(user.middleName) : "",
+          fullName: toTitleCase(
             user.fullName ||
               `${user.firstName} ${user.middleName || ""} ${
                 user.lastName
@@ -438,7 +428,7 @@ export default function UsersListPage() {
           registeredBy: user.registeredBy
             ? {
                 id: user.registeredBy._id,
-                fullName: capitalizeWords(
+                fullName: toTitleCase(
                   `${user.registeredBy.firstName} ${user.registeredBy.lastName}`,
                 ),
               }
@@ -447,11 +437,9 @@ export default function UsersListPage() {
           updatedAt: user.updatedAt,
         }));
 
-        console.log(`✅ Loaded ${transformedUsers.length} users`);
         setAllUsers(transformedUsers);
       }
-    } catch (error) {
-      console.error("❌ Error fetching users:", error);
+    } catch {
       setErrorModal({
         show: true,
         title: "Failed to Load Users",
@@ -463,29 +451,18 @@ export default function UsersListPage() {
     }
   };
 
-  // 🔥 FIXED: Update displayed users with proper flow: Filter -> Sort -> Paginate
+  // Filter -> Sort -> Paginate
   const updateDisplayedUsers = () => {
-    // Step 1: Filter
     let processedUsers = getFilteredUsers();
-
-    // Step 2: Sort ALL filtered users
     processedUsers = sortUsers(processedUsers);
 
-    // Step 3: Calculate pagination
     const pages = Math.ceil(processedUsers.length / USERS_PER_PAGE);
     setTotalPages(pages);
 
-    // Step 4: Paginate
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
     const endIndex = startIndex + USERS_PER_PAGE;
     const usersToDisplay = processedUsers.slice(startIndex, endIndex);
 
-    console.log(
-      `📄 Page ${currentPage}: Showing users ${startIndex + 1}-${Math.min(
-        endIndex,
-        processedUsers.length,
-      )} of ${processedUsers.length} (filtered from ${allUsers.length} total, sorted by ${sortField} ${sortDirection})`,
-    );
     setDisplayedUsers(usersToDisplay);
   };
 
@@ -499,20 +476,16 @@ export default function UsersListPage() {
     setCurrentPage(1);
   };
 
-  // 🔍 NEW: Handle search input
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setCurrentPage(1); // Reset to first page when searching
   };
 
-  // 🔍 NEW: Clear search
   const handleClearSearch = () => {
     setSearchQuery("");
   };
 
-  // 🔥 NEW: Handle sort changes from table
   const handleSortChange = (field: SortField, direction: SortDirection) => {
-    console.log(`🔄 Sort changed: ${field} ${direction}`);
     setSortField(field);
     setSortDirection(direction);
     setCurrentPage(1); // Reset to first page when sorting changes
@@ -541,7 +514,7 @@ export default function UsersListPage() {
         setSuccessModal({
           show: true,
           title: "User Added Successfully",
-          message: `${capitalizeWords(
+          message: `${toTitleCase(
             response.data.fullName,
           )} has been added to the system.`,
         });
@@ -551,7 +524,6 @@ export default function UsersListPage() {
         error instanceof Error
           ? error.message
           : "An error occurred while adding the user.";
-      console.error("Error adding user:", error);
       setErrorModal({
         show: true,
         title: "Failed to Add User",
@@ -654,7 +626,6 @@ export default function UsersListPage() {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "An unknown error occurred.";
-      console.error("❌ Sync upload error:", error);
       setIsUploading(false);
       setUploadProgress("");
 
@@ -763,7 +734,6 @@ export default function UsersListPage() {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to update user.";
-      console.error("Error updating user:", error);
       setErrorModal({
         show: true,
         title: "Update Failed",
@@ -798,7 +768,6 @@ export default function UsersListPage() {
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Failed to delete user.";
-        console.error("Error deleting user:", error);
         setErrorModal({
           show: true,
           title: "Delete Failed",
@@ -838,7 +807,6 @@ export default function UsersListPage() {
           error instanceof Error
             ? error.message
             : "Failed to update user status.";
-        console.error("Error toggling user status:", error);
         setErrorModal({
           show: true,
           title: "Status Update Failed",
@@ -869,6 +837,19 @@ export default function UsersListPage() {
     }
   };
 
+  // Let the user jump straight to a page by typing it in
+  const commitPageInput = () => {
+    const page = parseInt(pageInputValue, 10);
+    if (!isNaN(page)) {
+      const clamped = Math.min(Math.max(page, 1), totalPages);
+      setCurrentPage(clamped);
+      setPageInputValue(String(clamped));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      setPageInputValue(String(currentPage));
+    }
+  };
+
   const progressPercentage =
     uploadStats.total > 0
       ? Math.round((uploadStats.current / uploadStats.total) * 100)
@@ -879,172 +860,161 @@ export default function UsersListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative">
-      <Grid />
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow w-full max-w-[1600px] mx-auto px-8 pt-[9.5rem] pb-12">
-          <div className="mb-8 flex justify-start">
-            <Link
-              href="/"
-              title="Back to Home"
-              className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
-                         rounded-full border-2 border-primary1 text-primary1 
-                         overflow-hidden transition-all duration-300 ease-in-out 
-                         active:scale-95 before:absolute before:inset-0 
-                         before:bg-gradient-to-r before:from-transparent 
-                         before:via-white/40 before:to-transparent 
-                         before:translate-x-[-100%] hover:before:translate-x-[100%] 
-                         before:transition-transform before:duration-700"
-            >
-              <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
-            </Link>
-          </div>
-
-          <div className="mb-12 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-              <div className="h-2 w-2 rounded-full bg-primary1"></div>
-              <span className="font-raleway text-sm font-semibold text-primary1">
-                User Management
-              </span>
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+      <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+        <Grid />
+        <div className="relative z-10 flex flex-col min-h-screen">
+          <Header />
+          <div className="grow w-full max-w-400 mx-auto px-8 pt-38 pb-12">
+            <div className="mb-8 flex justify-start">
+              <BackButton onClick={() => router.push("/")} title="Back to Home" />
             </div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-              Registered Users
-            </h1>
-            <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-              Manage and view all registered users, members, officers, and
-              faculty.
-            </p>
-          </div>
 
-          <UserStats users={allUsers} />
+            <PageHeader
+              badge="User Management"
+              title="Registered Users"
+              subtitle={
+                <>
+                  Manage and view all registered users, members, officers, and
+                  faculty.
+                </>
+              }
+            />
 
-          {/* 🔍 Search Bar - Redesigned */}
-          <div className="mb-6">
-            <div
-              className="relative max-w-3xl mx-auto"
-            >
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-primary1" />
-                </div>
+            <UserStats users={allUsers} />
+
+            {/* Search Bar */}
+            <div className="mb-6 max-w-3xl mx-auto">
+              <div className="flex items-center w-full bg-white border-2 border-primary1/20 rounded-2xl px-4 py-2 sm:px-5 sm:py-3 transition-all duration-300 hover:border-primary1 focus-within:border-primary1">
+                <Search className="h-5 w-5 text-primary1 shrink-0" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Search users by name, student number, role, or year level..."
-                  className="w-full pl-14 pr-14 py-4 font-raleway text-base text-gray-900 placeholder-gray-500 bg-white border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-primary1 transition-all duration-300 shadow-sm hover:shadow-md"
+                  className="w-full bg-transparent ml-3 outline-none font-rubik text-sm sm:text-base font-medium text-primary3 placeholder:text-gray-400 placeholder:font-normal"
                 />
                 {searchQuery && (
                   <button
                     onClick={handleClearSearch}
-                    className="absolute inset-y-0 right-0 pr-5 flex items-center text-gray-400 hover:text-primary1 transition-colors cursor-pointer"
+                    className="ml-2 text-gray-400 hover:text-primary1 transition-colors cursor-pointer"
                     title="Clear search"
                   >
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4" />
                   </button>
                 )}
               </div>
-
-
-              {/* Search Suggestions Dropdown - REMOVED */}
             </div>
-          </div>
 
-          <div className="mb-6 flex flex-wrap items-center justify-end gap-3">
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-50 transition-colors duration-300 cursor-pointer"
-            >
-              <Download className="w-4 h-4" />
-              Export All
-            </button>
-            <button
-              onClick={() => setIsUploadModalOpen(true)}
-              disabled={isUploading}
-              className="flex items-center gap-2 px-4 py-2 border-2 border-primary1 text-primary1 font-raleway font-semibold rounded-lg hover:bg-primary1 hover:text-white transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
-              <Upload className="w-4 h-4" />
-              Upload Excel
-            </button>
-            <button
-              onClick={handleAddUser}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
-            >
-              <UserPlus className="w-4 h-4" />
-              Add User
-            </button>
-          </div>
+            <div className="mb-6 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
+              <Button
+                variant="heroOutline"
+                rounded="lg"
+                onClick={handleExport}
+                className="flex items-center justify-center gap-1.5 px-2 py-2 text-xs sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+              >
+                <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Export All
+              </Button>
+              <Button
+                variant="heroOutline"
+                rounded="lg"
+                onClick={() => setIsUploadModalOpen(true)}
+                disabled={isUploading}
+                className="flex items-center justify-center gap-1.5 px-2 py-2 text-xs sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+              >
+                <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Upload Excel
+              </Button>
+              <Button
+                variant="hero"
+                rounded="lg"
+                onClick={handleAddUser}
+                className="flex items-center justify-center gap-1.5 px-2 py-2 text-xs sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+              >
+                <UserPlus className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Add User
+              </Button>
+            </div>
 
-          {/* Pass props to UsersTable */}
-          <UsersTable
-            users={displayedUsers}
-            totalUsers={getFilteredUsers().length}
-            currentPage={currentPage}
-            usersPerPage={USERS_PER_PAGE}
-            onEdit={handleEditUser}
-            onDelete={handleDeleteUser}
-            onToggleActive={handleToggleActive}
-            onView={handleViewUser}
-            filterRole={filterRole}
-            filterMembership={filterMembership}
-            onFilterChange={handleFilterChange}
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSortChange={handleSortChange}
-          />
+            {/* Pass props to UsersTable */}
+            <UsersTable
+              users={displayedUsers}
+              totalUsers={getFilteredUsers().length}
+              currentPage={currentPage}
+              usersPerPage={USERS_PER_PAGE}
+              onEdit={handleEditUser}
+              onDelete={handleDeleteUser}
+              onToggleActive={handleToggleActive}
+              onView={handleViewUser}
+              filterRole={filterRole}
+              filterMembership={filterMembership}
+              onFilterChange={handleFilterChange}
+              sortField={sortField}
+              sortDirection={sortDirection}
+              onSortChange={handleSortChange}
+            />
 
-          {totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-center border-t border-gray-200 pt-6">
-              <div className="flex items-center gap-4">
-                {currentPage > 1 ? (
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-center border-t border-gray-200 pt-6">
+                <div className="flex items-center gap-4">
                   <button
                     onClick={handlePreviousPage}
-                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300 cursor-pointer"
+                    disabled={currentPage === 1}
+                    className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                     title="Previous page"
                   >
-                    <ChevronLeft className="w-5 h-5" />
+                    <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
                   </button>
-                ) : (
-                  <div className="w-[42px]"></div>
-                )}
 
-                <div className="flex items-center gap-2 min-w-[100px] justify-center">
-                  <span className="font-raleway text-base text-gray-700">
-                    <span className="font-bold text-primary1">
-                      {currentPage}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-bold text-primary1">
-                      {totalPages}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={pageInputValue}
+                      onChange={(e) =>
+                        setPageInputValue(e.target.value.replace(/\D/g, ""))
+                      }
+                      onBlur={commitPageInput}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      className="w-14 text-center font-raleway font-bold text-primary1 bg-white border-2 border-primary1/30 rounded-lg py-1.5 outline-none focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all"
+                    />
+                    <span className="font-raleway text-base text-gray-700">
+                      of{" "}
+                      <span className="font-bold text-primary1">
+                        {totalPages}
+                      </span>
                     </span>
-                  </span>
-                </div>
+                  </div>
 
-                {currentPage < totalPages ? (
                   <button
                     onClick={handleNextPage}
-                    className="p-2 rounded-lg border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white transition-all duration-300 cursor-pointer"
+                    disabled={currentPage === totalPages}
+                    className="flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
                     title="Next page"
                   >
-                    <ChevronRight className="w-5 h-5" />
+                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
                   </button>
-                ) : (
-                  <div className="w-[42px]"></div>
-                )}
+                </div>
               </div>
-            </div>
-          )}
-        </main>
+            )}
+          </div>
+        </div>
+      </main>
+
+      <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
 
-      {/* All modals remain the same... */}
       {isUploading && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-primary1 border-t-transparent mb-6"></div>
+              <LoadingIndicator className="mb-6" />
 
               <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
                 Uploading Users
@@ -1060,7 +1030,7 @@ export default function UsersListPage() {
 
               <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-2">
                 <div
-                  className="h-full bg-gradient-to-r from-primary1 to-primary1/80 rounded-full transition-all duration-300 ease-out"
+                  className="h-full bg-linear-to-r from-primary1 to-primary1/80 rounded-full transition-all duration-300 ease-out"
                   style={{ width: `${progressPercentage}%` }}
                 ></div>
               </div>
@@ -1097,25 +1067,36 @@ export default function UsersListPage() {
       )}
 
       {uploadResult.show && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-            <div className="text-center mb-6">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() =>
+              setUploadResult({
+                show: false,
+                success: 0,
+                failed: 0,
+                failedUsers: [],
+              })
+            }
+          />
+          <div className="relative bg-white rounded-2xl p-8 shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto themed-scrollbar animate-scale-in">
+            <div className="text-center mb-5">
               {uploadResult.failed === 0 ? (
-                <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <CheckCircle className="w-14 h-14 text-green-500 mx-auto mb-3" />
               ) : (
-                <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+                <AlertCircle className="w-14 h-14 text-amber-500 mx-auto mb-3" />
               )}
 
-              <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
+              <h3 className="text-xl font-bold text-primary3 font-rubik mb-4">
                 Upload Complete
               </h3>
 
-              <div className="flex justify-center gap-8 mb-6">
+              <div className="flex justify-center gap-8">
                 <div className="text-center">
                   <div className="font-raleway text-3xl font-bold text-green-600">
                     {uploadResult.success}
                   </div>
-                  <div className="font-raleway text-sm text-gray-600">
+                  <div className="font-raleway text-sm text-gray-500">
                     Successful
                   </div>
                 </div>
@@ -1123,7 +1104,7 @@ export default function UsersListPage() {
                   <div className="font-raleway text-3xl font-bold text-red-600">
                     {uploadResult.failed}
                   </div>
-                  <div className="font-raleway text-sm text-gray-600">
+                  <div className="font-raleway text-sm text-gray-500">
                     Failed
                   </div>
                 </div>
@@ -1131,15 +1112,15 @@ export default function UsersListPage() {
             </div>
 
             {uploadResult.failedUsers.length > 0 && (
-              <div className="mb-6">
-                <h4 className="font-raleway font-semibold text-lg mb-3 text-red-600">
+              <div className="mb-5">
+                <h4 className="font-raleway font-semibold text-base mb-2.5 text-red-600">
                   Failed Users:
                 </h4>
-                <div className="bg-red-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                <div className="bg-red-50 rounded-xl p-3.5 max-h-60 overflow-y-auto themed-scrollbar">
                   {uploadResult.failedUsers.map((user, index) => (
                     <div
                       key={index}
-                      className="mb-2 pb-2 border-b border-red-200 last:border-0"
+                      className="mb-2 pb-2 border-b border-red-200 last:border-0 last:mb-0 last:pb-0"
                     >
                       <p className="font-raleway text-sm font-semibold text-gray-800">
                         {user.studentNumber}
@@ -1153,7 +1134,8 @@ export default function UsersListPage() {
               </div>
             )}
 
-            <button
+            <Button
+              variant="hero"
               onClick={() =>
                 setUploadResult({
                   show: false,
@@ -1162,58 +1144,91 @@ export default function UsersListPage() {
                   failedUsers: [],
                 })
               }
-              className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300 cursor-pointer"
+              className="w-full py-2 text-sm sm:py-3"
             >
-              Close
-            </button>
+              Continue
+            </Button>
           </div>
         </div>
       )}
 
       {successModal.show && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
-            <div className="text-center">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() =>
+              setSuccessModal({ show: false, title: "", message: "" })
+            }
+          />
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl animate-scale-in">
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
+                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
+                  <svg
+                    className="w-10 h-10 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={3}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-primary3 font-rubik">
                 {successModal.title}
               </h3>
-              <p className="font-raleway text-gray-600 mb-6">
+              <p className="text-gray-400 text-sm font-raleway mt-2">
                 {successModal.message}
               </p>
-              <button
-                onClick={() =>
-                  setSuccessModal({ show: false, title: "", message: "" })
-                }
-                className="w-full px-6 py-3 bg-primary1 text-white font-raleway font-semibold rounded-lg hover:bg-primary1/90 transition-colors duration-300 cursor-pointer"
-              >
-                Close
-              </button>
             </div>
+            <Button
+              variant="hero"
+              onClick={() =>
+                setSuccessModal({ show: false, title: "", message: "" })
+              }
+              className="w-full py-2 text-sm sm:py-3"
+            >
+              Continue
+            </Button>
           </div>
         </div>
       )}
 
       {errorModal.show && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
-            <div className="text-center">
-              <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <h3 className="font-rubik text-2xl font-bold text-primary3 mb-2">
-                {errorModal.title}
-              </h3>
-              <p className="font-raleway text-gray-600 mb-6">
-                {errorModal.message}
-              </p>
-              <button
-                onClick={() =>
-                  setErrorModal({ show: false, title: "", message: "" })
-                }
-                className="w-full px-6 py-3 bg-red-500 text-white font-raleway font-semibold rounded-lg hover:bg-red-600 transition-colors duration-300 cursor-pointer"
-              >
-                Close
-              </button>
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() =>
+              setErrorModal({ show: false, title: "", message: "" })
+            }
+          />
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center animate-scale-in">
+            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <XCircle className="w-6 h-6 text-red-500" />
             </div>
+            <h3 className="text-xl font-bold text-primary3 font-rubik mb-2">
+              {errorModal.title}
+            </h3>
+            <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
+              {errorModal.message}
+            </p>
+            <Button
+              variant="heroDanger"
+              onClick={() =>
+                setErrorModal({ show: false, title: "", message: "" })
+              }
+              className="w-full py-2 sm:py-3"
+            >
+              Close
+            </Button>
           </div>
         </div>
       )}

@@ -33,7 +33,7 @@ export const events: Event[] = [
     location: "Google Meet",
     organizer: {
       name: "START DOST",
-      avatarImageUrl: "/icpep logo.png", // Example path to a logo
+      avatarImageUrl: "/brand/icpep-logo.png", // Example path to a logo
     },
     tags: ["AI", "Workshop", "No-Code", "Blockchain"],
     bannerImageUrl:
@@ -67,7 +67,7 @@ export const events: Event[] = [
     location: "CIT-U Main Auditorium",
     organizer: {
       name: "ICpEP.SE R7 CIT-U",
-      avatarImageUrl: "/icpep logo.png", // Using your existing logo
+      avatarImageUrl: "/brand/icpep-logo.png", // Using your existing logo
     },
     tags: ["Assembly", "Official", "Chapter Event"],
     bannerImageUrl:
@@ -101,7 +101,7 @@ export const events: Event[] = [
     location: "CIT-U Campus Grounds",
     organizer: {
       name: "ICpEP.SE R7 CIT-U",
-      avatarImageUrl: "/icpep logo.png", // Using your existing logo
+      avatarImageUrl: "/brand/icpep-logo.png", // Using your existing logo
     },
     tags: ["Chapter Week", "Competitions", "Seminars"],
     bannerImageUrl:
@@ -128,7 +128,7 @@ export const events: Event[] = [
     location: "CIT-U Innovation Hall",
     organizer: {
       name: "ICpEP.SE R7 CIT-U",
-      avatarImageUrl: "/icpep logo.png",
+      avatarImageUrl: "/brand/icpep-logo.png",
     },
     tags: ["Seminar", "TechTalks", "Networking"],
     bannerImageUrl:
@@ -158,7 +158,7 @@ export const events: Event[] = [
     location: "Discord Server + HackerRank",
     organizer: {
       name: "ICpEP.SE R7",
-      avatarImageUrl: "/icpep logo.png",
+      avatarImageUrl: "/brand/icpep-logo.png",
     },
     tags: ["Competition", "Programming", "Team Event"],
     bannerImageUrl:

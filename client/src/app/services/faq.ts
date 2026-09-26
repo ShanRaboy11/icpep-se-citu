@@ -1,31 +1,4 @@
-import axios from 'axios';
-
-const _RAW_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const API_URL = (() => {
-    try {
-        let base = String(_RAW_API).replace(/\/+$/, '');
-        if (!base.endsWith('/api')) base = `${base}/api`;
-        return base;
-    } catch {
-        return 'http://localhost:5000/api';
-    }
-})();
-
-const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    timeout: 30000,
-});
-
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+import { api } from './api-client';
 
 export interface FAQData {
     _id?: string;

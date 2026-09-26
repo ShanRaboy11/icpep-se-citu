@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "dev": "concurrently \"npm --prefix server run dev\" \"npm --prefix client run dev\""
+    "dev": "concurrently \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "check:mirrors": "node scripts/check-mirrored-utils.js"
   },
   "dependencies": {
     "axios": "^1.13.2",

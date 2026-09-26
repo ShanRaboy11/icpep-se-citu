@@ -25,8 +25,8 @@ const OfficerCard: FC<OfficerCardProps> = ({
   return (
     <div
       className={`
-        relative w-full aspect-[3/4] 
-        max-w-[280px]
+        relative w-full aspect-3/4
+        max-w-70
         rounded-2xl sm:rounded-3xl 
         shadow-lg 
         ${shadow} 
@@ -50,7 +50,7 @@ const OfficerCard: FC<OfficerCardProps> = ({
       />
 
       {/* Lighting Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/10 pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-black/10 pointer-events-none z-0" />
 
       {/* Glass Border */}
       <div className="absolute inset-0 rounded-2xl sm:rounded-3xl ring-1 ring-inset ring-white/20 pointer-events-none z-20" />
@@ -69,7 +69,7 @@ const OfficerCard: FC<OfficerCardProps> = ({
           )}
         </div>
 
-        <div className="relative flex-grow mt-1 sm:mt-2 w-full">
+        <div className="relative grow mt-1 sm:mt-2 w-full">
           
           <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[110%] h-[90%] bg-white/20 rounded-t-full backdrop-blur-sm z-0" />
 

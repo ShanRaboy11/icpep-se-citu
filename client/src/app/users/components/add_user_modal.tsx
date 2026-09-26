@@ -1,8 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, UserPlus, AlertCircle, ChevronDown, Check } from "lucide-react";
 import { PiPlaceholder } from "react-icons/pi";
+import Button from "../../components/button";
+import {
+  YEAR_OPTIONS,
+  ROLE_OPTIONS as ALL_ROLE_OPTIONS,
+  MEMBERSHIP_OPTIONS as BASE_MEMBERSHIP_OPTIONS,
+  dropdownOuterStyle,
+  dropdownInnerStyle,
+  dropdownItemStyle,
+  dropdownItemSelectedStyle,
+  dropdownItemHoverStyle,
+} from "../utils/user_options";
+import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
+import { useBodyScrollLock } from "@/app/utils/use-body-scroll-lock";
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -32,46 +45,59 @@ export default function AddUserModal({
     firstName: "",
     middleName: "",
     yearLevel: undefined,
-    password: "123456",
+    password: "",
     role: "student",
     membershipStatus: "non-member",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  useDropdownDismiss(activeDropdown !== null, () => setActiveDropdown(null));
 
-  const dropdownContainerStyle =
-    "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-1 p-2 max-h-56 overflow-y-auto";
-  const dropdownItemStyle =
-    "flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
-  const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
-  const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
-
-  const YEAR_OPTIONS = [
-    { value: "1", label: "1st Year" },
-    { value: "2", label: "2nd Year" },
-    { value: "3", label: "3rd Year" },
-    { value: "4", label: "4th Year" },
-    { value: "5", label: "5th Year" },
-  ];
-  const ROLE_OPTIONS = [
-    { value: "student", label: "Student" },
-    { value: "council-officer", label: "Council Officer" },
-    { value: "committee-officer", label: "Committee Officer" },
-    { value: "faculty", label: "Faculty" },
-    { value: "admin", label: "Admin" },
-  ];
+  const isAdmin =
+    typeof window !== "undefined" && localStorage.getItem("userRole") === "admin";
+  const ROLE_OPTIONS = ALL_ROLE_OPTIONS.filter(
+    (o) => o.value !== "admin" || isAdmin,
+  );
   const MEMBERSHIP_OPTIONS = [
-    { value: "non-member", label: "Non-Member" },
+    BASE_MEMBERSHIP_OPTIONS[0],
     { value: "member", label: "Member" },
-    { value: "local", label: "Local" },
-    { value: "regional", label: "Regional" },
-    { value: "both", label: "Both (Local & Regional)" },
+    ...BASE_MEMBERSHIP_OPTIONS.slice(1),
   ];
 
   const selectedYearLabel = YEAR_OPTIONS.find((o) => o.value === String(formData.yearLevel || ""))?.label ?? "Select Year Level";
   const selectedRoleLabel = ROLE_OPTIONS.find((o) => o.value === formData.role)?.label ?? "Student";
   const selectedMembershipLabel = MEMBERSHIP_OPTIONS.find((o) => o.value === formData.membershipStatus)?.label ?? "Non-Member";
+
+  useBodyScrollLock(isOpen);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [dropUp, setDropUp] = useState(false);
+
+  // An open list that would run past the bottom of the modal opens upward
+  // instead (when there is room above); otherwise it scrolls into view.
+  useEffect(() => {
+    if (!activeDropdown) {
+      setDropUp(false);
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      const box = scrollRef.current?.getBoundingClientRect();
+      const panel = scrollRef.current?.querySelector("[data-dropdown-panel]");
+      if (!box || !panel || !panel.parentElement) return;
+
+      const rect = panel.getBoundingClientRect();
+      const spaceAbove = panel.parentElement.getBoundingClientRect().top - box.top;
+      const overflowsBelow = rect.bottom > box.bottom - 8;
+
+      if (overflowsBelow && spaceAbove > rect.height + 8) {
+        setDropUp(true);
+      } else {
+        panel.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [activeDropdown]);
 
   if (!isOpen) return null;
 
@@ -114,8 +140,8 @@ export default function AddUserModal({
       firstName: "",
       middleName: "",
       yearLevel: undefined,
-      password: "123456",
-      role: "member",
+      password: "",
+      role: "student",
       membershipStatus: "non-member",
     });
     setErrors({});
@@ -142,34 +168,38 @@ export default function AddUserModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-visible flex flex-col animate-scale-in">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-primary1/5 to-secondary2/5">
+    <div className="fixed inset-0 z-99999 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+        onClick={handleClose}
+      />
+      <div className="relative z-100000 w-full max-w-2xl bg-white rounded-4xl shadow-2xl border border-white/50 animate-scale-in flex flex-col max-h-[90vh] overflow-hidden">
+        {/* Header — fixed, never scrolls away */}
+        <div className="flex items-center justify-between px-6 sm:px-7 pt-6 sm:pt-7 pb-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary1/10 rounded-lg">
-              <UserPlus className="w-6 h-6 text-primary1" />
+            <div className="p-2.5 bg-primary1/10 rounded-2xl text-primary1 shrink-0">
+              <UserPlus className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-rubik text-2xl font-bold text-primary3">
+              <h3 className="text-xl font-rubik font-bold text-primary3">
                 Add New User
-              </h2>
-              <p className="font-raleway text-sm text-gray-600">
-                Register a new user to the system
+              </h3>
+              <p className="text-sm font-raleway text-gray-500 mt-0.5">
+                Register a new user to the system.
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+            className="p-2 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-visible p-6">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div ref={scrollRef} className={`space-y-4 overflow-y-auto themed-scrollbar px-6 sm:px-7 py-5 flex-1`}>
             {/* Student Number */}
             <div>
               <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
@@ -181,8 +211,8 @@ export default function AddUserModal({
                 value={formData.studentNumber}
                 onChange={handleChange}
                 placeholder="23-2502-326"
-                className={`w-full px-4 py-2 border rounded-lg text-gray-500 font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
-                  errors.studentNumber ? "border-red-500" : "border-gray-300"
+                className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 text-gray-800 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
+                  errors.studentNumber ? "border-red-300 ring-2 ring-red-100" : ""
                 }`}
               />
               {errors.studentNumber && (
@@ -205,8 +235,8 @@ export default function AddUserModal({
                   value={formData.firstName}
                   onChange={handleChange}
                   placeholder="Juan"
-                  className={`w-full px-4 py-2 border rounded-lg text-gray-500 font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
-                    errors.firstName ? "border-red-500" : "border-gray-300"
+                  className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 text-gray-800 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
+                    errors.firstName ? "border-red-300 ring-2 ring-red-100" : ""
                   }`}
                 />
                 {errors.firstName && (
@@ -226,7 +256,7 @@ export default function AddUserModal({
                   value={formData.middleName}
                   onChange={handleChange}
                   placeholder="Santos"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-500 text-gray-400 font-raleway focus:outline-none focus:ring-2 focus:ring-primary1/50"
+                  className="w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 text-gray-800 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10"
                 />
               </div>
 
@@ -240,8 +270,8 @@ export default function AddUserModal({
                   value={formData.lastName}
                   onChange={handleChange}
                   placeholder="Dela Cruz"
-                  className={`w-full px-4 py-2 border rounded-lg font-raleway text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary1/50 ${
-                    errors.lastName ? "border-red-500" : "border-gray-300"
+                  className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 text-gray-800 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
+                    errors.lastName ? "border-red-300 ring-2 ring-red-100" : ""
                   }`}
                 />
                 {errors.lastName && (
@@ -259,7 +289,7 @@ export default function AddUserModal({
                 <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
                   Year Level
                 </label>
-                <div className="relative">
+                <div data-dropdown className="relative">
                   <div
                     className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
                       activeDropdown === "yearLevel"
@@ -279,27 +309,31 @@ export default function AddUserModal({
                   </div>
                   {activeDropdown === "yearLevel" && (
                     <>
-                      <div className="fixed inset-0 z-20" onClick={() => setActiveDropdown(null)} />
-                      <div className={dropdownContainerStyle}>
-                        {YEAR_OPTIONS.map((opt) => (
-                          <div
-                            key={opt.value}
-                            className={`${dropdownItemStyle} ${
-                              String(formData.yearLevel || "") === opt.value
-                                ? dropdownItemSelectedStyle
-                                : dropdownItemHoverStyle
-                            }`}
-                            onClick={() => {
-                              setFormData((prev) => ({ ...prev, yearLevel: parseInt(opt.value) }));
-                              setActiveDropdown(null);
-                            }}
-                          >
-                            <span>{opt.label}</span>
-                            {String(formData.yearLevel || "") === opt.value && (
-                              <Check className="w-4 h-4 text-primary1" />
-                            )}
-                          </div>
-                        ))}
+                      <div
+                      data-dropdown-panel
+                      className={`${dropdownOuterStyle} scroll-mb-4 ${dropUp ? "bottom-full mb-2 mt-0!" : ""}`}
+                    >
+                        <div className={dropdownInnerStyle}>
+                          {YEAR_OPTIONS.map((opt) => (
+                            <div
+                              key={opt.value}
+                              className={`${dropdownItemStyle} ${
+                                String(formData.yearLevel || "") === opt.value
+                                  ? dropdownItemSelectedStyle
+                                  : dropdownItemHoverStyle
+                              }`}
+                              onClick={() => {
+                                setFormData((prev) => ({ ...prev, yearLevel: parseInt(opt.value) }));
+                                setActiveDropdown(null);
+                              }}
+                            >
+                              <span>{opt.label}</span>
+                              {String(formData.yearLevel || "") === opt.value && (
+                                <Check className="w-4 h-4 text-primary1" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </>
                   )}
@@ -317,9 +351,10 @@ export default function AddUserModal({
                   type="text"
                   name="password"
                   value={formData.password}
+                  placeholder="Chapter default password"
                   readOnly
                   disabled
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg font-raleway text-gray-400 bg-gray-50 cursor-not-allowed select-none"
+                  className="w-full font-rubik text-base bg-gray-100 border border-gray-100 rounded-2xl px-4 py-3 text-gray-500 cursor-not-allowed select-none"
                 />
               </div>
             </div>
@@ -331,7 +366,7 @@ export default function AddUserModal({
                 <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
                   Role
                 </label>
-                <div className="relative">
+                <div data-dropdown className="relative">
                   <div
                     className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
                       activeDropdown === "role" ? "bg-white border-primary1 ring-4 ring-primary1/10" : ""
@@ -349,27 +384,31 @@ export default function AddUserModal({
                   </div>
                   {activeDropdown === "role" && (
                     <>
-                      <div className="fixed inset-0 z-20" onClick={() => setActiveDropdown(null)} />
-                      <div className={dropdownContainerStyle}>
-                        {ROLE_OPTIONS.map((opt) => (
-                          <div
-                            key={opt.value}
-                            className={`${dropdownItemStyle} ${
-                              formData.role === opt.value
-                                ? dropdownItemSelectedStyle
-                                : dropdownItemHoverStyle
-                            }`}
-                            onClick={() => {
-                              setFormData((prev) => ({ ...prev, role: opt.value }));
-                              setActiveDropdown(null);
-                            }}
-                          >
-                            <span>{opt.label}</span>
-                            {formData.role === opt.value && (
-                              <Check className="w-4 h-4 text-primary1" />
-                            )}
-                          </div>
-                        ))}
+                      <div
+                      data-dropdown-panel
+                      className={`${dropdownOuterStyle} scroll-mb-4 ${dropUp ? "bottom-full mb-2 mt-0!" : ""}`}
+                    >
+                        <div className={dropdownInnerStyle}>
+                          {ROLE_OPTIONS.map((opt) => (
+                            <div
+                              key={opt.value}
+                              className={`${dropdownItemStyle} ${
+                                formData.role === opt.value
+                                  ? dropdownItemSelectedStyle
+                                  : dropdownItemHoverStyle
+                              }`}
+                              onClick={() => {
+                                setFormData((prev) => ({ ...prev, role: opt.value }));
+                                setActiveDropdown(null);
+                              }}
+                            >
+                              <span>{opt.label}</span>
+                              {formData.role === opt.value && (
+                                <Check className="w-4 h-4 text-primary1" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </>
                   )}
@@ -381,7 +420,7 @@ export default function AddUserModal({
                 <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
                   Membership Status
                 </label>
-                <div className="relative">
+                <div data-dropdown className="relative">
                   <div
                     className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
                       activeDropdown === "membership" ? "bg-white border-primary1 ring-4 ring-primary1/10" : ""
@@ -399,27 +438,31 @@ export default function AddUserModal({
                   </div>
                   {activeDropdown === "membership" && (
                     <>
-                      <div className="fixed inset-0 z-20" onClick={() => setActiveDropdown(null)} />
-                      <div className={dropdownContainerStyle}>
-                        {MEMBERSHIP_OPTIONS.map((opt) => (
-                          <div
-                            key={opt.value}
-                            className={`${dropdownItemStyle} ${
-                              formData.membershipStatus === opt.value
-                                ? dropdownItemSelectedStyle
-                                : dropdownItemHoverStyle
-                            }`}
-                            onClick={() => {
-                              setFormData((prev) => ({ ...prev, membershipStatus: opt.value }));
-                              setActiveDropdown(null);
-                            }}
-                          >
-                            <span>{opt.label}</span>
-                            {formData.membershipStatus === opt.value && (
-                              <Check className="w-4 h-4 text-primary1" />
-                            )}
-                          </div>
-                        ))}
+                      <div
+                      data-dropdown-panel
+                      className={`${dropdownOuterStyle} scroll-mb-4 ${dropUp ? "bottom-full mb-2 mt-0!" : ""}`}
+                    >
+                        <div className={dropdownInnerStyle}>
+                          {MEMBERSHIP_OPTIONS.map((opt) => (
+                            <div
+                              key={opt.value}
+                              className={`${dropdownItemStyle} ${
+                                formData.membershipStatus === opt.value
+                                  ? dropdownItemSelectedStyle
+                                  : dropdownItemHoverStyle
+                              }`}
+                              onClick={() => {
+                                setFormData((prev) => ({ ...prev, membershipStatus: opt.value }));
+                                setActiveDropdown(null);
+                              }}
+                            >
+                              <span>{opt.label}</span>
+                              {formData.membershipStatus === opt.value && (
+                                <Check className="w-4 h-4 text-primary1" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </>
                   )}
@@ -435,24 +478,21 @@ export default function AddUserModal({
               </p>
             </div>
           </div>
-        </form>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3 bg-gray-50">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all cursor-pointer"
-          >
-            Add User
-          </button>
-        </div>
+          <div className="flex justify-end gap-3 px-6 sm:px-7 pt-4 pb-6 sm:pb-7 border-t border-gray-100 shrink-0">
+            <Button
+              variant="heroOutline"
+              type="button"
+              onClick={handleClose}
+              className="px-4 py-2 sm:px-6 sm:py-3"
+            >
+              Cancel
+            </Button>
+            <Button variant="hero" type="submit" className="px-5 py-2 sm:px-8 sm:py-3">
+              Add User
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

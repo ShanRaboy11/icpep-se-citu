@@ -3,7 +3,7 @@
 export const CallToActionCard = () => {
   return (
     <div
-      className={`relative w-full h-full overflow-hidden rounded-3xl backdrop-blur-xl border border-[var(--primary3)]/20 shadow-lg bg-gradient-to-br from-[#003599]/40 via-[#003599]/60 to-[#003599]/50 flex flex-col p-8`}
+      className={`relative w-full h-full overflow-hidden rounded-3xl backdrop-blur-xl border border-(--primary3)/20 shadow-lg bg-linear-to-br from-[#003599]/40 via-[#003599]/60 to-[#003599]/50 flex flex-col p-8`}
     >
       <div
         className="absolute inset-0 w-full h-full pointer-events-none"
@@ -35,7 +35,7 @@ export const CallToActionCard = () => {
             Sponsor Us
           </a>
           <a
-            href="/primer.pdf"
+            href="/documents/primer.pdf"
             download="Sponsorship_Primer.pdf"
             target="_blank"
             rel="noopener noreferrer"

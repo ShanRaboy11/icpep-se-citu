@@ -48,8 +48,8 @@ const InfoSection: FC = () => {
                 
                 ${
                   isActive
-                    ? "bg-gradient-to-br from-primary3 to-secondary1 shadow-md"
-                    : "bg-white border-2 border-secondary3 text-black hover:bg-gradient-to-br hover:from-primary3/85 hover:to-secondary1/85"
+                    ? "bg-linear-to-br from-primary3 to-secondary1 shadow-md"
+                    : "bg-white border-2 border-secondary3 text-black hover:bg-linear-to-br hover:from-primary3/85 hover:to-secondary1/85"
                 }
               `}
             >
@@ -62,7 +62,7 @@ const InfoSection: FC = () => {
 
               <motion.div
                 layout="position"
-                className={`relative z-10 flex-shrink-0 p-2 rounded-lg transition-colors duration-300 ${
+                className={`relative z-10 shrink-0 p-2 rounded-lg transition-colors duration-300 ${
                   isActive
                     ? "bg-white/10 text-secondary2"
                     : "bg-secondary3/10 text-secondary2"
@@ -91,7 +91,7 @@ const InfoSection: FC = () => {
                     text-[0.65rem] xs:text-xs sm:text-sm
                     
                     /* PREVENT WRAPPING ISSUES DURING ANIMATION */
-                    min-w-[80px] sm:min-w-0
+                    min-w-20 sm:min-w-0
                     
                     ${
                       isActive
@@ -123,8 +123,8 @@ const InfoSection: FC = () => {
       </div>
 
       <section
-        className="rounded-3xl mt-2 sm:mt-8 bg-gradient-to-br from-primary3 to-secondary1
-    px-6 sm:px-16 py-10 sm:py-20 shadow-2xl text-white flex flex-col justify-center min-h-[30rem] sm:min-h-[40rem]"
+        className="rounded-3xl mt-2 sm:mt-8 bg-linear-to-br from-primary3 to-secondary1
+    px-6 sm:px-16 py-10 sm:py-20 shadow-2xl text-white flex flex-col justify-center min-h-120 sm:min-h-160"
       >
         <div key={activeIndex} className="animate-fade-in">
           {activeSection.id === "org" && <OrgLayout section={activeSection} />}

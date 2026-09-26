@@ -2,8 +2,10 @@
 
 import { FC, useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import AdvisorCard from "../components/advisor-card";
+import advisorService from "@/app/services/advisor";
+import { toTitleCase } from "@/app/officers/utils/format-name";
 
 // Types
 interface AdvisorItem {
@@ -76,7 +78,7 @@ const AdvisorsCarousel: FC<{ items: AdvisorItem[] }> = ({ items }) => {
                 ref={(el) => {
                   itemRefs.current[index] = el;
                 }}
-                className="w-64 h-[22rem] min-w-[16rem] sm:w-80 sm:h-[28rem] sm:min-w-[20rem] origin-bottom overflow-visible shrink-0"
+                className="w-64 h-88 min-w-64 sm:w-80 sm:h-112 sm:min-w-80 origin-bottom overflow-visible shrink-0"
                 animate={{ scale }}
                 style={{
                   marginLeft: `-${marginOffset}rem`,
@@ -96,62 +98,49 @@ const AdvisorsCarousel: FC<{ items: AdvisorItem[] }> = ({ items }) => {
         <button
           onClick={handlePrev}
           disabled={currentIndex === 0}
+          aria-label="Previous advisor"
           className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
-          <ArrowLeft size={24} />
+          <ChevronLeft size={24} />
         </button>
         <button
           onClick={handleNext}
           disabled={currentIndex === items.length - 1}
+          aria-label="Next advisor"
           className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
-          <ArrowRight size={24} />
+          <ChevronRight size={24} />
         </button>
       </div>
     </div>
   );
 };
 
-const advisorHistory: AdvisorItem[] = [
-  {
-    year: "2022 - Present",
-    name: "Engr. Trixie Dolera",
-    position: "CPE Department Head",
-    imageUrl: "/gle.png",
-  },
-  {
-    year: "2021 - Present",
-    name: "Prof. Emily White",
-    position: "ICPEP.SE Adviser",
-    imageUrl: "/gle.png",
-  },
-  {
-    year: "2020 - 2022",
-    name: "Engr. John Smith",
-    position: "CPE Department Head",
-    imageUrl: "/gle.png",
-  },
-  {
-    year: "2018 - 2020",
-    name: "Dr. Alan Turing",
-    position: "CPE Department Head",
-    imageUrl: "/gle.png",
-  },
-  {
-    year: "2019 - 2021",
-    name: "Prof. Ada Lovelace",
-    position: "ICPEP.SE Adviser",
-    imageUrl: "/gle.png",
-  },
-  {
-    year: "2017 - 2019",
-    name: "Engr. Grace Hopper",
-    position: "ICPEP.SE Adviser",
-    imageUrl: "/gle.png",
-  },
-];
-
 const AdvisorsSection: FC = () => {
+  const [advisorHistory, setAdvisorHistory] = useState<AdvisorItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAdvisors = async () => {
+      try {
+        const response = await advisorService.getAdvisors();
+        const data = Array.isArray(response.data) ? response.data : [];
+        setAdvisorHistory(
+          data.map((a: any) => ({
+            name: toTitleCase(a.name),
+            position: a.position,
+            year: a.yearRange,
+            imageUrl: a.image || "/content/gle.png",
+          })),
+        );
+      } catch {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAdvisors();
+  }, []);
+
   return (
     <section className="mt-40">
       <div className="w-full max-w-7xl mx-auto px-6">
@@ -163,9 +152,11 @@ const AdvisorsSection: FC = () => {
           strengthened our organization through the years.
         </p>
       </div>
-      <div className="w-full">
-        <AdvisorsCarousel items={advisorHistory} />
-      </div>
+      {!loading && advisorHistory.length > 0 && (
+        <div className="w-full">
+          <AdvisorsCarousel items={advisorHistory} />
+        </div>
+      )}
     </section>
   );
 };

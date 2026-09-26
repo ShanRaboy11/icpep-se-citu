@@ -16,7 +16,7 @@ const DetailRow = ({
   value: string;
 }) => (
   <div className="flex items-center gap-4">
-    <div className="flex h-10 w-10 sm:h-11 sm:w-11 flex-shrink-0 items-center justify-center rounded-lg bg-primary1/10 text-primary1">
+    <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg bg-primary1/10 text-primary1">
       {icon}
     </div>
     <div>

@@ -1,15 +1,19 @@
 "use client";
 
 import { useRef, type MouseEvent, type FC } from "react";
+import Button from "../../components/button";
 
 interface InteractiveCtaProps {
   isOpen?: boolean;
+  registrationUrl?: string;
 }
 
-const InteractiveCta: FC<InteractiveCtaProps> = ({ isOpen = true }) => {
+const InteractiveCta: FC<InteractiveCtaProps> = ({
+  isOpen = true,
+  registrationUrl = "",
+}) => {
   const textRef = useRef<HTMLHeadingElement | null>(null);
 
-  const registrationUrl = "https://forms.gle/your-registration-form-link"; // add real gforms here if open lmao
   const announcementsUrl = "/announcements";
 
   const handleMouseMove = (e: MouseEvent<HTMLHeadingElement>) => {
@@ -77,20 +81,18 @@ const InteractiveCta: FC<InteractiveCtaProps> = ({ isOpen = true }) => {
         {paragraphText}
       </p>
 
-      <button
+      <Button
+        variant="hero"
         onClick={() => {
-          if (isOpen) {
+          if (isOpen && registrationUrl) {
             window.open(registrationUrl, "_blank");
           } else {
             window.location.href = announcementsUrl;
           }
         }}
-        className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 
-             rounded-full transition-all duration-300 transform hover:scale-105 
-             shadow-lg cursor-pointer"
       >
         {buttonText}
-      </button>
+      </Button>
     </div>
   );
 };

@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Event } from "../utils/event";
 
@@ -13,7 +14,7 @@ export default function EventCard({ event }: Props) {
   const defaultImg =
     event.bannerImageUrl ??
     (event as unknown as { image?: string }).image ??
-    "/placeholder.svg";
+    "/placeholders/placeholder.svg";
   const [imgSrc, setImgSrc] = useState<string>(defaultImg);
   const [imgLoaded, setImgLoaded] = useState(false);
 
@@ -48,7 +49,7 @@ export default function EventCard({ event }: Props) {
       href={`/events/${event.id}`}
       className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1"
     >
-      <div className="relative h-48 flex-shrink-0 overflow-hidden bg-gray-100">
+      <div className="relative h-48 shrink-0 overflow-hidden bg-gray-100">
         {/* Image skeleton */}
         {!imgLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -56,15 +57,18 @@ export default function EventCard({ event }: Props) {
           </div>
         )}
 
-        <img
+        <Image
           src={imgSrc}
           alt={event.title}
+          fill
+          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           onLoad={() => setImgLoaded(true)}
           onError={() => {
-            setImgSrc("/placeholder.svg");
+            setImgSrc("/placeholders/placeholder.svg");
             setImgLoaded(true);
           }}
-          className={`h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+          unoptimized={imgSrc.endsWith(".svg")}
+          className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
             imgLoaded ? "opacity-100" : "opacity-0"
           }`}
         />

@@ -6,6 +6,7 @@ import Sidebar from "../components/sidebar";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "../../components/grid";
+import Button from "../../components/button";
 import { GlassCard } from "../../components/glass-card";
 import {
   Pencil,
@@ -27,6 +28,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import eventService from "../../services/event";
+import { LoadingIndicator } from "@/app/components/loading";
 
 // Custom time picker constants
 const timeHours = Array.from({ length: 12 }, (_, i) =>
@@ -49,6 +51,42 @@ function formatDateLabel(dateStr: string): string {
   const mIndex = parseInt(month) - 1;
   const monthName = MONTH_NAMES[mIndex] ? MONTH_NAMES[mIndex].slice(0, 3) : month;
   return `${monthName} ${parseInt(day)}, ${year}`;
+}
+
+function splitDateTime(isoStr: string): {
+  date: string;
+  hour: string;
+  minute: string;
+  period: string;
+} {
+  if (!isoStr) return { date: "", hour: "08", minute: "00", period: "AM" };
+  const d = new Date(isoStr);
+  if (isNaN(d.getTime())) return { date: "", hour: "08", minute: "00", period: "AM" };
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  let h = d.getHours();
+  const period = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return {
+    date,
+    hour: String(h).padStart(2, "0"),
+    minute: String(d.getMinutes()).padStart(2, "0"),
+    period,
+  };
+}
+
+function combineDateTime(
+  dateStr: string,
+  hour: string,
+  minute: string,
+  period: string,
+): string {
+  if (!dateStr) return "";
+  let h = parseInt(hour, 10) % 12;
+  if (period === "PM") h += 12;
+  const time24 = `${String(h).padStart(2, "0")}:${minute}`;
+  const d = new Date(`${dateStr}T${time24}`);
+  return isNaN(d.getTime()) ? "" : d.toISOString();
 }
 
 function parseTimeToPicker(timeStr: string): { hour: string; minute: string; period: string } {
@@ -79,7 +117,10 @@ type FormErrors = {
   title: boolean;
   description: boolean;
   body: boolean;
+  contact: boolean;
 };
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface EventItem {
   _id: string;
@@ -102,6 +143,7 @@ interface EventItem {
   registrationEnd?: string;
   targetAudience?: string[];
   details?: { title: string; items: string[] }[];
+  galleryImages?: string[];
 }
 
 const VISIBILITY_OPTIONS = [
@@ -145,6 +187,17 @@ export default function EventsPage() {
   const [registrationRequired, setRegistrationRequired] = useState(false);
   const [registrationStart, setRegistrationStart] = useState("");
   const [registrationEnd, setRegistrationEnd] = useState("");
+  // Custom date+time picker pieces for Registration Opens/Closes (mirrors
+  // the Event Schedule date/time pickers instead of a native datetime-local
+  // input); combined into registrationStart/registrationEnd below.
+  const [regStartDate, setRegStartDate] = useState("");
+  const [regStartHour, setRegStartHour] = useState("08");
+  const [regStartMinute, setRegStartMinute] = useState("00");
+  const [regStartPeriod, setRegStartPeriod] = useState("AM");
+  const [regEndDate, setRegEndDate] = useState("");
+  const [regEndHour, setRegEndHour] = useState("08");
+  const [regEndMinute, setRegEndMinute] = useState("00");
+  const [regEndPeriod, setRegEndPeriod] = useState("AM");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -184,10 +237,14 @@ export default function EventsPage() {
     title: false,
     description: false,
     body: false,
+    contact: false,
   });
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [isGalleryUploading, setIsGalleryUploading] = useState(false);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [mode, setMode] = useState<"Online" | "Onsite">("Onsite");
   const [showTagInput, setShowTagInput] = useState(false);
@@ -219,6 +276,19 @@ export default function EventsPage() {
   useEffect(() => {
     setFormData((prev) => ({ ...prev, time: `${timeHour}:${timeMinute} ${timePeriod}` }));
   }, [timeHour, timeMinute, timePeriod]);
+
+  // Sync the registration date+time picker pieces into single datetime strings
+  useEffect(() => {
+    setRegistrationStart(
+      combineDateTime(regStartDate, regStartHour, regStartMinute, regStartPeriod),
+    );
+  }, [regStartDate, regStartHour, regStartMinute, regStartPeriod]);
+
+  useEffect(() => {
+    setRegistrationEnd(
+      combineDateTime(regEndDate, regEndHour, regEndMinute, regEndPeriod),
+    );
+  }, [regEndDate, regEndHour, regEndMinute, regEndPeriod]);
 
   useEffect(() => {
     if (editIdParam) {
@@ -261,6 +331,9 @@ export default function EventsPage() {
             }
             if (data.details) setDetails(data.details);
             if (data.coverImage) setPreviews([data.coverImage]);
+            setGalleryImages(
+              Array.isArray(data.galleryImages) ? data.galleryImages : [],
+            );
             if (data.organizer)
               setOrganizer(
                 typeof data.organizer === "string"
@@ -269,17 +342,22 @@ export default function EventsPage() {
               );
             if (data.registrationRequired)
               setRegistrationRequired(data.registrationRequired);
-            if (data.registrationStart)
-              setRegistrationStart(
-                new Date(data.registrationStart).toISOString().split("T")[0],
-              );
-            if (data.registrationEnd)
-              setRegistrationEnd(
-                new Date(data.registrationEnd).toISOString().split("T")[0],
-              );
+            if (data.registrationStart) {
+              const parsed = splitDateTime(data.registrationStart);
+              setRegStartDate(parsed.date);
+              setRegStartHour(parsed.hour);
+              setRegStartMinute(parsed.minute);
+              setRegStartPeriod(parsed.period);
+            }
+            if (data.registrationEnd) {
+              const parsed = splitDateTime(data.registrationEnd);
+              setRegEndDate(parsed.date);
+              setRegEndHour(parsed.hour);
+              setRegEndMinute(parsed.minute);
+              setRegEndPeriod(parsed.period);
+            }
           }
-        } catch (error) {
-          console.error("Failed to fetch event for edit:", error);
+        } catch {
         }
       };
       fetchEvent();
@@ -292,8 +370,7 @@ export default function EventsPage() {
       const response = await eventService.getEvents({ limit: 100 });
       const data = response.data || (Array.isArray(response) ? response : []);
       setEventList(data as EventItem[]);
-    } catch (err) {
-      console.error("Failed to fetch events:", err);
+    } catch {
     } finally {
       setIsLoadingList(false);
     }
@@ -336,16 +413,16 @@ export default function EventsPage() {
         : item.organizer || "",
     );
     setRegistrationRequired(!!item.registrationRequired);
-    setRegistrationStart(
-      item.registrationStart
-        ? new Date(item.registrationStart).toISOString().slice(0, 16)
-        : "",
-    );
-    setRegistrationEnd(
-      item.registrationEnd
-        ? new Date(item.registrationEnd).toISOString().slice(0, 16)
-        : "",
-    );
+    const startParsed = splitDateTime(item.registrationStart || "");
+    setRegStartDate(startParsed.date);
+    setRegStartHour(startParsed.hour);
+    setRegStartMinute(startParsed.minute);
+    setRegStartPeriod(startParsed.period);
+    const endParsed = splitDateTime(item.registrationEnd || "");
+    setRegEndDate(endParsed.date);
+    setRegEndHour(endParsed.hour);
+    setRegEndMinute(endParsed.minute);
+    setRegEndPeriod(endParsed.period);
     if (item.details && item.details.length > 0) {
       setDetails(
         item.details.map((d) => ({ title: d.title, body: d.items.join("\n") })),
@@ -357,6 +434,7 @@ export default function EventsPage() {
     }
     setPreviews(item.coverImage ? [item.coverImage] : []);
     setImages([]);
+    setGalleryImages(item.galleryImages || []);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -385,10 +463,19 @@ export default function EventsPage() {
     setRegistrationRequired(false);
     setRegistrationStart("");
     setRegistrationEnd("");
+    setRegStartDate("");
+    setRegStartHour("08");
+    setRegStartMinute("00");
+    setRegStartPeriod("AM");
+    setRegEndDate("");
+    setRegEndHour("08");
+    setRegEndMinute("00");
+    setRegEndPeriod("AM");
     setDetails([{ title: "", body: "" }]);
     setShowAdditionalInfo(false);
     setMode("Onsite");
     setDateConflictError(false);
+    setGalleryImages([]);
   };
 
   const handleCancelEdit = () => {
@@ -414,8 +501,7 @@ export default function EventsPage() {
         description: "The event has been permanently removed.",
       });
       setShowSuccessModal(true);
-    } catch (error) {
-      console.error("Failed to delete event:", error);
+    } catch {
       alert("Failed to delete event");
     }
   };
@@ -468,6 +554,10 @@ export default function EventsPage() {
       title: !formData.title.trim(),
       description: !formData.description.trim(),
       body: !formData.body.trim(),
+      // Contact Email is optional — only flag it when something was typed
+      // in but doesn't look like an email.
+      contact:
+        !!formData.contact.trim() && !EMAIL_REGEX.test(formData.contact.trim()),
     };
     setErrors(newErrors);
     setDateConflictError(false);
@@ -514,8 +604,7 @@ export default function EventsPage() {
       setShowSuccessModal(true);
       handleCancelEdit();
       fetchEvents();
-    } catch (error) {
-      console.error("Error saving event:", error);
+    } catch {
       alert("Failed to save event.");
     } finally {
       setIsSubmitting(false);
@@ -549,8 +638,7 @@ export default function EventsPage() {
       setShowSuccessModal(true);
       handleCancelEdit();
       fetchEvents();
-    } catch (error) {
-      console.error("Error saving draft:", error);
+    } catch {
       alert("Failed to save draft.");
     } finally {
       setIsSubmitting(false);
@@ -596,16 +684,22 @@ export default function EventsPage() {
       reader.readAsDataURL(file);
     });
 
+  const MAX_IMAGE_SIZE_MB = 5;
+
   const handleImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      alert(`Image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     try {
       const resized = await resizeImage(file);
       setImages([resized]);
       setPreviews([URL.createObjectURL(resized)]);
       if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (err) {
-      console.error(err);
+    } catch {
     }
   };
 
@@ -614,12 +708,63 @@ export default function EventsPage() {
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      alert(`Image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`);
+      return;
+    }
     try {
       const resized = await resizeImage(file);
       setImages([resized]);
       setPreviews([URL.createObjectURL(resized)]);
-    } catch (err) {
-      console.error(err);
+    } catch {
+    }
+  };
+
+  const handleGalleryFilesChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !editingId) return;
+
+    const oversized = files.find(
+      (f) => f.size > MAX_IMAGE_SIZE_MB * 1024 * 1024,
+    );
+    if (oversized) {
+      alert(`Each image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`);
+      if (galleryInputRef.current) galleryInputRef.current.value = "";
+      return;
+    }
+
+    setIsGalleryUploading(true);
+    try {
+      const resized = await Promise.all(files.map((f) => resizeImage(f)));
+      const response = await eventService.updateEvent(
+        editingId,
+        {},
+        resized,
+      );
+      const updated = response.data as { galleryImages?: string[] };
+      setGalleryImages(updated?.galleryImages || []);
+      fetchEvents();
+    } catch {
+      alert("Failed to upload gallery photos. Please try again.");
+    } finally {
+      setIsGalleryUploading(false);
+      if (galleryInputRef.current) galleryInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveGalleryImage = async (url: string) => {
+    if (!editingId) return;
+    const remaining = galleryImages.filter((img) => img !== url);
+    setGalleryImages(remaining);
+    try {
+      await eventService.updateEvent(editingId, {
+        galleryImages: remaining,
+      });
+      fetchEvents();
+    } catch {
+      setGalleryImages(galleryImages);
     }
   };
 
@@ -636,8 +781,13 @@ export default function EventsPage() {
   const inputCls = (hasError: boolean) =>
     `${inputBaseStyle} ${inputFocusStyle} ${hasError ? errorInputStyle : ""}`;
 
-  const dropdownContainerStyle =
-    "absolute z-30 w-full min-w-[5rem] mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-1 p-2 max-h-56 overflow-y-auto";
+  // Split into a non-scrolling outer wrapper (owns the rounding/border/shadow)
+  // and a scrolling inner container, so the scrollbar never pokes past the
+  // rounded corners.
+  const dropdownOuterStyle =
+    "absolute z-30 w-full min-w-20 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
+  const dropdownInnerStyle =
+    "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto overflow-x-hidden themed-scrollbar";
   const dropdownItemStyle =
     "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
   const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
@@ -726,26 +876,28 @@ export default function EventsPage() {
         {isOpen && (
           <>
             <div
-              className={`${dropdownContainerStyle} left-1/2 -translate-x-1/2 text-center`}
+              className={`${dropdownOuterStyle} left-1/2 -translate-x-1/2 text-center`}
               onMouseDown={(e) => e.preventDefault()}
             >
-              {options.map((opt) => (
-                <div
-                  key={opt}
-                  className={`justify-center ${dropdownItemStyle} ${
-                    value === opt
-                      ? dropdownItemSelectedStyle
-                      : dropdownItemHoverStyle
-                  }`}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setValue(opt);
-                    setActiveTimeDropdown(null);
-                  }}
-                >
-                  <span>{opt}</span>
-                </div>
-              ))}
+              <div className={dropdownInnerStyle}>
+                {options.map((opt) => (
+                  <div
+                    key={opt}
+                    className={`justify-center ${dropdownItemStyle} ${
+                      value === opt
+                        ? dropdownItemSelectedStyle
+                        : dropdownItemHoverStyle
+                    }`}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setValue(opt);
+                      setActiveTimeDropdown(null);
+                    }}
+                  >
+                    <span>{opt}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -768,7 +920,7 @@ export default function EventsPage() {
     return (
       <div className="relative w-full">
         <div
-          className={`w-full min-h-[3rem] bg-gray-50 border rounded-2xl px-4 py-3 cursor-pointer relative transition-all hover:bg-gray-100 flex items-center justify-between ${
+          className={`w-full min-h-12 bg-gray-50 border rounded-2xl px-4 py-3 cursor-pointer relative transition-all hover:bg-gray-100 flex items-center justify-between ${
             hasError ? errorInputStyle : "border-gray-200"
           } ${
             isOpen ? "bg-white border-primary1 ring-4 ring-primary1/10" : ""
@@ -785,7 +937,7 @@ export default function EventsPage() {
           }}
         >
           <div className="flex items-center gap-2.5 text-gray-700 font-rubik text-base font-medium">
-            <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <Calendar className="w-5 h-5 text-gray-400 shrink-0" />
             <span className={value ? "text-gray-800" : "text-gray-400 font-normal"}>
               {value ? formatDateLabel(value) : placeholder}
             </span>
@@ -807,7 +959,7 @@ export default function EventsPage() {
               <div className="flex items-center justify-between mb-3 px-1">
                 <button
                   type="button"
-                  className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors"
+                  className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (viewMonth === 0) {
@@ -825,7 +977,7 @@ export default function EventsPage() {
                 </span>
                 <button
                   type="button"
-                  className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors"
+                  className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (viewMonth === 11) {
@@ -862,7 +1014,7 @@ export default function EventsPage() {
                     <button
                       key={dayNum}
                       type="button"
-                      className={`h-8 w-8 mx-auto rounded-xl flex items-center justify-center text-xs font-semibold transition-all ${
+                      className={`h-8 w-8 mx-auto rounded-xl flex items-center justify-center text-xs font-semibold transition-all cursor-pointer active:scale-90 ${
                         isSelected
                           ? "bg-primary1 text-white font-bold shadow-md shadow-primary1/20"
                           : isToday
@@ -884,7 +1036,7 @@ export default function EventsPage() {
               <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center text-xs font-semibold">
                 <button
                   type="button"
-                  className="text-primary1 hover:underline font-raleway"
+                  className="text-primary1 hover:underline font-raleway cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     onChange(todayStr);
@@ -896,7 +1048,7 @@ export default function EventsPage() {
                 {value && (
                   <button
                     type="button"
-                    className="text-gray-400 hover:text-red-500 font-raleway"
+                    className="text-gray-400 hover:text-red-500 font-raleway cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       onChange("");
@@ -920,12 +1072,9 @@ export default function EventsPage() {
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
       {/* LOADING OVERLAY */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-md">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/90 backdrop-blur-md">
           <div className="flex flex-col items-center gap-5">
-            <div className="relative w-16 h-16">
-              <div className="absolute inset-0 rounded-full border-4 border-primary2/20" />
-              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary2 animate-spin" />
-            </div>
+            <LoadingIndicator />
             <div className="text-center">
               <p className="text-primary3 font-bold font-rubik text-lg">
                 {loadingAction === "saving"
@@ -948,7 +1097,7 @@ export default function EventsPage() {
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
 
-          <div className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
+          <div className="grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
             {/* PAGE HEADER */}
             <div className="mb-16 text-left">
               <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
@@ -959,19 +1108,19 @@ export default function EventsPage() {
               </p>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8 items-start">
-              <aside className="w-full lg:w-64 flex-shrink-0">
+            <div className="flex flex-col lg:flex-row gap-8 items-stretch lg:items-start">
+              <aside className="w-full lg:w-64 shrink-0">
                 <Sidebar />
               </aside>
 
               <div className="flex-1 min-w-0 space-y-8">
                 {/* FORM CARD */}
-                <div className={`bg-white rounded-[2rem] border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
                   editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
                 }`}>
                     {/* Edit Banner */}
                     {editingId && (
-                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-gradient-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-[2rem]">
+                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-linear-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-4xl">
                         <div className="flex items-center gap-2 text-white">
                           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                           <span className="text-sm font-bold font-rubik tracking-wide">
@@ -980,7 +1129,7 @@ export default function EventsPage() {
                         </div>
                         <button
                           onClick={handleCancelEdit}
-                          className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors"
+                          className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors cursor-pointer"
                         >
                           Cancel
                         </button>
@@ -1003,9 +1152,14 @@ export default function EventsPage() {
 
                       {/* COVER IMAGE */}
                       <div className="space-y-3">
-                        <label className={labelStyle}>
-                          Cover Image
-                        </label>
+                        <div className="flex items-center justify-between">
+                          <label className={labelStyle}>
+                            Cover Image
+                          </label>
+                          <span className="text-xs text-gray-400 font-raleway">
+                            Max {MAX_IMAGE_SIZE_MB}MB
+                          </span>
+                        </div>
                         <input
                           type="file"
                           accept="image/*"
@@ -1024,7 +1178,7 @@ export default function EventsPage() {
                               <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform font-rubik"
+                                className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
                               >
                                 Replace
                               </button>
@@ -1037,7 +1191,7 @@ export default function EventsPage() {
                                   setImages([]);
                                   setPreviews([]);
                                 }}
-                                className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform font-rubik"
+                                className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
                               >
                                 Remove
                               </button>
@@ -1077,6 +1231,71 @@ export default function EventsPage() {
                         )}
                       </div>
 
+                      {/* GALLERY (available once the event has ended) */}
+                      {editingId &&
+                        formData.date &&
+                        new Date(formData.date) < new Date() && (
+                          <>
+                            <Divider />
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between">
+                                <label className={labelStyle}>
+                                  Event Gallery
+                                </label>
+                                <span className="text-xs text-gray-400 font-raleway">
+                                  Max {MAX_IMAGE_SIZE_MB}MB per photo
+                                </span>
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                className="hidden"
+                                onChange={handleGalleryFilesChange}
+                                ref={galleryInputRef}
+                              />
+                              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                                {galleryImages.map((url) => (
+                                  <div
+                                    key={url}
+                                    className="group relative aspect-square rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50"
+                                  >
+                                    <img
+                                      src={url}
+                                      alt="Gallery photo"
+                                      className="w-full h-full object-cover"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        handleRemoveGalleryImage(url)
+                                      }
+                                      className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-all duration-200 hover:bg-red-500 group-hover:opacity-100 cursor-pointer active:scale-90"
+                                    >
+                                      <X size={13} />
+                                    </button>
+                                  </div>
+                                ))}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    galleryInputRef.current?.click()
+                                  }
+                                  disabled={isGalleryUploading}
+                                  className="aspect-square rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/80 flex flex-col items-center justify-center gap-1.5 text-gray-400 transition-all duration-300 hover:border-primary2/60 hover:bg-primary2/3 hover:text-primary2 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  <Upload size={18} strokeWidth={2.5} />
+                                  <span className="text-[11px] font-bold font-raleway">
+                                    {isGalleryUploading
+                                      ? "Uploading..."
+                                      : "Add Photos"}
+                                  </span>
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+
                       <Divider />
 
                       {/* TAGS */}
@@ -1096,7 +1315,7 @@ export default function EventsPage() {
                                     : [...prev, tag],
                                 )
                               }
-                              className={`px-4 py-2 text-xs font-bold rounded-xl border-2 transition-all duration-200 font-rubik ${tags.includes(tag) ? "bg-primary2 text-white border-primary2 shadow-md" : "border-gray-200 text-gray-500 bg-white hover:border-primary2/50 hover:text-primary2"}`}
+                              className={`px-4 py-2 text-xs font-bold rounded-xl border-2 transition-all duration-200 font-rubik cursor-pointer active:scale-95 ${tags.includes(tag) ? "bg-primary2 text-white border-primary2 shadow-md" : "border-gray-200 text-gray-500 bg-white hover:border-primary2/50 hover:text-primary2"}`}
                             >
                               {tag}
                             </button>
@@ -1105,7 +1324,7 @@ export default function EventsPage() {
                             <button
                               type="button"
                               onClick={() => setShowTagInput(true)}
-                              className="flex items-center gap-1 px-4 py-2 border-2 border-dashed border-primary2/40 text-primary2 rounded-xl hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik text-xs font-bold"
+                              className="flex items-center gap-1 px-4 py-2 border-2 border-dashed border-primary2/40 text-primary2 rounded-xl hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik text-xs font-bold cursor-pointer"
                             >
                               <Plus size={12} /> Custom
                             </button>
@@ -1136,7 +1355,7 @@ export default function EventsPage() {
                                   setNewTag("");
                                   setShowTagInput(false);
                                 }}
-                                className="px-3 py-2 bg-gradient-to-r from-primary1 to-primary2 text-white rounded-xl text-xs font-bold"
+                                className="px-3 py-2 bg-linear-to-r from-primary1 to-primary2 text-white rounded-xl text-xs font-bold font-rubik shadow-sm transition-all cursor-pointer active:scale-95"
                               >
                                 Add
                               </button>
@@ -1146,9 +1365,9 @@ export default function EventsPage() {
                                   setNewTag("");
                                   setShowTagInput(false);
                                 }}
-                                className="px-3 py-2 border-2 border-gray-200 text-gray-500 rounded-xl text-xs font-bold"
+                                className="px-3 py-2 border-2 border-gray-200 text-gray-500 rounded-xl text-xs font-bold font-rubik transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-500 cursor-pointer active:scale-95"
                               >
-                                ✕
+                                <X size={12} />
                               </button>
                             </div>
                           )}
@@ -1167,7 +1386,7 @@ export default function EventsPage() {
                                   onClick={() =>
                                     setTags(tags.filter((_, idx) => idx !== i))
                                   }
-                                  className="hover:text-red-500 transition-colors"
+                                  className="hover:text-red-500 transition-colors cursor-pointer"
                                 >
                                   <X size={10} />
                                 </button>
@@ -1212,7 +1431,7 @@ export default function EventsPage() {
     )}
     {dateConflictError && (
       <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 mt-2">
-        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
         <p className="text-xs text-amber-700 font-raleway">
           Today's date is not allowed. Use a past or future date.
         </p>
@@ -1237,7 +1456,7 @@ export default function EventsPage() {
       {renderTimeInput("evt-hour", timeHour, setTimeHour, timeHours, "hour")}
       <span className="text-gray-400 font-bold">:</span>
       {renderTimeInput("evt-minute", timeMinute, setTimeMinute, timeMinutes, "minute")}
-      <div className="w-[1px] h-6 bg-gray-200 mx-2" />
+      <div className="w-px h-6 bg-gray-200 mx-2" />
       {renderTimeInput("evt-period", timePeriod, setTimePeriod, timePeriods, "period")}
     </div>
     {errors.time && (
@@ -1278,7 +1497,7 @@ export default function EventsPage() {
       key={m}
       type="button"
       onClick={() => setMode(m)}
-      className={`px-5 py-2 rounded-full text-sm font-bold font-rubik border-2 transition-all duration-200 ${
+      className={`px-5 py-2 rounded-full text-sm font-bold font-rubik border-2 transition-all duration-200 cursor-pointer ${
         mode === m
           ? "border-primary1 text-primary1 bg-primary1/10"
           : "border-gray-300 text-gray-600 hover:border-gray-400 hover:text-gray-800 bg-transparent"
@@ -1300,7 +1519,7 @@ export default function EventsPage() {
                               <button
                                 type="button"
                                 onClick={() => setShowAdmissionInput(true)}
-                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik"
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
                               >
                                 <Plus size={11} /> Add
                               </button>
@@ -1313,15 +1532,19 @@ export default function EventsPage() {
                                 placeholder="Category (e.g., General)"
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
-                                className="flex-1 border-2 border-white bg-white rounded-xl px-4 py-2.5 font-rubik text-sm focus:outline-none focus:border-primary2 transition-all"
+                                className="flex-1 border-2 border-gray-200 bg-white rounded-xl px-4 py-2.5 font-rubik text-sm focus:outline-none focus:border-primary2 transition-all"
                                 autoFocus
                               />
                               <input
                                 type="text"
+                                inputMode="decimal"
                                 placeholder="Price"
                                 value={price}
-                                onChange={(e) => setPrice(e.target.value)}
-                                className="w-full sm:w-28 border-2 border-white bg-white rounded-xl px-4 py-2.5 font-rubik text-sm focus:outline-none focus:border-primary2 transition-all"
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (/^\d*\.?\d*$/.test(val)) setPrice(val);
+                                }}
+                                className="w-full sm:w-28 border-2 border-gray-200 bg-white rounded-xl px-4 py-2.5 font-rubik text-sm focus:outline-none focus:border-primary2 transition-all"
                               />
                               <div className="flex gap-2">
                                 <button
@@ -1339,7 +1562,7 @@ export default function EventsPage() {
                                     setPrice("");
                                     setShowAdmissionInput(false);
                                   }}
-                                  className="px-5 py-2.5 bg-gradient-to-r from-primary1 to-primary2 text-white rounded-xl font-bold text-xs font-rubik shadow-sm"
+                                  className="px-5 py-2.5 bg-linear-to-r from-primary1 to-primary2 text-white rounded-xl font-bold text-xs font-rubik shadow-sm transition-all cursor-pointer active:scale-95"
                                 >
                                   Add
                                 </button>
@@ -1350,7 +1573,7 @@ export default function EventsPage() {
                                     setPrice("");
                                     setShowAdmissionInput(false);
                                   }}
-                                  className="px-4 py-2.5 border-2 border-gray-200 bg-white text-gray-500 rounded-xl font-bold text-xs font-rubik"
+                                  className="px-4 py-2.5 border-2 border-gray-200 bg-white text-gray-500 rounded-xl font-bold text-xs font-rubik transition-all hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 cursor-pointer active:scale-95"
                                 >
                                   Cancel
                                 </button>
@@ -1377,7 +1600,7 @@ export default function EventsPage() {
                                         ),
                                       )
                                     }
-                                    className="hover:text-red-500 transition-colors"
+                                    className="hover:text-red-500 transition-colors cursor-pointer"
                                   >
                                     <X size={12} />
                                   </button>
@@ -1398,14 +1621,14 @@ export default function EventsPage() {
                           </label>
                           <label className="flex items-center gap-2.5 cursor-pointer select-none">
                             <div
-                              className={`w-10 h-5 rounded-full transition-all duration-200 relative ${registrationRequired ? "bg-primary2" : "bg-gray-200"}`}
+                              className={`w-10 h-5 rounded-full transition-all duration-300 relative cursor-pointer active:scale-95 ${registrationRequired ? "bg-primary2" : "bg-gray-200"}`}
                               onClick={() => setRegistrationRequired((p) => !p)}
                             >
                               <div
-                                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${registrationRequired ? "left-5" : "left-0.5"}`}
+                                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-all duration-300 ${registrationRequired ? "left-5.5" : "left-0.5"}`}
                               />
                             </div>
-                            <span className="text-xs font-bold text-gray-500 font-rubik">
+                            <span className="text-xs font-medium text-gray-500 font-raleway">
                               Required
                             </span>
                           </label>
@@ -1413,30 +1636,98 @@ export default function EventsPage() {
                         {registrationRequired && (
                           <div className="grid sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                              <label className={labelStyle}>
-                                Opens
-                              </label>
-                              <input
-                                type="datetime-local"
-                                value={registrationStart}
-                                onChange={(e) =>
-                                  setRegistrationStart(e.target.value)
-                                }
-                                className={inputCls(false)}
-                              />
+                              <label className={labelStyle}>Opens</label>
+                              {renderDatePicker(
+                                "regStartDate",
+                                regStartDate,
+                                setRegStartDate,
+                                false,
+                                "Select date",
+                              )}
+                              <div
+                                className={`flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 transition-all ${
+                                  [
+                                    "regStart-hour",
+                                    "regStart-minute",
+                                    "regStart-period",
+                                  ].includes(activeTimeDropdown || "")
+                                    ? "bg-white border-primary1 ring-4 ring-primary1/10"
+                                    : ""
+                                }`}
+                              >
+                                {renderTimeInput(
+                                  "regStart-hour",
+                                  regStartHour,
+                                  setRegStartHour,
+                                  timeHours,
+                                  "hour",
+                                )}
+                                <span className="text-gray-400 font-bold">
+                                  :
+                                </span>
+                                {renderTimeInput(
+                                  "regStart-minute",
+                                  regStartMinute,
+                                  setRegStartMinute,
+                                  timeMinutes,
+                                  "minute",
+                                )}
+                                <div className="w-px h-6 bg-gray-200 mx-2" />
+                                {renderTimeInput(
+                                  "regStart-period",
+                                  regStartPeriod,
+                                  setRegStartPeriod,
+                                  timePeriods,
+                                  "period",
+                                )}
+                              </div>
                             </div>
                             <div className="space-y-2">
-                              <label className={labelStyle}>
-                                Closes
-                              </label>
-                              <input
-                                type="datetime-local"
-                                value={registrationEnd}
-                                onChange={(e) =>
-                                  setRegistrationEnd(e.target.value)
-                                }
-                                className={inputCls(false)}
-                              />
+                              <label className={labelStyle}>Closes</label>
+                              {renderDatePicker(
+                                "regEndDate",
+                                regEndDate,
+                                setRegEndDate,
+                                false,
+                                "Select date",
+                              )}
+                              <div
+                                className={`flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 transition-all ${
+                                  [
+                                    "regEnd-hour",
+                                    "regEnd-minute",
+                                    "regEnd-period",
+                                  ].includes(activeTimeDropdown || "")
+                                    ? "bg-white border-primary1 ring-4 ring-primary1/10"
+                                    : ""
+                                }`}
+                              >
+                                {renderTimeInput(
+                                  "regEnd-hour",
+                                  regEndHour,
+                                  setRegEndHour,
+                                  timeHours,
+                                  "hour",
+                                )}
+                                <span className="text-gray-400 font-bold">
+                                  :
+                                </span>
+                                {renderTimeInput(
+                                  "regEnd-minute",
+                                  regEndMinute,
+                                  setRegEndMinute,
+                                  timeMinutes,
+                                  "minute",
+                                )}
+                                <div className="w-px h-6 bg-gray-200 mx-2" />
+                                {renderTimeInput(
+                                  "regEnd-period",
+                                  regEndPeriod,
+                                  setRegEndPeriod,
+                                  timePeriods,
+                                  "period",
+                                )}
+                              </div>
                             </div>
                           </div>
                         )}
@@ -1468,8 +1759,14 @@ export default function EventsPage() {
                             placeholder="organizer@example.com"
                             value={formData.contact}
                             onChange={handleInputChange}
-                            className={inputCls(false)}
+                            className={inputCls(errors.contact)}
                           />
+                          {errors.contact && (
+                            <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
+                              <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
+                              Enter a valid email address
+                            </p>
+                          )}
                         </div>
                       </div>
 
@@ -1536,7 +1833,7 @@ export default function EventsPage() {
                             onChange={handleInputChange}
                             rows={7}
                             placeholder="Agenda / program highlights..."
-                            className={`${inputCls(errors.body)} resize-y min-h-[180px]`}
+                            className={`${inputCls(errors.body)} resize-y min-h-45`}
                           />
                           {errors.body && (
                             <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
@@ -1559,7 +1856,7 @@ export default function EventsPage() {
                             <button
                               type="button"
                               onClick={() => setShowAdditionalInfo(true)}
-                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik"
+                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
                             >
                               <Plus size={11} /> Add Section
                             </button>
@@ -1586,7 +1883,7 @@ export default function EventsPage() {
                                         ),
                                       )
                                     }
-                                    className="flex-1 rounded-xl border-2 border-white bg-white px-4 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
+                                    className="flex-1 rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
                                   />
                                   <button
                                     type="button"
@@ -1595,7 +1892,7 @@ export default function EventsPage() {
                                         p.filter((_, i) => i !== idx),
                                       )
                                     }
-                                    className="px-3 py-2.5 rounded-xl bg-white border-2 border-red-100 text-red-400 hover:bg-red-50 text-xs font-bold font-rubik transition-all"
+                                    className="px-3 py-2.5 rounded-xl bg-white border-2 border-red-100 text-red-400 hover:bg-red-50 text-xs font-bold font-rubik transition-all cursor-pointer"
                                   >
                                     Remove
                                   </button>
@@ -1612,7 +1909,7 @@ export default function EventsPage() {
                                       ),
                                     )
                                   }
-                                  className="w-full rounded-xl border-2 border-white bg-white px-4 py-3 text-sm font-raleway text-gray-600 h-28 focus:outline-none focus:border-primary2 transition-all resize-y"
+                                  className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-3 text-sm font-raleway text-gray-600 h-28 focus:outline-none focus:border-primary2 transition-all resize-y"
                                 />
                               </div>
                             ))}
@@ -1624,7 +1921,7 @@ export default function EventsPage() {
                                   { title: "", body: "" },
                                 ])
                               }
-                              className="w-full px-6 py-3.5 border-2 border-dashed border-primary2/30 text-primary2 rounded-xl hover:border-primary2 hover:bg-primary2/5 transition-all font-bold font-rubik text-sm flex items-center justify-center gap-2"
+                              className="w-full px-6 py-3.5 border-2 border-dashed border-primary2/30 text-primary2 rounded-xl hover:border-primary2 hover:bg-primary2/5 transition-all font-bold font-rubik text-sm flex items-center justify-center gap-2 cursor-pointer"
                             >
                               <Plus size={14} /> Add Another Section
                             </button>
@@ -1668,10 +1965,10 @@ export default function EventsPage() {
                                     visibility: opt.value,
                                   }))
                                 }
-                                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-left border-2 transition-all duration-200 ${isActive ? `${opt.bg} ${opt.color} ${opt.border} shadow-sm scale-[1.02]` : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"}`}
+                                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-left border-2 transition-all duration-200 cursor-pointer ${isActive ? `${opt.bg} ${opt.color} ${opt.border} shadow-sm scale-[1.02]` : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"}`}
                               >
                                 <span
-                                  className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? opt.dot : "bg-gray-200"}`}
+                                  className={`w-2 h-2 rounded-full shrink-0 ${isActive ? opt.dot : "bg-gray-200"}`}
                                 />
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-bold font-rubik leading-tight">
@@ -1686,7 +1983,7 @@ export default function EventsPage() {
                                 {isActive && (
                                   <Check
                                     size={12}
-                                    className="flex-shrink-0 opacity-70"
+                                    className="shrink-0 opacity-70"
                                   />
                                 )}
                               </button>
@@ -1706,46 +2003,49 @@ export default function EventsPage() {
                         )}
                         <div className="flex flex-wrap gap-3 ml-auto">
                           {editingId && (
-                            <button
+                            <Button
                               type="button"
+                              variant="heroOutline"
                               onClick={handleCancelEdit}
-                              className="px-6 py-3 font-rubik font-bold text-gray-500 border-2 border-gray-200 hover:border-red-200 hover:text-red-400 rounded-2xl transition-all duration-300"
+                              className="px-4 py-2 sm:px-6 sm:py-3"
                             >
                               Cancel
-                            </button>
+                            </Button>
                           )}
                           {(!editingId || isEditingDraft) && (
-                            <button
+                            <Button
                               type="button"
+                              variant="heroOutline"
                               onClick={handleSaveDraft}
                               disabled={isSubmitting}
-                              className="px-6 py-3 font-rubik font-bold text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="px-4 py-2 sm:px-6 sm:py-3"
                             >
                               {editingId ? "Update Draft" : "Save Draft"}
-                            </button>
+                            </Button>
                           )}
-                          <button
+                          <Button
                             type="button"
+                            variant="hero"
                             onClick={handlePublish}
                             disabled={isSubmitting}
-                            className="group relative px-8 py-3 bg-gradient-to-r from-primary3 to-primary1 rounded-2xl font-rubik font-bold text-white shadow-lg shadow-primary1/20 hover:shadow-primary1/40 transition-all duration-300 flex items-center gap-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="group flex items-center gap-3 px-5 py-2 sm:px-8 sm:py-3"
                           >
                             <span>
                               {editingId && !isEditingDraft
                                 ? "Update Event"
                                 : "Publish Event"}
                             </span>
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
                 </div>
 
                 {/* MANAGE LIST */}
-                <div className="bg-white rounded-[2rem] border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200">
+                <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
                   <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                     <div>
-                      <h2 className="text-xl font-black font-rubik text-primary3">
+                      <h2 className="text-xl font-bold font-rubik text-primary3">
                         Published Events
                       </h2>
                         <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
@@ -1755,7 +2055,7 @@ export default function EventsPage() {
                       </div>
                       <button
                         onClick={fetchEvents}
-                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200"
+                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200 cursor-pointer"
                       >
                         <RefreshCw
                           size={13}
@@ -1766,12 +2066,7 @@ export default function EventsPage() {
                     </div>
 
                     {isLoadingList ? (
-                      <div className="py-20 flex flex-col items-center gap-3 text-gray-300">
-                        <div className="w-8 h-8 border-2 border-gray-200 border-t-primary2 rounded-full animate-spin" />
-                        <p className="text-sm font-raleway">
-                          Loading events...
-                        </p>
-                      </div>
+                      <LoadingIndicator label="Loading events..." className="py-16" />
                     ) : eventList.length === 0 ? (
                       <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
                         <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
@@ -1787,23 +2082,23 @@ export default function EventsPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[640px]">
+                      <div className="overflow-x-auto themed-scrollbar">
+                        <table className="responsive-table w-full text-left min-w-160">
                           <thead>
                             <tr className="bg-gray-50/80">
-                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Cover
                               </th>
-                              <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Title
                               </th>
-                              <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Date
                               </th>
-                              <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Mode
                               </th>
-                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Actions
                               </th>
                             </tr>
@@ -1817,7 +2112,7 @@ export default function EventsPage() {
                                   key={item._id}
                                   className={`group border-t border-gray-50 transition-all duration-200 ${isEditing ? "bg-primary1/5" : "hover:bg-gray-50/70"}`}
                                 >
-                                  <td className="px-6 sm:px-8 py-4">
+                                  <td data-label="Cover" data-primary="media" className="px-6 sm:px-8 py-4">
                                     <div className="w-14 h-10 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
                                       {item.coverImage ? (
                                         <img
@@ -1833,22 +2128,22 @@ export default function EventsPage() {
                                       )}
                                     </div>
                                   </td>
-                                  <td className="px-4 py-4">
+                                  <td data-label="Title" data-primary="" className="px-4 py-4">
                                     <div className="flex items-center gap-2">
                                       {isEditing && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-primary1 animate-pulse flex-shrink-0" />
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary1 animate-pulse shrink-0" />
                                       )}
                                       <span className="font-bold text-sm text-gray-800 font-rubik">
                                         {item.title}
                                       </span>
                                     </div>
                                     {item.description && (
-                                      <p className="text-xs text-gray-400 font-raleway mt-0.5 max-w-[200px] truncate">
+                                      <p className="text-xs text-gray-400 font-raleway mt-0.5 max-w-50 truncate">
                                         {item.description}
                                       </p>
                                     )}
                                   </td>
-                                  <td className="px-4 py-4">
+                                  <td data-label="Date" className="px-4 py-4">
                                     <span className="text-xs text-gray-600 font-raleway">
                                       {item.eventDate
                                         ? new Date(
@@ -1857,9 +2152,9 @@ export default function EventsPage() {
                                         : "N/A"}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-4">
+                                  <td data-label="Mode" className="px-4 py-4">
                                     <span
-                                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${online ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-orange-50 text-orange-700 border-orange-200"}`}
+                                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-raleway font-semibold border ${online ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-orange-50 text-orange-700 border-orange-200"}`}
                                     >
                                       <span
                                         className={`w-1.5 h-1.5 rounded-full ${online ? "bg-emerald-500" : "bg-orange-400"}`}
@@ -1867,21 +2162,23 @@ export default function EventsPage() {
                                       {item.mode}
                                     </span>
                                   </td>
-                                  <td className="px-8 py-4 text-right">
-                                    <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
+                                  <td data-label="Actions" className="px-8 py-4 text-right">
+                                    <div className="inline-flex items-center gap-1 opacity-100 lg:opacity-40 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
                                       <button
                                         onClick={() => handleEditClick(item)}
-                                        className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150"
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-raleway font-semibold whitespace-nowrap text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150 cursor-pointer"
                                         title="Edit"
                                       >
                                         <Pencil size={15} />
+                                        Edit
                                       </button>
                                       <button
                                         onClick={() => confirmDelete(item._id)}
-                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150"
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-raleway font-semibold whitespace-nowrap text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150 cursor-pointer"
                                         title="Delete"
                                       >
                                         <Trash2 size={15} />
+                                        Delete
                                       </button>
                                     </div>
                                   </td>
@@ -1899,13 +2196,13 @@ export default function EventsPage() {
         </div>
       </main>
 
-      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
+      <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
 
       {/* DELETE MODAL */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowDeleteModal(false)}
@@ -1914,7 +2211,7 @@ export default function EventsPage() {
             <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
               <AlertTriangle className="w-6 h-6 text-red-500" />
             </div>
-            <h3 className="text-xl font-black text-primary3 font-rubik mb-2">
+            <h3 className="text-xl font-bold text-primary3 font-rubik mb-2">
               Delete Event?
             </h3>
             <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
@@ -1922,18 +2219,20 @@ export default function EventsPage() {
               undone.
             </p>
             <div className="flex gap-3">
-              <button
+              <Button
+                variant="heroOutline"
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-3 text-sm font-bold font-rubik text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                className="flex-1 py-2 sm:py-3"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="heroDanger"
                 onClick={handleDelete}
-                className="flex-1 py-3 text-sm font-bold font-rubik text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-lg shadow-red-500/25"
+                className="flex-1 py-2 sm:py-3"
               >
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1941,7 +2240,7 @@ export default function EventsPage() {
 
       {/* SUCCESS MODAL */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => {
@@ -1953,7 +2252,7 @@ export default function EventsPage() {
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
+                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
                   <svg
                     className="w-10 h-10 text-white"
                     fill="none"
@@ -1971,7 +2270,7 @@ export default function EventsPage() {
               </div>
             </div>
             <div className="text-center mb-6">
-              <h3 className="text-xl font-black text-primary3 font-rubik">
+              <h3 className="text-xl font-bold text-primary3 font-rubik">
                 {successMessage.title}
               </h3>
               <p className="text-gray-400 text-sm font-raleway mt-2">
@@ -1979,25 +2278,27 @@ export default function EventsPage() {
               </p>
             </div>
             <div className="flex flex-col gap-2">
-              <button
+              <Button
+                variant="hero"
                 onClick={() => {
                   setShowSuccessModal(false);
                   setSubmitSuccess(false);
                   router.push("/events");
                 }}
-                className="w-full py-3 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg hover:shadow-primary2/40 hover:-translate-y-0.5 transition-all duration-200"
+                className="w-full py-2 text-sm sm:py-3"
               >
                 View Events
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="heroOutline"
                 onClick={() => {
                   setShowSuccessModal(false);
                   setSubmitSuccess(false);
                 }}
-                className="w-full py-3 text-sm font-bold font-rubik text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                className="w-full py-2 text-sm sm:py-3"
               >
                 Close
-              </button>
+              </Button>
             </div>
           </div>
         </div>

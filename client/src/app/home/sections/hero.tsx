@@ -1,125 +1,133 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Code, PenTool, BrainCircuit, Users } from "lucide-react";
+import { ChevronRight, Code, PenTool, BrainCircuit, Users } from "lucide-react";
+import Button from "../../components/button";
+
+const STATS = [
+  { value: "200+", label: "Active Members" },
+  { value: "15+", label: "Events Hosted" },
+  { value: "8", label: "Years Active" },
+];
+
+const SkillBox = ({
+  icon,
+  text,
+  className,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  className: string;
+}) => (
+  <div
+    className={`absolute flex items-center gap-1.5 rounded-lg border border-gray-200/50 bg-white/70 px-2.5 py-1.5 shadow-md backdrop-blur-md sm:gap-2 sm:px-4 sm:py-2.5 ${className}`}
+  >
+    <div className="text-primary1">{icon}</div>
+    <span className="font-raleway text-xs font-semibold text-primary3 sm:text-[15px]">
+      {text}
+    </span>
+  </div>
+);
 
 const Hero = () => {
   const router = useRouter();
 
-  const SkillBox = ({
-    icon,
-    text,
-    className,
-  }: {
-    icon: React.ReactNode;
-    text: string;
-    className: string;
-  }) => (
-    <div
-      className={`absolute flex items-center gap-2 rounded-lg border border-gray-200/50 bg-white/70 px-4 py-2.5 shadow-md backdrop-blur-md ${className}`}
-    >
-      <div className="text-primary1">{icon}</div>
-      <span className="font-raleway text-[15px] font-semibold text-primary3">
-        {text}
-      </span>
-    </div>
-  );
-
   return (
-    <section className="light-dark-background relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 isolate -translate-y-[4vh]">
-      {/* pills */}
-      <div className="absolute inset-0 pointer-events-none z-20 overflow-hidden">
+    <section className="light-dark-background relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 sm:px-6">
+      {/* grid-paper backdrop, brand-blue and faded at the bottom so it
+          blends into the section below instead of cutting off */}
+      <div className="interactive-grid-fade pointer-events-none absolute inset-0 z-0" />
+
+      {/* floating skill pills — a fixed gutter from the edge (not a
+          percentage) so they never clip on a narrow phone, pulled in just
+          enough to sit near the content without covering it */}
+      <div className="pointer-events-none absolute inset-0 z-30 overflow-hidden">
         <SkillBox
-          icon={<Code size={20} />}
+          icon={<Code size={16} />}
           text="Programming"
-          className="top-[10%] left-[5%] md:top-1/3 md:left-1/4 animate-float-slow"
+          className="top-[15%] left-3 md:top-1/3 md:left-[8%] animate-float-slow"
         />
         <SkillBox
-          icon={<PenTool size={20} />}
+          icon={<PenTool size={16} />}
           text="UI/UX Design"
-          className="top-[12%] right-[5%] md:top-[28%] md:right-1/4 animate-float-medium"
+          className="top-[15%] right-3 md:top-[24%] md:right-[8%] animate-float-medium"
         />
         <SkillBox
-          icon={<BrainCircuit size={20} />}
+          icon={<BrainCircuit size={16} />}
           text="Arduino"
-          className="bottom-[20%] left-[8%] md:bottom-1/3 md:left-1/3 animate-float-fast"
+          className="bottom-[15%] left-3 md:bottom-1/4 md:left-[10%] animate-float-fast"
         />
         <SkillBox
-          icon={<Users size={20} />}
+          icon={<Users size={16} />}
           text="COMPanions"
-          className="bottom-[18%] right-[8%] md:bottom-1/3 md:right-1/3 animate-float-slow"
+          className="bottom-[15%] right-3 md:bottom-1/4 md:right-[10%] animate-float-slow"
         />
       </div>
 
-      <div className="relative z-10 text-center px-4 w-full max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="inline-block bg-buttonbg1 border border-primary1/30 rounded-full px-6 py-2">
-            <p className="text-primary1 text-sm font-raleway font-medium tracking-wide">
-              Welcome to the community
-            </p>
-          </div>
+      <div className="relative z-20 mx-auto -mt-6 flex w-full max-w-5xl flex-col items-center px-4 py-24 text-center sm:-mt-10 sm:py-32">
+        <div className="group relative mb-6 h-20 w-20 sm:h-28 sm:w-28">
+          <Image
+            src="/brand/icpep-logo.png"
+            alt="ICpEP Logo"
+            fill
+            priority
+            className="object-contain drop-shadow-[0_15px_25px_rgba(0,53,153,0.3)] transition-transform duration-500 group-hover:scale-110"
+          />
         </div>
 
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-rubik font-bold mb-4 leading-tight">
-          <span className="bg-gradient-to-r from-black via-primary1 to-black bg-clip-text text-transparent animate-gradient-flow">
-            <span className="sm:hidden">
-              ICpEP SE <br />
-              CIT-U Chapter
-            </span>
-
-            <span className="hidden sm:inline">ICpEP SE CIT-U Chapter</span>
+        <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1">
+          <span className="font-raleway text-sm font-semibold text-primary1">
+            ICpEP.SE · Region 7 · CIT-U Chapter
           </span>
+        </div>
+
+        <h1 className="font-rubik text-4xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl">
+          <span className="block text-primary1">Unlocking Potential,</span>
+          <span className="block text-secondary1">One Bit at a Time</span>
         </h1>
 
-        <p className="text-lg md:text-2xl font-raleway text-bodytext mb-6 max-w-2xl mx-auto leading-relaxed">
-          Unlocking Potential, One Bit at a Time
+        <p className="mt-6 max-w-2xl font-raleway text-base text-bodytext sm:text-xl">
+          The official chapter of the Institute of Computer Engineers of the
+          Philippines — Student Edition, empowering scholars through
+          innovation, leadership, and community.
         </p>
 
-        {/* buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-          <button
-            className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer w-[220px] sm:w-auto"
+        <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
+          <Button
+            variant="hero"
+            className="group w-64 px-8 py-3 sm:w-auto"
             onClick={() => router.push("/login")}
           >
-            Join Community
-          </button>
-          <button
+            <span className="inline-flex items-center gap-2">
+              Join Community
+              <ChevronRight
+                size={18}
+                className="transition-transform duration-300 group-hover:translate-x-1"
+              />
+            </span>
+          </Button>
+          <Button
+            variant="heroOutline"
+            className="w-64 px-8 py-3 sm:w-auto"
             onClick={() => router.push("/about")}
-            className="bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-buttonbg1 hover:border-primary1 hover:text-primary1 font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 cursor-pointer w-[220px] sm:w-auto"
           >
             Learn More
-          </button>
+          </Button>
         </div>
 
-        {/* stats */}
-        <div className="flex justify-center">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-lg">
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-rubik font-bold text-primary1 mb-1">
-                200+
+        <div className="mt-16 flex gap-8 sm:gap-16">
+          {STATS.map((stat) => (
+            <div key={stat.label} className="text-center">
+              <div className="font-rubik text-2xl font-bold text-primary1 sm:text-3xl">
+                {stat.value}
               </div>
-              <div className="text-sm font-raleway text-bodytext">
-                Active Members
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl md:text-3xl font-rubik font-bold text-primary1 mb-1">
-                15+
-              </div>
-              <div className="text-sm font-raleway text-bodytext">
-                Events Hosted
+              <div className="mt-1 font-raleway text-xs text-bodytext sm:text-sm">
+                {stat.label}
               </div>
             </div>
-            <div className="text-center col-span-2 md:col-span-1">
-              <div className="text-2xl md:text-3xl font-rubik font-bold text-primary1 mb-1">
-                8
-              </div>
-              <div className="text-sm font-raleway text-bodytext">
-                Years Active
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     </section>

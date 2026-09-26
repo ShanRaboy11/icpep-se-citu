@@ -7,25 +7,25 @@ import { SectionType } from "../utils/types";
 const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
   const missionPoints = [
     {
-      imageUrl: "/trophy.png",
+      imageUrl: "/icons/illustrations/trophy.png",
       title: "Academic Support",
       description:
         "Excel in your studies with targeted resources and mentorship.",
     },
     {
-      imageUrl: "/computer.png",
+      imageUrl: "/icons/illustrations/computer.png",
       title: "Skills Training",
       description:
         "Master in-demand tech with hands-on workshops and projects.",
     },
     {
-      imageUrl: "/shield.png",
+      imageUrl: "/icons/illustrations/shield.png",
       title: "Global Competence",
       description:
         "Prepare for an international career solving complex problems.",
     },
     {
-      imageUrl: "/notify.png",
+      imageUrl: "/icons/illustrations/notify.png",
       title: "Community Engagement",
       description: "Connect and collaborate with a vibrant network of peers.",
     },
@@ -33,7 +33,7 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
 
   return (
     <div className="content-fade flex flex-col md:flex-row gap-6 md:gap-12 items-start justify-center">
-      <div className="text-left w-full md:max-w-xs flex-shrink-0">
+      <div className="text-left w-full md:max-w-xs shrink-0">
         <h3 className="font-rubik text-2xl md:text-4xl font-bold mb-3 text-secondary2">
           {section.title}
         </h3>
@@ -54,7 +54,7 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
               backgroundSize: "1rem 1rem",
             }}
           >
-            <div className="relative flex-shrink-0 w-12 h-12 md:w-24 md:h-24">
+            <div className="relative shrink-0 w-12 h-12 md:w-24 md:h-24">
               <Image
                 src={point.imageUrl}
                 alt={point.title}

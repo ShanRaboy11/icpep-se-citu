@@ -1,6 +1,5 @@
 // Minimal declaration to satisfy TypeScript when @types/multer is not installed
 declare module 'multer' {
-  import type { RequestHandler } from 'express';
   const multer: any;
   export = multer;
 }

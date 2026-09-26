@@ -52,7 +52,7 @@ export function LoadingScreen({ showEntrance = true }: { showEntrance?: boolean 
           }}
         >
           <Image
-            src="/icpep logo.png"
+            src="/brand/icpep-logo.png"
             alt="ICpEP Logo"
             fill
             className="object-contain"
@@ -99,6 +99,45 @@ export function LoadingScreen({ showEntrance = true }: { showEntrance?: boolean 
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+export function LoadingIndicator({
+  label,
+  size = "md",
+  className = "",
+}: {
+  label?: string;
+  size?: "sm" | "md";
+  className?: string;
+}) {
+  const dot = size === "sm" ? "w-1.5 h-1.5" : "w-2 h-2";
+  return (
+    <div
+      role="status"
+      aria-label={label ?? "Loading"}
+      className={`flex flex-col items-center gap-3 ${className}`}
+    >
+      <div className="flex gap-2">
+        {[0, 1, 2].map((index) => (
+          <motion.div
+            key={index}
+            initial={{ y: 0 }}
+            animate={{ y: [-5, 5, -5] }}
+            transition={{
+              duration: 0.8,
+              repeat: Infinity,
+              delay: index * 0.2,
+              ease: "easeInOut",
+            }}
+            className={`${dot} bg-primary3 rounded-full`}
+          />
+        ))}
+      </div>
+      {label && (
+        <p className="text-sm font-raleway text-gray-500">{label}</p>
+      )}
     </div>
   );
 }

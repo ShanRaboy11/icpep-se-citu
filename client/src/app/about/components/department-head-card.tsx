@@ -26,7 +26,7 @@ const DepartmentHeadCard: FC<FacultyMember> = ({
 
       <div className="relative mb-4 sm:mb-6">
         {/* gradient */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary1 to-primary3 blur opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
+        <div className="absolute inset-0 rounded-full bg-linear-to-tr from-primary1 to-primary3 blur opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
 
         {/* photo */}
         <div className="relative w-36 h-36 sm:w-52 sm:h-52 rounded-full border-4 border-white shadow-xl overflow-hidden">

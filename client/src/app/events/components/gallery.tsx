@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import GalleryLightbox from "./gallery-lightbox";
 
 interface Props {
   imageUrls: string[];
@@ -10,6 +12,7 @@ export default function EventGallery({ imageUrls }: Props) {
   const [imageErrors, setImageErrors] = useState<{ [key: number]: boolean }>(
     {},
   );
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   if (!imageUrls || imageUrls.length === 0) return null;
 
@@ -30,14 +33,17 @@ export default function EventGallery({ imageUrls }: Props) {
         {imageUrls.slice(0, 2).map((photo, index) => (
           <div
             key={index}
-            className="aspect-square rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-gray-100"
+            onClick={() => setLightboxIndex(index)}
+            className="relative aspect-square rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-gray-100"
           >
             {!imageErrors[index] ? (
-              <img
+              <Image
                 src={photo}
                 alt={`Event photo ${index + 1}`}
+                fill
+                sizes="33vw"
                 onError={() => handleImageError(index)}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="object-cover hover:scale-105 transition-transform duration-300"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -62,14 +68,17 @@ export default function EventGallery({ imageUrls }: Props) {
         {imageUrls.length === 3 && (
           <div
             key={2}
-            className="aspect-square rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-gray-100"
+            onClick={() => setLightboxIndex(2)}
+            className="relative aspect-square rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-gray-100"
           >
             {!imageErrors[2] ? (
-              <img
+              <Image
                 src={imageUrls[2]}
                 alt={`Event photo 3`}
+                fill
+                sizes="33vw"
                 onError={() => handleImageError(2)}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                className="object-cover hover:scale-105 transition-transform duration-300"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -92,14 +101,19 @@ export default function EventGallery({ imageUrls }: Props) {
         )}
 
         {imageUrls.length > 3 && (
-          <div className="group aspect-square cursor-pointer overflow-hidden relative rounded-xl shadow-sm bg-gray-100">
+          <div
+            onClick={() => setLightboxIndex(2)}
+            className="group aspect-square cursor-pointer overflow-hidden relative rounded-xl shadow-sm bg-gray-100"
+          >
             {!imageErrors[2] ? (
               <>
-                <img
+                <Image
                   src={imageUrls[2]}
                   alt="More photos"
+                  fill
+                  sizes="33vw"
                   onError={() => handleImageError(2)}
-                  className="h-full w-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+                  className="object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
                 />
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 transition-opacity duration-300 group-hover:bg-black/40">
                   <span className="font-rubik text-xl sm:text-2xl font-bold text-white">
@@ -117,6 +131,15 @@ export default function EventGallery({ imageUrls }: Props) {
           </div>
         )}
       </div>
+
+      {lightboxIndex !== null && (
+        <GalleryLightbox
+          imageUrls={imageUrls}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onIndexChange={setLightboxIndex}
+        />
+      )}
     </div>
   );
 }

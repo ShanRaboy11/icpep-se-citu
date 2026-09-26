@@ -7,21 +7,24 @@ import Menu from "./menu";
 import { useRouter } from "next/navigation";
 import { notificationService } from "@/app/services/notification";
 import {
-  Loader2,
   CheckCheck,
   Megaphone,
   Calendar,
   User,
   Bell,
   Check,
+  Trash2,
+  MoreVertical,
 } from "lucide-react";
+import { LoadingIndicator } from "@/app/components/loading";
 
 type UserRole =
   | "guest"
   | "student"
   | "council-officer"
   | "committee-officer"
-  | "faculty";
+  | "faculty"
+  | "admin";
 
 const Header = () => {
   const [open, setOpen] = useState(false);
@@ -37,6 +40,7 @@ const Header = () => {
   const [notifPage, setNotifPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isNotifLoading, setIsNotifLoading] = useState(false);
+  const [swipedNotifId, setSwipedNotifId] = useState<string | null>(null);
 
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -58,8 +62,9 @@ const Header = () => {
   // escape key to close menu
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && open) {
-        setOpen(false);
+      if (event.key === "Escape") {
+        setSwipedNotifId(null);
+        if (open) setOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -130,6 +135,10 @@ const Header = () => {
   // close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const insideOpenNotif = (event.target as Element).closest?.(
+        "[data-notif-open]",
+      );
+      if (!insideOpenNotif) setSwipedNotifId(null);
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target as Node)
@@ -213,8 +222,7 @@ const Header = () => {
       await notificationService.markAllAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
-    } catch (error) {
-      console.error(error);
+    } catch {
     }
   };
 
@@ -226,8 +234,17 @@ const Header = () => {
         prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error(error);
+    } catch {
+    }
+  };
+
+  const handleDeleteNotif = async (e: React.MouseEvent, n: any) => {
+    e.stopPropagation();
+    try {
+      await notificationService.delete(n.id);
+      setNotifications((prev) => prev.filter((item) => item.id !== n.id));
+      if (!n.read) setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch {
     }
   };
 
@@ -236,8 +253,7 @@ const Header = () => {
       try {
         await notificationService.markAsRead(n.id);
         setUnreadCount((prev) => Math.max(0, prev - 1));
-      } catch (error) {
-        console.error(error);
+      } catch {
       }
     }
     router.push(n.link);
@@ -245,6 +261,7 @@ const Header = () => {
   };
 
   const toggleNotifDropdown = () => {
+    setSwipedNotifId(null);
     if (!notifDropdownOpen) {
       setNotifPage(1);
       setHasMore(true);
@@ -280,7 +297,7 @@ const Header = () => {
           {text}
         </span>
         {badge !== undefined && badge > 0 && (
-          <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-[#ef4444]/90 text-white text-[10px] font-bold rounded-full shadow-sm">
+          <span className="flex items-center justify-center min-w-5 h-5 px-1.5 bg-[#ef4444]/90 text-white text-[10px] font-bold rounded-full shadow-sm">
             {badge > 99 ? "99+" : badge}
           </span>
         )}
@@ -302,7 +319,7 @@ const Header = () => {
               aria-label="Go to Home"
             >
               <Image
-                src="/icpep logo.png"
+                src="/brand/icpep-logo.png"
                 alt="ICPEP Logo"
                 width={55}
                 height={55}
@@ -310,56 +327,56 @@ const Header = () => {
               />
               <div className="flex items-end gap-0.5">
                 <Image
-                  src="/Vector-i.svg"
+                  src="/icons/decorative/Vector-i.svg"
                   alt="I"
                   width={0}
                   height={50}
                   className="h-0 w-auto sm:h-12"
                 />
                 <Image
-                  src="/Vector-c.svg"
+                  src="/icons/decorative/Vector-c.svg"
                   alt="C"
                   width={0}
                   height={50}
                   className="h-0 w-auto sm:h-12"
                 />
                 <Image
-                  src="/Vector-p1.svg"
+                  src="/icons/decorative/Vector-p1.svg"
                   alt="P"
                   width={0}
                   height={50}
                   className="h-0 w-auto sm:h-12"
                 />
                 <Image
-                  src="/Vector-e1.svg"
+                  src="/icons/decorative/Vector-e1.svg"
                   alt="E"
                   width={0}
                   height={50}
                   className="h-0 w-auto sm:h-12"
                 />
                 <Image
-                  src="/Vector-p2.svg"
+                  src="/icons/decorative/Vector-p2.svg"
                   alt="P"
                   width={0}
                   height={50}
                   className="h-0 w-auto sm:h-12"
                 />
                 <Image
-                  src="/Vector-dot.svg"
+                  src="/icons/decorative/Vector-dot.svg"
                   alt="."
                   width={0}
                   height={16}
                   className="h-0 w-auto sm:h-3.5 -ml-2"
                 />
                 <Image
-                  src="/Vector-s.svg"
+                  src="/icons/decorative/Vector-s.svg"
                   alt="S"
                   width={0}
                   height={50}
                   className="h-0 w-auto sm:h-12"
                 />
                 <Image
-                  src="/Vector-e2.svg"
+                  src="/icons/decorative/Vector-e2.svg"
                   alt="E"
                   width={0}
                   height={50}
@@ -380,7 +397,13 @@ const Header = () => {
           <div className="flex items-center gap-1.5 sm:gap-5">
             {role === "guest" && (
               <Button
-                className="sm:block border-2 border-[#00a7ee] text-[#00a7ee] hover:bg-[#dbeeff]"
+                className="sm:block bg-transparent border border-primary1 text-primary1
+                           hover:bg-primary1 hover:text-white font-raleway font-semibold
+                           text-sm sm:text-base py-2 px-4 rounded-lg relative overflow-hidden
+                           before:absolute before:inset-0 before:bg-linear-to-r
+                           before:from-transparent before:via-white/40 before:to-transparent
+                           before:-translate-x-full hover:before:translate-x-full
+                           before:transition-transform before:duration-700"
                 onClick={handleLogin}
               >
                 Log In
@@ -390,7 +413,7 @@ const Header = () => {
             {isLoggedIn && (
               <div className="flex items-center gap-1.5 sm:gap-2">
                 {/* notification btn */}
-                <div className="relative" ref={notifDropdownRef}>
+                <div className="sm:relative" ref={notifDropdownRef}>
                   <style>{`
                     @keyframes bell-ring {
                       0% { transform: rotate(0deg); }
@@ -421,14 +444,14 @@ const Header = () => {
                       <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
                     </svg>
                     {unreadCount > 0 && (
-                      <span className="absolute top-[2px] right-[1px] flex items-center justify-center min-w-[18px] h-[18px] px-[3px] bg-[#ef4444] text-white text-[10px] font-normal font-rubik rounded-full shadow-sm border-[1px] border-white leading-none">
+                      <span className="absolute top-0.5 right-px flex items-center justify-center min-w-4.5 h-4.5 px-0.75 bg-[#ef4444] text-white text-[10px] font-normal font-rubik rounded-full shadow-sm border border-white leading-none">
                         {unreadCount > 99 ? "99+" : unreadCount}
                       </span>
                     )}
                   </div>
 
                   {notifDropdownOpen && (
-                    <div className="absolute top-[125%] right-[-60px] sm:right-0 w-[320px] sm:w-[400px] bg-white rounded-2xl shadow-[0_15px_50px_-12px_rgba(0,0,0,0.15)] border border-gray-100 z-50 animate-in fade-in slide-in-from-top-3 duration-200 origin-top-right overflow-hidden">
+                    <div className="absolute top-full mt-2 left-3 right-3 sm:top-[125%] sm:mt-0 sm:left-auto sm:right-0 sm:w-100 bg-white rounded-2xl shadow-[0_15px_50px_-12px_rgba(0,0,0,0.15)] border border-gray-100 z-50 animate-in fade-in slide-in-from-top-3 duration-200 origin-top-right overflow-hidden">
                       <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
                         <h3 className="text-[#373d47] font-bold text-sm font-rubik tracking-tight">
                           Notifications
@@ -446,57 +469,111 @@ const Header = () => {
                       <div
                         ref={scrollContainerRef}
                         onScroll={handleNotifScroll}
-                        className="max-h-[380px] themed-scrollbar overflow-y-auto overflow-x-hidden bg-white"
+                        className="max-h-95 themed-scrollbar overflow-y-auto overflow-x-hidden bg-white"
                       >
                         {notifications.length > 0 ? (
                           <div className="flex flex-col">
-                            {notifications.map((n) => (
-                              <div
-                                key={n.id}
-                                onClick={() => handleNotifClick(n)}
-                                className={`group relative flex gap-4 px-6 py-4 border-b border-gray-50 cursor-pointer transition-all duration-200 ${!n.read ? "bg-blue-50/30" : "hover:bg-gray-50/80"}`}
-                              >
-                                <div className="shrink-0 flex items-center">
-                                  {n.type === "announcement" ? (
-                                    <Megaphone className="w-6 h-6 text-orange-500" />
-                                  ) : n.type === "event" ? (
-                                    <Calendar className="w-6 h-6 text-blue-500" />
-                                  ) : n.type === "membership" ? (
-                                    <User className="w-6 h-6 text-green-500" />
-                                  ) : (
-                                    <Bell className="w-6 h-6 text-primary1" />
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                  <p
-                                    className={`text-xs leading-tight font-rubik ${!n.read ? "text-[#373d47] font-bold" : "text-gray-500 font-medium"}`}
+                            {notifications.map((n) => {
+                              const isSwiped = swipedNotifId === n.id;
+                              const actionsWidth = n.read ? 72 : 144;
+
+                              return (
+                                <div
+                                  key={n.id}
+                                  data-notif-open={isSwiped ? "" : undefined}
+                                  className="relative overflow-hidden border-b border-gray-50"
+                                >
+                                  <div
+                                    className="absolute inset-y-0 right-0 flex"
+                                    style={{ width: actionsWidth }}
                                   >
-                                    {n.title}
-                                  </p>
-                                  <p className="text-[12px] text-gray-400 font-raleway mt-0.5 font-medium tracking-tight">
-                                    {n.date}
-                                  </p>
-                                </div>
-                                <div className="flex flex-col items-center justify-center">
-                                  {!n.read ? (
-                                    <div className="flex flex-col items-center gap-3">
-                                      <div className="w-2 h-2 bg-primary1 rounded-full"></div>
+                                    {!n.read && (
                                       <button
-                                        onClick={(e) => handleMarkRead(e, n.id)}
-                                        className="opacity-0 group-hover:opacity-100 transition-all p-1.5 bg-white text-gray-400 hover:text-green-500 rounded-lg border border-gray-100 shadow-sm cursor-pointer"
+                                        tabIndex={isSwiped ? 0 : -1}
+                                        onClick={(e) => {
+                                          handleMarkRead(e, n.id);
+                                          setSwipedNotifId(null);
+                                        }}
+                                        className="flex-1 flex flex-col items-center justify-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-rubik font-semibold transition-colors cursor-pointer"
                                       >
-                                        <Check size={14} strokeWidth={3} />
+                                        <Check size={16} strokeWidth={3} />
+                                        Read
+                                      </button>
+                                    )}
+                                    <button
+                                      tabIndex={isSwiped ? 0 : -1}
+                                      onClick={(e) => {
+                                        handleDeleteNotif(e, n);
+                                        setSwipedNotifId(null);
+                                      }}
+                                      className="flex-1 flex flex-col items-center justify-center gap-1 bg-red-500 hover:bg-red-600 text-white text-[11px] font-rubik font-semibold transition-colors cursor-pointer"
+                                    >
+                                      <Trash2 size={16} />
+                                      Delete
+                                    </button>
+                                  </div>
+
+                                  <div
+                                    onClick={() =>
+                                      isSwiped
+                                        ? setSwipedNotifId(null)
+                                        : handleNotifClick(n)
+                                    }
+                                    style={{
+                                      transform: isSwiped
+                                        ? `translateX(-${actionsWidth}px)`
+                                        : "translateX(0)",
+                                    }}
+                                    className={`relative flex gap-4 px-6 py-4 cursor-pointer transition-[transform,background-color] duration-300 ease-out ${!n.read ? "bg-[#fafcff]" : "bg-white hover:bg-gray-50"}`}
+                                  >
+                                    <div className="shrink-0 flex items-center">
+                                      {n.type === "announcement" ? (
+                                        <Megaphone className="w-6 h-6 text-orange-500" />
+                                      ) : n.type === "event" ? (
+                                        <Calendar className="w-6 h-6 text-blue-500" />
+                                      ) : n.type === "membership" ? (
+                                        <User className="w-6 h-6 text-green-500" />
+                                      ) : (
+                                        <Bell className="w-6 h-6 text-primary1" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                      <p
+                                        className={`text-xs leading-tight font-rubik ${!n.read ? "text-[#373d47] font-bold" : "text-gray-500 font-medium"}`}
+                                      >
+                                        {n.title}
+                                      </p>
+                                      <p className="text-[12px] text-gray-400 font-raleway mt-0.5 font-medium tracking-tight">
+                                        {n.date}
+                                      </p>
+                                    </div>
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                      {!n.read && (
+                                        <div className="w-2 h-2 bg-primary1 rounded-full shrink-0"></div>
+                                      )}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSwipedNotifId(isSwiped ? null : n.id);
+                                        }}
+                                        title="More actions"
+                                        aria-expanded={isSwiped}
+                                        className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                          isSwiped
+                                            ? "bg-gray-100 text-gray-600"
+                                            : "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                        }`}
+                                      >
+                                        <MoreVertical size={16} />
                                       </button>
                                     </div>
-                                  ) : (
-                                    <div className="w-5" />
-                                  )}
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                             {isNotifLoading && (
                               <div className="py-6 flex justify-center">
-                                <Loader2 className="w-5 h-5 text-primary1 animate-spin" />
+                                <LoadingIndicator size="sm" />
                               </div>
                             )}
                           </div>
@@ -509,7 +586,7 @@ const Header = () => {
                           </div>
                         ) : (
                           <div className="py-24 flex justify-center">
-                            <Loader2 className="w-6 h-6 text-primary1 animate-spin" />
+                            <LoadingIndicator />
                           </div>
                         )}
                       </div>
@@ -527,7 +604,7 @@ const Header = () => {
                     }}
                   >
                     <Image
-                      src="/user.svg"
+                      src="/icons/ui/user.svg"
                       alt="User"
                       width={36}
                       height={36}
@@ -607,7 +684,7 @@ const Header = () => {
               className="cursor-pointer"
             >
               <div
-                className={`hidden md:grid grid-cols-3 gap-1 transition-transform duration-500 ease-in-out hover:rotate-90 ${open ? "rotate-[360deg]" : ""}`}
+                className={`hidden md:grid grid-cols-3 gap-1 transition-transform duration-500 ease-in-out hover:rotate-90 ${open ? "rotate-360" : ""}`}
               >
                 {Array.from({ length: 9 }).map((_, i) => (
                   <div
@@ -616,15 +693,15 @@ const Header = () => {
                   />
                 ))}
               </div>
-              <div className="md:hidden flex flex-col items-end justify-center gap-[6px] w-9 h-9">
+              <div className="md:hidden flex flex-col items-end justify-center gap-1.5 w-9 h-9">
                 <div
-                  className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${open ? "w-6" : "w-[26px]"}`}
+                  className={`h-1 bg-[#00a7ee] rounded-full transition-all duration-300 ${open ? "w-6" : "w-6.5"}`}
                 />
                 <div
-                  className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${open ? "w-[26px]" : "w-[19px]"}`}
+                  className={`h-1 bg-[#00a7ee] rounded-full transition-all duration-300 ${open ? "w-6.5" : "w-4.75"}`}
                 />
                 <div
-                  className={`h-[4px] bg-[#00a7ee] rounded-full transition-all duration-300 ${open ? "w-6" : "w-[26px]"}`}
+                  className={`h-1 bg-[#00a7ee] rounded-full transition-all duration-300 ${open ? "w-6" : "w-6.5"}`}
                 />
               </div>
             </div>
@@ -633,7 +710,7 @@ const Header = () => {
       </header>
 
       <div
-        className={`fixed inset-0 z-50 overflow-y-auto transition-transform duration-700 ease-in-out ${open ? "translate-x-0 md:translate-y-0" : "translate-x-full md:translate-x-0 md:-translate-y-full"}`}
+        className={`fixed inset-0 z-50 overflow-y-auto themed-scrollbar-dark transition-transform duration-700 ease-in-out ${open ? "translate-x-0 md:translate-y-0" : "translate-x-full md:translate-x-0 md:-translate-y-full"}`}
       >
         <Menu userRole={role} onExit={() => setOpen(false)} />
       </div>

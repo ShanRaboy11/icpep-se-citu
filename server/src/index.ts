@@ -20,21 +20,35 @@ import merchRoutes from "./routes/merch.routes";
 import faqRoutes from "./routes/faq.routes";
 import notificationRoutes from "./routes/notification.routes";
 import officerRoutes from "./routes/officer.routes";
+import advisorRoutes from "./routes/advisor.routes";
+import facultyRoutes from "./routes/faculty.routes";
+import officerTermRoutes from "./routes/officerTerm.routes";
+import membershipRoutes from "./routes/membership.routes";
+import siteRoutes from "./routes/site.routes";
 import startAnnouncementScheduler from "./utils/scheduler";
+import { escapeRegExp } from "./utils/regex";
+import { getJwtSecret, getDefaultPassword } from "./config/env";
+import { enforceMaintenanceMode } from "./middleware/maintenance.middleware";
 
-// Global unhandled rejection handler to avoid process crash during development
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("🚨 Unhandled Rejection at:", promise, "reason:", reason);
-  // Do not exit the process in development; log and continue.
-});
+// Refuse to start without a usable JWT secret (and, in production, a
+// deliberate default password for new accounts)
+getJwtSecret();
+getDefaultPassword();
 
 // Initialize express app
 const app: Application = express();
 
-// ✅ CRITICAL: Middleware MUST come BEFORE routes!
-// 1. Body Parser - FIRST
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+// Behind a reverse proxy (Render, etc.) set TRUST_PROXY=1 so req.ip is the real
+// client rather than the proxy; leave it unset when the server is exposed directly.
+const trustedProxyHops = parseInt(process.env.TRUST_PROXY ?? "", 10);
+if (trustedProxyHops > 0) app.set("trust proxy", trustedProxyHops);
+
+// Middleware must come before routes.
+// 1. Body Parser - FIRST. Small by default; the bulk user import sends a whole
+// roster as JSON, so only that route gets a larger limit.
+app.use("/api/users", express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // 2. Cookie Parser
 app.use(cookieParser());
@@ -63,15 +77,6 @@ const allowVercelSubdomains =
   String(process.env.ALLOW_VERCEL_SUBDOMAINS ?? "true").toLowerCase() ===
   "true";
 
-console.log(
-  "🌐 CORS configuration — allowedOrigins:",
-  allowedOrigins,
-  "ALLOW_ALL_ORIGINS=",
-  allowAllOrigins,
-  "ALLOW_VERCEL_SUBDOMAINS=",
-  allowVercelSubdomains
-);
-
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -79,7 +84,6 @@ app.use(
       if (!origin) return callback(null, true);
 
       if (allowAllOrigins) {
-        console.log("✅ CORS allow-all enabled — allowing origin:", origin);
         return callback(null, true);
       }
 
@@ -88,13 +92,11 @@ app.use(
 
         // Allow vercel preview subdomains (e.g. *.vercel.app) when enabled
         if (allowVercelSubdomains && originHost.endsWith(".vercel.app")) {
-          console.log("✅ CORS allowed vercel subdomain:", origin);
           return callback(null, true);
         }
 
         // Direct match against configured allowed origins (may include protocol)
         if (allowedOrigins.includes(origin)) {
-          console.log("✅ CORS allowed for (direct match):", origin);
           return callback(null, true);
         }
 
@@ -103,7 +105,6 @@ app.use(
           try {
             const allowedHost = new URL(allowed).host;
             if (allowedHost === originHost) {
-              console.log("✅ CORS allowed for (host match):", origin);
               return callback(null, true);
             }
           } catch {
@@ -114,27 +115,18 @@ app.use(
         // Support wildcard-like entries in allowedOrigins using '*' (e.g. *.example.com)
         for (const allowed of allowedOrigins) {
           if (allowed.includes("*")) {
-            // Convert wildcard entry to regex: escape dots, replace '*' with '.*'
-            const regexStr = allowed
-              .replace(/[-/\\^$+?.()|[\]{}]/g, "\\$&")
-              .replace(/\\\*/g, ".*");
+            // Escape everything literally, then turn each '*' into '.*'
+            const regexStr = allowed.split("*").map(escapeRegExp).join(".*");
             const re = new RegExp(`^${regexStr}$`);
             if (re.test(origin)) {
-              console.log(
-                "✅ CORS allowed by wildcard pattern:",
-                origin,
-                "pattern:",
-                allowed
-              );
               return callback(null, true);
             }
           }
         }
       } catch {
-        // If URL parsing fails, fall through to blocked log
+        // If URL parsing fails, fall through to blocked
       }
 
-      console.log("❌ CORS blocked for:", origin);
       callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
@@ -151,44 +143,35 @@ if (process.env.NODE_ENV === "development") {
   });
 }
 
+// 5. Maintenance mode — an admin-only switch that suspends the rest of the
+// API for everyone else. Sits ahead of every route below.
+app.use(enforceMaintenanceMode);
+
 // MongoDB connection function
 const connectDB = async (): Promise<void> => {
   try {
     // Validate environment variables
     if (!process.env.MONGO_URI) {
-      throw new Error("❌ MONGO_URI environment variable is not defined!");
+      throw new Error("MONGO_URI environment variable is not defined!");
     }
 
     if (typeof process.env.MONGO_URI !== "string") {
-      throw new Error("❌ MONGO_URI must be a valid string!");
+      throw new Error("MONGO_URI must be a valid string!");
     }
 
     // Connect to MongoDB
     const conn = await mongoose.connect(process.env.MONGO_URI);
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    console.log(`📦 Database: ${conn.connection.name}`);
+    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    console.log(`Database: ${conn.connection.name}`);
 
-    // Connection event listeners
-    mongoose.connection.on("error", (err) => {
-      console.error(`❌ MongoDB connection error: ${err}`);
-    });
-
-    mongoose.connection.on("disconnected", () => {
-      console.log("⚠️  MongoDB disconnected");
-    });
-
-    mongoose.connection.on("reconnected", () => {
-      console.log("✅ MongoDB reconnected");
-    });
   } catch (error) {
-    console.error("❌ MongoDB connection error:", (error as Error).message);
-    console.error("Full error:", error);
-    process.exit(1);
+    // Nothing works without the database: exit with the error left to Node to print
+    process.exitCode = 1;
+    throw error;
   }
 };
 
-// Connect to database
 connectDB();
 
 // Health check route
@@ -208,7 +191,7 @@ app.get("/health", (req: Request, res: Response) => {
 app.get("/", (req: Request, res: Response) => {
   res.json({
     success: true,
-    message: "🚀 ICPEP CITU API Server",
+    message: "ICPEP CITU API Server",
     version: "1.0.0",
     endpoints: {
       health: "/health",
@@ -232,7 +215,7 @@ app.get("/api", (req: Request, res: Response) => {
       "/api/notifications",
       "/api/officers",
       "/api/faculty",
-      "/api/partners",
+      "/api/sponsors",
       "/api/testimonials",
       "/api/faqs",
       "/api/availability",
@@ -247,27 +230,17 @@ app.use("/api/announcements", announcementRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/testimonials", testimonialRoutes);
 app.use("/api/sponsors", sponsorRoutes);
+app.use("/api/advisors", advisorRoutes);
+app.use("/api/faculty", facultyRoutes);
+app.use("/api/officer-terms", officerTermRoutes);
+app.use("/api/membership", membershipRoutes);
 app.use("/api/meetings", meetingRoutes);
 app.use("/api/availability", availabilityRoutes);
 app.use("/api/merch", merchRoutes);
 app.use("/api/faqs", faqRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/officers", officerRoutes);
-
-app.get("/api/debug/env", (req: Request, res: Response) => {
-  res.json({
-    nodeEnv: process.env.NODE_ENV,
-    port: process.env.PORT,
-    mongoUri: process.env.MONGODB_URI ? "Set" : "Missing",
-    jwtSecret: process.env.JWT_SECRET ? "Set" : "Missing",
-    cloudinary: {
-      cloudName: process.env.CLOUDINARY_CLOUD_NAME ? "Set" : "Missing",
-      apiKey: process.env.CLOUDINARY_API_KEY ? "Set" : "Missing",
-      apiSecret: process.env.CLOUDINARY_API_SECRET ? "Set" : "Missing",
-    },
-    clientUrl: process.env.CLIENT_URL,
-  });
-});
+app.use("/api/site", siteRoutes);
 
 // 404 handler - must be after all routes
 app.use((req: Request, res: Response) => {
@@ -281,8 +254,6 @@ app.use((req: Request, res: Response) => {
 
 // Global error handler - must be last
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error("❌ Error:", err.stack);
-
   res.status(500).json({
     success: false,
     message: "Internal server error",
@@ -295,64 +266,45 @@ const PORT = process.env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
   console.log(
-    `🚀 Server running in ${
+    `Server running in ${
       process.env.NODE_ENV || "development"
     } mode on port ${PORT}`
   );
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`📍 API: http://localhost:${PORT}/api`);
+  console.log(`Health check: http://localhost:${PORT}/health`);
+  console.log(`API: http://localhost:${PORT}/api`);
   console.log(
-    `📍 MongoDB: ${
-      mongoose.connection.readyState === 1 ? "✅ Connected" : "⏳ Connecting..."
+    `MongoDB: ${
+      mongoose.connection.readyState === 1 ? "Connected" : "Connecting..."
     }`
   );
 });
 
 // Start scheduler after successful DB connection
 mongoose.connection.once("open", () => {
-  try {
-    startAnnouncementScheduler();
-  } catch (err) {
-    console.error("❌ Failed to start announcement scheduler:", err);
-  }
+  startAnnouncementScheduler();
 });
 
 // Graceful shutdown
 process.on("SIGTERM", () => {
-  console.log("👋 SIGTERM signal received: closing HTTP server");
+  console.log("SIGTERM signal received: closing HTTP server");
   server.close(() => {
-    console.log("💤 HTTP server closed");
+    console.log("HTTP server closed");
     mongoose.connection.close(false).then(() => {
-      console.log("💤 MongoDB connection closed");
+      console.log("MongoDB connection closed");
       process.exit(0);
     });
   });
 });
 
 process.on("SIGINT", () => {
-  console.log("👋 SIGINT signal received: closing HTTP server");
+  console.log("SIGINT signal received: closing HTTP server");
   server.close(() => {
-    console.log("💤 HTTP server closed");
+    console.log("HTTP server closed");
     mongoose.connection.close(false).then(() => {
-      console.log("💤 MongoDB connection closed");
+      console.log("MongoDB connection closed");
       process.exit(0);
     });
   });
-});
-
-// Handle unhandled promise rejections
-process.on("unhandledRejection", (err: Error) => {
-  console.error(`❌ Unhandled Rejection: ${err.message}`);
-  console.error(err.stack);
-  // Close server & exit process
-  server.close(() => process.exit(1));
-});
-
-// Handle uncaught exceptions
-process.on("uncaughtException", (err: Error) => {
-  console.error(`❌ Uncaught Exception: ${err.message}`);
-  console.error(err.stack);
-  process.exit(1);
 });
 
 export default app;

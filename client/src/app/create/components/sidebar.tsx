@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import {
   Megaphone,
   CalendarDays,
@@ -9,13 +10,18 @@ import {
   Handshake,
   ShoppingBag,
   Users,
+  GraduationCap,
+  BookOpen,
   FileText,
   ChevronRight,
+  ChevronDown,
   Check,
+  CreditCard,
+  Wrench,
 } from "lucide-react";
 import clsx from "clsx";
 
-const sections = [
+const baseSections = [
   {
     label: "Engagement",
     links: [
@@ -29,11 +35,16 @@ const sections = [
       { name: "Testimonials", href: "/create/testimonials", icon: Quote },
       { name: "Sponsors", href: "/create/sponsors", icon: Handshake },
       { name: "Officers", href: "/create/officers", icon: Users },
+      { name: "Advisors", href: "/create/advisors", icon: GraduationCap },
+      { name: "Faculty", href: "/create/faculty", icon: BookOpen },
     ],
   },
   {
     label: "Commerce",
-    links: [{ name: "Merch", href: "/create/merch", icon: ShoppingBag }],
+    links: [
+      { name: "Merch", href: "/create/merch", icon: ShoppingBag },
+      { name: "Membership", href: "/create/membership", icon: CreditCard },
+    ],
   },
   {
     label: "Admin",
@@ -41,10 +52,50 @@ const sections = [
   },
 ];
 
-const allLinks = sections.flatMap((s) => s.links);
+const MAINTENANCE_LINK = { name: "Maintenance", href: "/create/maintenance", icon: Wrench };
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsAdmin(localStorage.getItem("userRole") === "admin");
+  }, []);
+
+  // Only admins get the maintenance toggle — everyone else on this sidebar
+  // (council officers) never sees the link.
+  const sections = isAdmin
+    ? baseSections.map((section) =>
+        section.label === "Admin"
+          ? { ...section, links: [...section.links, MAINTENANCE_LINK] }
+          : section,
+      )
+    : baseSections;
+
+  const allLinks = sections.flatMap((s) => s.links);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
+
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
+  const currentLink = allLinks.find((link) => isActive(link.href));
+  const CurrentIcon = currentLink?.icon;
 
   return (
     <>
@@ -100,32 +151,64 @@ const Sidebar = () => {
         ))}
       </aside>
 
-      <nav className="lg:hidden w-full">
-        <div
-          className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 px-1
-          [mask-image:linear-gradient(90deg,transparent_0%,black_5%,black_95%,transparent_100%)]"
+      <nav ref={menuRef} className="lg:hidden relative w-full">
+        <button
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-haspopup="listbox"
+          aria-expanded={menuOpen}
+          className="flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-primary1/40 cursor-pointer"
         >
-          {allLinks.map((link) => {
-            const Icon = link.icon;
-            const active =
-              pathname === link.href || pathname.startsWith(`${link.href}/`);
-            return (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={clsx(
-                  "inline-flex items-center gap-2 px-4 py-2 rounded-full border text-xs font-bold font-rubik whitespace-nowrap shrink-0 transition-all duration-200",
-                  active
-                    ? "bg-primary1 border-primary1 text-white shadow-md shadow-primary1/25"
-                    : "bg-white border-gray-200 text-gray-500 hover:border-primary1/30 hover:bg-primary1/5 hover:text-primary1",
-                )}
-              >
-                <Icon size={14} strokeWidth={2} />
-                {link.name}
-              </Link>
-            );
-          })}
-        </div>
+          <span className="font-raleway text-xs font-medium text-gray-400">
+            Manage
+          </span>
+          <span className="flex flex-1 items-center gap-2 font-rubik text-sm font-bold text-primary3">
+            {CurrentIcon && <CurrentIcon size={16} className="text-primary1" />}
+            {currentLink?.name ?? "Select a section"}
+          </span>
+          <ChevronDown
+            size={16}
+            className={clsx(
+              "text-gray-400 transition-transform duration-200",
+              menuOpen && "rotate-180",
+            )}
+          />
+        </button>
+
+        {menuOpen && (
+          <div className="absolute inset-x-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
+            <div className="max-h-80 overflow-y-auto overflow-x-hidden p-2 themed-scrollbar">
+              {sections.map((section) => (
+                <div key={section.label} className="mb-1 last:mb-0">
+                  <p className="px-3 pb-1 pt-2 font-raleway text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+                    {section.label}
+                  </p>
+                  {section.links.map((link) => {
+                    const Icon = link.icon;
+                    const active = isActive(link.href);
+                    return (
+                      <Link
+                        key={link.name}
+                        href={link.href}
+                        onClick={() => setMenuOpen(false)}
+                        className={clsx(
+                          "flex items-center gap-3 rounded-xl px-3 py-2 font-rubik text-sm transition-colors",
+                          active
+                            ? "bg-primary1/10 font-semibold text-primary1"
+                            : "text-gray-600 hover:bg-gray-50",
+                        )}
+                      >
+                        <Icon size={16} />
+                        <span className="flex-1">{link.name}</span>
+                        {active && <Check size={14} />}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </nav>
     </>
   );

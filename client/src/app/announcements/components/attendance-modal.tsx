@@ -71,9 +71,9 @@ export default function AttendanceModal({
         <div className="relative border-b border-gray-100 px-5 sm:px-8 py-4 sm:py-5">
           <div className="flex items-center gap-4">
             {/* logo */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <Image
-                src="/icpep logo.png"
+                src="/brand/icpep-logo.png"
                 alt="ICpEP Logo"
                 width={70}
                 height={70}
@@ -103,6 +103,7 @@ export default function AttendanceModal({
           {/* close */}
           <button
             onClick={onClose}
+            aria-label="Close"
             className="group absolute top-3 right-3 rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 cursor-pointer"
           >
             <X className="h-5 w-5 transition-transform duration-300 ease-in-out group-hover:rotate-90" />
@@ -129,7 +130,7 @@ export default function AttendanceModal({
                   key={index}
                   className="font-raleway flex items-center justify-between rounded-lg bg-black/20 p-2 sm:p-2.5"
                 >
-                  <span className="text-xs sm:text-sm font-medium text-white min-w-[90px]">
+                  <span className="text-xs sm:text-sm font-medium text-white min-w-22.5">
                     {officer.title}
                   </span>
                   <span className="text-right text-xs sm:text-sm">
@@ -161,7 +162,7 @@ export default function AttendanceModal({
                     key={index}
                     className="font-raleway flex items-center justify-between rounded-lg bg-black/20 p-2 sm:p-2.5"
                   >
-                    <span className="text-xs sm:text-sm font-medium text-white min-w-[90px]">
+                    <span className="text-xs sm:text-sm font-medium text-white min-w-22.5">
                       {member.title}
                     </span>
                     <span className="text-right text-xs sm:text-sm">

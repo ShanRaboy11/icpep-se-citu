@@ -21,7 +21,6 @@ export const createFAQ = async (req: Request, res: Response): Promise<void> => {
       data: savedFAQ,
     });
   } catch (error) {
-    console.error('Error creating FAQ:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create FAQ',
@@ -38,7 +37,6 @@ export const getFAQs = async (req: Request, res: Response): Promise<void> => {
       data: faqs,
     });
   } catch (error) {
-    console.error('Error fetching FAQs:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch FAQs',
@@ -55,7 +53,6 @@ export const getAllFAQs = async (req: Request, res: Response): Promise<void> => 
       data: faqs,
     });
   } catch (error) {
-    console.error('Error fetching all FAQs:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch all FAQs',
@@ -85,7 +82,6 @@ export const updateFAQ = async (req: Request, res: Response): Promise<void> => {
       data: updatedFAQ,
     });
   } catch (error) {
-    console.error('Error updating FAQ:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update FAQ',
@@ -113,7 +109,6 @@ export const deleteFAQ = async (req: Request, res: Response): Promise<void> => {
       message: 'FAQ deleted successfully',
     });
   } catch (error) {
-    console.error('Error deleting FAQ:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete FAQ',

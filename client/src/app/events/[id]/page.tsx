@@ -15,7 +15,8 @@ import EventTags from "../components/tags";
 import RsvpCard from "../components/rsvp";
 import EventDetails from "../components/details";
 import EventGallery from "../components/gallery";
-import { ArrowLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
+import BackButton from "../../components/back-button";
 
 type ProcessedEvent = Event & {
   status: "Upcoming" | "Ongoing" | "Ended";
@@ -38,7 +39,7 @@ interface RawEvent {
   image?: string;
   description?: string;
   details?: unknown[];
-  galleryImageUrls?: string[];
+  galleryImages?: string[];
   rsvpLink?: string;
 }
 
@@ -60,7 +61,7 @@ export default function EventDetailPage() {
           const e = res.data as RawEvent;
 
           const toImageUrl = (url: unknown) => {
-            if (!url || typeof url !== "string") return "/placeholder.svg";
+            if (!url || typeof url !== "string") return "/placeholders/placeholder.svg";
             if (url.startsWith("http")) return url;
             const backendHost = (
               process.env.NEXT_PUBLIC_BACKEND_URL ||
@@ -97,7 +98,7 @@ export default function EventDetailPage() {
 
           const organizer =
             typeof e.organizer === "string"
-              ? { name: e.organizer, avatarImageUrl: "/icpep logo.png" }
+              ? { name: e.organizer, avatarImageUrl: "/brand/icpep-logo.png" }
               : e.organizer && typeof e.organizer === "object"
                 ? {
                     name: (e.organizer as Record<string, unknown>).name
@@ -109,9 +110,9 @@ export default function EventDetailPage() {
                           (e.organizer as Record<string, unknown>)
                             .avatarImageUrl,
                         )
-                      : "/icpep logo.png",
+                      : "/brand/icpep-logo.png",
                   }
-                : { name: "", avatarImageUrl: "/icpep logo.png" };
+                : { name: "", avatarImageUrl: "/brand/icpep-logo.png" };
 
           const mode =
             typeof e.mode === "string" && e.mode.toLowerCase() === "online"
@@ -127,7 +128,7 @@ export default function EventDetailPage() {
             location: e.location || "TBA",
             organizer: {
               name: organizer.name || "",
-              avatarImageUrl: organizer.avatarImageUrl || "/icpep logo.png",
+              avatarImageUrl: organizer.avatarImageUrl || "/brand/icpep-logo.png",
             },
             tags: Array.isArray(e.tags) ? e.tags : [],
             bannerImageUrl: toImageUrl(
@@ -139,8 +140,8 @@ export default function EventDetailPage() {
                 ? String((e as Record<string, unknown>).content)
                 : "",
             details: detailsArr,
-            galleryImageUrls: Array.isArray(e.galleryImageUrls)
-              ? e.galleryImageUrls
+            galleryImageUrls: Array.isArray(e.galleryImages)
+              ? e.galleryImages
               : [],
             rsvpLink: e.rsvpLink,
           };
@@ -149,8 +150,7 @@ export default function EventDetailPage() {
         } else {
           setFetchError(res?.message || "Event not found");
         }
-      } catch (err) {
-        console.error(err);
+      } catch {
         setFetchError("Failed to load event");
       } finally {
         setLoading(false);
@@ -191,7 +191,7 @@ export default function EventDetailPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="flex flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-12">
+        <main className="flex grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-38 pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start w-full">
             <div className="lg:col-span-2 lg:sticky lg:top-28 h-fit space-y-6 order-2 lg:order-1">
               <div className="rounded-xl bg-gray-100 w-full h-64 animate-pulse" />
@@ -229,7 +229,7 @@ export default function EventDetailPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="flex flex-grow flex-col items-center justify-center text-center px-4 pt-[9.5rem] pb-12">
+        <main className="flex grow flex-col items-center justify-center text-center px-4 pt-38 pb-12">
           <h1 className="font-rubik text-4xl font-bold text-primary3 mb-4">
             {fetchError || "Event Not Found"}
           </h1>
@@ -239,9 +239,9 @@ export default function EventDetailPage() {
           </p>
           <button
             onClick={() => router.push("/events")}
-            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2"
+            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2 active:scale-95 cursor-pointer"
           >
-            <ArrowLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
+            <ChevronLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
             <span>Back to Events</span>
           </button>
         </main>
@@ -257,22 +257,9 @@ export default function EventDetailPage() {
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
-          <div className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-[9.5rem] pb-16">
+          <div className="grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-38 pb-16">
             <div className="mb-8 flex justify-start">
-              <button
-                onClick={handleBackToEvents}
-                title="Back to Events"
-                className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
-                         rounded-full border-2 border-primary1 text-primary1 
-                         overflow-hidden transition-all duration-300 ease-in-out 
-                         active:scale-95 before:absolute before:inset-0 
-                         before:bg-gradient-to-r before:from-transparent 
-                         before:via-white/40 before:to-transparent 
-                         before:translate-x-[-100%] hover:before:translate-x-[100%] 
-                         before:transition-transform before:duration-700"
-              >
-                <ArrowLeft className="h-6 w-6 animate-nudge-left translate-x-[2px]" />
-              </button>
+              <BackButton onClick={handleBackToEvents} title="Back to Events" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
@@ -282,7 +269,11 @@ export default function EventDetailPage() {
                   title={event.title}
                 />
                 <EventTags tags={event.tags || []} />
-                <OrganizerCard organizer={event.organizer} />
+                <OrganizerCard
+                  organizer={event.organizer}
+                  eventTitle={event.title}
+                  eventId={event.id}
+                />
               </div>
 
               <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
@@ -314,7 +305,7 @@ export default function EventDetailPage() {
         </div>
       </main>
 
-      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
+      <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
     </div>

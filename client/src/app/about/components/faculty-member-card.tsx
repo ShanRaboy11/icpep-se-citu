@@ -15,10 +15,10 @@ const FacultyMemberCard: FC<FacultyMember> = ({ name, imageUrl }) => {
       <div className="relative mb-4 sm:mb-7 flex justify-center items-center">
         {/* rings */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -z-10 flex items-center justify-center pointer-events-none">
-          <div className="absolute w-[100px] h-[100px] sm:w-[200px] sm:h-[200px] rounded-full border border-gray-100 opacity-100"></div>
-          <div className="absolute w-[130px] h-[130px] sm:w-[260px] sm:h-[260px] rounded-full border border-gray-100 opacity-80"></div>
-          <div className="absolute w-[160px] h-[160px] sm:w-[320px] sm:h-[320px] rounded-full border border-gray-50 opacity-60"></div>
-          <div className="absolute w-[190px] h-[190px] sm:w-[380px] sm:h-[380px] rounded-full border border-gray-50 opacity-40"></div>
+          <div className="absolute w-25 h-25 sm:w-50 sm:h-50 rounded-full border border-gray-100 opacity-100"></div>
+          <div className="absolute w-32.5 h-32.5 sm:w-65 sm:h-65 rounded-full border border-gray-100 opacity-80"></div>
+          <div className="absolute w-40 h-40 sm:w-80 sm:h-80 rounded-full border border-gray-50 opacity-60"></div>
+          <div className="absolute w-47.5 h-47.5 sm:w-95 sm:h-95 rounded-full border border-gray-50 opacity-40"></div>
         </div>
 
         {/* glow */}

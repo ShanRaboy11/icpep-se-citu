@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
-import User, { IUser } from "../models/user";
+import User from "../models/user";
 import { validatePassword } from "../utils/password_validator";
 import { sendNotification } from "../utils/notification";
 import sendEmail from "../utils/email";
-import crypto from "crypto";
+import { DEVELOPER_STUDENT_NUMBERS } from "../config/developers";
+import { getJwtSecret, getJwtExpiresIn } from "../config/env";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -13,13 +15,11 @@ export interface AuthRequest extends Request {
   };
 }
 
-// JWT Secret
-const JWT_SECRET =
-  process.env.JWT_SECRET || "your-secret-key-change-in-production";
-
 // Generate JWT Token
-const generateToken = (userId: string, role: string): string => {
-  return jwt.sign({ id: userId, role }, JWT_SECRET, { expiresIn: "7d" });
+const generateToken = (userId: string, role: string, tokenVersion = 0): string => {
+  return jwt.sign({ id: userId, role, tv: tokenVersion }, getJwtSecret(), {
+    expiresIn: getJwtExpiresIn() as jwt.SignOptions["expiresIn"],
+  });
 };
 
 // @desc    Login user
@@ -49,15 +49,6 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if user is active
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Your account has been deactivated. Please contact an administrator.",
-      });
-    }
-
     // Check password
     const isPasswordCorrect = await user.comparePassword(password);
 
@@ -68,8 +59,38 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
+    // Self-healing developer protection: dev team accounts should always
+    // be admin and active, even if something elsewhere ever changed that
+    // (e.g. an Excel roster sync deactivating them for not being on the
+    // student list, or an accidental role change via the Users admin
+    // page). Runs after the password check so this can't be triggered by
+    // anyone who doesn't already know the account's real password.
+    if (DEVELOPER_STUDENT_NUMBERS.includes(user.studentNumber)) {
+      let healed = false;
+      if (user.role !== "admin") {
+        user.role = "admin";
+        healed = true;
+      }
+      if (!user.isActive) {
+        user.isActive = true;
+        healed = true;
+      }
+      if (healed) {
+        await user.save({ validateBeforeSave: false });
+      }
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Your account has been deactivated. Please contact an administrator.",
+      });
+    }
+
     // Generate token
-    const token = generateToken(user._id.toString(), user.role);
+    const token = generateToken(user._id.toString(), user.role, user.tokenVersion);
 
     // Prepare user data (exclude sensitive fields)
     const userData = {
@@ -96,8 +117,7 @@ export const login = async (req: Request, res: Response) => {
       token,
       user: userData,
     });
-  } catch (error) {
-    console.error("Login error:", error);
+  } catch {
     res.status(500).json({
       success: false,
       message: "Server error during login",
@@ -160,6 +180,7 @@ export const firstLoginPasswordChange = async (
     // Update password
     user.password = newPassword;
     user.firstLogin = false;
+    user.$locals.keepSessions = true;
     await user.save();
 
     // Send notification
@@ -243,6 +264,7 @@ export const changePassword = async (
     // Update password
     user.password = newPassword;
     user.firstLogin = false;
+    user.$locals.keepSessions = true;
     await user.save();
 
     // Send notification
@@ -260,7 +282,6 @@ export const changePassword = async (
       message: "Password changed successfully",
     });
   } catch (error: any) {
-    console.error("Change password error:", error);
     res.status(500).json({
       success: false,
       message: "Server error during password change",
@@ -289,8 +310,7 @@ export const getCurrentUser = async (req: AuthRequest, res: Response) => {
       success: true,
       data: user,
     });
-  } catch (error) {
-    console.error("Get current user error:", error);
+  } catch {
     res.status(500).json({
       success: false,
       message: "Server error",
@@ -310,7 +330,7 @@ export const logout = async (req: Request, res: Response) => {
 
 // Helper to generate 6-digit code
 const generateResetCode = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return crypto.randomInt(100000, 1000000).toString();
 };
 
 // @desc    Forgot Password
@@ -374,20 +394,18 @@ export const forgotPassword = async (req: Request, res: Response) => {
         message: "Email sent",
         email: user.email // sending back partially masked email could be good for UX if needed
       });
-    } catch (error) {
+    } catch {
       user.resetPasswordCode = undefined;
       user.resetPasswordExpire = undefined;
       await user.save({ validateBeforeSave: false });
 
-      console.error(error);
       return res.status(500).json({
         success: false,
         message: "Email could not be sent",
       });
     }
 
-  } catch (error) {
-    console.error("Forgot password error:", error);
+  } catch {
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -427,8 +445,7 @@ export const verifyResetCode = async (req: Request, res: Response) => {
       message: "Code verified",
     });
 
-  } catch (error) {
-    console.error("Verify code error:", error);
+  } catch {
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -478,8 +495,7 @@ export const resetPassword = async (req: Request, res: Response) => {
       message: "Password updated successfully",
     });
 
-  } catch (error) {
-    console.error("Reset password error:", error);
+  } catch {
     res.status(500).json({
       success: false,
       message: "Internal server error",

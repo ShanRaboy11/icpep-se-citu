@@ -3,6 +3,7 @@ import Header from "../components/header";
 import Footer from "../components/footer";
 import DeveloperCard from "./components/developer-card";
 import Grid from "../components/grid";
+import PageHeader from "../components/page-header";
 
 export default function DevelopersPage() {
   const developers = [
@@ -10,8 +11,8 @@ export default function DevelopersPage() {
       name: "Maica C. Eupinado",
       title: "UI/UX",
       desc: "Designer",
-      imageSrc: "/eupinado.png",
-      bgSrc: "/bg-mai.png",
+      imageSrc: "/team/eupinado.png",
+      bgSrc: "/team/bg-mai.png",
       imageClassName: "scale-[0.95] origin-bottom",
       details: [
         "3rd Year Batch Representative, 6th Administration",
@@ -25,8 +26,8 @@ export default function DevelopersPage() {
       name: "Gio Christian D. Macatual",
       title: "Frontend",
       desc: "Developer",
-      imageSrc: "/macatual.png",
-      bgSrc: "/bg-gio.png",
+      imageSrc: "/team/macatual.png",
+      bgSrc: "/team/bg-gio.png",
       details: [
         "Auditor, 6th Administration",
         "Asst. Head of Finance Committee, 6th Administration",
@@ -39,8 +40,8 @@ export default function DevelopersPage() {
       name: "Shan Michael V. Raboy",
       title: "Backend",
       desc: "Developer",
-      imageSrc: "/raboy.png",
-      bgSrc: "/bg-shan.png",
+      imageSrc: "/team/raboy.png",
+      bgSrc: "/team/bg-shan.png",
       details: [
         "Vice President - Internal, 6th Administration",
         "Head of Internal Affairs Committee, 6th Administration",
@@ -54,8 +55,8 @@ export default function DevelopersPage() {
       name: "Trixie T. Dolera",
       title: "Fullstack",
       desc: "Developer",
-      imageSrc: "/dolera.png",
-      bgSrc: "/bg-rexi.png",
+      imageSrc: "/team/dolera.png",
+      bgSrc: "/team/bg-rexi.png",
       imageClassName: "scale-[1.095] origin-bottom",
       details: [
         "Public Relations Officer, 6th Administration",
@@ -76,24 +77,20 @@ export default function DevelopersPage() {
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
 
-          <div className="max-w-7xl mx-auto px-6 pt-[9.5rem] pb-12 w-full flex-grow">
-            <div className="mb-16 text-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-                <div className="h-2 w-2 rounded-full bg-primary1"></div>
-                <span className="font-raleway text-sm font-semibold text-primary1">
-                  Project Team
-                </span>
-              </div>
-              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-                Meet the Developers
-              </h1>
-              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-                The student developers who created the official ICPEP SE CIT-U
-                Chapter website as part of the Software Design course.
-              </p>
-            </div>
+          <div className="max-w-7xl mx-auto px-6 pt-38 pb-12 w-full grow">
+            <PageHeader
+              className="mb-16 text-center"
+              badge="Project Team"
+              title="Meet the Developers"
+              subtitle={
+                <>
+                  The student developers who created the official ICPEP SE
+                  CIT-U Chapter website as part of the Software Design course.
+                </>
+              }
+            />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-[0px] gap-y-14 justify-items-center max-w-[845px] mx-auto mb-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-0 gap-y-14 justify-items-center max-w-211.25 mx-auto mb-16">
               {developers.map((dev, index) => (
                 <DeveloperCard key={index} {...dev} />
               ))}
@@ -102,7 +99,7 @@ export default function DevelopersPage() {
         </div>
       </main>
 
-      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
+      <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
     </div>

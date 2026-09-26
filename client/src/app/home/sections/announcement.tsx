@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { GlassCard } from "../components/glass-card";
+import { GlassCard } from "../../components/glass-card";
 import FeaturedAnnouncementCard from "../components/featured-announcement";
 import MiniAnnouncementCard from "../components/mini-announcement";
 import announcementService from "@/app/services/announcement";
 import { Announcement } from "../../announcements/utils/announcements";
+import Button from "../../components/button";
 
 export function AnnouncementsSection() {
   const router = useRouter();
@@ -34,8 +35,7 @@ export function AnnouncementsSection() {
           }));
           setAnnouncements(mapped);
         }
-      } catch (error) {
-        console.error("Failed to fetch announcements", error);
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -51,32 +51,33 @@ export function AnnouncementsSection() {
       <div className="relative z-10 mx-auto max-w-7xl transform -translate-y-8">
         <div className="flex flex-col items-center justify-between gap-4 text-center mb-12 sm:flex-row sm:text-left">
           <div>
-            <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
+            <h2 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
               Latest Announcements
-            </h1>
+            </h2>
             <p className="font-raleway text-base sm:text-lg text-bodytext mt-2 max-w-lg">
               Be in the loop with the latest from our chapter.
             </p>
           </div>
 
           <div className="hidden sm:block">
-            <button
+            <Button
+              variant="hero"
               onClick={() => router.push("/announcements")}
-              className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer w-[220px] sm:w-auto"
+              className="w-55 px-8 py-3 sm:w-auto"
             >
               View All
-            </button>
+            </Button>
           </div>
         </div>
 
         {loading ? (
           <>
-            <GlassCard>
-              <div className="h-[400px] w-full animate-pulse bg-white/5 rounded-xl" />
+            <GlassCard variant="roomy">
+              <div className="h-100 w-full animate-pulse bg-white/5 rounded-xl" />
             </GlassCard>
             <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-flow-col lg:auto-cols-fr">
               {[1, 2, 3].map((i) => (
-                <GlassCard key={i}>
+                <GlassCard variant="roomy" key={i}>
                   <div className="h-64 w-full animate-pulse bg-white/5 rounded-xl" />
                 </GlassCard>
               ))}
@@ -91,7 +92,7 @@ export function AnnouncementsSection() {
         ) : (
           <>
             {latestAnnouncement && (
-              <GlassCard>
+              <GlassCard variant="roomy">
                 <FeaturedAnnouncementCard announcement={latestAnnouncement} />
               </GlassCard>
             )}
@@ -99,7 +100,7 @@ export function AnnouncementsSection() {
             {otherAnnouncements.length > 0 && (
               <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-flow-col lg:auto-cols-fr items-stretch content-stretch">
                 {otherAnnouncements.map((announcement) => (
-                  <GlassCard key={announcement.id}>
+                  <GlassCard variant="roomy" key={announcement.id}>
                     <MiniAnnouncementCard announcement={announcement} />
                   </GlassCard>
                 ))}
@@ -109,12 +110,9 @@ export function AnnouncementsSection() {
         )}
 
         <div className="mt-8 flex justify-center sm:hidden">
-          <button
-            onClick={() => router.push("/announcements")}
-            className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer"
-          >
+          <Button variant="hero" onClick={() => router.push("/announcements")}>
             View All
-          </button>
+          </Button>
         </div>
       </div>
     </section>

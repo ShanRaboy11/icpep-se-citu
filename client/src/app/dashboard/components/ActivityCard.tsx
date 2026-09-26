@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC } from "react";
-import { UserCheck, CalendarPlus, Megaphone, ShoppingBag, CalendarClock, HelpCircle } from "lucide-react";
+import { User, Calendar, Megaphone, Bell } from "lucide-react";
 
 export type ActivityType = "membership" | "event" | "announcement" | "merch" | "meeting";
 
@@ -10,29 +10,16 @@ interface ActivityCardProps {
   description: string;
   timestamp: string;
   type: ActivityType;
+  isRead?: boolean;
+  onClick?: () => void;
 }
 
-const activityStyles = {
-  membership: {
-    icon: <UserCheck className="h-5 w-5" />,
-    color: "bg-emerald-50 text-emerald-600 border-emerald-100",
-  },
-  event: {
-    icon: <CalendarPlus className="h-5 w-5" />,
-    color: "bg-blue-50 text-[#003599] border-blue-100",
-  },
-  announcement: {
-    icon: <Megaphone className="h-5 w-5" />,
-    color: "bg-purple-50 text-purple-600 border-purple-100",
-  },
-  merch: {
-    icon: <ShoppingBag className="h-5 w-5" />,
-    color: "bg-amber-50 text-amber-600 border-amber-100",
-  },
-  meeting: {
-    icon: <CalendarClock className="h-5 w-5" />,
-    color: "bg-cyan-50 text-[#006fa1] border-cyan-100",
-  },
+// Bare, colored icons with no background badge — matches the header's real
+// notification dropdown exactly, rather than inventing a separate look here.
+const activityIcons: Partial<Record<ActivityType, React.ReactNode>> = {
+  announcement: <Megaphone className="w-6 h-6 text-orange-500" />,
+  event: <Calendar className="w-6 h-6 text-blue-500" />,
+  membership: <User className="w-6 h-6 text-green-500" />,
 };
 
 export const ActivityCard: FC<ActivityCardProps> = ({
@@ -40,24 +27,30 @@ export const ActivityCard: FC<ActivityCardProps> = ({
   description,
   timestamp,
   type,
+  isRead = true,
+  onClick,
 }) => {
-  const style = activityStyles[type] || {
-    icon: <HelpCircle className="h-5 w-5" />,
-    color: "bg-gray-50 text-gray-600 border-gray-100",
-  };
+  const icon = activityIcons[type] || <Bell className="w-6 h-6 text-primary1" />;
 
   return (
-    <div className="flex gap-4 p-4 rounded-2xl border border-slate-100 bg-white/50 hover:bg-white shadow-xs transition-all duration-300">
-      <div className={`h-10 w-10 flex-shrink-0 rounded-xl border flex items-center justify-center ${style.color}`}>
-        {style.icon}
-      </div>
+    <div
+      onClick={onClick}
+      className={`flex gap-4 py-3 px-2 transition-colors duration-200 ${
+        onClick ? "cursor-pointer" : ""
+      } ${!isRead ? "bg-blue-50/30" : "hover:bg-gray-50/80"}`}
+    >
+      <div className="shrink-0 flex items-center">{icon}</div>
 
-      <div className="flex-grow min-w-0">
+      <div className="grow min-w-0 flex flex-col justify-center">
         <div className="flex items-center justify-between gap-2">
-          <h5 className="font-rubik text-sm font-semibold text-slate-800 truncate">
+          <h5
+            className={`font-rubik text-sm truncate ${
+              !isRead ? "font-bold text-slate-900" : "font-medium text-gray-500"
+            }`}
+          >
             {title}
           </h5>
-          <span className="font-raleway text-xs text-slate-400 whitespace-nowrap">
+          <span className="font-raleway text-xs text-gray-400 whitespace-nowrap">
             {timestamp}
           </span>
         </div>
@@ -65,6 +58,12 @@ export const ActivityCard: FC<ActivityCardProps> = ({
           {description}
         </p>
       </div>
+
+      {!isRead && (
+        <div className="shrink-0 flex items-start pt-1.5">
+          <div className="w-2 h-2 bg-primary1 rounded-full" />
+        </div>
+      )}
     </div>
   );
 };

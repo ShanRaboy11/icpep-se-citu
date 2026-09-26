@@ -27,6 +27,11 @@ export default function SecuritySection({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
 
   const currentRef = useRef<HTMLInputElement | null>(null);
   const [showCurrent, setShowCurrent] = useState(false);
@@ -36,6 +41,7 @@ export default function SecuritySection({
   const openModal = () => {
     setError(null);
     setSuccess(null);
+    setFieldErrors({ current: false, new: false, confirm: false });
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
@@ -58,11 +64,26 @@ export default function SecuritySection({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!currentPassword) return setError("Please enter your current password");
-    if (!newPassword || newPassword.length < 6)
-      return setError("New password must be at least 6 characters");
-    if (newPassword !== confirmPassword)
-      return setError("Passwords do not match");
+
+    const newFieldErrors = {
+      current: !currentPassword,
+      new: !newPassword || newPassword.length < 6,
+      confirm: !confirmPassword || newPassword !== confirmPassword,
+    };
+    setFieldErrors(newFieldErrors);
+
+    if (newFieldErrors.current) {
+      setError("Please enter your current password");
+      return;
+    }
+    if (newFieldErrors.new) {
+      setError("New password must be at least 6 characters");
+      return;
+    }
+    if (newFieldErrors.confirm) {
+      setError("Passwords do not match");
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -103,7 +124,7 @@ export default function SecuritySection({
     <div className="w-full border border-primary1/10 rounded-3xl p-5 bg-white shadow-lg hover:shadow-xl transition-all duration-300">
       {/* Header - Styled to match "Update Profile" card exactly */}
       <div className="flex items-center gap-4 mb-4 pb-3 border-b border-primary1/5">
-        <div className="p-3 bg-primary1/10 rounded-2xl text-primary1 flex-shrink-0">
+        <div className="p-3 bg-primary1/10 rounded-2xl text-primary1 shrink-0">
           <Shield className="w-6 h-6" />
         </div>
         <div>
@@ -128,8 +149,8 @@ export default function SecuritySection({
         </div>
 
         <Button
-          variant="secondary2"
-          className="px-5 py-2.5 rounded-xl shadow-md font-rubik font-semibold text-sm whitespace-nowrap cursor-pointer hover:scale-105 transition-transform"
+          variant="hero"
+          className="px-5 py-2.5 text-sm whitespace-nowrap"
           onClick={openModal}
         >
           {/* Responsive Text */}
@@ -141,12 +162,12 @@ export default function SecuritySection({
       {/* --- Password Modal --- */}
       {open &&
         createPortal(
-          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-99999 flex items-center justify-center p-4">
             <div
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
               onClick={closeModal}
             />
-            <div className="relative z-[100000] w-full max-w-md bg-white rounded-[2rem] p-8 shadow-2xl border border-white/50 animate-scale-in">
+            <div className="relative z-100000 w-full max-w-md bg-white rounded-4xl p-8 shadow-2xl border border-white/50 animate-scale-in">
               <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
                 <div>
                   <h3 className="text-2xl font-rubik font-bold text-primary3">
@@ -164,59 +185,79 @@ export default function SecuritySection({
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                className="space-y-6"
+              >
                 <PasswordField
                   label="Current Password"
                   value={currentPassword}
-                  onChange={setCurrentPassword}
+                  onChange={(val: string) => {
+                    setCurrentPassword(val);
+                    if (fieldErrors.current)
+                      setFieldErrors((prev) => ({ ...prev, current: false }));
+                  }}
                   show={showCurrent}
                   onToggle={() => setShowCurrent(!showCurrent)}
                   ref={currentRef}
+                  error={fieldErrors.current}
                 />
 
                 <PasswordField
                   label="New Password"
                   value={newPassword}
-                  onChange={setNewPassword}
+                  onChange={(val: string) => {
+                    setNewPassword(val);
+                    if (fieldErrors.new)
+                      setFieldErrors((prev) => ({ ...prev, new: false }));
+                  }}
                   show={showNew}
                   onToggle={() => setShowNew(!showNew)}
                   hint="Must be at least 6 characters"
+                  error={fieldErrors.new}
                 />
 
                 <PasswordField
                   label="Confirm New Password"
                   value={confirmPassword}
-                  onChange={setConfirmPassword}
+                  onChange={(val: string) => {
+                    setConfirmPassword(val);
+                    if (fieldErrors.confirm)
+                      setFieldErrors((prev) => ({ ...prev, confirm: false }));
+                  }}
                   show={showConfirm}
                   onToggle={() => setShowConfirm(!showConfirm)}
+                  error={fieldErrors.confirm}
                 />
 
                 {error && (
                   <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-raleway font-medium">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                    <AlertCircle className="w-5 h-5 shrink-0" />
                     <span>{error}</span>
                   </div>
                 )}
 
                 {success && (
                   <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-100 rounded-xl text-green-600 text-sm font-raleway font-medium">
-                    <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
                     <span>{success}</span>
                   </div>
                 )}
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                  <button
+                  <Button
+                    variant="heroOutline"
                     type="button"
                     onClick={closeModal}
-                    className="px-6 py-2.5 rounded-xl border border-gray-200 font-rubik font-semibold text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-colors cursor-pointer"
+                    className="px-6 py-2.5"
                   >
                     Cancel
-                  </button>
+                  </Button>
                   <Button
                     type="submit"
-                    variant="primary3"
-                    className="px-6 py-2.5 rounded-xl font-rubik font-semibold shadow-lg shadow-primary3/20 cursor-pointer"
+                    variant="hero"
+                    className="px-6 py-2.5"
                     disabled={submitting}
                   >
                     {submitting ? "Updating..." : "Update Password"}
@@ -240,6 +281,7 @@ function PasswordField({
   onToggle,
   hint,
   ref,
+  error = false,
 }: any) {
   return (
     <div>
@@ -252,8 +294,11 @@ function PasswordField({
           type={show ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full font-rubik bg-slate-50 border border-gray-200 rounded-xl px-4 py-3.5 pr-12 outline-none focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 transition-all text-gray-800 placeholder-gray-400 shadow-sm focus:shadow-md"
-          required
+          className={`w-full font-rubik text-base border rounded-2xl px-4 py-3 pr-12 outline-none transition-all text-gray-800 placeholder-gray-400 ${
+            error
+              ? "bg-gray-50 border-red-300 ring-2 ring-red-100"
+              : "bg-gray-50 border-gray-200 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10"
+          }`}
         />
         <button
           type="button"

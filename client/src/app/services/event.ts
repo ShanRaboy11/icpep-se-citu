@@ -1,95 +1,5 @@
 import axios, { AxiosError } from 'axios';
-
-// Normalize API base URL and ensure it ends with `/api` so client requests
-// target the server endpoints even if the environment variable was set
-// without the trailing `/api` segment.
-const _RAW_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const API_URL = (() => {
-    try {
-        let base = String(_RAW_API).replace(/\/+$/, '');
-        if (!base.endsWith('/api')) base = `${base}/api`;
-
-        if (typeof window !== 'undefined') {
-            try {
-                const baseHost = new URL(base).host;
-                const windowHost = window.location.host;
-                if (baseHost === windowHost && !process.env.NEXT_PUBLIC_API_URL) {
-                    console.warn(
-                        '⚠️ WARNING: API base defaults to same origin. In production set `NEXT_PUBLIC_API_URL` to your backend (including protocol).'
-                    );
-                }
-            } catch {
-                // ignore parsing errors
-            }
-        }
-
-        return base;
-    } catch {
-        return 'http://localhost:5000/api';
-    }
-})();
-
-// Create axios instance with default config
-const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    timeout: 30000,
-});
-
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    // If sending FormData, let the browser set the Content-Type (including boundary)
-    if (config.data instanceof FormData) {
-        if (config.headers && 'Content-Type' in config.headers) {
-            const headers = config.headers as Record<string, unknown> | undefined;
-            if (headers && Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
-                delete headers['Content-Type'];
-            }
-        }
-    }
-    
-    console.log('🔵 API Request:', {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        baseURL: config.baseURL,
-        fullURL: `${config.baseURL}${config.url}`,
-        hasAuth: !!token,
-        contentType: config.headers['Content-Type'],
-    });
-    
-    return config;
-});
-
-// Add response interceptor for debugging
-api.interceptors.response.use(
-    (response) => {
-        console.log('✅ API Response:', {
-            status: response.status,
-            url: response.config.url,
-            data: response.data,
-        });
-        return response;
-    },
-    (error: AxiosError) => {
-        // Safe error logging
-        const errorDetails = {
-            status: error.response?.status,
-            url: error.config?.url,
-            method: error.config?.method,
-            message: error.message,
-            data: error.response?.data,
-        };
-        
-        console.error('❌ API Error:', JSON.stringify(errorDetails, null, 2));
-        return Promise.reject(error);
-    }
-);
+import { api } from './api-client';
 
 export interface ApiError {
     message: string;
@@ -133,6 +43,7 @@ export interface EventData {
     registrationRequired?: boolean;
     registrationStart?: string;
     registrationEnd?: string;
+    galleryImages?: string[];
 }
 
 class EventService {
@@ -164,8 +75,6 @@ class EventService {
      */
     async createEvent(data: EventData, images?: File[]): Promise<EventResponse> {
         try {
-            console.log('📤 Creating event with data:', data);
-            
             const formData = new FormData();
 
             // Append simple fields directly
@@ -208,7 +117,6 @@ class EventService {
 
             // Append images if provided (multiple)
             if (Array.isArray(images) && images.length > 0) {
-                console.log(`📷 Appending ${images.length} images`);
                 images.forEach((file) => formData.append('images', file));
             }
 
@@ -286,6 +194,18 @@ class EventService {
             // allow longer timeout for update uploads
             const response = await api.patch(`/events/${id}`, formData, { timeout: 120000 });
 
+            return response.data;
+        } catch (error) {
+            this.handleError(error);
+        }
+    }
+
+    /**
+     * Report an event (sends an email to the chapter's inbox)
+     */
+    async reportEvent(id: string, reason: string, details: string): Promise<EventResponse> {
+        try {
+            const response = await api.post(`/events/${id}/report`, { reason, details });
             return response.data;
         } catch (error) {
             this.handleError(error);

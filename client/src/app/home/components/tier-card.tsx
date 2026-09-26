@@ -59,7 +59,7 @@ export const TierCard = ({
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-3xl backdrop-blur-xl border border-[var(--primary3)]/20 shadow-lg bg-gradient-to-br ${tierGradients[tier]}`}
+      className={`relative w-full overflow-hidden rounded-3xl backdrop-blur-xl border border-(--primary3)/20 shadow-lg bg-linear-to-br ${tierGradients[tier]}`}
     >
       <div
         className="absolute inset-0 w-full h-full pointer-events-none"
@@ -94,7 +94,7 @@ export const TierCard = ({
           {data.title}
         </h3>
 
-        <div className="flex justify-start items-center space-x-4 h-[120px] pl-2">
+        <div className="flex justify-start items-center space-x-4 h-30 pl-2">
           {loading
             ? [1, 2, 3].map((i) => (
                 <div

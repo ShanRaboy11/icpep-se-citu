@@ -10,12 +10,12 @@ export default function MeetingAttendanceCard({
   attendanceLink,
 }: MeetingAttendanceCardProps) {
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-primary3 to-secondary1 p-6 text-white shadow-lg">
+    <div className="rounded-2xl bg-linear-to-br from-primary3 to-secondary1 p-6 text-white shadow-lg">
       <h3 className="font-rubik text-xl font-bold text-white mb-4 pb-4 border-b border-white/20">
         Meeting Attendance
       </h3>
 
-      <div className="bg-white/10 rounded-lg p-4 mb-4 max-h-64 overflow-y-auto">
+      <div className="bg-white/10 rounded-lg p-4 mb-4 max-h-64 overflow-y-auto themed-scrollbar-dark">
         <div className="space-y-3">
           <div>
             <h4 className="font-rubik text-sm font-semibold text-white/90 mb-2">

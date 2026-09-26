@@ -32,10 +32,10 @@ export default function MiniAnnouncementCard({ announcement }: MiniCardProps) {
       onClick={() => router.push(`/announcements/${announcement.id}`)}
       className="cursor-pointer h-full flex flex-col"
     >
-      <div className="flex-shrink-0 mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary1/10 text-primary1">
+      <div className="shrink-0 mb-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary1/10 text-primary1">
         {getIcon(announcement.type)}
       </div>
-      <div className="flex-grow">
+      <div className="grow">
         <h3 className="font-rubik text-lg sm:text-xl font-bold text-primary3">
           {announcement.title}
         </h3>

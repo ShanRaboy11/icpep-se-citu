@@ -43,7 +43,7 @@ export const EventCard: FC<EventCardProps> = ({
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           onError={(e) => {
             // fallback if image not found
-            (e.target as HTMLImageElement).src = "/gle.png";
+            (e.target as HTMLImageElement).src = "/content/gle.png";
           }}
         />
         <div className="absolute top-4 right-4">
@@ -55,18 +55,18 @@ export const EventCard: FC<EventCardProps> = ({
         </div>
       </div>
 
-      <div className="p-6 flex flex-col flex-grow">
+      <div className="p-6 flex flex-col grow">
         <h4 className="font-rubik text-base font-bold text-slate-800 tracking-tight leading-snug mb-3 group-hover:text-primary1 transition-colors duration-300">
           {title}
         </h4>
 
         <div className="space-y-2 mt-auto font-raleway text-xs text-slate-500">
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-[#0073AD] flex-shrink-0" />
+            <Calendar className="h-4 w-4 text-[#0073AD] shrink-0" />
             <span className="truncate">{date}</span>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-[#0073AD] flex-shrink-0" />
+            <MapPin className="h-4 w-4 text-[#0073AD] shrink-0" />
             <span className="truncate">{venue}</span>
           </div>
         </div>

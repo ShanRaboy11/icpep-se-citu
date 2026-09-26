@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import Announcement, { IAnnouncement } from "../models/announcement";
+import Announcement from "../models/announcement";
+import { canManagePost } from "../utils/ownership";
 import {
   uploadToCloudinary,
   uploadMultipleToCloudinary,
@@ -39,11 +40,6 @@ export const createAnnouncement = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log("🔵 CREATE ANNOUNCEMENT - START");
-    console.log("📦 Request body:", JSON.stringify(req.body, null, 2));
-    console.log("📷 File present:", !!req.file);
-    console.log("📷 Files present:", !!req.files && req.files.length);
-    console.log("👤 User:", req.user);
 
     const {
       title,
@@ -69,7 +65,6 @@ export const createAnnouncement = async (
     const author = req.user?.id;
 
     if (!author) {
-      console.error("❌ No author ID found");
       res.status(401).json({
         success: false,
         message: "User not authenticated",
@@ -90,9 +85,6 @@ export const createAnnouncement = async (
 
     if (filesArray.length > 0) {
       try {
-        console.log(
-          `📷 Uploading ${filesArray.length} image(s) to Cloudinary...`
-        );
         const results = await uploadMultipleToCloudinary(
           filesArray as { buffer: Buffer }[],
           "announcements"
@@ -104,9 +96,7 @@ export const createAnnouncement = async (
           imageUrl = urls[0];
           galleryImages = urls;
         }
-        console.log("✅ Images uploaded:", urls);
       } catch (uploadError) {
-        console.error("❌ Cloudinary upload failed:", uploadError);
         res.status(500).json({
           success: false,
           message: "Failed to upload image(s)",
@@ -130,9 +120,7 @@ export const createAnnouncement = async (
         const result = await uploadToCloudinary(fileBuf, "announcements");
         imageUrl = result.secure_url;
         galleryImages = imageUrl ? [imageUrl] : undefined;
-        console.log("✅ Image uploaded (single):", imageUrl);
       } catch (uploadError) {
-        console.error("❌ Cloudinary upload failed:", uploadError);
         res
           .status(500)
           .json({
@@ -157,7 +145,6 @@ export const createAnnouncement = async (
         ? JSON.parse(targetAudience)
         : ["all"];
     } catch (parseError) {
-      console.error("❌ JSON parsing failed:", parseError);
       res.status(400).json({
         success: false,
         message: "Invalid JSON data in request",
@@ -167,18 +154,9 @@ export const createAnnouncement = async (
       return;
     }
 
-    console.log("📝 Creating announcement with data:", {
-      title,
-      type,
-      author,
-      isPublished: String(isPublished) === "true",
-      targetAudience: parsedTargetAudience,
-      hasImage: !!imageUrl,
-    });
 
     // Validate required fields
     if (!title || !description || !content) {
-      console.error("❌ Missing required fields");
       res.status(400).json({
         success: false,
         message: "Missing required fields: title, description, or content",
@@ -231,11 +209,6 @@ export const createAnnouncement = async (
       announcementData.scheduled = false;
     }
 
-    console.log("📝 Final announcement data (publishDate/isPublished):", {
-      publishDate: announcementData.publishDate,
-      isPublished: announcementData.isPublished,
-      scheduled: announcementData.scheduled,
-    });
 
     // Enforce that published announcements must have at least one featured image
     const willBePublished = announcementData.isPublished === true;
@@ -245,9 +218,6 @@ export const createAnnouncement = async (
       (!announcementData.galleryImages ||
         announcementData.galleryImages.length === 0)
     ) {
-      console.error(
-        "❌ Attempted to publish announcement without a featured image"
-      );
       res
         .status(400)
         .json({
@@ -258,13 +228,10 @@ export const createAnnouncement = async (
       return;
     }
 
-    console.log("💾 Saving to database...");
     const announcement = await Announcement.create(announcementData);
 
-    console.log("👥 Populating author...");
     await announcement.populate("author", "firstName lastName studentNumber");
 
-    console.log("✅ Announcement created successfully:", announcement._id);
 
     // Send notification if published
     if (announcement.isPublished) {
@@ -285,11 +252,6 @@ export const createAnnouncement = async (
       data: announcement,
     });
   } catch (error) {
-    console.error("❌ FATAL ERROR in createAnnouncement:", error);
-    console.error(
-      "Error stack:",
-      error instanceof Error ? error.stack : "No stack"
-    );
 
     // Send error response
     res.status(500).json({
@@ -406,7 +368,6 @@ export const updateAnnouncement = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ message: "Invalid announcement ID" });
@@ -420,11 +381,14 @@ export const updateAnnouncement = async (
       return;
     }
 
-    // Optional: Check if user is the author
-    // if (announcement.author.toString() !== userId) {
-    //     res.status(403).json({ message: 'Not authorized to update this announcement' });
-    //     return;
-    // }
+    if (!canManagePost(req.user, announcement.author)) {
+      res.status(403).json({
+        success: false,
+        message: "You can only manage your own announcements",
+      });
+      return;
+    }
+
 
     // Handle new image upload(s)
     // Normalize multer files (array or object)
@@ -440,18 +404,13 @@ export const updateAnnouncement = async (
         for (const url of announcement.galleryImages) {
           try {
             await deleteFromCloudinary(url);
-          } catch (err) {
-            console.warn(
-              "Failed to delete old announcement gallery image:",
-              err
-            );
+          } catch {
           }
         }
       } else if (announcement.imageUrl) {
         try {
           await deleteFromCloudinary(announcement.imageUrl);
-        } catch (err) {
-          console.warn("Failed to delete old announcement image:", err);
+        } catch {
         }
       }
 
@@ -543,7 +502,7 @@ export const updateAnnouncement = async (
     if (updateData.date && typeof updateData.date === "string") {
       try {
         updateData.date = new Date(updateData.date);
-      } catch (e) {
+      } catch {
         // leave as-is if parsing fails; validation will catch it
       }
     }
@@ -554,7 +513,7 @@ export const updateAnnouncement = async (
     ) {
       try {
         updateData.galleryImages = JSON.parse(updateData.galleryImages);
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
@@ -583,7 +542,6 @@ export const deleteAnnouncement = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ message: "Invalid announcement ID" });
@@ -597,19 +555,21 @@ export const deleteAnnouncement = async (
       return;
     }
 
-    // Optional: Check if user is the author
-    // if (announcement.author.toString() !== userId) {
-    //     res.status(403).json({ message: 'Not authorized to delete this announcement' });
-    //     return;
-    // }
+    if (!canManagePost(req.user, announcement.author)) {
+      res.status(403).json({
+        success: false,
+        message: "You can only manage your own announcements",
+      });
+      return;
+    }
+
 
     // Delete image(s) from cloudinary if exist
     if (announcement.galleryImages && announcement.galleryImages.length > 0) {
       for (const url of announcement.galleryImages) {
         try {
           await deleteFromCloudinary(url);
-        } catch (err) {
-          console.warn("Failed to delete announcement gallery image:", err);
+        } catch {
         }
       }
     } else if (announcement.imageUrl) {
@@ -635,7 +595,6 @@ export const togglePublishStatus = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = req.user?.id;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ message: "Invalid announcement ID" });
@@ -649,11 +608,14 @@ export const togglePublishStatus = async (
       return;
     }
 
-    // Optional: Check if user is the author
-    // if (announcement.author.toString() !== userId) {
-    //     res.status(403).json({ message: 'Not authorized to modify this announcement' });
-    //     return;
-    // }
+    if (!canManagePost(req.user, announcement.author)) {
+      res.status(403).json({
+        success: false,
+        message: "You can only manage your own announcements",
+      });
+      return;
+    }
+
 
     announcement.isPublished = !announcement.isPublished;
 

@@ -14,7 +14,7 @@ const InfoDetailRow = ({
   line2: string;
 }) => (
   <div className="flex items-center gap-3 sm:gap-4">
-    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-buttonbg1 rounded-lg flex items-center justify-center text-primary1 flex-shrink-0">
+    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-buttonbg1 rounded-lg flex items-center justify-center text-primary1 shrink-0">
       {icon}
     </div>
     <div>

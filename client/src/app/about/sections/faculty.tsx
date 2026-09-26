@@ -15,8 +15,16 @@ interface FacultySectionProps {
 }
 
 const FacultySection: FC<FacultySectionProps> = ({ faculty }) => {
-  const departmentHead = faculty[0];
-  const otherFaculty = faculty.slice(1);
+  // The center-stage highlight should always be whoever holds the
+  // "Department Head" position, regardless of where they land in the list —
+  // fall back to the first entry if no one has that title yet.
+  const headIndex = faculty.findIndex((member) =>
+    member.position?.toLowerCase().includes("department head"),
+  );
+  const departmentHead = faculty[headIndex >= 0 ? headIndex : 0];
+  const otherFaculty = faculty
+    .filter((_, i) => i !== (headIndex >= 0 ? headIndex : 0))
+    .sort((a, b) => a.name.trim().localeCompare(b.name.trim()));
 
   return (
     <section className="mt-48">
