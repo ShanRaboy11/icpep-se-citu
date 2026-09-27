@@ -9,6 +9,8 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import Button from "../../components/button";
+import { useBodyScrollLock } from "@/app/utils/use-body-scroll-lock";
 
 // Define an interface for the raw data read from the Excel sheet
 interface RawExcelRow {
@@ -60,6 +62,8 @@ export default function ExcelUploadModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useBodyScrollLock(isOpen);
 
   if (!isOpen) return null;
 
@@ -200,8 +204,7 @@ export default function ExcelUploadModal({
       });
 
       setUploadedUsers(processedUsers);
-    } catch (error) {
-      console.error("Error processing file:", error);
+    } catch {
       alert("Error processing file. Please check the file format.");
     } finally {
       setIsProcessing(false);
@@ -229,33 +232,37 @@ export default function ExcelUploadModal({
   const errorCount = uploadedUsers.filter((u) => u.status === "error").length;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-primary1/5 to-secondary2/5">
+    <div className="fixed inset-0 z-99999 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
+        onClick={handleClose}
+      />
+      <div className="relative z-100000 w-full max-w-4xl bg-white rounded-4xl shadow-2xl border border-white/50 animate-scale-in flex flex-col max-h-[90vh] overflow-hidden">
+        {/* Header — fixed, never scrolls away */}
+        <div className="flex items-center justify-between px-6 sm:px-7 pt-6 sm:pt-7 pb-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary1/10 rounded-lg">
-              <FileSpreadsheet className="w-6 h-6 text-primary1" />
+            <div className="p-2.5 bg-primary1/10 rounded-2xl text-primary1 shrink-0">
+              <FileSpreadsheet className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-rubik text-2xl font-bold text-primary3">
+              <h3 className="text-xl font-rubik font-bold text-primary3">
                 Upload Excel File
-              </h2>
-              <p className="font-raleway text-sm text-gray-600">
-                Import multiple users from an Excel file
+              </h3>
+              <p className="text-sm font-raleway text-gray-500 mt-0.5">
+                Import multiple users from an Excel file.
               </p>
             </div>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
+            className="p-2 rounded-full bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors cursor-pointer"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* Content — the only part that scrolls */}
+        <div className="space-y-5 overflow-y-auto themed-scrollbar px-6 sm:px-7 py-5 flex-1">
           {/* Upload Area */}
           {!file ? (
             <div
@@ -283,12 +290,15 @@ export default function ExcelUploadModal({
                 onChange={handleChange}
                 className="hidden"
               />
-              <button
+              <Button
+                type="button"
+                variant="hero"
+                rounded="lg"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg transition-all cursor-pointer"
+                className="px-6 py-2.5"
               >
                 Select File
-              </button>
+              </Button>
             </div>
           ) : (
             <>
@@ -349,7 +359,7 @@ export default function ExcelUploadModal({
               {/* Preview Table */}
               {uploadedUsers.length > 0 && (
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto max-h-96">
+                  <div className="overflow-x-auto themed-scrollbar max-h-96">
                     <table className="w-full text-sm">
                       <thead className="bg-gray-100 sticky top-0">
                         <tr>
@@ -432,17 +442,20 @@ export default function ExcelUploadModal({
                 <AlertCircle className="w-4 h-4" />
                 Excel File Format
               </h4>
-              <button
+              <Button
+                type="button"
+                variant="heroOutline"
+                rounded="lg"
                 onClick={() => {
                   const link = document.createElement("a");
-                  link.href = "/user-upload-template.xlsx";
+                  link.href = "/documents/user-upload-template.xlsx";
                   link.download = "user-upload-template.xlsx";
                   link.click();
                 }}
-                className="px-3 py-1 bg-blue-600 text-white text-xs font-raleway font-semibold rounded hover:bg-blue-700 transition-colors cursor-pointer"
+                className="px-3 py-1.5 text-xs"
               >
                 Download Template
-              </button>
+              </Button>
             </div>
             <p className="font-raleway text-sm text-blue-800 mb-2">
               Your Excel file should have the following columns in this exact
@@ -475,23 +488,27 @@ export default function ExcelUploadModal({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between bg-gray-50">
-          <button
+        {/* Footer — fixed, never scrolls away */}
+        <div className="flex items-center justify-between px-6 sm:px-7 pt-4 pb-6 sm:pb-7 border-t border-gray-100 shrink-0">
+          <Button
+            type="button"
+            variant="heroOutline"
             onClick={handleClose}
-            className="px-6 py-2 border-2 border-gray-300 text-gray-700 font-raleway font-semibold rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+            className="px-4 py-2 sm:px-6 sm:py-3"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="hero"
             onClick={handleUpload}
             disabled={validCount === 0 || isProcessing}
-            className="px-6 py-2 bg-gradient-to-r from-primary1 to-primary1/90 text-white font-raleway font-semibold rounded-lg hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+            className="px-5 py-2 sm:px-8 sm:py-3"
           >
             {isProcessing
               ? "Processing..."
               : `Upload ${validCount} User${validCount !== 1 ? "s" : ""}`}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

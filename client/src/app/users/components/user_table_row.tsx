@@ -2,9 +2,7 @@
 
 import { User } from "../utils/user";
 import { format } from "date-fns";
-import { useState } from "react";
-import { MoreVertical } from "lucide-react";
-import UserContextMenu from "./context_menu";
+import { Eye, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
 
 interface UserTableRowProps {
   user: User;
@@ -21,11 +19,8 @@ export default function UserTableRow({
   onToggleActive,
   onView,
 }: UserTableRowProps) {
-  const [contextMenu, setContextMenu] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  const [showMenu, setShowMenu] = useState(false);
+  const actionButton =
+    "inline-flex items-center justify-start gap-1 px-2 py-1.5 text-[11px] sm:gap-1.5 sm:px-2.5 sm:text-xs font-raleway font-semibold text-gray-500 rounded-lg whitespace-nowrap transition-all duration-150 cursor-pointer";
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -38,7 +33,7 @@ export default function UserTableRow({
       case "student":
         return "bg-green-100 text-green-700 border-green-200";
       case "admin":
-        return "bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 border-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.4)]";
+        return "bg-linear-to-r from-amber-100 to-yellow-100 text-amber-800 border-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.4)]";
       default:
         return "bg-green-100 text-green-700 border-green-200";
     }
@@ -66,48 +61,35 @@ export default function UserTableRow({
     }
   };
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setContextMenu({ x: e.pageX, y: e.pageY });
-    setShowMenu(true);
-  };
-
-  const handleMenuClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setContextMenu({
-      x: rect.left + window.scrollX,
-      y: rect.bottom + 5 + window.scrollY,
-    });
-    setShowMenu(true);
-  };
-
   return (
-    <>
       <tr
-        className="hover:bg-gray-50/50 transition-colors cursor-pointer"
-        onContextMenu={handleContextMenu}
-        onClick={() => onView(user)}
+        className="group hover:bg-gray-50/50 transition-colors cursor-pointer"
+        onClick={() => {
+          // Below lg a tap expands the card (see responsive-table-toggle);
+          // View is still one of the action buttons.
+          if (window.matchMedia("(max-width: 1023px)").matches) return;
+          onView(user);
+        }}
       >
-        <td className="px-4 py-4 whitespace-nowrap text-center">
+        <td data-label="Student Number" data-primary="media" className="px-4 py-4 whitespace-nowrap text-center">
           <span className="font-raleway text-sm font-medium text-primary3">
             {user.studentNumber}
           </span>
         </td>
-        <td className="px-4 py-4 whitespace-nowrap">
+        <td data-label="Full Name" data-primary="" className="px-4 py-4 whitespace-nowrap">
           <span className="font-raleway text-sm text-center text-gray-900">
             {user.fullName}
           </span>
         </td>
       
-        <td className="px-4 py-4 whitespace-nowrap text-center">
+        <td data-label="Year Level" className="px-4 py-4 whitespace-nowrap text-center">
           <span className="font-raleway text-sm text-gray-600">
             {user.yearLevel ? `${user.yearLevel}` : "N/A"}
           </span>
         </td>
         
 
-        <td className="px-4 py-4 whitespace-nowrap text-center">
+        <td data-label="Role" className="px-4 py-4 whitespace-nowrap text-center">
           <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-raleway border ${getRoleBadgeColor(
               user.role
@@ -123,7 +105,7 @@ export default function UserTableRow({
           </span>
         </td>
         
-        <td className="px-4 py-4 whitespace-nowrap text-center">
+        <td data-label="Membership" className="px-4 py-4 whitespace-nowrap text-center">
           <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-raleway border ${getMembershipBadgeColor(
               user.membershipStatus.isMember,
@@ -140,22 +122,22 @@ export default function UserTableRow({
           </span>
         </td>
         
-        <td className="px-4 py-4 whitespace-nowrap text-center">
+        <td data-label="Registered By" className="px-4 py-4 whitespace-nowrap text-center">
           <span className="font-raleway text-sm text-gray-600">
             {user.registeredBy?.fullName || "Self-registered"}
           </span>
         </td>
-        <td className="px-4 py-4 whitespace-nowrap text-center">
+        <td data-label="Registration Date" className="px-4 py-4 whitespace-nowrap text-center">
           <span className="font-raleway text-sm text-gray-600">
             {formatDate(user.createdAt)}
           </span>
         </td>
-        <td className="px-4 py-4 whitespace-nowrap text-center">
+        <td data-label="Last Updated" className="px-4 py-4 whitespace-nowrap text-center">
           <span className="font-raleway text-sm text-gray-600">
             {formatDate(user.updatedAt)}
           </span>
         </td>
-        <td className="px-4 py-4 whitespace-nowrap">
+        <td data-label="Status" className="px-4 py-4 whitespace-nowrap">
           <div className="flex items-center gap-2 justify-center">
             <div
               className={`w-2 h-2 rounded-full ${
@@ -167,31 +149,58 @@ export default function UserTableRow({
             </span>
           </div>
         </td>
-        <td className="px-4 py-4 whitespace-nowrap text-center">
-          <button
-            onClick={handleMenuClick}
-            className="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-            title="More actions"
-          >
-            <MoreVertical className="w-5 h-5 text-gray-500" />
-          </button>
+        <td data-label="Actions" className="px-4 py-4 whitespace-nowrap text-center">
+          <div className="flex flex-nowrap items-center justify-end gap-1 lg:grid lg:grid-cols-2 lg:justify-start lg:opacity-40 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onView(user);
+              }}
+              className={`${actionButton} hover:text-primary1 hover:bg-primary1/10`}
+              title="View"
+            >
+              <Eye size={14} />
+              View
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(user);
+              }}
+              className={`${actionButton} hover:text-primary1 hover:bg-primary1/10`}
+              title="Edit"
+            >
+              <Pencil size={14} />
+              Edit
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleActive(user);
+              }}
+              className={`${actionButton} ${
+                user.isActive
+                  ? "hover:text-amber-600 hover:bg-amber-50"
+                  : "hover:text-green-600 hover:bg-green-50"
+              }`}
+              title={user.isActive ? "Deactivate" : "Activate"}
+            >
+              {user.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
+              {user.isActive ? "Deactivate" : "Activate"}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(user);
+              }}
+              className={`${actionButton} hover:text-red-500 hover:bg-red-50`}
+              title="Delete"
+            >
+              <Trash2 size={14} />
+              Delete
+            </button>
+          </div>
         </td>
       </tr>
-
-      {/* Context Menu */}
-      {showMenu && contextMenu && (
-        <UserContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          onClose={() => setShowMenu(false)}
-          onEdit={() => onEdit(user)}
-          onDelete={() => onDelete(user)}
-          onToggleActive={() => onToggleActive(user)}
-          onView={() => onView(user)}
-          isActive={user.isActive}
-          userName={user.fullName}
-        />
-      )}
-    </>
   );
 }

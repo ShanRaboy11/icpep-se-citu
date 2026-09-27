@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 interface Props {
   status?: "Upcoming" | "Ongoing" | "Ended";
@@ -81,9 +82,11 @@ export default function RsvpCard({ status, date, rsvpLink }: Props) {
         <div>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <img
+              <Image
                 src="https://i.pravatar.cc/150?img=32"
                 alt="User"
+                width={56}
+                height={56}
                 className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-green-500 p-0.5"
               />
               <div>
@@ -115,26 +118,32 @@ export default function RsvpCard({ status, date, rsvpLink }: Props) {
           </p>
           <button
             onClick={handleRsvp}
-            className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-bold py-4 rounded-xl transition-all text-lg sm:text-xl shadow-lg hover:shadow-primary1/40 transform hover:-translate-y-0.5 cursor-pointer"
+            className="w-full bg-primary1 hover:bg-primary2 text-white font-raleway font-bold py-4 rounded-xl transition-all text-lg sm:text-xl shadow-lg hover:shadow-primary1/40 transform hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] cursor-pointer"
           >
             {rsvpLink ? "RSVP Now" : "RSVP Now"}
           </button>
           <div className="flex items-center justify-center gap-2 mt-4 text-sm font-raleway text-gray-600">
             <div className="flex -space-x-2">
-              <img
+              <Image
                 className="inline-block h-6 w-6 rounded-full ring-2 ring-white"
                 src="https://i.pravatar.cc/100?img=1"
                 alt="User 1"
+                width={24}
+                height={24}
               />
-              <img
+              <Image
                 className="inline-block h-6 w-6 rounded-full ring-2 ring-white"
                 src="https://i.pravatar.cc/100?img=2"
                 alt="User 2"
+                width={24}
+                height={24}
               />
-              <img
+              <Image
                 className="inline-block h-6 w-6 rounded-full ring-2 ring-white"
                 src="https://i.pravatar.cc/100?img=3"
                 alt="User 3"
+                width={24}
+                height={24}
               />
             </div>
             <p>

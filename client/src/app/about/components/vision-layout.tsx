@@ -7,19 +7,19 @@ import { SectionType } from "../utils/types";
 const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
   const visionPoints = [
     {
-      iconUrl: "/rocket.png",
+      iconUrl: "/icons/illustrations/rocket.png",
       title: "Fostering Innovators",
       description: "Leading and inspiring technological advancement.",
       sizeClass: "w-[85%] h-[85%] md:w-3/4 md:h-3/4",
     },
     {
-      iconUrl: "/target.png",
+      iconUrl: "/icons/illustrations/target.png",
       title: "Ethical Leadership",
       description: "Impacting society with technical prowess and integrity.",
       sizeClass: "w-[85%] h-[85%] md:w-3/4 md:h-3/4",
     },
     {
-      iconUrl: "/megaphone.png",
+      iconUrl: "/icons/illustrations/megaphone.png",
       title: "Community Driven",
       description: "Building a collaborative and supportive student network.",
       sizeClass: "w-[80%] h-[80%] md:w-2/3 md:h-2/3",
@@ -41,16 +41,15 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
         {visionPoints.map((point, index) => (
           <div
             key={index}
-            className="flex flex-row md:flex-col items-center md:items-center gap-4 md:gap-0 group"
+            className="flex flex-row md:flex-col items-center md:items-center gap-3 md:gap-0 group
+                       p-3 md:p-0 rounded-xl md:rounded-none border border-white/10 md:border-0
+                       bg-white/5 md:bg-transparent transition-all duration-300
+                       hover:bg-white/10 md:hover:bg-transparent
+                       bg-[radial-gradient(circle,transparent_1px,rgba(255,255,255,0.05)_1px)] bg-size-[1rem_1rem] md:bg-none"
           >
             <div
-              className="w-12 h-12 md:w-full md:h-40 flex-shrink-0 rounded-xl md:rounded-2xl overflow-hidden bg-white/5 md:mb-4 border border-white/10 transition-colors duration-300 group-hover:bg-white/10
+              className="w-12 h-12 md:w-full md:h-40 shrink-0 rounded-xl md:rounded-2xl overflow-hidden md:bg-white/5 md:mb-4 md:border md:border-white/10 transition-colors duration-300 md:group-hover:bg-white/10
                          flex items-center justify-center"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
-                backgroundSize: "1rem 1rem",
-              }}
             >
               <div className={`relative ${point.sizeClass}`}>
                 <Image

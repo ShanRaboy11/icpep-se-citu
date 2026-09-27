@@ -1,14 +1,8 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-export default function App() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.push("/home");
-  }, [router]);
-
-  return null;
+// The site's real home page lives at /home; redirect at the server so
+// crawlers and first paint see it immediately instead of a blank page that
+// only redirects once client JS runs.
+export default function RootPage() {
+  redirect("/home");
 }

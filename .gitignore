@@ -67,3 +67,7 @@ out/
 # VSCode settings
 .vscode/
 .DS_Store
+
+# compiled output
+/server/dist/
+/server/src/dist/

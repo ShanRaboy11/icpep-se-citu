@@ -25,7 +25,7 @@ export const TestimonialCard = ({
       className={`relative h-full w-full rounded-3xl p-6 sm:p-8 transition-all duration-500
       ${
         isCenter
-          ? "bg-gradient-to-b from-[#cde4fa] to-[#a9d3f9] shadow-xl shadow-primary3/20"
+          ? "bg-linear-to-b from-[#cde4fa] to-[#a9d3f9] shadow-xl shadow-primary3/20"
           : "bg-white shadow-lg shadow-gray-400/20"
       }`}
     >

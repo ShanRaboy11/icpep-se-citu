@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC, ReactNode } from "react";
-import { ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 interface QuickActionCardProps {
   title: string;
@@ -9,6 +9,7 @@ interface QuickActionCardProps {
   icon: ReactNode;
   onClick?: () => void;
   accentColor?: "primary" | "steel" | "sky";
+  actionLabel?: string;
 }
 
 const accentStyles = {
@@ -38,29 +39,30 @@ export const QuickActionCard: FC<QuickActionCardProps> = ({
   icon,
   onClick,
   accentColor = "primary",
+  actionLabel = "Execute",
 }) => {
   const styles = accentStyles[accentColor];
 
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col text-left rounded-2xl p-4 pt-5 border shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 group w-full ${styles.bg} ${styles.border}`}
+      className={`flex h-full flex-col justify-between text-left rounded-2xl p-4 pt-5 border shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 active:scale-[0.98] group w-full cursor-pointer ${styles.bg} ${styles.border}`}
     >
       <div className="flex items-center gap-3 mb-2 w-full">
         <div
-          className={`h-9 w-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 ${styles.icon}`}
+          className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 ${styles.icon}`}
         >
           {icon}
         </div>
-        <h4 className="font-rubik text-sm font-medium text-slate-800 tracking-tight truncate">
+        <h4 className="font-rubik text-sm font-medium text-slate-800 tracking-tight leading-snug">
           {title}
         </h4>
       </div>
       <div
         className={`w-full py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 font-raleway font-semibold text-[11px] transition-all duration-300 ${styles.button}`}
       >
-        <span>Execute</span>
-        <ArrowRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
+        <span>{actionLabel}</span>
+        <ChevronRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
       </div>
     </button>
   );

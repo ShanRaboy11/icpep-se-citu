@@ -9,6 +9,7 @@ export interface INotification extends Document {
   relatedModel?: 'Announcement' | 'Event' | 'Membership' | null;
   isRead: boolean;
   readAt?: Date;
+  isDeleted: boolean;
   link?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -44,6 +45,10 @@ const notificationSchema = new Schema<INotification>(
       default: false,
     },
     readAt: Date,
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
     link: String,
   },
   { timestamps: true }

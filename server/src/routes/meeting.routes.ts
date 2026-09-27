@@ -10,9 +10,9 @@ import {
 
 const router = express.Router();
 
-// Public
-router.get("/", getMeetings);
-router.get("/:id", getMeetingById);
+// Any logged-in user can view meetings; the link is only included for the people it is meant for
+router.get("/", authenticate, getMeetings);
+router.get("/:id", authenticate, getMeetingById);
 
 // Protected (officers/faculty create & manage)
 router.post(

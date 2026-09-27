@@ -10,13 +10,21 @@ import {
   resetPassword
 } from '../controllers/auth.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
+import {
+  loginLimiterByIp,
+  loginLimiterByAccount,
+  forgotPasswordLimiterByIp,
+  forgotPasswordLimiterByAccount,
+  resetCodeLimiterByIp,
+  resetCodeLimiterByAccount,
+} from '../middleware/auth-limits';
 
 const router = express.Router();
 
 // @route   POST /api/auth/login
 // @desc    Login user with student number and password
 // @access  Public
-router.post('/login', login);
+router.post('/login', loginLimiterByIp, loginLimiterByAccount, login);
 
 // @route   POST /api/auth/logout
 // @desc    Logout user (client-side token removal)
@@ -26,17 +34,17 @@ router.post('/logout', logout);
 // @route   POST /api/auth/forgot-password
 // @desc    Request password reset code
 // @access  Public
-router.post('/forgot-password', forgotPassword);
+router.post('/forgot-password', forgotPasswordLimiterByIp, forgotPasswordLimiterByAccount, forgotPassword);
 
 // @route   POST /api/auth/verify-code
 // @desc    Verify reset code
 // @access  Public
-router.post('/verify-code', verifyResetCode);
+router.post('/verify-code', resetCodeLimiterByIp, resetCodeLimiterByAccount, verifyResetCode);
 
 // @route   POST /api/auth/reset-password
 // @desc    Reset password
 // @access  Public
-router.post('/reset-password', resetPassword);
+router.post('/reset-password', resetCodeLimiterByIp, resetCodeLimiterByAccount, resetPassword);
 
 // @route   POST /api/auth/first-login-password
 // @desc    Change password on first login (no current password required)

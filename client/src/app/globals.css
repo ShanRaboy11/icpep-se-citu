@@ -278,6 +278,26 @@ html {
   background-color: #ffffff;
 }
 
+/* Same grid lines as .interactive-grid, but transparent (so a gradient
+   section background shows through) and faded out toward the bottom edge,
+   so it doesn't cut off sharply where the hero meets the next section. */
+.interactive-grid-fade {
+  background-image: linear-gradient(
+      to right,
+      rgba(0, 167, 238, 0.12) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(0, 167, 238, 0.12) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 70%,
+    transparent 100%
+  );
+}
+
 .interactive-grid::before {
   content: "";
   position: absolute;
@@ -317,6 +337,7 @@ html {
 
 .themed-scrollbar::-webkit-scrollbar {
   width: 7px;
+  height: 7px;
 }
 .themed-scrollbar::-webkit-scrollbar-track {
   background: #f1f5f9;
@@ -328,6 +349,23 @@ html {
 }
 .themed-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #94a3b8;
+}
+
+/* Same custom scrollbar, tuned for dark/colored backgrounds */
+.themed-scrollbar-dark::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+.themed-scrollbar-dark::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+.themed-scrollbar-dark::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+.themed-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
 }
 
 @keyframes spin-and-fade {
@@ -458,11 +496,20 @@ html {
 }
 
 @keyframes spin-3d {
-  from {
-    transform: rotateX(0deg) rotateY(0deg);
+  0% {
+    transform: rotate3d(1, 1, 0, 20deg);
   }
-  to {
-    transform: rotateX(360deg) rotateY(360deg);
+  25% {
+    transform: rotate3d(1, 1, 0, 110deg);
+  }
+  50% {
+    transform: rotate3d(1, 1, 0, 200deg);
+  }
+  75% {
+    transform: rotate3d(1, 1, 0, 290deg);
+  }
+  100% {
+    transform: rotate3d(1, 1, 0, 380deg);
   }
 }
 
@@ -932,5 +979,130 @@ html {
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
+  }
+}
+
+/* Manage list tables become collapsible cards below the lg breakpoint (1024px), so nothing scrolls
+   sideways or gets cut off. A row shows its primary cells (data-primary) and a
+   chevron; tapping it reveals the other cells, labelled by data-label. The
+   tap toggling lives in components/responsive-table-toggle.tsx. */
+@media (max-width: 1023px) {
+  .responsive-table {
+    min-width: 0;
+  }
+
+  .responsive-table,
+  .responsive-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table thead {
+    display: none;
+  }
+
+  .responsive-table tr {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: 0.75rem;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border-top: 1px solid #f3f4f6;
+    cursor: pointer;
+  }
+
+  .responsive-table tr::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 1.1rem;
+    width: 0.375rem;
+    height: 0.375rem;
+    margin-top: -0.1875rem;
+    border-right: 1.5px solid #9ca3af;
+    border-bottom: 1.5px solid #9ca3af;
+    transform: rotate(45deg);
+    transition: transform 0.2s;
+  }
+
+  /* Open rows grow tall with revealed detail, so the chevron stays put near
+     the top instead of tracking the now much lower vertical center. */
+  .responsive-table tr[data-open="true"]::after {
+    top: 1.25rem;
+    margin-top: 0;
+    transform: rotate(225deg);
+  }
+
+  .responsive-table td {
+    display: none;
+    width: 100%;
+    padding: 0.3rem 0;
+    white-space: normal;
+    max-width: none;
+    overflow-wrap: anywhere;
+  }
+
+  /* A real minimum width (not 0) so the other cells, which are full width,
+     always wrap onto their own line instead of sharing this one. */
+  .responsive-table td[data-primary] {
+    display: block;
+    width: auto;
+    flex: 1 1 10rem;
+    min-width: 0;
+    padding: 0;
+    overflow-wrap: anywhere;
+    text-align: left;
+  }
+
+  .responsive-table td[data-primary="media"] {
+    flex: none;
+  }
+
+  .responsive-table tr[data-open="true"] td:not([data-primary]) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    text-align: right;
+  }
+
+  .responsive-table tr[data-open="true"] td:not([data-primary])::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-family: var(--font-raleway), sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--primary3);
+    opacity: 0.65;
+    text-align: left;
+  }
+
+  /* Long text (e.g. a testimonial message) goes under its label at full width,
+     unclamped, instead of squeezing in beside it. */
+  .responsive-table tr[data-open="true"] td[data-long] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    text-align: left;
+  }
+
+  .responsive-table td[data-long] p {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+  }
+
+  .responsive-table tr[data-open="true"] td:last-child {
+    justify-content: flex-end;
+    border-top: 1px dashed #f3f4f6;
+    margin-top: 0.25rem;
+    padding-top: 0.6rem;
+  }
+
+  .responsive-table tr[data-open="true"] td:last-child::before {
+    display: none;
   }
 }

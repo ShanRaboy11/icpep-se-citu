@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useState, type FC } from "react";
 import Header from "../components/header";
 import Footer from "../components/footer";
 import Grid from "../components/grid";
 import MerchCard from "./components/merch-card";
-import { type FC } from "react";
+import PageHeader from "../components/page-header";
+import merchService, { MerchItem as ApiMerchItem } from "../services/merch";
 
 interface MerchItem {
   name: string;
@@ -15,54 +17,41 @@ interface MerchItem {
   buyLink?: string;
 }
 
+const formatPrice = (prices: ApiMerchItem["prices"]): string => {
+  if (!prices || prices.length === 0) return "";
+  const values = prices.map((p) => p.price);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  return min === max ? `₱${min}` : `₱${min} - ₱${max}`;
+};
+
+const mapMerchItem = (item: ApiMerchItem): MerchItem => ({
+  name: item.name,
+  description: item.description,
+  imageSrc: item.image || "/content/gle.png",
+  price: formatPrice(item.prices),
+  status: "Available",
+  buyLink: item.orderLink,
+});
+
 const MerchPage: FC = () => {
-  const merchandise: MerchItem[] = [
-    {
-      name: "Varsity Jacket",
-      price: "₱1200",
-      description: "Classic collegiate style with premium embroidery.",
-      status: "Available",
-      imageSrc: "https://source.unsplash.com/400x400/?varsity-jacket",
-      buyLink: "https://forms.gle/your-order-form-link",
-    },
-    {
-      name: "Chapter T-Shirt",
-      price: "₱350",
-      description: "Comfortable and stylish, perfect for daily wear.",
-      status: "Sold Out",
-      imageSrc: "https://source.unsplash.com/400x400/?t-shirt",
-    },
-    {
-      name: "ICPEP.SE Lanyard",
-      price: "₱150",
-      description: "Keep your essentials close with our official lanyard.",
-      status: "Available",
-      imageSrc: "https://source.unsplash.com/400x400/?lanyard",
-      buyLink: "https://forms.gle/your-order-form-link",
-    },
-    {
-      name: "Tote Bag",
-      price: "₱250",
-      description: "A versatile and eco-friendly bag for your daily needs.",
-      status: "Coming Soon",
-      imageSrc: "https://source.unsplash.com/400x400/?tote-bag",
-    },
-    {
-      name: "Enamel Pin Set",
-      price: "₱300",
-      description: "A set of three custom-designed pins for your collection.",
-      status: "Coming Soon",
-      imageSrc: "https://source.unsplash.com/400x400/?pins",
-    },
-    {
-      name: "Sticker Pack",
-      price: "₱100",
-      description: "Decorate your gear with our waterproof vinyl stickers.",
-      status: "Available",
-      imageSrc: "https://source.unsplash.com/400x400/?stickers",
-      buyLink: "https://forms.gle/your-order-form-link",
-    },
-  ];
+  const [merchandise, setMerchandise] = useState<MerchItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMerch = async () => {
+      try {
+        const items = await merchService.getAll();
+        setMerchandise(
+          items.filter((item) => item.isActive).map(mapMerchItem),
+        );
+      } catch {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMerch();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
@@ -70,33 +59,55 @@ const MerchPage: FC = () => {
         <Grid />
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
-          <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem] pb-24 flex-grow">
-            <div className="mb-20 text-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-                <div className="h-2 w-2 rounded-full bg-primary1"></div>
-                <span className="font-raleway text-sm font-semibold text-primary1">
-                  Official Gear
-                </span>
-              </div>
-              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-                Wear Your Pride
-              </h1>
-              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
-                Show your support for the ICPEP SE CIT-U Chapter with our
-                exclusive collection of high-quality merchandise.
-              </p>
-            </div>
+          <div className="w-full max-w-7xl mx-auto px-6 pt-38 pb-24 grow">
+            <PageHeader
+              className="mb-20 text-center"
+              badge="Official Gear"
+              title="Wear Your Pride"
+              subtitleClassName="max-w-3xl"
+              subtitle={
+                <>
+                  Show your support for the ICPEP SE CIT-U Chapter with our
+                  exclusive collection of high-quality merchandise.
+                </>
+              }
+            />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {merchandise.map((item) => (
-                <MerchCard key={item.name} {...item} />
-              ))}
-            </div>
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="rounded-2xl overflow-hidden border border-gray-100 shadow-md animate-pulse"
+                  >
+                    <div className="aspect-square bg-gray-100" />
+                    <div className="p-6 space-y-3">
+                      <div className="h-5 w-2/3 bg-gray-100 rounded-md" />
+                      <div className="h-4 w-full bg-gray-100 rounded-md" />
+                      <div className="h-4 w-1/2 bg-gray-100 rounded-md" />
+                      <div className="h-12 w-full bg-gray-100 rounded-lg mt-4" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : merchandise.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-gray-500 font-raleway text-lg">
+                  No merchandise available at the moment.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {merchandise.map((item) => (
+                  <MerchCard key={item.name} {...item} />
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </main>
 
-      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
+      <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
     </div>

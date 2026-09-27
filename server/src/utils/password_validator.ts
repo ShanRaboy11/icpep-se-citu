@@ -1,3 +1,5 @@
+import { getDefaultPassword } from '../config/env';
+
 export interface PasswordValidationResult {
   isValid: boolean;
   errors: string[];
@@ -27,12 +29,12 @@ export const validatePassword = (password: string): PasswordValidationResult => 
   }
 
   // Check for special character
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
     errors.push('Password must contain at least one special character (!@#$%^&*()_+-=[]{};\':"|,.<>?/)');
   }
 
   // Check if it's the default password (without mentioning it explicitly)
-  if (password === '123456') {
+  if (password === getDefaultPassword()) {
     errors.push('This password is too common. Please choose a stronger password');
   }
 

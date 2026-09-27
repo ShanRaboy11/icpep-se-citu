@@ -1,7 +1,7 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
-import type { FC, ReactNode } from "react";
+import { CheckCircle2, User, Globe, Zap, ChevronRight } from "lucide-react";
+import type { FC } from "react";
 
 type AccentColor = "primary" | "steel" | "sky";
 
@@ -13,10 +13,17 @@ interface MembershipCardProps {
   benefits: string[];
   isHighlighted?: boolean;
   accentColor: AccentColor;
-  icon: ReactNode;
-  buttonIcon: ReactNode;
   isOpen?: boolean;
+  registrationUrl?: string;
 }
+
+// Each accent color has a fixed icon identity, so admins pick a color
+// rather than needing to manage icon assets from the database.
+const accentIcon: Record<AccentColor, typeof User> = {
+  primary: Zap,
+  steel: User,
+  sky: Globe,
+};
 
 const accentClasses: Record<
   AccentColor,
@@ -26,7 +33,7 @@ const accentClasses: Record<
     text: "text-[#003599]",
     border: "border-blue-300",
     glow: "shadow-[inset_0_0_15px_rgba(147,197,253,0.5)] lg:shadow-none lg:group-hover:shadow-[inset_0_0_15px_rgba(147,197,253,0.5)]",
-    bg: "bg-gradient-to-b from-blue-50 to-blue-300",
+    bg: "bg-linear-to-b from-blue-50 to-blue-300",
     button:
       "bg-[#003599] text-white shadow-lg shadow-blue-500/30 hover:bg-[#004ab3] hover:-translate-y-1 cursor-pointer",
   },
@@ -34,7 +41,7 @@ const accentClasses: Record<
     text: "text-[#006fa1]",
     border: "border-cyan-300",
     glow: "shadow-[inset_0_0_15px_rgba(103,232,249,0.5)] lg:shadow-none lg:group-hover:shadow-[inset_0_0_15px_rgba(103,232,249,0.5)]",
-    bg: "bg-gradient-to-b from-cyan-50 to-cyan-300",
+    bg: "bg-linear-to-b from-cyan-50 to-cyan-300",
     button:
       "bg-[#006fa1] text-white shadow-lg shadow-cyan-500/30 lg:shadow-none lg:bg-transparent lg:text-[#006fa1] lg:border lg:border-[#006fa1] hover:-translate-y-1 lg:hover:bg-[#006fa1]/15 cursor-pointer",
   },
@@ -42,7 +49,7 @@ const accentClasses: Record<
     text: "text-[#0073AD]",
     border: "border-sky-300",
     glow: "shadow-[inset_0_0_15px_rgba(125,211,252,0.5)] lg:shadow-none lg:group-hover:shadow-[inset_0_0_15px_rgba(125,211,252,0.5)]",
-    bg: "bg-gradient-to-b from-sky-50 to-sky-300",
+    bg: "bg-linear-to-b from-sky-50 to-sky-300",
     button:
       "bg-[#0073AD] text-white shadow-lg shadow-sky-500/30 lg:shadow-none lg:bg-transparent lg:text-[#0073AD] lg:border lg:border-[#0073AD] hover:-translate-y-1 lg:hover:bg-[#0073AD]/15 cursor-pointer",
   },
@@ -63,11 +70,12 @@ const MembershipCard: FC<MembershipCardProps> = ({
   benefits,
   isHighlighted = false,
   accentColor,
-  icon,
-  buttonIcon,
   isOpen = true,
+  registrationUrl,
 }) => {
   const styles = isOpen ? accentClasses[accentColor] : disabledClasses;
+  const Icon = accentIcon[accentColor];
+  const ButtonIcon = isHighlighted ? Zap : ChevronRight;
 
   const cardClasses = `
     flex flex-col rounded-3xl p-8 h-full border relative group
@@ -89,7 +97,7 @@ const MembershipCard: FC<MembershipCardProps> = ({
         <div
           className={`h-12 w-12 rounded-full flex items-center justify-center ${styles.text} bg-slate-50 transition-shadow duration-300 ${styles.glow}`}
         >
-          {icon}
+          <Icon size={24} />
         </div>
       </div>
 
@@ -102,14 +110,14 @@ const MembershipCard: FC<MembershipCardProps> = ({
       </div>
 
       {isOpen ? (
-        <div className="text-center mb-2 h-[68px]">
+        <div className="text-center mb-2 h-17">
           <span className="font-rubik text-5xl font-bold text-slate-900">
             {price}
           </span>
           <span className="font-raleway text-slate-500 text-lg">/ year</span>
         </div>
       ) : (
-        <div className="text-center mb-2 h-[68px] flex items-center justify-center">
+        <div className="text-center mb-2 h-17 flex items-center justify-center">
           <span className="font-rubik text-xl font-bold text-gray-400">
             Not Available
           </span>
@@ -120,21 +128,29 @@ const MembershipCard: FC<MembershipCardProps> = ({
         {description}
       </p>
 
-      <ul className="space-y-3 font-raleway text-gray-600 flex-grow mb-8">
+      <ul className="space-y-3 font-raleway text-gray-600 grow mb-8">
         {benefits.map((benefit, index) => (
           <li key={index} className="flex items-start gap-3">
             <CheckCircle2
-              className={`h-5 w-5 flex-shrink-0 mt-0.5 ${styles.text}`}
+              className={`h-5 w-5 shrink-0 mt-0.5 ${styles.text}`}
             />
             <span>{benefit}</span>
           </li>
         ))}
       </ul>
 
-      <button className={buttonClasses} disabled={!isOpen}>
+      <button
+        className={buttonClasses}
+        disabled={!isOpen}
+        onClick={() => {
+          if (isOpen && registrationUrl) {
+            window.open(registrationUrl, "_blank");
+          }
+        }}
+      >
         {isOpen ? (
           <>
-            {buttonIcon}
+            <ButtonIcon size={20} />
             <span>Get Started</span>
           </>
         ) : (

@@ -14,15 +14,15 @@ const Footer = () => {
 
   return (
     <div
-      className="relative w-full h-[520px] md:h-[415px]"
+      className="relative w-full h-130 md:h-103.75"
       style={{ clipPath: "inset(0 0 0 0)" }}
     >
-      <div className="fixed bottom-0 left-0 right-0 h-[520px] md:h-[380px] w-full -z-10 bg-[#00609c] text-white overflow-hidden flex flex-col justify-between font-raleway">
-        <div className="max-w-7xl mx-auto w-full px-6 flex-grow flex flex-col justify-start pt-16 md:pt-20 gap-8">
+      <div className="fixed bottom-0 left-0 right-0 h-130 md:h-95 w-full -z-10 bg-[#00609c] text-white overflow-hidden flex flex-col justify-between font-raleway">
+        <div className="max-w-7xl mx-auto w-full px-6 grow flex flex-col justify-start pt-16 md:pt-20 gap-8">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-0">
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <Image
-                src="/icpep logo.png"
+                src="/brand/icpep-logo.png"
                 alt="ICPEP Logo"
                 width={100}
                 height={100}
@@ -33,39 +33,39 @@ const Footer = () => {
               <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-3">
                 <div className="flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-start">
                   <div
-                    className="flex items-end gap-0.5 cursor-pointer h-[50px]"
+                    className="flex items-end gap-0.5 cursor-pointer h-12.5"
                     onClick={scrollToTop}
                   >
                     <Image
-                      src="/Vector-ifooter.svg"
+                      src="/icons/decorative/Vector-ifooter.svg"
                       alt="I"
                       width={0}
                       height={50}
                       className="h-full w-auto"
                     />
                     <Image
-                      src="/Vector-cfooter.svg"
+                      src="/icons/decorative/Vector-cfooter.svg"
                       alt="C"
                       width={0}
                       height={50}
                       className="h-full w-auto"
                     />
                     <Image
-                      src="/Vector-p1footer.svg"
+                      src="/icons/decorative/Vector-p1footer.svg"
                       alt="P"
                       width={0}
                       height={50}
                       className="h-full w-auto"
                     />
                     <Image
-                      src="/Vector-e1footer.svg"
+                      src="/icons/decorative/Vector-e1footer.svg"
                       alt="E"
                       width={0}
                       height={50}
                       className="h-full w-auto"
                     />
                     <Image
-                      src="/Vector-p2footer.svg"
+                      src="/icons/decorative/Vector-p2footer.svg"
                       alt="P"
                       width={0}
                       height={50}
@@ -73,22 +73,22 @@ const Footer = () => {
                     />
 
                     <Image
-                      src="/Vector-dotfooter.svg"
+                      src="/icons/decorative/Vector-dotfooter.svg"
                       alt="."
                       width={0}
                       height={16}
-                      className="h-[30%] w-auto ml-[-5px] mr-[1px]"
+                      className="h-[30%] w-auto -ml-1.25 mr-px"
                     />
 
                     <Image
-                      src="/Vector-sfooter.svg"
+                      src="/icons/decorative/Vector-sfooter.svg"
                       alt="S"
                       width={0}
                       height={50}
                       className="h-full w-auto"
                     />
                     <Image
-                      src="/Vector-e2footer.svg"
+                      src="/icons/decorative/Vector-e2footer.svg"
                       alt="E"
                       width={0}
                       height={50}
@@ -97,7 +97,7 @@ const Footer = () => {
                   </div>
 
                   <div
-                    className="flex flex-row sm:flex-col gap-2 sm:gap-0 items-baseline sm:justify-between h-auto sm:h-[50px] sm:ml-3 font-rubik text-[#002231] cursor-pointer mt-2 sm:mt-0"
+                    className="flex flex-row sm:flex-col gap-2 sm:gap-0 items-baseline sm:justify-between h-auto sm:h-12.5 sm:ml-3 font-rubik text-[#002231] cursor-pointer mt-2 sm:mt-0"
                     onClick={scrollToTop}
                   >
                     <span className="text-[20px] sm:text-[23px] font-bold leading-none tracking-wide">
@@ -115,8 +115,8 @@ const Footer = () => {
                     collaboration, and leadership.
                   </p>
                   <p className="text-xs text-sky-200 mt-2">
-                    © 2025 ICpEP Student Edition R7 CIT-U Chapter. All rights
-                    reserved.
+                    © {new Date().getFullYear()} ICpEP Student Edition R7
+                    CIT-U Chapter. All rights reserved.
                   </p>
                 </div>
               </div>
@@ -127,27 +127,56 @@ const Footer = () => {
               Mobile: 'mb-6' 
             */}
             <div className="flex flex-col items-center gap-3 mb-6 sm:mb-0">
-              <Link
-                href="/contact-us"
-                className="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-sky-100 transition-all hover:border-white hover:bg-white hover:text-[#00609c]"
-              >
-                <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                <span>Get in Touch</span>
-              </Link>
+              <span className="text-xs font-bold uppercase tracking-widest text-sky-200">
+                Contact Us
+              </span>
               <div className="flex items-center justify-center gap-4">
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-sky-100 transition-all hover:border-white hover:bg-white hover:text-[#00609c] active:scale-95"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  <span>Get in Touch</span>
+                </Link>
                 <a
                   href="https://www.facebook.com/cituicpep"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex hover:scale-110 transition-transform duration-300"
+                  className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/30 transition-all hover:border-white hover:bg-white active:scale-95"
                 >
-                  <Image src="/fb.svg" alt="Facebook" width={28} height={28} />
+                  <Image
+                    src="/icons/social/fb.svg"
+                    alt="Facebook"
+                    width={18}
+                    height={18}
+                    className="opacity-80 transition-all group-hover:opacity-100 group-hover:filter-[invert(28%)_sepia(95%)_saturate(1985%)_hue-rotate(186deg)_brightness(93%)_contrast(101%)]"
+                  />
+                </a>
+                <a
+                  href="https://tiktok.com/@icpep.se.citu"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/30 transition-all hover:border-white hover:bg-white active:scale-95"
+                >
+                  <Image
+                    src="/icons/social/tiktok.svg"
+                    alt="TikTok"
+                    width={18}
+                    height={18}
+                    className="opacity-80 transition-all group-hover:opacity-100 group-hover:filter-[invert(28%)_sepia(95%)_saturate(1985%)_hue-rotate(186deg)_brightness(93%)_contrast(101%)]"
+                  />
                 </a>
                 <a
                   href="mailto:icpepse@cit.edu"
-                  className="flex hover:scale-110 transition-transform duration-300"
+                  className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/30 transition-all hover:border-white hover:bg-white active:scale-95"
                 >
-                  <Image src="/email.svg" alt="Email" width={28} height={28} />
+                  <Image
+                    src="/icons/social/email.svg"
+                    alt="Email"
+                    width={18}
+                    height={18}
+                    className="opacity-80 transition-all group-hover:opacity-100 group-hover:filter-[invert(28%)_sepia(95%)_saturate(1985%)_hue-rotate(186deg)_brightness(93%)_contrast(101%)]"
+                  />
                 </a>
               </div>
             </div>

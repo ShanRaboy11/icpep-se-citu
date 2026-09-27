@@ -29,7 +29,6 @@ export const createSponsor = async (req: Request, res: Response): Promise<void> 
       data: savedSponsor,
     });
   } catch (error) {
-    console.error('Error creating sponsor:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create sponsor',
@@ -46,7 +45,6 @@ export const getSponsors = async (req: Request, res: Response): Promise<void> =>
       data: sponsors,
     });
   } catch (error) {
-    console.error('Error fetching sponsors:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch sponsors',
@@ -63,7 +61,6 @@ export const getAllSponsors = async (req: Request, res: Response): Promise<void>
       data: sponsors,
     });
   } catch (error) {
-    console.error('Error fetching all sponsors:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch sponsors',
@@ -101,7 +98,6 @@ export const updateSponsor = async (req: Request, res: Response): Promise<void> 
       data: updatedSponsor,
     });
   } catch (error) {
-    console.error('Error updating sponsor:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update sponsor',
@@ -125,7 +121,6 @@ export const deleteSponsor = async (req: Request, res: Response): Promise<void> 
       message: 'Sponsor deleted successfully',
     });
   } catch (error) {
-    console.error('Error deleting sponsor:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete sponsor',

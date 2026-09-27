@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import Event, { IEvent } from "../models/event";
+import Event from "../models/event";
+import { canManagePost } from "../utils/ownership";
+import { escapeHtml } from "../utils/html";
 import {
   uploadToCloudinary,
   deleteFromCloudinary,
@@ -7,6 +9,7 @@ import {
 } from "../utils/cloudinary";
 import mongoose from "mongoose";
 import { notifyTargetAudience } from "../utils/notification";
+import sendEmail from "../utils/email";
 
 // Local Multer file shape (avoid relying on global Express.Multer augmentation)
 type MulterFile = MulterLocal.MulterFile;
@@ -40,11 +43,6 @@ export const createEvent = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    console.log("🔵 CREATE EVENT - START");
-    console.log("📦 Request body:", JSON.stringify(req.body, null, 2));
-    console.log("📷 File present:", !!req.file);
-    console.log("👤 User:", req.user);
-
     const {
       title,
       description,
@@ -72,7 +70,6 @@ export const createEvent = async (
     const author = req.user?.id;
 
     if (!author) {
-      console.error("❌ No author ID found");
       res.status(401).json({
         success: false,
         message: "User not authenticated",
@@ -89,9 +86,6 @@ export const createEvent = async (
 
     if (Array.isArray(multerFiles) && multerFiles.length > 0) {
       try {
-        console.log(
-          `📷 Uploading ${multerFiles.length} images to Cloudinary...`
-        );
         const buffers = multerFiles
           .filter((f) => !!f.buffer)
           .map((f) => ({ buffer: f.buffer as Buffer }));
@@ -102,22 +96,16 @@ export const createEvent = async (
         galleryImages = results
           .map((r) => (r as any).secure_url)
           .filter(Boolean);
-        console.log("✅ Images uploaded:", galleryImages);
         // Ensure coverImage is set to first uploaded image if not already
         if (!coverImage && galleryImages.length > 0) {
           coverImage = galleryImages[0];
         }
       } catch (uploadError) {
-        console.error("❌ Cloudinary multiple upload failed:", uploadError);
-        console.error("Attempting individual uploads as fallback...");
         // Try uploading individually to get partial results
         try {
           for (const f of multerFiles) {
             try {
               if (!f.buffer) {
-                console.warn(
-                  "Skipping file with empty buffer during fallback upload"
-                );
                 continue;
               }
               const singleResult = await uploadToCloudinary(
@@ -127,11 +115,7 @@ export const createEvent = async (
               const url = (singleResult as any).secure_url;
               if (url) galleryImages.push(url);
               if (!coverImage && url) coverImage = url;
-            } catch (singleErr) {
-              console.error(
-                "Failed uploading one file in fallback:",
-                singleErr
-              );
+            } catch {
               // continue with others
             }
           }
@@ -148,9 +132,7 @@ export const createEvent = async (
             });
             return;
           }
-          console.log("✅ Fallback uploaded images:", galleryImages);
         } catch (fallbackErr) {
-          console.error("❌ Fallback upload also failed:", fallbackErr);
           res.status(500).json({
             success: false,
             message: "Failed to upload images",
@@ -165,7 +147,6 @@ export const createEvent = async (
     } else if (singleFile) {
       // Backwards compatible: if a single file was uploaded under req.file
       try {
-        console.log("📷 Uploading single cover image to Cloudinary...");
         const buf = singleFile.buffer as Buffer | undefined;
         if (!buf) {
           res
@@ -177,9 +158,7 @@ export const createEvent = async (
         const url = (result as any).secure_url;
         galleryImages = url ? [url] : [];
         coverImage = url || coverImage;
-        console.log("✅ Image uploaded:", url);
       } catch (uploadError) {
-        console.error("❌ Cloudinary upload failed:", uploadError);
         res.status(500).json({
           success: false,
           message: "Failed to upload cover image",
@@ -206,7 +185,6 @@ export const createEvent = async (
           ? JSON.parse(req.body.details)
           : req.body.details;
     } catch (parseError) {
-      console.error("❌ JSON parsing failed:", parseError);
       res.status(400).json({
         success: false,
         message: "Invalid JSON data in request",
@@ -216,18 +194,8 @@ export const createEvent = async (
       return;
     }
 
-    console.log("📝 Creating event with data:", {
-      title,
-      author,
-      eventDate,
-      isPublished: String(isPublished) === "true",
-      targetAudience: parsedTargetAudience,
-      hasCoverImage: !!coverImage,
-    });
-
     // Validate required fields
     if (!title || !description || !content || !eventDate) {
-      console.error("❌ Missing required fields");
       res.status(400).json({
         success: false,
         message:
@@ -281,13 +249,8 @@ export const createEvent = async (
       eventData.scheduled = false;
     }
 
-    console.log("💾 Saving to database...");
     const event = await Event.create(eventData);
-
-    console.log("👥 Populating author...");
     await event.populate("author", "firstName lastName studentNumber");
-
-    console.log("✅ Event created successfully:", event._id);
 
     // Send notification if published
     if (event.isPublished) {
@@ -308,11 +271,6 @@ export const createEvent = async (
       data: event,
     });
   } catch (error) {
-    console.error("❌ FATAL ERROR in createEvent:", error);
-    console.error(
-      "Error stack:",
-      error instanceof Error ? error.stack : "No stack"
-    );
 
     res.status(500).json({
       success: false,
@@ -450,13 +408,20 @@ export const updateEvent = async (
       return;
     }
 
+    if (!canManagePost(req.user, event.author)) {
+      res.status(403).json({
+        success: false,
+        message: "You can only manage your own events",
+      });
+      return;
+    }
+
     // Handle new cover image upload
     // Handle uploaded files (multiple) during update
     const reqFiles = (req as any).files as MulterFile[] | undefined;
     const reqSingle = (req as any).file as MulterFile | undefined;
     if (Array.isArray(reqFiles) && reqFiles.length > 0) {
       try {
-        console.log(`📷 Uploading ${reqFiles.length} images for update...`);
         const buffers = reqFiles
           .filter((f) => !!f.buffer)
           .map((f) => ({ buffer: f.buffer as Buffer }));
@@ -474,9 +439,7 @@ export const updateEvent = async (
         req.body.galleryImages = JSON.stringify([...existing, ...newUrls]);
         if (!event.coverImage && newUrls.length > 0)
           req.body.coverImage = newUrls[0];
-        console.log("✅ Uploaded and appended images:", newUrls);
       } catch (err) {
-        console.error("❌ Failed uploading images on update:", err);
         res
           .status(500)
           .json({
@@ -518,8 +481,7 @@ export const updateEvent = async (
     if (req.body.details && typeof req.body.details === "string") {
       try {
         req.body.details = JSON.parse(req.body.details);
-      } catch (e) {
-        console.error("❌ Failed to parse details on update:", e);
+      } catch {
       }
     }
 
@@ -567,7 +529,7 @@ export const updateEvent = async (
     ) {
       try {
         updateData.galleryImages = JSON.parse(updateData.galleryImages);
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
@@ -608,6 +570,14 @@ export const deleteEvent = async (
       return;
     }
 
+    if (!canManagePost(req.user, event.author)) {
+      res.status(403).json({
+        success: false,
+        message: "You can only manage your own events",
+      });
+      return;
+    }
+
     // Delete cover image from cloudinary if exists
     if (event.coverImage) {
       await deleteFromCloudinary(event.coverImage);
@@ -642,6 +612,14 @@ export const togglePublishStatus = async (
 
     if (!event) {
       res.status(404).json({ message: "Event not found" });
+      return;
+    }
+
+    if (!canManagePost(req.user, event.author)) {
+      res.status(403).json({
+        success: false,
+        message: "You can only manage your own events",
+      });
       return;
     }
 
@@ -759,6 +737,78 @@ export const getMyEvents = async (
         pages: Math.ceil(total / limitNum),
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Report an event (sends an email to the organizing chapter's inbox)
+export const reportEvent = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { reason, details } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, message: "Invalid event ID" });
+      return;
+    }
+
+    if (!reason || !details || !String(details).trim()) {
+      res.status(400).json({
+        success: false,
+        message: "Please provide a reason and details for the report",
+      });
+      return;
+    }
+
+    if (String(reason).length > 200 || String(details).length > 2000) {
+      res.status(400).json({
+        success: false,
+        message: "Report is too long",
+      });
+      return;
+    }
+
+    const event = await Event.findById(id);
+    if (!event) {
+      res.status(404).json({ success: false, message: "Event not found" });
+      return;
+    }
+
+    const reportRecipient =
+      process.env.REPORT_EMAIL ||
+      process.env.FROM_EMAIL ||
+      process.env.SMTP_EMAIL;
+
+    if (!reportRecipient) {
+      res.status(500).json({
+        success: false,
+        message: "Reporting is not configured on the server yet",
+      });
+      return;
+    }
+
+    const message = `Event reported: ${event.title}\n\nReason: ${reason}\n\nDetails:\n${details}`;
+    const html = `
+      <h2>Event Reported</h2>
+      <p><strong>Event:</strong> ${escapeHtml(event.title)}</p>
+      <p><strong>Reason:</strong> ${escapeHtml(reason)}</p>
+      <p><strong>Details:</strong></p>
+      <p>${escapeHtml(details).replace(/\n/g, "<br/>")}</p>
+    `;
+
+    await sendEmail({
+      email: reportRecipient,
+      subject: `Event Report: ${event.title}`,
+      message,
+      html,
+    });
+
+    res.status(200).json({ success: true, message: "Report sent" });
   } catch (error) {
     next(error);
   }

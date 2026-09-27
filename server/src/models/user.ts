@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
+import { getDefaultPassword } from "../config/env";
 
 // Interface for User document
 export interface IUser extends Document {
@@ -11,9 +12,18 @@ export interface IUser extends Document {
   middleName?: string;
   password: string;
   role: 'student' | 'council-officer' | 'committee-officer' | 'faculty' | 'admin';
+  // Legacy single-slot fields, kept for backward compatibility with any code
+  // still reading them directly. New code should use the council/committee
+  // fields below, which let a student hold both roles at once.
   position?: string;
   department?: string;
   yearLevel?: number;
+  // Executive Council assignment (independent of committee assignment)
+  councilPosition?: string;
+  councilYearLevel?: number;
+  // Committee assignment (independent of council assignment)
+  committeeDepartment?: string;
+  committeeTitle?: string;
   membershipStatus: {
     isMember: boolean;
     membershipType: "local" | "regional" | "both" | null;
@@ -23,6 +33,8 @@ export interface IUser extends Document {
   isActive: boolean;
   registeredBy?: mongoose.Types.ObjectId | IUser;
   firstLogin: boolean;
+  // Bumped when the password is reset, which signs out every existing session.
+  tokenVersion: number;
   createdAt: Date;
   updatedAt: Date;
   fullName: string;
@@ -71,7 +83,7 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Password is required"],
       minlength: 6,
-      default: "123456",
+      default: () => getDefaultPassword(),
       select: false,
     },
     role: {
@@ -91,6 +103,23 @@ const userSchema = new Schema<IUser>(
       type: Number,
       min: 1,
       max: 5,
+    },
+    councilPosition: {
+      type: String,
+      default: null,
+    },
+    councilYearLevel: {
+      type: Number,
+      min: 1,
+      max: 5,
+    },
+    committeeDepartment: {
+      type: String,
+      default: null,
+    },
+    committeeTitle: {
+      type: String,
+      default: null,
     },
     membershipStatus: {
       isMember: { type: Boolean, default: false },
@@ -118,6 +147,10 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: true,
       select: false,
+    },
+    tokenVersion: {
+      type: Number,
+      default: 0,
     },
     resetPasswordCode: {
       type: String,
@@ -154,7 +187,16 @@ userSchema.virtual("registeredByName").get(function (this: IUser) {
 
 // Pre-save middleware to hash password
 userSchema.pre("save", async function (this: IUser, next) {
-  if (!this.isModified("password")) return next();
+  // A changed password revokes every token issued before it, unless the
+  // caller is the signed-in owner changing it themselves ($locals.keepSessions).
+  if (this.isModified("password") && !this.isNew && !this.$locals.keepSessions) {
+    this.tokenVersion = (this.tokenVersion ?? 0) + 1;
+  }
+
+  // Bulk creates pre-hash their passwords (see user.controller), so skip re-hashing.
+  if (!this.isModified("password") || this.$locals.passwordAlreadyHashed) {
+    return next();
+  }
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });

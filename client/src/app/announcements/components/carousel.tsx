@@ -20,17 +20,26 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
   ]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const scrollPrev = useCallback(
-    () => emblaApi && emblaApi.scrollPrev(),
-    [emblaApi]
-  );
-  const scrollNext = useCallback(
-    () => emblaApi && emblaApi.scrollNext(),
-    [emblaApi]
-  );
+  // Restart the autoplay timer from 0s after any manual interaction, so the
+  // next auto-advance doesn't fire early and feel abrupt/cut short.
+  const resetAutoplay = useCallback(() => {
+    emblaApi?.plugins()?.autoplay?.reset();
+  }, [emblaApi]);
+
+  const scrollPrev = useCallback(() => {
+    emblaApi?.scrollPrev();
+    resetAutoplay();
+  }, [emblaApi, resetAutoplay]);
+  const scrollNext = useCallback(() => {
+    emblaApi?.scrollNext();
+    resetAutoplay();
+  }, [emblaApi, resetAutoplay]);
   const scrollTo = useCallback(
-    (index: number) => emblaApi && emblaApi.scrollTo(index),
-    [emblaApi]
+    (index: number) => {
+      emblaApi?.scrollTo(index);
+      resetAutoplay();
+    },
+    [emblaApi, resetAutoplay]
   );
 
   useEffect(() => {
@@ -69,8 +78,8 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
         onClick={scrollPrev}
         aria-label="Previous image"
         disabled={!emblaApi}
-        className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/60 hover:bg-white/90 text-primary3 rounded-full p-2 
-                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary2 cursor-pointer opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
+        className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/60 hover:bg-white/90 text-primary3 rounded-full p-2
+                   transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary2 active:scale-90 cursor-pointer opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
       >
         <ChevronLeft className="h-6 w-6" />
       </button>
@@ -78,8 +87,8 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
         onClick={scrollNext}
         aria-label="Next image"
         disabled={!emblaApi}
-        className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/60 hover:bg-white/90 text-primary3 rounded-full p-2 
-                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary2 cursor-pointer opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
+        className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/60 hover:bg-white/90 text-primary3 rounded-full p-2
+                   transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary2 active:scale-90 cursor-pointer opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto"
       >
         <ChevronRight className="h-6 w-6" />
       </button>
@@ -89,7 +98,7 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
           <button
             key={index}
             onClick={() => scrollTo(index)}
-            className={`h-2 w-2 rounded-full transition-all cursor-pointer duration-300 ${
+            className={`h-2 w-2 rounded-full transition-all cursor-pointer duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary2 ${
               index === selectedIndex ? "w-6 bg-white" : "bg-white/50"
             }`}
           />

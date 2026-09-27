@@ -31,7 +31,6 @@ export const createTestimonial = async (req: Request, res: Response): Promise<vo
       data: savedTestimonial,
     });
   } catch (error) {
-    console.error('Error creating testimonial:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create testimonial',
@@ -48,7 +47,6 @@ export const getTestimonials = async (req: Request, res: Response): Promise<void
       data: testimonials,
     });
   } catch (error) {
-    console.error('Error fetching testimonials:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch testimonials',
@@ -65,7 +63,6 @@ export const getAllTestimonials = async (req: Request, res: Response): Promise<v
       data: testimonials,
     });
   } catch (error) {
-    console.error('Error fetching all testimonials:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch testimonials',
@@ -105,7 +102,6 @@ export const updateTestimonial = async (req: Request, res: Response): Promise<vo
       data: updatedTestimonial,
     });
   } catch (error) {
-    console.error('Error updating testimonial:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update testimonial',
@@ -129,7 +125,6 @@ export const deleteTestimonial = async (req: Request, res: Response): Promise<vo
       message: 'Testimonial deleted successfully',
     });
   } catch (error) {
-    console.error('Error deleting testimonial:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete testimonial',

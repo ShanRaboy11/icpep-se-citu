@@ -1,41 +1,4 @@
-import axios, { AxiosError } from 'axios';
-
-// Reuse the same API normalization pattern used elsewhere in services
-const _RAW_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const API_URL = (() => {
-  try {
-    let base = String(_RAW_API).replace(/\/+$/, '');
-    if (!base.endsWith('/api')) base = `${base}/api`;
-    return base;
-  } catch {
-    return 'http://localhost:5000/api';
-  }
-})();
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' },
-  timeout: 30000,
-});
-
-api.interceptors.request.use((config) => {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  if (config.data instanceof FormData) {
-    const headers = config.headers as Record<string, unknown> | undefined;
-    if (headers && Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
-      delete headers['Content-Type'];
-    }
-  }
-  return config;
-});
-
-api.interceptors.response.use(
-  (res) => res,
-  (error: AxiosError) => Promise.reject(error)
-);
+import { api } from './api-client';
 
 export interface CurrentUser {
   id: string;
@@ -46,8 +9,18 @@ export interface CurrentUser {
   yearLevel?: string | number;
   role?: string;
   position?: string;
+  department?: string;
   membership?: 'both' | 'local' | 'regional' | string;
   avatar?: string;
+  profilePicture?: string;
+  councilPosition?: string;
+  committeeDepartment?: string;
+  committeeTitle?: string;
+  membershipStatus?: {
+    isMember: boolean;
+    membershipType: 'local' | 'regional' | 'both' | null;
+    validUntil?: string;
+  };
 }
 
 class UserService {
@@ -86,7 +59,29 @@ class UserService {
         email: u.email,
         yearLevel: u.yearLevel,
         studentNumber: u.studentNumber,
+        councilPosition: u.councilPosition,
+        committeeTitle: u.committeeTitle,
+        committeeDepartment: u.committeeDepartment,
+        department: u.department,
       }));
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getStats(): Promise<{
+    success: boolean;
+    data?: {
+      total: number;
+      active: number;
+      inactive: number;
+      members: number;
+      nonMembers: number;
+    };
+  }> {
+    try {
+      const res = await api.get('/users/stats');
+      return res.data;
     } catch (err) {
       throw err;
     }

@@ -1,99 +1,5 @@
 import axios, { AxiosError } from 'axios';
-
-// Normalize API base URL: allow providing host (e.g. https://my-backend.render.com)
-// or a full URL that already includes `/api`. If the env var is set to a
-// hostname without `/api`, append `/api` so requests target the server routes.
-const _RAW_API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const API_URL = (() => {
-    try {
-        let base = String(_RAW_API).replace(/\/+$/, '');
-        if (!base.endsWith('/api')) base = `${base}/api`;
-
-        // In browser, warn if the API base appears to point at the same host
-        // but the env var wasn't explicitly provided (common misconfiguration).
-        if (typeof window !== 'undefined') {
-            try {
-                const baseHost = new URL(base).host;
-                const windowHost = window.location.host;
-                if (baseHost === windowHost && !process.env.NEXT_PUBLIC_API_URL) {
-                    console.warn(
-                        '⚠️ WARNING: API base defaults to same origin. In production set `NEXT_PUBLIC_API_URL` to your backend (including protocol), e.g. https://my-backend.example.com'
-                    );
-                }
-            } catch {
-                // ignore URL parsing errors
-            }
-        }
-
-        return base;
-    } catch {
-        return 'http://localhost:5000/api';
-    }
-})();
-
-// Create axios instance with default config
-const api = axios.create({
-    baseURL: API_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    timeout: 30000, // 30 second timeout
-});
-
-// Add auth token to requests
-api.interceptors.request.use((config) => {
-    // The app stores auth token under 'authToken' (see login page)
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    console.log('🔵 API Request:', {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        baseURL: config.baseURL,
-        fullURL: `${config.baseURL}${config.url}`,
-        hasAuth: !!token,
-        contentType: config.headers['Content-Type'],
-    });
-    
-    // If sending FormData, allow browser/axios to set the Content-Type (including boundary)
-    if (config.data instanceof FormData) {
-        if (config.headers && 'Content-Type' in config.headers) {
-            const headers = config.headers as Record<string, unknown> | undefined;
-            if (headers && Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
-                delete headers['Content-Type'];
-            }
-        }
-    }
-
-    return config;
-});
-
-// Add response interceptor for debugging
-api.interceptors.response.use(
-    (response) => {
-        console.log('✅ API Response:', {
-            status: response.status,
-            url: response.config.url,
-            data: response.data,
-        });
-        return response;
-    },
-    (error: AxiosError) => {
-        // Safe error logging
-        const errorDetails = {
-            status: error.response?.status,
-            url: error.config?.url,
-            method: error.config?.method,
-            message: error.message,
-            data: error.response?.data,
-        };
-        
-        console.error('❌ API Error:', JSON.stringify(errorDetails, null, 2));
-        return Promise.reject(error);
-    }
-);
+import { api } from './api-client';
 
 export interface ApiError {
     message: string;
@@ -113,7 +19,7 @@ export interface AnnouncementResponse {
 }
 
 // Normalize backend announcement objects to a stable client-facing shape
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 export interface ClientAnnouncement {
     id: string;
     title: string;
@@ -126,7 +32,7 @@ export interface ClientAnnouncement {
     author?: any;
     [key: string]: any;
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
+ 
 
 function normalizeType(rawType: string | undefined): "News" | "Meeting" | "Achievement" | string {
     if (!rawType) return "News";
@@ -138,7 +44,7 @@ function normalizeType(rawType: string | undefined): "News" | "Meeting" | "Achie
     return rawType;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function normalizeAnnouncement(raw: any): ClientAnnouncement {
     const id = raw._id ?? raw.id ?? String((raw.id ?? raw._id) ?? "");
     const title = raw.title ?? raw.name ?? "Untitled";
@@ -218,8 +124,6 @@ class AnnouncementService {
      */
     async createAnnouncement(data: AnnouncementData, images?: File[] | File): Promise<AnnouncementResponse> {
         try {
-            console.log('📤 Creating announcement with data:', data);
-            
             const formData = new FormData();
 
             // Append simple fields directly (don't stringify)
@@ -254,20 +158,8 @@ class AnnouncementService {
             // Append image(s) if provided
             if (images) {
                 const imgs = Array.isArray(images) ? images : [images];
-                console.log(`📷 Appending ${imgs.length} image(s)`);
                 imgs.forEach((file) => formData.append('images', file));
             }
-
-            // Log FormData contents for debugging
-            console.log('📋 FormData contents:');
-            formData.forEach((value, key) => {
-                if (value instanceof File) {
-                    console.log(`  ${key}:`, `File(${value.name}, ${value.size} bytes)`);
-                } else {
-                    const displayValue = String(value).substring(0, 50);
-                    console.log(`  ${key}:`, displayValue + (String(value).length > 50 ? '...' : ''));
-                }
-            });
 
             const response = await api.post('/announcements', formData);
 

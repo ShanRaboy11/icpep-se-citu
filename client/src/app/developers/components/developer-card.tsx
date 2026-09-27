@@ -34,7 +34,7 @@ export default function DeveloperCard({
 
   return (
     <div
-      className="w-[310px] h-[330px] sm:w-[320px] sm:h-[360px] md:w-[360px] md:h-[360px]"
+      className="w-77.5 h-82.5 sm:w-80 sm:h-90 md:w-90 md:h-90"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -44,8 +44,8 @@ export default function DeveloperCard({
         }`}
       >
         {/* front */}
-        <div className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg backface-hidden bg-gradient-to-b from-sky-400 to-blue-600 flex flex-col justify-between">
-          <div className="absolute top-[-60px] sm:top-[-19px] lg:top-[-38px] left-0 w-full h-full z-0 hidden md:block">
+        <div className="absolute w-full h-full rounded-2xl overflow-hidden shadow-lg backface-hidden bg-linear-to-b from-sky-400 to-blue-600 flex flex-col justify-between">
+          <div className="absolute -top-15 sm:-top-4.75 lg:-top-9.5 left-0 w-full h-full z-0 hidden md:block">
             <Image
               src={bgSrc}
               alt={`${name}`}
@@ -55,9 +55,9 @@ export default function DeveloperCard({
             />
           </div>
 
-          <div className="absolute top-[-15px] left-[20px] w-[120%] h-[120%] z-0 md:hidden">
+          <div className="absolute -top-3.75 left-5 w-[120%] h-[120%] z-0 md:hidden">
             <Image
-              src="/icpep logo.png"
+              src="/brand/icpep-logo.png"
               alt={`${name}`}
               fill
               className="object-contain object-bottom opacity-10"
@@ -94,7 +94,7 @@ export default function DeveloperCard({
         </div>
 
         {/* back */}
-        <div className="absolute px-8 sm:px-12 lg:px-12 w-full h-full rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-sky-400 to-blue-900 p-6 flex flex-col justify-between text-white rotate-y-180 backface-hidden">
+        <div className="absolute px-8 sm:px-12 lg:px-12 w-full h-full rounded-2xl overflow-hidden shadow-lg bg-linear-to-br from-sky-400 to-blue-900 p-6 flex flex-col justify-between text-white rotate-y-180 backface-hidden">
           <div>
             <h2 className="font-rubik text-[20.2px] sm:text-xl lg:text-2xl text-center font-bold mt-1 sm:mt-1 lg:mt-1 mb-2 sm:mb-3 lg:mb-3">
               {name}
@@ -106,7 +106,7 @@ export default function DeveloperCard({
             </ul>
           </div>
 
-          <div className="self-end flex items-center gap-4 mr-[-20px] mt-5 py-2 px-4">
+          <div className="self-end flex items-center gap-4 -mr-5 mt-5 py-2 px-4">
             {githubLink && githubLink !== "#" && (
               <a
                 href={githubLink}

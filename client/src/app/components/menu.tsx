@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import { ChevronRight, MessageCircle } from "lucide-react";
 
 interface MenuProps {
   userRole:
@@ -56,11 +57,13 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
           { label: "Announcements", href: "/create/announcements" },
           { label: "Events", href: "/create/events" },
           { label: "Merch", href: "/create/merch" },
+          { label: "Membership", href: "/create/membership" },
           { label: "Testimonials", href: "/create/testimonials" },
           { label: "Sponsors", href: "/create/sponsors" },
           { label: "Officers", href: "/create/officers" },
+          { label: "Advisors", href: "/create/advisors" },
+          { label: "Faculty", href: "/create/faculty" },
           { label: "Users", href: "/users" },
-          { label: "FAQ", href: "/faq" },
         ],
       });
     }
@@ -84,12 +87,29 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     onExit();
   };
 
-  const handleMouseEnter = (label: string) => {
-    setActiveItem(label);
+  // Hovering only opens the desktop options panel for a real mouse. Touch
+  // screens also emit an emulated hover right before the click, which used to
+  // open a submenu and have the click toggle it shut again straight away.
+  const handleHoverEnter = (e: React.PointerEvent, label: string) => {
+    if (e.pointerType === "mouse") setActiveItem(label);
   };
 
-  const handleMouseLeaveNav = () => {
-    setActiveItem(null);
+  const handleHoverLeave = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse") setActiveItem(null);
+  };
+
+  const handleItemClick = (item: MenuItem) => {
+    if (!item.children) {
+      handleNavigate(item.href);
+      return;
+    }
+
+    // On wide screens the options panel is already showing, so a click keeps
+    // it open; on phones the click is what expands and collapses the submenu.
+    const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+    setActiveItem((current) =>
+      !isDesktop && current === item.label ? null : item.label,
+    );
   };
 
   const activeChildren = activeItem
@@ -100,7 +120,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     <div className="w-full min-h-screen bg-[#00609c] text-white font-rubik relative overflow-hidden flex flex-col">
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <Image
-          src="/gle.png"
+          src="/content/gle.png"
           alt="Background"
           fill
           className="object-cover"
@@ -114,66 +134,66 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
           className="flex items-center gap-3 cursor-pointer group opacity-90 hover:opacity-100 transition-opacity"
         >
           <Image
-            src="/icpep logo.png"
+            src="/brand/icpep-logo.png"
             alt="ICPEP Logo"
             width={56}
             height={56}
-            className="w-12 h-12 md:w-[54px] md:h-[54px] object-contain"
+            className="w-12 h-12 md:w-13.5 md:h-13.5 object-contain"
           />
 
-          <div className="flex flex-col justify-center gap-[2px]">
-            <div className="flex items-start gap-[1px] h-[26px] md:h-[34px]">
+          <div className="flex flex-col justify-center gap-0.5">
+            <div className="flex items-start gap-px h-6.5 md:h-8.5">
               <Image
-                src="/Vector-ifooter.svg"
+                src="/icons/decorative/Vector-ifooter.svg"
                 alt="I"
                 width={0}
                 height={34}
                 className="h-full w-auto"
               />
               <Image
-                src="/Vector-cfooter.svg"
+                src="/icons/decorative/Vector-cfooter.svg"
                 alt="C"
                 width={0}
                 height={34}
                 className="h-full w-auto"
               />
               <Image
-                src="/Vector-p1footer.svg"
+                src="/icons/decorative/Vector-p1footer.svg"
                 alt="P"
                 width={0}
                 height={34}
                 className="h-full w-auto"
               />
               <Image
-                src="/Vector-e1footer.svg"
+                src="/icons/decorative/Vector-e1footer.svg"
                 alt="E"
                 width={0}
                 height={34}
                 className="h-full w-auto"
               />
               <Image
-                src="/Vector-p2footer.svg"
+                src="/icons/decorative/Vector-p2footer.svg"
                 alt="P"
                 width={0}
                 height={34}
                 className="h-full w-auto"
               />
               <Image
-                src="/Vector-dotfooter.svg"
+                src="/icons/decorative/Vector-dotfooter.svg"
                 alt="."
                 width={0}
                 height={8}
-                className="h-[30%] w-auto -ml-[2px] mr-[2px] self-end"
+                className="h-[30%] w-auto -ml-0.5 mr-0.5 self-end"
               />
               <Image
-                src="/Vector-sfooter.svg"
+                src="/icons/decorative/Vector-sfooter.svg"
                 alt="S"
                 width={0}
                 height={34}
                 className="h-full w-auto"
               />
               <Image
-                src="/Vector-e2footer.svg"
+                src="/icons/decorative/Vector-e2footer.svg"
                 alt="E"
                 width={0}
                 height={34}
@@ -193,6 +213,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
 
         <button
           onClick={onExit}
+          aria-label="Close menu"
           className="group cursor-pointer flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 transition-all duration-300"
         >
           <svg
@@ -213,7 +234,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
       </div>
 
       <div
-        onMouseLeave={handleMouseLeaveNav}
+        onPointerLeave={handleHoverLeave}
         className="flex-1 relative z-10 flex flex-col md:flex-row px-6 md:px-12 pt-4 pb-12 max-w-7xl mx-auto w-full"
       >
         <div className="w-full md:w-5/12 lg:w-1/3 flex flex-col gap-2 md:gap-4 md:border-r border-white/10 md:pr-10">
@@ -224,12 +245,8 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
           {navItems.map((item) => (
             <div key={item.label} className="flex flex-col">
               <div
-                onMouseEnter={() => handleMouseEnter(item.label)}
-                onClick={() => {
-                  if (activeItem === item.label) setActiveItem(null);
-                  else setActiveItem(item.label);
-                  if (!item.children) handleNavigate(item.href);
-                }}
+                onPointerEnter={(e) => handleHoverEnter(e, item.label)}
+                onClick={() => handleItemClick(item)}
                 className="group cursor-pointer flex items-center justify-between py-1"
               >
                 <span
@@ -238,27 +255,31 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                   {item.label}
                 </span>
                 <span
-                  className={`hidden md:block text-2xl transition-opacity duration-300 ${activeItem === item.label ? "opacity-100 text-[#00a7ee]" : "opacity-0"}`}
+                  className={`hidden md:block transition-opacity duration-300 ${activeItem === item.label ? "opacity-100 text-[#00a7ee]" : "opacity-0"}`}
                 >
-                  &rarr;
+                  <ChevronRight className="h-6 w-6" />
                 </span>
                 {item.children && (
                   <span
-                    className={`md:hidden text-xl text-white/50 ${activeItem === item.label ? "rotate-90 text-[#00a7ee]" : ""} transition-transform duration-300`}
+                    className={`md:hidden text-white/50 ${activeItem === item.label ? "rotate-90 text-[#00a7ee]" : ""} transition-transform duration-300`}
                   >
-                    &#8250;
+                    <ChevronRight className="h-5 w-5" />
                   </span>
                 )}
               </div>
 
               {activeItem === item.label && item.children && (
-                <div className="md:hidden flex flex-col pl-6 mt-2 mb-4 border-l-2 border-[#00a7ee]/30 animate-in slide-in-from-top-2 duration-200">
+                <div
+                  className={`md:hidden grid gap-x-4 pl-5 mt-1 mb-2 border-l-2 border-[#00a7ee]/30 animate-in slide-in-from-top-2 duration-200 ${
+                    item.children.length > 4 ? "grid-cols-2" : "grid-cols-1"
+                  }`}
+                >
                   {item.children.map((child) => (
                     <Link
                       key={child.label}
                       href={child.href || "#"}
                       onClick={() => onExit()}
-                      className="py-2 text-xl text-white/80 hover:text-[#00a7ee] cursor-pointer font-raleway"
+                      className="py-1.5 text-base text-white/80 hover:text-[#00a7ee] cursor-pointer font-raleway"
                     >
                       {child.label}
                     </Link>
@@ -285,7 +306,11 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
               <h3 className="text-white/50 text-sm font-raleway mb-6 uppercase tracking-wider">
                 {activeItem} Options
               </h3>
-              <div className="grid grid-cols-1 gap-6">
+              <div
+                className={`grid gap-x-10 gap-y-6 ${
+                  activeChildren.length > 5 ? "grid-cols-2" : "grid-cols-1"
+                }`}
+              >
                 {activeChildren.map((child) => (
                   <Link
                     key={child.label}
@@ -293,7 +318,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                     onClick={() => onExit()}
                     className="group flex items-center gap-4 cursor-pointer w-fit"
                   >
-                    <div className="w-12 h-[1px] bg-white/30 group-hover:w-20 group-hover:bg-[#00a7ee] transition-all duration-300"></div>
+                    <div className="w-12 h-px bg-white/30 group-hover:w-20 group-hover:bg-[#00a7ee] transition-all duration-300"></div>
                     <span className="text-2xl font-raleway font-light text-white group-hover:text-[#00a7ee] transition-colors">
                       {child.label}
                     </span>
@@ -344,10 +369,14 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
               <div className="flex gap-4">
                 {[
                   {
-                    src: "/fb.svg",
+                    src: "/icons/social/fb.svg",
                     link: "https://www.facebook.com/cituicpep",
                   },
-                  { src: "/email.svg", link: "mailto:icpepse@cit.edu" },
+                  {
+                    src: "/icons/social/tiktok.svg",
+                    link: "https://tiktok.com/@icpep.se.citu",
+                  },
+                  { src: "/icons/social/email.svg", link: "mailto:icpepse@cit.edu" },
                 ].map((social, idx) => (
                   <a
                     key={idx}
@@ -359,12 +388,19 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                     <Image
                       src={social.src}
                       alt="Social"
-                      width={20}
-                      height={20}
-                      className="opacity-70 group-hover:opacity-100 group-hover:[filter:invert(28%)_sepia(95%)_saturate(1985%)_hue-rotate(186deg)_brightness(93%)_contrast(101%)] transition-all"
+                      width={24}
+                      height={24}
+                      className="opacity-70 group-hover:opacity-100 group-hover:filter-[invert(28%)_sepia(95%)_saturate(1985%)_hue-rotate(186deg)_brightness(93%)_contrast(101%)] transition-all"
                     />
                   </a>
                 ))}
+                <Link
+                  href="/contact"
+                  onClick={() => onExit()}
+                  className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center hover:bg-white hover:border-white transition-all duration-300 group"
+                >
+                  <MessageCircle className="h-5 w-5 text-white/70 group-hover:text-[#00609c] group-hover:opacity-100 transition-all" />
+                </Link>
               </div>
             </div>
           </div>

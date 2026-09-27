@@ -1,3 +1,5 @@
+import { api, errorMessage } from "./api-client";
+
 export type Meeting = {
   _id: string;
   title: string;
@@ -7,33 +9,25 @@ export type Meeting = {
   startTime: string;
   endTime: string;
   timeLimit?: string;
-};
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-const authHeader = () => {
-  if (typeof window === "undefined") return {} as Record<string, string>;
-  const token = localStorage.getItem("authToken");
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  meetingLink?: string;
 };
 
 export async function createMeeting(payload: Omit<Meeting, "_id">) {
-  const res = await fetch(`${API_BASE}/meetings`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeader() },
-    body: JSON.stringify(payload),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message || "Failed to create meeting");
-  return json.data as Meeting;
+  try {
+    const res = await api.post("/meetings", payload);
+    return res.data.data as Meeting;
+  } catch (error) {
+    throw new Error(errorMessage(error, "Failed to create meeting"));
+  }
 }
 
 export async function getMeeting(id: string) {
-  const res = await fetch(`${API_BASE}/meetings/${id}`, {
-    headers: { ...authHeader() },
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message || "Failed to fetch meeting");
-  return json.data as Meeting;
+  try {
+    const res = await api.get(`/meetings/${id}`);
+    return res.data.data as Meeting;
+  } catch (error) {
+    throw new Error(errorMessage(error, "Failed to fetch meeting"));
+  }
 }
 
 export async function listMeetings(params?: {
@@ -41,41 +35,33 @@ export async function listMeetings(params?: {
   me?: boolean;
   q?: string;
 }) {
-  const search = new URLSearchParams();
-  if (params?.upcoming) search.set("upcoming", "true");
-  if (params?.me) search.set("me", "true");
-  if (params?.q) search.set("q", params.q);
+  const query: Record<string, string> = {};
+  if (params?.upcoming) query.upcoming = "true";
+  if (params?.me) query.me = "true";
+  if (params?.q) query.q = params.q;
 
-  const res = await fetch(`${API_BASE}/meetings?${search.toString()}`, {
-    headers: { ...authHeader() },
-    cache: "no-store", // Ensure we don't cache old results
-  });
-
-  const json = await res.json();
-
-  if (!res.ok) throw new Error(json.message || "Failed to list meetings");
-
-  // FIX: Handle the { success: true, data: [...] } structure
-  return json.data as Meeting[];
+  try {
+    const res = await api.get("/meetings", { params: query });
+    return res.data.data as Meeting[];
+  } catch (error) {
+    throw new Error(errorMessage(error, "Failed to list meetings"));
+  }
 }
 
 export async function updateMeeting(id: string, patch: Partial<Meeting>) {
-  const res = await fetch(`${API_BASE}/meetings/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...authHeader() },
-    body: JSON.stringify(patch),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message || "Failed to update meeting");
-  return json.data as Meeting;
+  try {
+    const res = await api.patch(`/meetings/${id}`, patch);
+    return res.data.data as Meeting;
+  } catch (error) {
+    throw new Error(errorMessage(error, "Failed to update meeting"));
+  }
 }
 
 export async function deleteMeeting(id: string) {
-  const res = await fetch(`${API_BASE}/meetings/${id}`, {
-    method: "DELETE",
-    headers: { ...authHeader() },
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message || "Failed to delete meeting");
-  return true;
+  try {
+    await api.delete(`/meetings/${id}`);
+    return true;
+  } catch (error) {
+    throw new Error(errorMessage(error, "Failed to delete meeting"));
+  }
 }

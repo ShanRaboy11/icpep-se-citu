@@ -111,12 +111,12 @@ export default function AnnouncementDetails({
                 key={index}
                 className="border-l-4 border-primary1 bg-blue-50 rounded-lg p-4"
               >
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-0">
                   <h4 className="font-rubik font-bold text-primary3 text-base sm:text-lg">
                     {awardee.name}
                   </h4>
                   {awardee.year && (
-                    <span className="font-raleway text-xs bg-primary1 text-white px-3 py-1 rounded-full font-semibold">
+                    <span className="w-fit font-raleway text-xs bg-primary1 text-white px-3 py-1 rounded-full font-semibold">
                       {formatYearLevel(awardee.year)}
                     </span>
                   )}

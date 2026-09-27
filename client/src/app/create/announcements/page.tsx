@@ -6,6 +6,7 @@ import Sidebar from "../components/sidebar";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
+import Button from "@/app/components/button";
 import { GlassCard } from "../../components/glass-card";
 import {
   Pencil,
@@ -52,6 +53,7 @@ function formatDateLabel(dateStr: string): string {
 import announcementService, {
   AnnouncementData,
 } from "../../services/announcement";
+import { LoadingIndicator } from "@/app/components/loading";
 
 type FormErrors = {
   date: boolean;
@@ -287,8 +289,7 @@ export default function AnnouncementsPage() {
             }
             if (data.imageUrl) setPreviews([data.imageUrl]);
           }
-        } catch (error) {
-          console.error("Failed to fetch announcement for edit:", error);
+        } catch {
         }
       };
       fetchAnnouncement();
@@ -303,8 +304,7 @@ export default function AnnouncementsPage() {
       });
       const data = response.data || (Array.isArray(response) ? response : []);
       setAnnouncementList(data as AnnouncementItem[]);
-    } catch (err) {
-      console.error("Failed to fetch announcements:", err);
+    } catch {
     } finally {
       setIsLoadingList(false);
     }
@@ -424,8 +424,7 @@ export default function AnnouncementsPage() {
         description: "The announcement has been permanently removed.",
       });
       setShowSuccessModal(true);
-    } catch (error) {
-      console.error("Failed to delete announcement:", error);
+    } catch {
       alert("Failed to delete announcement.");
     }
   };
@@ -538,8 +537,7 @@ export default function AnnouncementsPage() {
       setShowSuccessModal(true);
       handleCancelEdit();
       fetchAnnouncements();
-    } catch (error) {
-      console.error("Error:", error);
+    } catch {
       alert("Failed to process announcement.");
     } finally {
       setIsSubmitting(false);
@@ -573,8 +571,7 @@ export default function AnnouncementsPage() {
       setShowSuccessModal(true);
       handleCancelEdit();
       fetchAnnouncements();
-    } catch (error) {
-      console.error("Error saving draft:", error);
+    } catch {
       alert("Failed to save draft.");
     } finally {
       setIsSubmitting(false);
@@ -644,21 +641,29 @@ export default function AnnouncementsPage() {
       reader.readAsDataURL(file);
     });
 
+  const MAX_IMAGE_SIZE_MB = 5;
+
   const handleImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
     if (!fileList || !fileList.length) return;
+    const files = Array.from(fileList);
+    const oversized = files.find(
+      (f) => f.size > MAX_IMAGE_SIZE_MB * 1024 * 1024,
+    );
+    if (oversized) {
+      alert(`Each image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     try {
-      const resized = await Promise.all(
-        Array.from(fileList).map((f) => resizeImage(f)),
-      );
+      const resized = await Promise.all(files.map((f) => resizeImage(f)));
       setImages((prev) => [...prev, ...resized]);
       setPreviews((prev) => [
         ...prev,
         ...resized.map((f) => URL.createObjectURL(f)),
       ]);
       if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (err) {
-      console.error(err);
+    } catch {
     }
   };
 
@@ -667,12 +672,15 @@ export default function AnnouncementsPage() {
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      alert(`Image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`);
+      return;
+    }
     try {
       const resized = await resizeImage(file);
       setImages((p) => [...p, resized]);
       setPreviews((p) => [...p, URL.createObjectURL(resized)]);
-    } catch (err) {
-      console.error(err);
+    } catch {
     }
   };
 
@@ -705,8 +713,13 @@ export default function AnnouncementsPage() {
   const Divider = () => <div className="h-px bg-gray-100 w-full" />;
 
   // --- Custom Time Picker Render (matching meet-information) ---
-  const dropdownContainerStyle =
-    "absolute z-30 w-full min-w-[5rem] mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden flex flex-col gap-1 p-2 max-h-56 overflow-y-auto";
+  // Split into a non-scrolling outer wrapper (owns the rounding/border/shadow)
+  // and a scrolling inner container, so the scrollbar never pokes past the
+  // rounded corners.
+  const dropdownOuterStyle =
+    "absolute z-30 w-full min-w-20 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
+  const dropdownInnerStyle =
+    "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto overflow-x-hidden themed-scrollbar";
   const dropdownItemStyle =
     "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
   const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
@@ -795,26 +808,28 @@ export default function AnnouncementsPage() {
         {isOpen && (
           <>
             <div
-              className={`${dropdownContainerStyle} left-1/2 -translate-x-1/2 text-center`}
+              className={`${dropdownOuterStyle} left-1/2 -translate-x-1/2 text-center`}
               onMouseDown={(e) => e.preventDefault()}
             >
-              {options.map((opt) => (
-                <div
-                  key={opt}
-                  className={`justify-center ${dropdownItemStyle} ${
-                    value === opt
-                      ? dropdownItemSelectedStyle
-                      : dropdownItemHoverStyle
-                  }`}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setValue(opt);
-                    setActiveTimeDropdown(null);
-                  }}
-                >
-                  <span>{opt}</span>
-                </div>
-              ))}
+              <div className={dropdownInnerStyle}>
+                {options.map((opt) => (
+                  <div
+                    key={opt}
+                    className={`justify-center ${dropdownItemStyle} ${
+                      value === opt
+                        ? dropdownItemSelectedStyle
+                        : dropdownItemHoverStyle
+                    }`}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      setValue(opt);
+                      setActiveTimeDropdown(null);
+                    }}
+                  >
+                    <span>{opt}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </>
         )}
@@ -838,7 +853,7 @@ export default function AnnouncementsPage() {
     return (
       <div className="relative w-full">
         <div
-          className={`w-full min-h-[3rem] bg-gray-50 border rounded-2xl px-4 py-3 cursor-pointer relative transition-all hover:bg-gray-100 flex items-center justify-between ${
+          className={`w-full min-h-12 bg-gray-50 border rounded-2xl px-4 py-3 cursor-pointer relative transition-all hover:bg-gray-100 flex items-center justify-between ${
             hasError ? errorInputStyle : "border-gray-200"
           } ${
             isOpen ? "bg-white border-primary1 ring-4 ring-primary1/10" : ""
@@ -855,7 +870,7 @@ export default function AnnouncementsPage() {
           }}
         >
           <div className="flex items-center gap-2.5 text-gray-700 font-rubik text-base font-medium">
-            <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
+            <Calendar className="w-5 h-5 text-gray-400 shrink-0" />
             <span className={value ? "text-gray-800" : "text-gray-400 font-normal"}>
               {value ? formatDateLabel(value) : placeholder}
             </span>
@@ -877,7 +892,7 @@ export default function AnnouncementsPage() {
               <div className="flex items-center justify-between mb-3 px-1">
                 <button
                   type="button"
-                  className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors"
+                  className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (viewMonth === 0) {
@@ -895,7 +910,7 @@ export default function AnnouncementsPage() {
                 </span>
                 <button
                   type="button"
-                  className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors"
+                  className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-600 transition-colors cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (viewMonth === 11) {
@@ -932,7 +947,7 @@ export default function AnnouncementsPage() {
                     <button
                       key={dayNum}
                       type="button"
-                      className={`h-8 w-8 mx-auto rounded-xl flex items-center justify-center text-xs font-semibold transition-all ${
+                      className={`h-8 w-8 mx-auto rounded-xl flex items-center justify-center text-xs font-semibold transition-all cursor-pointer active:scale-90 ${
                         isSelected
                           ? "bg-primary1 text-white font-bold shadow-md shadow-primary1/20"
                           : isToday
@@ -954,7 +969,7 @@ export default function AnnouncementsPage() {
               <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center text-xs font-semibold">
                 <button
                   type="button"
-                  className="text-primary1 hover:underline font-raleway"
+                  className="text-primary1 hover:underline font-raleway cursor-pointer"
                   onClick={(e) => {
                     e.stopPropagation();
                     onChange(todayStr);
@@ -966,7 +981,7 @@ export default function AnnouncementsPage() {
                 {value && (
                   <button
                     type="button"
-                    className="text-gray-400 hover:text-red-500 font-raleway"
+                    className="text-gray-400 hover:text-red-500 font-raleway cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       onChange("");
@@ -988,12 +1003,9 @@ export default function AnnouncementsPage() {
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
       {/* LOADING OVERLAY */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-md">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/90 backdrop-blur-md">
           <div className="flex flex-col items-center gap-5">
-            <div className="relative w-16 h-16">
-              <div className="absolute inset-0 rounded-full border-4 border-primary2/20" />
-              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary2 animate-spin" />
-            </div>
+            <LoadingIndicator />
             <div className="text-center">
               <p className="text-primary3 font-bold font-rubik text-lg">
                 {loadingAction === "saving"
@@ -1016,7 +1028,7 @@ export default function AnnouncementsPage() {
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
 
-          <div className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
+          <div className="grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
             {/* PAGE HEADER */}
             <div className="mb-16 text-left">
               <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
@@ -1027,19 +1039,19 @@ export default function AnnouncementsPage() {
               </p>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8 items-start">
-              <aside className="w-full lg:w-64 flex-shrink-0">
+            <div className="flex flex-col lg:flex-row gap-8 items-stretch lg:items-start">
+              <aside className="w-full lg:w-64 shrink-0">
   <Sidebar />
 </aside>
 
               <div className="flex-1 min-w-0 space-y-8">
                 {/* FORM CARD */}
-                <div className={`bg-white rounded-[2rem] border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
                   editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
                 }`}>
                     {/* Edit Banner */}
                     {editingId && (
-                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-gradient-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-[2rem]">
+                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-linear-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-4xl">
                         <div className="flex items-center gap-2 text-white">
                           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                           <span className="text-sm font-bold font-rubik tracking-wide">
@@ -1048,7 +1060,7 @@ export default function AnnouncementsPage() {
                         </div>
                         <button
                           onClick={handleCancelEdit}
-                          className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors"
+                          className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors cursor-pointer"
                         >
                           Cancel
                         </button>
@@ -1075,6 +1087,11 @@ export default function AnnouncementsPage() {
                           <label className={labelStyle}>
                             Featured Image <span className="text-red-500">*</span>
                           </label>
+                          {previews.length === 0 && (
+                            <span className="text-xs text-gray-400 font-raleway">
+                              Max {MAX_IMAGE_SIZE_MB}MB each
+                            </span>
+                          )}
                           {previews.length > 0 && (
                             <button
                               type="button"
@@ -1082,7 +1099,7 @@ export default function AnnouncementsPage() {
                                 setImages([]);
                                 setPreviews([]);
                               }}
-                              className="text-xs font-bold text-red-400 hover:text-red-600 font-rubik flex items-center gap-1 transition-colors"
+                              className="text-xs font-bold text-red-400 hover:text-red-600 font-rubik flex items-center gap-1 transition-colors cursor-pointer"
                             >
                               <X size={11} /> Clear all
                             </button>
@@ -1124,7 +1141,7 @@ export default function AnnouncementsPage() {
                                         prev.filter((_, idx) => idx !== i),
                                       );
                                     }}
-                                    className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 transition-transform font-rubik"
+                                    className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
                                   >
                                     Remove
                                   </button>
@@ -1204,7 +1221,7 @@ export default function AnnouncementsPage() {
         key={tab}
         type="button"
         onClick={() => setActiveTab(tab)}
-        className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold font-rubik border-2 transition-all duration-200 select-none ${
+        className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold font-rubik border-2 transition-all duration-200 select-none cursor-pointer ${
           isActive
             ? "border-primary1 bg-primary1/10 text-primary1 shadow-sm"
             : "border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700"
@@ -1261,7 +1278,7 @@ export default function AnnouncementsPage() {
                               {renderTimeInput("ann-hour", timeHour, setTimeHour, timeHours, "hour")}
                               <span className="text-gray-400 font-bold">:</span>
                               {renderTimeInput("ann-minute", timeMinute, setTimeMinute, timeMinutes, "minute")}
-                              <div className="w-[1px] h-6 bg-gray-200 mx-2" />
+                              <div className="w-px h-6 bg-gray-200 mx-2" />
                               {renderTimeInput("ann-period", timePeriod, setTimePeriod, timePeriods, "period")}
                             </div>
                           </div>
@@ -1301,7 +1318,7 @@ export default function AnnouncementsPage() {
   <button
     type="button"
     onClick={() => setShowOrganizerInput(true)}
-    className="inline-flex items-center gap-1 px-4 py-1.5 rounded-xl border-2 border-primary2/30 text-primary2 hover:border-primary2 hover:bg-primary2/5 font-bold text-xs transition-all font-rubik"
+    className="inline-flex items-center gap-1 px-4 py-1.5 rounded-xl border-2 border-primary2/30 text-primary2 hover:border-primary2 hover:bg-primary2/5 font-bold text-xs transition-all font-rubik cursor-pointer"
     title="Add Organizer"
   >
     <Plus size={15} /> Add Organizer
@@ -1325,7 +1342,7 @@ export default function AnnouncementsPage() {
           setOrganizer("");
           setShowOrganizerInput(false);
         }}
-        className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-xl border-2 border-red-100 text-red-400 hover:bg-red-50 transition-all"
+        className="w-8 h-8 shrink-0 flex items-center justify-center rounded-xl border-2 border-red-100 text-red-400 hover:bg-red-50 transition-all cursor-pointer"
         title="Remove Organizer"
       >
         <X size={13} />
@@ -1391,7 +1408,7 @@ export default function AnnouncementsPage() {
                             onChange={handleInputChange}
                             rows={7}
                             placeholder="Add full details, links, and information..."
-                            className={`${inputCls(errors.body)} resize-y min-h-[180px]`}
+                            className={`${inputCls(errors.body)} resize-y min-h-45`}
                           />
                           {errors.body && (
                             <p className="text-red-500 text-xs mt-1 ml-2 font-raleway">Body is required</p>
@@ -1411,7 +1428,7 @@ export default function AnnouncementsPage() {
                               <button
                                 type="button"
                                 onClick={addAwardee}
-                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik"
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
                               >
                                 <Plus size={11} /> Add Awardee
                               </button>
@@ -1434,7 +1451,7 @@ export default function AnnouncementsPage() {
                                           e.target.value,
                                         )
                                       }
-                                      className="w-full rounded-xl border-2 border-white bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
+                                      className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
                                     />
                                   </div>
                                   <div className="sm:col-span-3">
@@ -1449,7 +1466,7 @@ export default function AnnouncementsPage() {
                                           e.target.value,
                                         )
                                       }
-                                      className="w-full rounded-xl border-2 border-white bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
+                                      className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
                                     />
                                   </div>
                                   <div className="sm:col-span-2">
@@ -1464,7 +1481,7 @@ export default function AnnouncementsPage() {
                                           e.target.value,
                                         )
                                       }
-                                      className="w-full rounded-xl border-2 border-white bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
+                                      className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
                                     />
                                   </div>
                                   <div className="sm:col-span-3">
@@ -1479,7 +1496,7 @@ export default function AnnouncementsPage() {
                                           e.target.value,
                                         )
                                       }
-                                      className="w-full rounded-xl border-2 border-white bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
+                                      className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
                                     />
                                   </div>
                                   <div className="sm:col-span-1 flex items-center justify-end">
@@ -1525,7 +1542,7 @@ export default function AnnouncementsPage() {
                                 <button
                                   type="button"
                                   onClick={addAgendaItem}
-                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik"
+                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
                                 >
                                   <Plus size={11} /> Add Item
                                 </button>
@@ -1536,7 +1553,7 @@ export default function AnnouncementsPage() {
                                     key={i}
                                     className="flex items-center gap-2"
                                   >
-                                    <span className="text-xs font-black text-gray-300 font-rubik w-5 text-right flex-shrink-0">
+                                    <span className="text-xs font-bold text-gray-300 font-rubik w-5 text-right shrink-0">
                                       {i + 1}.
                                     </span>
                                     <input
@@ -1551,7 +1568,7 @@ export default function AnnouncementsPage() {
                                     <button
                                       type="button"
                                       onClick={() => removeAgendaItem(i)}
-                                      className="w-8 h-8 flex items-center justify-center rounded-xl border-2 border-red-100 text-red-400 hover:bg-red-50 transition-all"
+                                      className="w-8 h-8 flex items-center justify-center rounded-xl border-2 border-red-100 text-red-400 hover:bg-red-50 transition-all cursor-pointer"
                                     >
                                       <X size={13} />
                                     </button>
@@ -1591,10 +1608,10 @@ export default function AnnouncementsPage() {
                                     visibility: false,
                                   }));
                                 }}
-                                className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left border-2 transition-all duration-200 ${isActive ? `${opt.bg} ${opt.color} ${opt.border} shadow-sm ring-4 ring-primary1/10 scale-[1.02]` : "bg-gray-50 text-gray-400 border-gray-200 hover:bg-white hover:border-gray-300 hover:text-gray-600"}`}
+                                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-left border-2 transition-all duration-200 cursor-pointer ${isActive ? `${opt.bg} ${opt.color} ${opt.border} shadow-sm scale-[1.02]` : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"}`}
                               >
                                 <span
-                                  className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? opt.dot : "bg-gray-200"}`}
+                                  className={`w-2 h-2 rounded-full shrink-0 ${isActive ? opt.dot : "bg-gray-200"}`}
                                 />
                                 <div className="flex-1 min-w-0">
                                   <p className="text-xs font-bold font-rubik leading-tight">
@@ -1609,7 +1626,7 @@ export default function AnnouncementsPage() {
                                 {isActive && (
                                   <Check
                                     size={12}
-                                    className="flex-shrink-0 opacity-70"
+                                    className="shrink-0 opacity-70"
                                   />
                                 )}
                               </button>
@@ -1631,11 +1648,11 @@ export default function AnnouncementsPage() {
                           </label>
                           <label className="flex items-center gap-2.5 cursor-pointer select-none">
                             <div
-                              className={`w-10 h-5 rounded-full transition-all duration-200 relative ${showSchedule ? "bg-primary2" : "bg-gray-200"}`}
+                              className={`w-10 h-5 rounded-full transition-all duration-300 relative cursor-pointer active:scale-95 ${showSchedule ? "bg-primary2" : "bg-gray-200"}`}
                               onClick={() => setShowSchedule((p) => !p)}
                             >
                               <div
-                                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all duration-200 ${showSchedule ? "left-5" : "left-0.5"}`}
+                                className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-all duration-300 ${showSchedule ? "left-5.5" : "left-0.5"}`}
                               />
                             </div>
                           </label>
@@ -1670,7 +1687,7 @@ export default function AnnouncementsPage() {
                                 {renderTimeInput("sched-hour", scheduleTimeHour, setScheduleTimeHour, timeHours, "hour")}
                                 <span className="text-gray-400 font-bold">:</span>
                                 {renderTimeInput("sched-minute", scheduleTimeMinute, setScheduleTimeMinute, timeMinutes, "minute")}
-                                <div className="w-[1px] h-6 bg-gray-200 mx-2" />
+                                <div className="w-px h-6 bg-gray-200 mx-2" />
                                 {renderTimeInput("sched-period", scheduleTimePeriod, setScheduleTimePeriod, timePeriods, "period")}
                               </div>
                             </div>
@@ -1689,46 +1706,49 @@ export default function AnnouncementsPage() {
                         )}
                         <div className="flex flex-wrap gap-3 ml-auto">
                           {editingId && (
-                            <button
+                            <Button
                               type="button"
+                              variant="heroOutline"
                               onClick={handleCancelEdit}
-                              className="px-6 py-3 font-rubik font-bold text-gray-500 border-2 border-gray-200 hover:border-red-200 hover:text-red-400 rounded-2xl transition-all duration-300"
+                              className="px-4 py-2 sm:px-6 sm:py-3"
                             >
                               Cancel
-                            </button>
+                            </Button>
                           )}
                           {(!editingId || isEditingDraft) && (
-                            <button
+                            <Button
                               type="button"
+                              variant="heroOutline"
                               onClick={handleSaveDraft}
                               disabled={isSubmitting}
-                              className="px-6 py-3 font-rubik font-bold text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="px-4 py-2 sm:px-6 sm:py-3"
                             >
                               {editingId ? "Update Draft" : "Save Draft"}
-                            </button>
+                            </Button>
                           )}
-                          <button
+                          <Button
                             type="button"
+                            variant="hero"
                             onClick={handlePublish}
                             disabled={isSubmitting}
-                            className="group relative px-8 py-3 bg-gradient-to-r from-primary3 to-primary1 rounded-2xl font-rubik font-bold text-white shadow-lg shadow-primary1/20 hover:shadow-primary1/40 transition-all duration-300 flex items-center gap-3 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="group flex items-center gap-3 px-5 py-2 sm:px-8 sm:py-3"
                           >
                             <span>
                               {editingId && !isEditingDraft
                                 ? "Update Announcement"
                                 : "Publish Announcement"}
                             </span>
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
                 </div>
 
                 {/* MANAGE LIST */}
-                  <div className="bg-white rounded-[2rem] border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200">
+                  <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
                     <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                       <div>
-                        <h2 className="text-xl font-black font-rubik text-primary3">
+                        <h2 className="text-xl font-bold font-rubik text-primary3">
                           Published Announcements
                         </h2>
                         <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
@@ -1740,7 +1760,7 @@ export default function AnnouncementsPage() {
                       </div>
                       <button
                         onClick={fetchAnnouncements}
-                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200"
+                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200 cursor-pointer"
                       >
                         <RefreshCw
                           size={13}
@@ -1751,12 +1771,7 @@ export default function AnnouncementsPage() {
                     </div>
 
                     {isLoadingList ? (
-                      <div className="py-20 flex flex-col items-center gap-3 text-gray-300">
-                        <div className="w-8 h-8 border-2 border-gray-200 border-t-primary2 rounded-full animate-spin" />
-                        <p className="text-sm font-raleway">
-                          Loading announcements...
-                        </p>
-                      </div>
+                      <LoadingIndicator label="Loading announcements..." className="py-16" />
                     ) : publishedItems.length === 0 ? (
                       <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
                         <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
@@ -1772,23 +1787,23 @@ export default function AnnouncementsPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[680px]">
+                      <div className="overflow-x-auto themed-scrollbar">
+                        <table className="responsive-table w-full text-left min-w-170">
                           <thead>
                             <tr className="bg-gray-50/80">
-                              <th className="px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Title
                               </th>
-                              <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Type
                               </th>
-                              <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Date
                               </th>
-                              <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Status
                               </th>
-                              <th className="px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-8 py-3.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Actions
                               </th>
                             </tr>
@@ -1803,26 +1818,26 @@ export default function AnnouncementsPage() {
                                   key={item._id}
                                   className={`group border-t border-gray-50 transition-all duration-200 ${isEditing ? "bg-primary1/5" : "hover:bg-gray-50/70"}`}
                                 >
-                                  <td className="px-8 py-4">
+                                  <td data-label="Title" data-primary="" className="px-8 py-4">
                                     <div className="flex items-center gap-2">
                                       {isEditing && (
-                                        <span className="w-1.5 h-1.5 rounded-full bg-primary1 animate-pulse flex-shrink-0" />
+                                        <span className="w-1.5 h-1.5 rounded-full bg-primary1 animate-pulse shrink-0" />
                                       )}
                                       <div>
-                                        <span className="font-bold text-sm text-gray-800 font-rubik truncate max-w-[200px] block">
+                                        <span className="font-bold text-sm text-gray-800 font-rubik truncate max-w-50 block">
                                           {item.title}
                                         </span>
                                         {item.description && (
-                                          <p className="text-xs text-gray-400 font-raleway mt-0.5 max-w-[200px] truncate">
+                                          <p className="text-xs text-gray-400 font-raleway mt-0.5 max-w-50 truncate">
                                             {item.description}
                                           </p>
                                         )}
                                       </div>
                                     </div>
                                   </td>
-                                  <td className="px-4 py-4">
+                                  <td data-label="Type" className="px-4 py-4">
                                     <span
-                                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${meta.bg} ${meta.color} ${meta.border}`}
+                                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-raleway font-semibold border ${meta.bg} ${meta.color} ${meta.border}`}
                                     >
                                       <span
                                         className={`w-1.5 h-1.5 rounded-full ${meta.dot}`}
@@ -1830,7 +1845,7 @@ export default function AnnouncementsPage() {
                                       {item.type}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-4">
+                                  <td data-label="Date" className="px-4 py-4">
                                     <span className="text-xs text-gray-600 font-raleway">
                                       {item.publishDate
                                         ? new Date(
@@ -1839,9 +1854,9 @@ export default function AnnouncementsPage() {
                                         : "N/A"}
                                     </span>
                                   </td>
-                                  <td className="px-4 py-4">
+                                  <td data-label="Status" className="px-4 py-4">
                                     <span
-                                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${item.isPublished ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-gray-100 text-gray-500 border-gray-200"}`}
+                                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-raleway font-semibold border ${item.isPublished ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-gray-100 text-gray-500 border-gray-200"}`}
                                     >
                                       <span
                                         className={`w-1.5 h-1.5 rounded-full ${item.isPublished ? "bg-emerald-500" : "bg-gray-400"}`}
@@ -1849,21 +1864,23 @@ export default function AnnouncementsPage() {
                                       {item.isPublished ? "Published" : "Draft"}
                                     </span>
                                   </td>
-                                  <td className="px-8 py-4 text-right">
-                                    <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
+                                  <td data-label="Actions" className="px-8 py-4 text-right">
+                                    <div className="inline-flex items-center gap-1 opacity-100 lg:opacity-40 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
                                       <button
                                         onClick={() => handleEditClick(item)}
-                                        className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150"
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-raleway font-semibold whitespace-nowrap text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150 cursor-pointer"
                                         title="Edit"
                                       >
                                         <Pencil size={15} />
+                                        Edit
                                       </button>
                                       <button
                                         onClick={() => confirmDelete(item._id)}
-                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150"
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-raleway font-semibold whitespace-nowrap text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150 cursor-pointer"
                                         title="Delete"
                                       >
                                         <Trash2 size={15} />
+                                        Delete
                                       </button>
                                     </div>
                                   </td>
@@ -1881,13 +1898,13 @@ export default function AnnouncementsPage() {
         </div>
       </main>
 
-      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
+      <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
 
       {/* DELETE MODAL */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowDeleteModal(false)}
@@ -1896,7 +1913,7 @@ export default function AnnouncementsPage() {
             <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
               <AlertTriangle className="w-6 h-6 text-red-500" />
             </div>
-            <h3 className="text-xl font-black text-primary3 font-rubik mb-2">
+            <h3 className="text-xl font-bold text-primary3 font-rubik mb-2">
               Delete Announcement?
             </h3>
             <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
@@ -1904,18 +1921,20 @@ export default function AnnouncementsPage() {
               be undone.
             </p>
             <div className="flex gap-3">
-              <button
+              <Button
+                variant="heroOutline"
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-3 text-sm font-bold font-rubik text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                className="flex-1 py-2 sm:py-3"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="heroDanger"
                 onClick={handleDelete}
-                className="flex-1 py-3 text-sm font-bold font-rubik text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-lg shadow-red-500/25"
+                className="flex-1 py-2 sm:py-3"
               >
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -1923,7 +1942,7 @@ export default function AnnouncementsPage() {
 
       {/* SUCCESS MODAL */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => {
@@ -1935,7 +1954,7 @@ export default function AnnouncementsPage() {
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
+                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
                   <svg
                     className="w-10 h-10 text-white"
                     fill="none"
@@ -1953,22 +1972,23 @@ export default function AnnouncementsPage() {
               </div>
             </div>
             <div className="text-center mb-6">
-              <h3 className="text-xl font-black text-primary3 font-rubik">
+              <h3 className="text-xl font-bold text-primary3 font-rubik">
                 {successMessage.title}
               </h3>
               <p className="text-gray-400 text-sm font-raleway mt-2">
                 {successMessage.description}
               </p>
             </div>
-            <button
+            <Button
+              variant="hero"
               onClick={() => {
                 setShowSuccessModal(false);
                 setSubmitSuccess(false);
               }}
-              className="w-full py-3 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg hover:shadow-primary2/40 hover:-translate-y-0.5 transition-all duration-200"
+              className="w-full py-2 text-sm sm:py-3"
             >
               Continue
-            </button>
+            </Button>
           </div>
         </div>
       )}

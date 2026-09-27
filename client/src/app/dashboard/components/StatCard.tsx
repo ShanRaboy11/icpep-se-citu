@@ -6,8 +6,8 @@ interface StatCardProps {
   icon: ReactNode;
   count: string | number;
   title: string;
-  subtitle: string;
-  color?: "blue" | "cyan" | "sky" | "royal";
+  subtitle?: string;
+  color?: "blue" | "cyan" | "sky" | "royal" | "violet";
 }
 
 const colorStyles = {
@@ -27,9 +27,14 @@ const colorStyles = {
     badge: "text-[#0073AD] border-sky-200 bg-white/70",
   },
   royal: {
-    bg: "bg-indigo-50/50 hover:bg-indigo-50 border-indigo-100 hover:border-indigo-200",
+    bg: "bg-white hover:bg-indigo-50 border-indigo-100 hover:border-indigo-200",
     iconBg: "bg-indigo-100/80 text-[#003599]",
     badge: "text-[#003599] border-indigo-200 bg-white/70",
+  },
+  violet: {
+    bg: "bg-white hover:bg-purple-50 border-purple-100 hover:border-purple-200",
+    iconBg: "bg-purple-100/80 text-purple-600",
+    badge: "text-purple-600 border-purple-200 bg-white/70",
   },
 };
 
@@ -63,9 +68,11 @@ export const StatCard: FC<StatCardProps> = ({
         <h3 className="font-rubik text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">
           {count}
         </h3>
-        <p className="mt-0.5 font-raleway text-slate-600 text-xs truncate">
-          {subtitle}
-        </p>
+        {subtitle && (
+          <p className="mt-0.5 font-raleway text-slate-600 text-xs truncate">
+            {subtitle}
+          </p>
+        )}
       </div>
     </div>
   );

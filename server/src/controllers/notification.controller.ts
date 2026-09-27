@@ -6,6 +6,7 @@ import Announcement from "../models/announcement";
 import Event from "../models/event";
 import Meeting from "../models/meeting";
 import User from "../models/user";
+import { isInTargetAudience } from "../utils/notification";
 
 // Get all notifications for the current user
 export const getNotifications = async (
@@ -28,6 +29,10 @@ export const getNotifications = async (
     const limitNum = parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
 
+    const viewer = await User.findById(userId)
+      .select("role membershipStatus")
+      .lean();
+
     // 1. Fetch existing notifications
     const query: any = { recipient: userId };
     if (filter !== "all") {
@@ -40,13 +45,20 @@ export const getNotifications = async (
       }
     }
 
-    const existingNotifications = await Notification.find(query)
+    // Fetch every notification matching the filter (deleted included) so we
+    // can both display the non-deleted ones and — crucially — still block a
+    // deleted item's virtual counterpart (pending availability, recent
+    // announcement, upcoming event, membership reminder) from being
+    // regenerated on the next fetch.
+    const allMatching = await Notification.find(query)
       .sort({ createdAt: -1 })
       .lean();
 
-    // Set of relatedIds to avoid duplicates
+    const existingNotifications = allMatching.filter((n) => !n.isDeleted);
+
+    // Set of relatedIds to avoid duplicates (and re-generating deleted ones)
     const existingRelatedIds = new Set(
-      existingNotifications
+      allMatching
         .filter((n) => n.relatedId)
         .map((n) => n.relatedId!.toString())
     );
@@ -94,7 +106,11 @@ export const getNotifications = async (
         .lean();
 
       recentAnnouncements = announcements
-        .filter((a) => !existingRelatedIds.has(a._id.toString()))
+        .filter(
+          (a) =>
+            isInTargetAudience(a.targetAudience, viewer) &&
+            !existingRelatedIds.has(a._id.toString())
+        )
         .map((a) => ({
           _id: a._id,
           recipient: userId,
@@ -121,7 +137,11 @@ export const getNotifications = async (
         .lean();
 
       upcomingEvents = events
-        .filter((e) => !existingRelatedIds.has(e._id.toString()))
+        .filter(
+          (e) =>
+            isInTargetAudience(e.targetAudience, viewer) &&
+            !existingRelatedIds.has(e._id.toString())
+        )
         .map((e) => ({
           _id: e._id,
           recipient: userId,
@@ -231,7 +251,6 @@ export const getNotifications = async (
       unreadCount,
     });
   } catch (error: any) {
-    console.error("Error fetching notifications:", error);
     res.status(500).json({
       success: false,
       message: "Error fetching notifications",
@@ -366,7 +385,6 @@ export const markAsRead = async (
       data: notification,
     });
   } catch (error: any) {
-    console.error("Error marking notification as read:", error);
     res.status(500).json({
       success: false,
       message: "Error marking notification as read",
@@ -401,7 +419,6 @@ export const markAllAsRead = async (
       message: "All notifications marked as read",
     });
   } catch (error: any) {
-    console.error("Error marking all notifications as read:", error);
     res.status(500).json({
       success: false,
       message: "Error marking all notifications as read",
@@ -435,10 +452,96 @@ export const deleteNotification = async (
       return;
     }
 
-    const notification = await Notification.findOneAndDelete({
-      _id: id,
-      recipient: userId,
-    });
+    // Soft-delete rather than hard-delete: some notifications are "virtual"
+    // (computed on the fly from live data — a pending availability request,
+    // a recent announcement, an upcoming event, the membership reminder).
+    // If we hard-deleted their underlying record, the next fetch would just
+    // recompute and re-show the exact same notification. Marking it deleted
+    // instead keeps a record around purely to suppress that regeneration.
+    let notification = await Notification.findOneAndUpdate(
+      { _id: id, recipient: userId },
+      { isDeleted: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      // Not a real notification yet — check if it's a virtual one (id is
+      // the underlying Meeting/Announcement/Event/User id) and materialize
+      // it as already-deleted so it won't reappear.
+      const relatedId = id;
+
+      const meeting = await Meeting.findById(relatedId);
+      if (meeting) {
+        notification = await Notification.create({
+          recipient: userId,
+          type: "rsvp",
+          title: "[COMMEET] Availability Request",
+          message: `Please add your availability schedule for the meeting: ${meeting.title}. Status: Pending`,
+          relatedId: meeting._id,
+          relatedModel: "Meeting",
+          isRead: true,
+          readAt: new Date(),
+          isDeleted: true,
+          createdAt: meeting.createdAt,
+        });
+      } else {
+        const announcement = await Announcement.findById(relatedId);
+        if (announcement) {
+          notification = await Notification.create({
+            recipient: userId,
+            type: "announcement",
+            title: `[ANNOUNCEMENT] ${announcement.title}`,
+            message: `New announcement: ${announcement.title}`,
+            relatedId: announcement._id,
+            relatedModel: "Announcement",
+            isRead: true,
+            readAt: new Date(),
+            isDeleted: true,
+            createdAt: announcement.createdAt,
+          });
+        } else {
+          const event = await Event.findById(relatedId);
+          if (event) {
+            notification = await Notification.create({
+              recipient: userId,
+              type: "event",
+              title: `[NEW] ${event.title}`,
+              message: `New event: ${event.title}`,
+              relatedId: event._id,
+              relatedModel: "Event",
+              isRead: true,
+              readAt: new Date(),
+              isDeleted: true,
+              createdAt: event.createdAt,
+            });
+          }
+        }
+      }
+
+      if (!notification && relatedId === userId) {
+        const user = await User.findById(userId);
+        if (user) {
+          const isMember = user.membershipStatus.isMember;
+          const today = new Date();
+          notification = await Notification.create({
+            recipient: userId,
+            type: "membership",
+            title: isMember
+              ? "[MEMBERSHIP] Membership Active"
+              : "[MEMBERSHIP] Become a Member!",
+            message: isMember
+              ? `You are a verified member as of ${today.toLocaleDateString()}.`
+              : "Unlock exclusive benefits by becoming an official ICPEP-SE member today.",
+            relatedId: user._id,
+            relatedModel: "Membership",
+            isRead: true,
+            readAt: today,
+            isDeleted: true,
+            createdAt: today,
+          });
+        }
+      }
+    }
 
     if (!notification) {
       res.status(404).json({
@@ -453,7 +556,6 @@ export const deleteNotification = async (
       message: "Notification deleted",
     });
   } catch (error: any) {
-    console.error("Error deleting notification:", error);
     res.status(500).json({
       success: false,
       message: "Error deleting notification",

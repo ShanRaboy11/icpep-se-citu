@@ -6,6 +6,7 @@ import Sidebar from "@/app/create/components/sidebar";
 import Header from "@/app/components/header";
 import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
+import Button from "@/app/components/button";
 import { GlassCard } from "../../components/glass-card";
 import testimonialService from "@/app/services/testimonial";
 import {
@@ -17,6 +18,7 @@ import {
   Quote,
   User,
 } from "lucide-react";
+import { LoadingIndicator } from "@/app/components/loading";
 
 interface Testimonial {
   _id: string;
@@ -91,8 +93,7 @@ export default function TestimonialsPage() {
         const itemToEdit = data.find((t: Testimonial) => t._id === editIdParam);
         if (itemToEdit) handleEditClick(itemToEdit);
       }
-    } catch (error) {
-      console.error("Error fetching testimonials:", error);
+    } catch {
     } finally {
       setIsLoadingList(false);
     }
@@ -136,8 +137,7 @@ export default function TestimonialsPage() {
         description: "The testimonial has been permanently removed.",
       });
       setShowSuccessModal(true);
-    } catch (error) {
-      console.error("Failed to delete testimonial:", error);
+    } catch {
       alert("Failed to delete testimonial");
     }
   };
@@ -177,8 +177,7 @@ export default function TestimonialsPage() {
       });
       setShowSuccessModal(true);
       fetchTestimonials();
-    } catch (error) {
-      console.error("Error saving draft:", error);
+    } catch {
       alert("Failed to save draft.");
     } finally {
       setIsSubmitting(false);
@@ -225,8 +224,7 @@ export default function TestimonialsPage() {
       });
       setShowSuccessModal(true);
       fetchTestimonials();
-    } catch (error) {
-      console.error("Error publishing testimonial:", error);
+    } catch {
       alert("Failed to publish testimonial.");
     } finally {
       setIsSubmitting(false);
@@ -270,16 +268,22 @@ export default function TestimonialsPage() {
       reader.readAsDataURL(file);
     });
 
+  const MAX_IMAGE_SIZE_MB = 5;
+
   const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      alert(`Image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     try {
       const resized = await resizeImage(file);
       setCover(resized);
       setPreview(URL.createObjectURL(resized));
       if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch (err) {
-      console.error("Error resizing image", err);
+    } catch {
     }
   };
 
@@ -288,12 +292,15 @@ export default function TestimonialsPage() {
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
+    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+      alert(`Image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`);
+      return;
+    }
     try {
       const resized = await resizeImage(file);
       setCover(resized);
       setPreview(URL.createObjectURL(resized));
-    } catch (err) {
-      console.error(err);
+    } catch {
     }
   };
 
@@ -303,12 +310,9 @@ export default function TestimonialsPage() {
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
       {/* Loading Overlay */}
       {isSubmitting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-md">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/90 backdrop-blur-md">
           <div className="flex flex-col items-center gap-5">
-            <div className="relative w-16 h-16">
-              <div className="absolute inset-0 rounded-full border-4 border-primary2/20" />
-              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary2 animate-spin" />
-            </div>
+            <LoadingIndicator />
             <div className="text-center">
               <p className="text-primary3 font-bold font-rubik text-lg">
                 {loadingAction === "saving"
@@ -331,7 +335,7 @@ export default function TestimonialsPage() {
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
 
-          <div className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
+          <div className="grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
             {/* ── PAGE HEADER ── */}
             <div className="mb-16 text-left">
               <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
@@ -342,19 +346,19 @@ export default function TestimonialsPage() {
               </p>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8 items-start">
-              <aside className="w-full lg:w-64 flex-shrink-0">
+            <div className="flex flex-col lg:flex-row gap-8 items-stretch lg:items-start">
+              <aside className="w-full lg:w-64 shrink-0">
                 <Sidebar />
               </aside>
 
               <div className="flex-1 min-w-0 space-y-8">
                 {/* ── FORM CARD ── */}
-                <div className={`bg-white rounded-[2rem] border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
                   editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
                 }`}>
                     {/* Edit Banner */}
                     {editingId && (
-                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-gradient-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-[2rem]">
+                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-linear-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-4xl">
                         <div className="flex items-center gap-2 text-white">
                           <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                           <span className="text-sm font-bold font-rubik tracking-wide">
@@ -363,7 +367,7 @@ export default function TestimonialsPage() {
                         </div>
                         <button
                           onClick={handleCancelEdit}
-                          className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors"
+                          className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors cursor-pointer"
                         >
                           Cancel
                         </button>
@@ -410,7 +414,7 @@ export default function TestimonialsPage() {
                                 <button
                                   type="button"
                                   onClick={() => fileInputRef.current?.click()}
-                                  className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform font-rubik"
+                                  className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
                                 >
                                   Replace
                                 </button>
@@ -423,7 +427,7 @@ export default function TestimonialsPage() {
                                     setCover(null);
                                     setPreview(null);
                                   }}
-                                  className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform font-rubik"
+                                  className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
                                 >
                                   Remove
                                 </button>
@@ -531,13 +535,6 @@ export default function TestimonialsPage() {
 
                       {/* ── MESSAGE FIELD (full width) ── */}
                       <div className="mt-8 space-y-3">
-                        <div className="mb-8 flex items-center gap-2 pt-1">
-                          <div className="flex-1 h-px bg-gray-200" />
-                          <p className="text-[11px] text-gray-300 font-raleway">
-                            testimonial message below
-                          </p>
-                          <div className="flex-1 h-px bg-gray-200" />
-                        </div>
                         <div className="flex items-center justify-between">
                           <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                             Testimonial Message{" "}
@@ -582,43 +579,46 @@ export default function TestimonialsPage() {
                         )}
                         <div className="flex flex-wrap gap-3 ml-auto">
                           {editingId && (
-                            <button
+                            <Button
                               type="button"
+                              variant="heroOutline"
                               onClick={handleCancelEdit}
-                              className="px-6 py-3 font-rubik font-bold text-gray-500 border-2 border-gray-200 hover:border-red-200 hover:text-red-400 rounded-2xl transition-all duration-300"
+                              className="px-4 py-2 sm:px-6 sm:py-3"
                             >
                               Cancel
-                            </button>
+                            </Button>
                           )}
                           {(!editingId || isEditingDraft) && (
-                            <button
+                            <Button
                               type="button"
+                              variant="heroOutline"
                               onClick={handleSaveDraft}
-                              className="px-6 py-3 font-rubik font-bold text-primary1 border-2 border-primary1/30 hover:border-primary1 hover:bg-primary1/5 rounded-2xl transition-all duration-300"
+                              className="px-4 py-2 sm:px-6 sm:py-3"
                             >
                               {editingId ? "Update Draft" : "Save Draft"}
-                            </button>
+                            </Button>
                           )}
-                          <button
+                          <Button
                             type="button"
+                            variant="hero"
                             onClick={handlePublish}
                             disabled={isSubmitting}
-                            className="px-8 py-3 bg-gradient-to-r from-primary3 to-primary1 rounded-2xl font-rubik font-bold text-white shadow-lg shadow-primary1/20 hover:shadow-primary1/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-5 py-2 sm:px-8 sm:py-3"
                           >
                             {editingId && !isEditingDraft
                               ? "Update Testimonial"
                               : "Publish Testimonial"}
-                          </button>
+                          </Button>
                         </div>
                       </div>
                 </div>
 
                 {/* ── MANAGE LIST ── */}
-                <div className="bg-white rounded-[2rem] border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200">
+                <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
                     {/* List Header */}
                     <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                       <div>
-                        <h2 className="text-xl font-black font-rubik text-primary3">
+                        <h2 className="text-xl font-bold font-rubik text-primary3">
                           Manage Testimonials
                         </h2>
                         <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
@@ -630,7 +630,7 @@ export default function TestimonialsPage() {
                       </div>
                       <button
                         onClick={fetchTestimonials}
-                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200"
+                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200 cursor-pointer"
                       >
                         <RefreshCw
                           size={13}
@@ -642,12 +642,7 @@ export default function TestimonialsPage() {
 
                     {/* Table */}
                     {isLoadingList ? (
-                      <div className="py-20 flex flex-col items-center gap-3 text-gray-300">
-                        <div className="w-8 h-8 border-2 border-gray-200 border-t-primary2 rounded-full animate-spin" />
-                        <p className="text-sm font-raleway">
-                          Loading testimonials...
-                        </p>
-                      </div>
+                      <LoadingIndicator label="Loading testimonials..." className="py-16" />
                     ) : publishedItems.length === 0 ? (
                       <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
                         <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
@@ -663,17 +658,17 @@ export default function TestimonialsPage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left min-w-[580px]">
+                      <div className="overflow-x-auto themed-scrollbar">
+                        <table className="responsive-table w-full text-left min-w-145">
                           <thead>
                             <tr className="bg-gray-50/80">
-                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Author
                               </th>
-                              <th className="px-4 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Message
                               </th>
-                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-black uppercase tracking-widest text-gray-400 font-rubik">
+                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                 Actions
                               </th>
                             </tr>
@@ -691,9 +686,9 @@ export default function TestimonialsPage() {
                                   }`}
                                 >
                                   {/* Author */}
-                                  <td className="px-6 sm:px-8 py-4">
+                                  <td data-label="Author" data-primary="" className="px-6 sm:px-8 py-4">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-100 flex-shrink-0">
+                                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-100 shrink-0">
                                         {item.image ? (
                                           <img
                                             src={item.image}
@@ -701,7 +696,7 @@ export default function TestimonialsPage() {
                                             className="w-full h-full object-cover"
                                           />
                                         ) : (
-                                          <div className="w-full h-full flex items-center justify-center bg-primary1/10 text-primary1 text-xs font-black font-rubik">
+                                          <div className="w-full h-full flex items-center justify-center bg-primary1/10 text-primary1 text-xs font-bold font-rubik">
                                             {item.name.charAt(0)}
                                           </div>
                                         )}
@@ -709,7 +704,7 @@ export default function TestimonialsPage() {
                                       <div>
                                         <div className="flex items-center gap-2">
                                           {isEditing && (
-                                            <span className="w-1.5 h-1.5 rounded-full bg-primary1 animate-pulse flex-shrink-0" />
+                                            <span className="w-1.5 h-1.5 rounded-full bg-primary1 animate-pulse shrink-0" />
                                           )}
                                           <span className="font-bold text-sm text-gray-800 font-rubik">
                                             {item.name}
@@ -723,7 +718,7 @@ export default function TestimonialsPage() {
                                   </td>
 
                                   {/* Quote */}
-                                  <td className="px-4 py-4 max-w-sm">
+                                  <td data-label="Message" data-long className="px-4 py-4 max-w-sm">
                                     <p className="text-xs text-gray-500 font-raleway italic line-clamp-2 leading-relaxed">
                                       <Quote
                                         size={10}
@@ -734,21 +729,23 @@ export default function TestimonialsPage() {
                                   </td>
 
                                   {/* Actions */}
-                                  <td className="px-6 sm:px-8 py-4 text-right">
-                                    <div className="inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity">
+                                  <td data-label="Actions" className="px-6 sm:px-8 py-4 text-right">
+                                    <div className="inline-flex items-center gap-1 opacity-100 lg:opacity-40 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
                                       <button
                                         onClick={() => handleEditClick(item)}
-                                        className="p-2 text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150"
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-raleway font-semibold whitespace-nowrap text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150 cursor-pointer"
                                         title="Edit"
                                       >
                                         <Pencil size={15} />
+                                        Edit
                                       </button>
                                       <button
                                         onClick={() => confirmDelete(item._id)}
-                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150"
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-raleway font-semibold whitespace-nowrap text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150 cursor-pointer"
                                         title="Delete"
                                       >
                                         <Trash2 size={15} />
+                                        Delete
                                       </button>
                                     </div>
                                   </td>
@@ -766,13 +763,13 @@ export default function TestimonialsPage() {
         </div>
       </main>
 
-      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
+      <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
 
       {/* ── DELETE MODAL ── */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowDeleteModal(false)}
@@ -781,7 +778,7 @@ export default function TestimonialsPage() {
             <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
               <AlertTriangle className="w-6 h-6 text-red-500" />
             </div>
-            <h3 className="text-xl font-black text-primary3 font-rubik mb-2">
+            <h3 className="text-xl font-bold text-primary3 font-rubik mb-2">
               Delete Testimonial?
             </h3>
             <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
@@ -789,18 +786,20 @@ export default function TestimonialsPage() {
               be undone.
             </p>
             <div className="flex gap-3">
-              <button
+              <Button
+                variant="heroOutline"
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-3 text-sm font-bold font-rubik text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+                className="flex-1 py-2 sm:py-3"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="heroDanger"
                 onClick={handleDelete}
-                className="flex-1 py-3 text-sm font-bold font-rubik text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-lg shadow-red-500/25"
+                className="flex-1 py-2 sm:py-3"
               >
                 Delete
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -808,7 +807,7 @@ export default function TestimonialsPage() {
 
       {/* ── SUCCESS MODAL ── */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => {
@@ -820,7 +819,7 @@ export default function TestimonialsPage() {
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
+                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
                   <svg
                     className="w-10 h-10 text-white"
                     fill="none"
@@ -838,22 +837,23 @@ export default function TestimonialsPage() {
               </div>
             </div>
             <div className="text-center mb-6">
-              <h3 className="text-xl font-black text-primary3 font-rubik">
+              <h3 className="text-xl font-bold text-primary3 font-rubik">
                 {successMessage.title}
               </h3>
               <p className="text-gray-400 text-sm font-raleway mt-2">
                 {successMessage.description}
               </p>
             </div>
-            <button
+            <Button
+              variant="hero"
               onClick={() => {
                 setShowSuccessModal(false);
                 setSubmitSuccess(false);
               }}
-              className="w-full py-3 text-sm font-bold font-rubik text-white bg-gradient-to-r from-primary1 to-primary2 rounded-xl shadow-lg hover:shadow-primary2/40 hover:-translate-y-0.5 transition-all duration-200"
+              className="w-full py-2 text-sm sm:py-3"
             >
               Continue
-            </button>
+            </Button>
           </div>
         </div>
       )}

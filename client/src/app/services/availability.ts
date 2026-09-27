@@ -1,9 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-const authHeader = () => {
-  if (typeof window === "undefined") return {} as Record<string, string>;
-  const token = localStorage.getItem("authToken");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
+import { api, errorMessage } from "./api-client";
 
 export type AvailabilityDoc = {
   meeting: string;
@@ -12,46 +7,28 @@ export type AvailabilityDoc = {
 };
 
 export async function getMyAvailability(meetingId: string) {
-  const res = await fetch(`${API_BASE}/availability/${meetingId}/me`, {
-    headers: { ...authHeader() },
-  });
-  const json = await res.json();
-  if (!res.ok)
-    throw new Error(json.message || "Failed to fetch my availability");
-  return json.data as AvailabilityDoc;
+  try {
+    const res = await api.get(`/availability/${meetingId}/me`);
+    return res.data.data as AvailabilityDoc;
+  } catch (error) {
+    throw new Error(errorMessage(error, "Failed to fetch my availability"));
+  }
 }
 
 export async function saveMyAvailability(meetingId: string, slots: string[]) {
-  const res = await fetch(`${API_BASE}/availability/${meetingId}/me`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", ...authHeader() },
-    body: JSON.stringify({ slots }),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message || "Failed to save availability");
-  return json.data as AvailabilityDoc;
+  try {
+    const res = await api.patch(`/availability/${meetingId}/me`, { slots });
+    return res.data.data as AvailabilityDoc;
+  } catch (error) {
+    throw new Error(errorMessage(error, "Failed to save availability"));
+  }
 }
 
 export async function getAvailability(meetingId: string) {
-  const res = await fetch(`${API_BASE}/availability/${meetingId}`, {
-    headers: { ...authHeader() },
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message || "Failed to fetch availability");
-  return json.data as Array<{ user: any; slots: string[] }>;
-}
-
-export async function getAvailabilitySummary(meetingId: string) {
-  const res = await fetch(`${API_BASE}/availability/${meetingId}/summary`, {
-    headers: { ...authHeader() },
-  });
-  const json = await res.json();
-  if (!res.ok)
-    throw new Error(json.message || "Failed to fetch availability summary");
-  return json.data as {
-    selectedDates: string[];
-    startTime: string;
-    endTime: string;
-    counts: Record<string, number>;
-  };
+  try {
+    const res = await api.get(`/availability/${meetingId}`);
+    return res.data.data as Array<{ user: any; slots: string[] }>;
+  } catch (error) {
+    throw new Error(errorMessage(error, "Failed to fetch availability"));
+  }
 }

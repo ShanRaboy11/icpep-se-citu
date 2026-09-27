@@ -8,32 +8,32 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
   const coreValues = [
     {
       name: "Integrity",
-      iconUrl: "/integrity.png",
+      iconUrl: "/icons/illustrations/integrity.png",
       position: "top-[15%] left-[2%] md:top-0 md:left-[-15%]",
       animationClass: "animate-pulse-subtle",
     },
     {
       name: "Passion",
-      iconUrl: "/passion.png",
+      iconUrl: "/icons/illustrations/passion.png",
       position: "top-[-5%] right-[10%] md:top-[-10%] md:right-[-5%]",
       animationClass: "animate-pulse-subtle",
     },
     {
       name: "Excellence",
-      iconUrl: "/excellence.png",
+      iconUrl: "/icons/illustrations/excellence.png",
       position:
         "top-[54%] -translate-y-1/2 right-[0%] md:top-1/2 md:right-[-25%]",
       animationClass: "animate-pulse-subtle",
     },
     {
       name: "Collaboration",
-      iconUrl: "/collaboration.png",
+      iconUrl: "/icons/illustrations/collaboration.png",
       position: "bottom-[-6%] right-[8%] md:bottom-[-20%] md:right-[10%]",
       animationClass: "animate-pulse-subtle",
     },
     {
       name: "Service",
-      iconUrl: "/service.png",
+      iconUrl: "/icons/illustrations/service.png",
       position: "bottom-[8%] left-[-5%] md:bottom-[10%] md:left-[-20%]",
       animationClass: "animate-pulse-subtle",
     },
@@ -41,7 +41,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
 
   return (
     <div className="content-fade grid md:grid-cols-2 gap-8 md:gap-24 items-start">
-      <div className="relative w-full max-w-[18rem] sm:max-w-sm mx-auto h-64 sm:h-96 group order-last md:order-first mt-4 md:mt-0">
+      <div className="relative w-full max-w-72 sm:max-w-sm mx-auto h-64 sm:h-96 group order-last md:order-first mt-4 md:mt-0">
         <svg
           viewBox="0 0 400 400"
           className="absolute inset-0 z-0 opacity-70 md:hidden"
@@ -198,7 +198,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
 
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 sm:w-48 sm:h-48 z-10">
           <Image
-            src="/icpep logo.png"
+            src="/brand/icpep-logo.png"
             alt="ICpEP Logo"
             fill
             className="object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.4)]"
@@ -209,7 +209,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           <div
             key={value.name}
             className={`absolute ${value.position} ${value.animationClass} z-20
-              w-[74px] h-[74px] sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5
+              w-18.5 h-18.5 sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5
               flex flex-col items-center justify-center gap-0.5 sm:gap-2 p-1 sm:p-4
               transition-colors duration-300 hover:bg-white/10`}
             style={{

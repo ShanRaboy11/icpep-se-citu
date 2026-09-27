@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+import { api } from './api-client';
 
 export interface MerchItem {
   _id: string;
@@ -22,7 +20,7 @@ export interface CreateMerchData {
 
 const merchService = {
   getAll: async (): Promise<MerchItem[]> => {
-    const response = await axios.get(`${API_URL}/merch`);
+    const response = await api.get('/merch');
     return response.data.data;
   },
 
@@ -39,11 +37,7 @@ const merchService = {
       formData.append('image', image);
     }
 
-    const response = await axios.post(`${API_URL}/merch`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.post('/merch', formData);
     return response.data.data;
   },
 
@@ -58,16 +52,12 @@ const merchService = {
       formData.append('image', image);
     }
 
-    const response = await axios.put(`${API_URL}/merch/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await api.put(`/merch/${id}`, formData);
     return response.data.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await axios.delete(`${API_URL}/merch/${id}`);
+    await api.delete(`/merch/${id}`);
   },
 };
 

@@ -2,11 +2,15 @@
 
 This project is the **official website of the ICPEP.SE CIT-U Chapter**, developed using the **MERN stack** (MongoDB, Express, React/Next.js, Node.js). 
 
+> **Working with an AI coding agent (Claude Code, Cursor, etc.)?** Start with [AGENTS.md](AGENTS.md) — it links to the fuller [`docs/`](docs/) suite covering architecture, conventions and the full API surface.
+
 ---
 
 ## 📑 Table of Contents
 - [Prerequisites](#-prerequisites)  
 - [Setup Instructions](#-setup-instructions)  
+- [Environment Variables](#-environment-variables)  
+- [Tests & Checks](#-tests--checks)  
 - [Updating After Pulling New Code](#-updating-after-pulling-new-code)  
 - [Verify Setup](#-verify-setup)  
 - [Development Notes](#-development-notes)  
@@ -56,6 +60,40 @@ This project is the **official website of the ICPEP.SE CIT-U Chapter**, develope
 
 ---
 
+## 🔐 Environment Variables
+
+Copy `.env.example` and fill in real values. The ones that change behavior:
+
+| Variable | Purpose |
+| -------- | ------- |
+| `JWT_SECRET` | **Required.** The server refuses to start without it (at least 16 characters, use a long random string). |
+| `DEFAULT_PASSWORD` | Password given to new accounts when none is supplied; users must change it at first login. **Required in production** (the server won't start without it); falls back to `123456` in development. |
+| `JWT_EXPIRES_IN` | How long a login stays valid, e.g. `12h` or `3d`. Defaults to `7d`. Resetting a password signs out all of that account's sessions. |
+| `NEXT_PUBLIC_SITE_URL` | The deployed site's public URL, used for the sitemap, canonical links and structured data. Defaults to the production domain. |
+| `TRUST_PROXY` | Number of reverse proxies in front of the server (e.g. `1` on Render) so rate limits see the real client IP. Leave unset when the server is exposed directly. |
+| `SMTP_TLS_REJECT_UNAUTHORIZED` | Certificates are verified by default. Set to `false` only for a local mail catcher with a self-signed certificate. |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_EMAIL`, `SMTP_PASSWORD`, `FROM_EMAIL`, `FROM_NAME`, `REPORT_EMAIL` | Outgoing email (reset codes, event reports). |
+
+Login, forgot-password, verify-code and reset-password are rate limited per IP and per account (in memory, reset on restart).
+
+---
+
+## 🧪 Tests & Checks
+
+```bash
+npm --prefix server test          # role, ownership, whitelist, token and rate-limit rules
+npm --prefix server run typecheck
+npm --prefix server run lint
+npm --prefix client test          # name, department and academic-year helpers
+(cd client && npx tsc --noEmit)
+npm --prefix client run lint
+npm run check:mirrors             # client/server copies of shared utils must match
+```
+
+The same checks run on every push through GitHub Actions (`.github/workflows/ci.yml`).
+
+---
+
 ## 🔄 Updating After Pulling New Code
 
 ```bash
@@ -71,7 +109,7 @@ docker compose up --build
 ## ✅ Verify Setup
 
 * Open **[http://localhost:3000](http://localhost:3000)** → frontend should load.
-* Open **[http://localhost:5000](http://localhost:5000)** → should display: `API is running...`.
+* Open **[http://localhost:5000](http://localhost:5000)** → should display a JSON API index (`"message": "ICPEP CITU API Server"`).
 * Docker logs should show:
 
   ```
@@ -86,6 +124,9 @@ docker compose up --build
 * **Backend (server/)** → Express + MongoDB, auto-restarts with `nodemon`.
 * **Frontend (client/)** → Next.js + TailwindCSS, supports hot reload.
 * **Database** → MongoDB 6.0 with Docker volume (`mongo-data`) for persistence.
+* **Public assets** (`client/public/`) → organized into subfolders: `brand/`, `icons/{social,ui,illustrations,decorative}/`, `team/`, `content/`, `placeholders/`, `documents/`. Add new files to the matching folder rather than the root.
+* **Maintenance mode** → an `admin`-only toggle at `/create/maintenance` suspends the site for everyone else (a maintenance screen on the client, a `503` on the API). See [docs/architecture.md](docs/architecture.md#maintenance-mode).
+* **Dashboard** → one URL (`/dashboard`) shows a different view per role (admin / officer / student) rather than separate role-named routes.
 
 ---
 

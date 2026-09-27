@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import eventService from "../services/event";
 import clsx from "clsx";
+import BackButton from "../components/back-button";
+import PageHeader from "../components/page-header";
 
 type ProcessedEvent = Event & {
   status: "Upcoming" | "Ongoing" | "Ended";
@@ -87,8 +89,8 @@ export default function EventsListPage() {
             : [];
 
           const toImageUrl = (url: unknown): string => {
-            if (!url) return "/placeholder.svg";
-            if (typeof url !== "string") return "/placeholder.svg";
+            if (!url) return "/placeholders/placeholder.svg";
+            if (typeof url !== "string") return "/placeholders/placeholder.svg";
             if (url.startsWith("http")) return url;
             const backendHost = (
               process.env.NEXT_PUBLIC_BACKEND_URL ||
@@ -109,7 +111,7 @@ export default function EventsListPage() {
             const organizerRaw = evt["organizer"];
             const organizer =
               typeof organizerRaw === "string"
-                ? { name: organizerRaw, avatarImageUrl: "/icpep logo.png" }
+                ? { name: organizerRaw, avatarImageUrl: "/brand/icpep-logo.png" }
                 : (organizerRaw as Record<string, unknown> | undefined)
                   ? {
                       name: String(
@@ -118,10 +120,10 @@ export default function EventsListPage() {
                       avatarImageUrl: String(
                         (organizerRaw as Record<string, unknown>)[
                           "avatarImageUrl"
-                        ] ?? "/icpep logo.png",
+                        ] ?? "/brand/icpep-logo.png",
                       ),
                     }
-                  : { name: "", avatarImageUrl: "/icpep logo.png" };
+                  : { name: "", avatarImageUrl: "/brand/icpep-logo.png" };
 
             const tags = Array.isArray(evt["tags"])
               ? (evt["tags"] as unknown[]).map((t) => String(t))
@@ -171,8 +173,7 @@ export default function EventsListPage() {
 
           setEvents(transformedEvents as Event[]);
         }
-      } catch (err) {
-        console.error("Failed to fetch events:", err);
+      } catch {
         setError("Failed to load events. Please try again later.");
       } finally {
         setIsLoading(false);
@@ -324,31 +325,24 @@ export default function EventsListPage() {
           <div className="max-w-7xl mx-auto px-6 pt-38 pb-12 w-full grow">
             {/* back */}
             <div className="mb-8 flex justify-start">
-              <button
+              <BackButton
                 onClick={() => router.push("/")}
                 title="Back to Home"
-                className="relative flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border-2 border-primary1 text-primary1 overflow-hidden transition-all duration-300 ease-in-out active:scale-95 before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/40 before:to-transparent before:translate-x-[-100%] hover:before:translate-x-[100%] before:transition-transform before:duration-700"
-              >
-                <Home className="h-6 w-6" />
-              </button>
+                icon={Home}
+              />
             </div>
 
             {/* title */}
-            <div className="mb-12 text-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-                <div className="h-2 w-2 rounded-full bg-primary1"></div>
-                <span className="font-raleway text-sm font-semibold text-primary1">
-                  Chapter Activities
-                </span>
-              </div>
-              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-                Our Events
-              </h1>
-              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
-                Explore our lineup of events and find your next opportunity to
-                be part of the excitement, connect, learn, and grow.
-              </p>
-            </div>
+            <PageHeader
+              badge="Chapter Activities"
+              title="Our Events"
+              subtitle={
+                <>
+                  Explore our lineup of events and find your next opportunity
+                  to be part of the excitement, connect, learn, and grow.
+                </>
+              }
+            />
 
             {/* search & filters */}
             <div className="mb-10 max-w-4xl mx-auto flex gap-4 items-center">
@@ -365,7 +359,7 @@ export default function EventsListPage() {
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="ml-2 text-gray-400 hover:text-primary1 transition-colors"
+                      className="ml-2 text-gray-400 hover:text-primary1 transition-colors cursor-pointer"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -382,7 +376,7 @@ export default function EventsListPage() {
                     setIsCategoryFilterOpen(false);
                   }}
                   className={clsx(
-                    "flex items-center justify-center h-[52px] w-[52px] bg-white border-2 rounded-2xl transition-all hover:border-primary1",
+                    "flex items-center justify-center h-13 w-13 bg-white border-2 rounded-2xl transition-all hover:border-primary1 cursor-pointer",
                     isDateFilterOpen ||
                       selectedYears.length > 0 ||
                       selectedMonths.length > 0
@@ -400,7 +394,7 @@ export default function EventsListPage() {
                         {filterStep === "month" && (
                           <button
                             onClick={() => setFilterStep("year")}
-                            className="p-1 hover:bg-gray-100 rounded-full transition-colors text-primary1"
+                            className="p-1 hover:bg-gray-100 rounded-full transition-colors text-primary1 cursor-pointer"
                           >
                             <ChevronLeft className="h-4 w-4" />
                           </button>
@@ -416,7 +410,7 @@ export default function EventsListPage() {
                           setSelectedYears([]);
                           setSelectedMonths([]);
                         }}
-                        className="flex items-center gap-1 px-2 py-1 bg-red-50 hover:bg-red-100 rounded-full transition-colors group"
+                        className="flex items-center gap-1 px-2 py-1 bg-red-50 hover:bg-red-100 rounded-full transition-colors group cursor-pointer"
                       >
                         <RotateCcw className="h-3 w-3 text-red-500 group-hover:-rotate-45 transition-transform" />
                         <span className="font-raleway text-[9px] font-bold text-red-500 uppercase tracking-wider">
@@ -441,7 +435,7 @@ export default function EventsListPage() {
                                   : toggleMonth(idx)
                               }
                               className={clsx(
-                                "relative py-2.5 rounded-xl text-xs font-bold font-rubik transition-all duration-200 border-2 overflow-hidden",
+                                "relative py-2.5 rounded-xl text-xs font-bold font-rubik transition-all duration-200 border-2 overflow-hidden cursor-pointer active:scale-95",
                                 isSelected
                                   ? "bg-primary1 text-white border-primary1 shadow-md shadow-primary1/30 scale-[0.96]"
                                   : "bg-white text-gray-500 border-gray-50 hover:border-primary1/30 hover:bg-primary1/5 hover:text-primary1",
@@ -463,7 +457,7 @@ export default function EventsListPage() {
                           ? setFilterStep("month")
                           : setIsDateFilterOpen(false)
                       }
-                      className="w-full mt-5 py-2.5 bg-primary3 text-white rounded-xl font-rubik font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.97] transition-all shadow-lg shadow-primary3/10"
+                      className="w-full mt-5 py-2.5 bg-primary3 text-white rounded-xl font-rubik font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.97] transition-all shadow-lg shadow-primary3/10 cursor-pointer"
                     >
                       {filterStep === "year" ? (
                         <>
@@ -487,7 +481,7 @@ export default function EventsListPage() {
                     setIsDateFilterOpen(false);
                   }}
                   className={clsx(
-                    "flex items-center justify-center h-[52px] w-[52px] bg-white border-2 rounded-2xl transition-all hover:border-primary1",
+                    "flex items-center justify-center h-13 w-13 bg-white border-2 rounded-2xl transition-all hover:border-primary1 cursor-pointer",
                     isCategoryFilterOpen || activeCategory !== "All"
                       ? "border-primary1 bg-primary1/5 shadow-sm shadow-primary1/10"
                       : "border-primary1/20",
@@ -504,7 +498,7 @@ export default function EventsListPage() {
                       </span>
                       <button
                         onClick={() => setActiveCategory("All")}
-                        className="flex items-center gap-1 px-2 py-1 bg-red-50 hover:bg-red-100 rounded-full transition-colors group"
+                        className="flex items-center gap-1 px-2 py-1 bg-red-50 hover:bg-red-100 rounded-full transition-colors group cursor-pointer"
                       >
                         <RotateCcw className="h-3 w-3 text-red-500 group-hover:-rotate-45 transition-transform" />
                         <span className="font-raleway text-[9px] font-bold text-red-500 uppercase tracking-wider">
@@ -521,7 +515,7 @@ export default function EventsListPage() {
                             setIsCategoryFilterOpen(false);
                           }}
                           className={clsx(
-                            "w-full py-2.5 px-4 rounded-xl text-sm transition-all duration-200 text-left flex items-center gap-3 font-rubik cursor-pointer transform-gpu backface-hidden",
+                            "w-full py-2.5 px-4 rounded-xl text-sm transition-all duration-200 text-left flex items-center gap-3 font-rubik cursor-pointer active:scale-[0.98] transform-gpu backface-hidden",
                             activeCategory === cat.name
                               ? "bg-primary1 text-white shadow-md shadow-primary1/25 font-semibold"
                               : "text-gray-600 hover:bg-primary1/5 hover:text-primary1 hover:translate-x-1",
@@ -571,7 +565,7 @@ export default function EventsListPage() {
                     Category: {activeCategory}
                     <button
                       onClick={() => setActiveCategory("All")}
-                      className="hover:text-primary3 transition-colors"
+                      className="hover:text-primary3 transition-colors cursor-pointer"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -590,7 +584,7 @@ export default function EventsListPage() {
                             prev.filter((y) => !range.original.includes(y)),
                           )
                         }
-                        className="hover:text-primary3 transition-colors"
+                        className="hover:text-primary3 transition-colors cursor-pointer"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -610,7 +604,7 @@ export default function EventsListPage() {
                             prev.filter((m) => !range.original.includes(m)),
                           )
                         }
-                        className="hover:text-primary1 transition-colors"
+                        className="hover:text-primary1 transition-colors cursor-pointer"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -675,7 +669,7 @@ export default function EventsListPage() {
                             <button
                               key={pageNum}
                               onClick={() => setCurrentPage(pageNum)}
-                              className={`w-10 h-10 rounded-xl text-sm font-bold font-rubik transition-all border-2 ${currentPage === pageNum ? "bg-primary1 text-white border-primary1" : "border-primary1/20 text-primary1 hover:border-primary1 hover:bg-primary1/5"}`}
+                              className={`w-10 h-10 rounded-xl text-sm font-bold font-rubik transition-all border-2 cursor-pointer ${currentPage === pageNum ? "bg-primary1 text-white border-primary1" : "border-primary1/20 text-primary1 hover:border-primary1 hover:bg-primary1/5"}`}
                             >
                               {pageNum}
                             </button>
@@ -710,7 +704,7 @@ export default function EventsListPage() {
       </main>
 
       {/* footer */}
-      <div className="-mt-[35px] md:-mt-20 relative z-0">
+      <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
     </div>

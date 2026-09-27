@@ -6,7 +6,7 @@ import {
   Announcement,
   formatDate,
 } from "../../announcements/utils/announcements";
-import { ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 interface FeaturedCardProps {
   announcement: Announcement;
@@ -23,7 +23,8 @@ export default function FeaturedAnnouncementCard({
         <Image
           src={announcement.imageUrl}
           alt={announcement.title}
-          layout="fill"
+          fill
+          sizes="(min-width: 1024px) 50vw, 100vw"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
@@ -46,7 +47,7 @@ export default function FeaturedAnnouncementCard({
           className="group mt-6 sm:mt-8 inline-flex items-center gap-2 font-rubik font-semibold text-primary1 transition-colors duration-300 hover:text-secondary2 cursor-pointer"
         >
           <span>Read More</span>
-          <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1.5" />
+          <ChevronRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1.5" />
         </button>
       </div>
     </div>

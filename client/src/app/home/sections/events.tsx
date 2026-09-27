@@ -4,8 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Event } from "@/app/events/utils/event";
 import EventCard from "@/app/home/components/event-card";
-import ParticleNetwork from "@/app/home/components/particle";
 import eventService from "@/app/services/event";
+import Button from "@/app/components/button";
 
 const shimmerStyle = `
   @keyframes shimmer {
@@ -61,7 +61,7 @@ function EventCardSkeleton() {
         </div>
 
         <div className="flex items-center gap-3 mt-auto pt-4 border-t border-white/10">
-          <SkeletonBlock className="w-8 h-8 rounded-full flex-shrink-0" />
+          <SkeletonBlock className="w-8 h-8 rounded-full shrink-0" />
           <SkeletonBlock className="w-32 h-4 rounded-md" />
         </div>
       </div>
@@ -125,7 +125,7 @@ export function EventsSection() {
                 typeof item.organizer === "string"
                   ? item.organizer
                   : item.organizer?.name || "ICpEP.SE CIT-U",
-              avatarImageUrl: "/icpep logo.png",
+              avatarImageUrl: "/brand/icpep-logo.png",
             },
             tags: item.tags || [],
             bannerImageUrl:
@@ -137,8 +137,7 @@ export function EventsSection() {
           }));
           setEvents(mapped);
         }
-      } catch (error) {
-        console.error("Failed to fetch events", error);
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -148,16 +147,11 @@ export function EventsSection() {
 
   return (
     <section className="light-dark-background relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 py-16 sm:py-20">
-      <div className="absolute inset-0 items-center justify-center top-[40px] hidden sm:flex">
-        <ParticleNetwork className="mask-[radial-gradient(ellipse_45%_50%_at_50%_55%,transparent_35%,white_100%)]" />
-      </div>
-
       <div className="relative z-10 w-full max-w-7xl mx-auto transform -translate-y-8">
         <div className="mb-12 md:mb-16 text-center relative">
-          <div className="absolute left-1/2 top-[58%] -translate-x-1/2 -translate-y-1/2 w-[220px] h-[130px] rounded-full bg-[radial-gradient(circle,rgba(255,255,255,0.07)_0%,transparent_70%)] pointer-events-none" />
-          <h1 className="relative font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
+          <h2 className="relative font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
             Featured Events
-          </h1>
+          </h2>
           <p className="relative font-raleway text-base sm:text-lg text-bodytext mt-2 max-w-lg mx-auto">
             Stay updated with our past and upcoming activities.
           </p>
@@ -165,14 +159,14 @@ export function EventsSection() {
 
         <div
           className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-center items-stretch ${
-            loading || events.length > 0 ? "min-h-[450px]" : "min-h-0"
+            loading || events.length > 0 ? "min-h-112.5" : "min-h-0"
           }`}
         >
           {loading ? (
             [1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="h-[480px] w-full rounded-2xl bg-white/5 animate-pulse border border-white/10 relative overflow-hidden"
+                className="h-120 w-full rounded-2xl bg-white/5 animate-pulse border border-white/10 relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent" />
               </div>
@@ -195,12 +189,9 @@ export function EventsSection() {
             !loading && events.length === 0 ? "mt-10" : "mt-16"
           }`}
         >
-          <button
-            onClick={() => router.push("/events")}
-            className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer"
-          >
+          <Button variant="hero" onClick={() => router.push("/events")}>
             Discover More
-          </button>
+          </Button>
         </div>
       </div>
     </section>

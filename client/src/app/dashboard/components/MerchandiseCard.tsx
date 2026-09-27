@@ -32,17 +32,17 @@ export const MerchandiseCard: FC<MerchandiseCardProps> = ({
           sizes="(max-width: 768px) 100vw, 25vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = "/gle.png";
+            (e.target as HTMLImageElement).src = "/content/gle.png";
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        <button className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-white/90 backdrop-blur-sm text-primary1 text-xs font-semibold font-raleway shadow">
+        <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <button className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-white/90 backdrop-blur-sm text-primary1 text-xs font-semibold font-raleway shadow cursor-pointer">
           <Eye className="h-3 w-3" />
           View
         </button>
       </div>
 
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="p-4 flex flex-col grow">
         <h5 className="font-rubik text-sm font-bold text-slate-800 truncate group-hover:text-primary1 transition-colors duration-300">
           {name}
         </h5>

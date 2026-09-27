@@ -8,6 +8,7 @@ export interface IMeeting extends Document {
   startTime: string; // e.g. "09:00 AM"
   endTime: string; // e.g. "10:30 AM"
   timeLimit?: string; // e.g. "45 Minutes" | "No Limit"
+  meetingLink?: string; // optional online meeting URL (http/https)
   createdBy: mongoose.Types.ObjectId;
   isPublished: boolean;
   createdAt: Date;
@@ -23,6 +24,7 @@ const meetingSchema = new Schema<IMeeting>(
     startTime: { type: String, required: true },
     endTime: { type: String, required: true },
     timeLimit: { type: String, default: "No Limit" },
+    meetingLink: { type: String, default: "", trim: true, maxlength: 2048 },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     isPublished: { type: Boolean, default: true },
   },

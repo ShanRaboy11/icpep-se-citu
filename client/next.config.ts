@@ -1,15 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Allow builds to proceed in environments (like Vercel) where lint rules
-  // should not block the production build. Prefer fixing the lint warnings
-  // long-term; this is a temporary measure to unblock deployment.
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   turbopack: {
     root: __dirname,
+  },
+
+  // The dashboard used to live at a role-named URL each; old bookmarks and
+  // links land on the single /dashboard now.
+  async redirects() {
+    return [
+      { source: "/dashboard/officer", destination: "/dashboard", permanent: true },
+      { source: "/dashboard/student", destination: "/dashboard", permanent: true },
+    ];
   },
 
   images: {
@@ -34,7 +36,9 @@ const nextConfig: NextConfig = {
   },
 
   webpack: (config, { isServer }) => {
-    if (!isServer) {
+    // File-change events don't reach the container under Docker on Windows/Mac,
+    // so docker-compose turns polling on; everywhere else the default is better.
+    if (!isServer && process.env.WATCHPACK_POLLING === "true") {
       config.watchOptions = {
         poll: 1000,
         aggregateTimeout: 300,

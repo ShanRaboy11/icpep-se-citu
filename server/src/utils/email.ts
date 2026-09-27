@@ -10,9 +10,10 @@ const sendEmail = async (options: { email: string; subject: string; message: str
       user: process.env.SMTP_EMAIL,
       pass: process.env.SMTP_PASSWORD,
     },
+    requireTLS: true,
     tls: {
-      ciphers: 'SSLv3', // specific for outlook? might not be needed but common fix
-      rejectUnauthorized: false
+      // Certificates are verified unless a self-signed dev SMTP explicitly opts out.
+      rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false',
     }
   });
 
@@ -24,9 +25,7 @@ const sendEmail = async (options: { email: string; subject: string; message: str
     html: options.html
   };
 
-  const info = await transporter.sendMail(message);
-
-  console.log('Message sent: %s', info.messageId);
+  await transporter.sendMail(message);
 };
 
 export default sendEmail;

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getTypeColor, formatDate } from "../utils/announcements";
 
 // Props for the card; imageUrl is optional because some announcements may not include one
@@ -32,11 +33,13 @@ export function AnnouncementCard({
       onClick={onClick}
     >
       <div className="md:flex h-full">
-        <div className="md:w-1/3 h-48 md:h-full">
-          <img
-            src={imageUrl ?? "/gle.png"}
+        <div className="relative md:w-1/3 h-48 md:h-full">
+          <Image
+            src={imageUrl ?? "/content/gle.png"}
             alt={title}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(min-width: 768px) 33vw, 100vw"
+            className="object-cover"
           />
         </div>
 

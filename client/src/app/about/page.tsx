@@ -10,10 +10,17 @@ import FacultySection from "./sections/faculty";
 
 import { Home } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FC } from "react";
+import { FC, useEffect, useState } from "react";
+import BackButton from "../components/back-button";
+import PageHeader from "../components/page-header";
+import facultyService from "../services/faculty";
+import officerTermService from "../services/officerTerm";
+import { getCurrentAcademicYear } from "../utils/academic-year";
+import { toTitleCase } from "../officers/utils/format-name";
 
 interface OfficerTerm {
   term: string;
+  href: string;
 }
 interface FacultyMember {
   name: string;
@@ -21,50 +28,58 @@ interface FacultyMember {
   imageUrl: string;
 }
 
-const officerHistory: OfficerTerm[] = [
-  { term: "A.Y. 2024 - 2025" },
-  { term: "A.Y. 2023 - 2024" },
-  { term: "A.Y. 2022 - 2023" },
-  { term: "A.Y. 2021 - 2022" },
-  { term: "A.Y. 2020 - 2021" },
-  { term: "A.Y. 2020 - 2020" },
-];
-
-const departmentFaculty: FacultyMember[] = [
-  {
-    name: "Engr. Roel P. Lauron",
-    position: "Department Head",
-    imageUrl: "/gle.png",
-  },
-  {
-    name: "Dr. Jane Doe",
-    position: "Professor, Embedded Systems",
-    imageUrl: "/gle.png",
-  },
-  {
-    name: "Engr. John Smith",
-    position: "Assoc. Professor, Networking",
-    imageUrl: "/gle.png",
-  },
-  {
-    name: "Dr. Emily White",
-    position: "Professor, VLSI Design",
-    imageUrl: "/gle.png",
-  },
-  {
-    name: "Engr. Michael Brown",
-    position: "Instructor, IoT",
-    imageUrl: "/gle.png",
-  },
-  {
-    name: "Dr. Sarah Green",
-    position: "Professor, Signal Processing",
-    imageUrl: "/gle.png",
-  },
-];
-
 const AboutPage: FC = () => {
   const router = useRouter();
+  const [departmentFaculty, setDepartmentFaculty] = useState<FacultyMember[]>(
+    [],
+  );
+  const [officerHistory, setOfficerHistory] = useState<OfficerTerm[]>([]);
+
+  useEffect(() => {
+    const fetchFaculty = async () => {
+      try {
+        const response = await facultyService.getFaculty();
+        const data = Array.isArray(response.data) ? response.data : [];
+        setDepartmentFaculty(
+          data.map((f: any) => ({
+            name: toTitleCase(f.name),
+            position: f.position,
+            imageUrl: f.image || "/content/gle.png",
+          })),
+        );
+      } catch {
+      }
+    };
+    fetchFaculty();
+
+    const fetchYears = async () => {
+      try {
+        const response = await officerTermService.getYears();
+        const years: string[] = Array.isArray(response.data)
+          ? response.data
+          : [];
+        const currentYear = getCurrentAcademicYear();
+
+        const cards: OfficerTerm[] = [
+          { term: `A.Y. ${currentYear}`, href: "/officers" },
+        ];
+        years
+          .filter((y) => y !== currentYear)
+          .forEach((y) => {
+            cards.push({
+              term: `A.Y. ${y}`,
+              href: `/officers?year=${encodeURIComponent(y)}`,
+            });
+          });
+        setOfficerHistory(cards);
+      } catch {
+        setOfficerHistory([
+          { term: `A.Y. ${getCurrentAcademicYear()}`, href: "/officers" },
+        ]);
+      }
+    };
+    fetchYears();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
@@ -74,39 +89,27 @@ const AboutPage: FC = () => {
         <div className="relative z-10 flex flex-col">
           <Header />
 
-          <div className="w-full max-w-7xl mx-auto px-6 pt-[9.5rem]">
+          <div className="w-full max-w-7xl mx-auto px-6 pt-38">
             <div className="mb-8 flex justify-start">
-              <button
+              <BackButton
                 onClick={() => router.push("/")}
                 title="Back to Home"
-                className="relative flex h-12 w-12 cursor-pointer items-center justify-center 
-               rounded-full border-2 border-primary1 text-primary1 
-               overflow-hidden transition-all duration-300 ease-in-out 
-               active:scale-95 before:absolute before:inset-0 
-               before:bg-gradient-to-r before:from-transparent 
-               before:via-white/40 before:to-transparent 
-               before:translate-x-[-100%] hover:before:translate-x-[100%] 
-               before:transition-transform before:duration-700"
-              >
-                <Home className="h-6 w-6" />
-              </button>
+                icon={Home}
+              />
             </div>
 
-            <div className="mb-20 text-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary1/10 px-3 py-1 mb-4">
-                <div className="h-2 w-2 rounded-full bg-primary1"></div>
-                <span className="font-raleway text-sm font-semibold text-primary1">
-                  About Our Chapter
-                </span>
-              </div>
-              <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
-                The ICpEP SE CIT-U Story
-              </h1>
-              <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl mx-auto">
-                Get to know our mission, values, and the dedicated individuals
-                who bring ICPEP SE CIT-U Chapter to life.
-              </p>
-            </div>
+            <PageHeader
+              className="mb-20 text-center"
+              badge="About Our Chapter"
+              title="The ICpEP SE CIT-U Story"
+              subtitleClassName="max-w-3xl"
+              subtitle={
+                <>
+                  Get to know our mission, values, and the dedicated
+                  individuals who bring ICPEP SE CIT-U Chapter to life.
+                </>
+              }
+            />
 
             <InfoSection />
           </div>
@@ -119,7 +122,7 @@ const AboutPage: FC = () => {
         </div>
       </main>
 
-      <div className="mt-[-35px] md:mt-[-80px] relative z-0">
+      <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
     </div>

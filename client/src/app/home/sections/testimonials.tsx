@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TestimonialCard } from "@/app/home/components/testimonial-card";
 import testimonialService from "@/app/services/testimonial";
+import { toTitleCase } from "@/app/officers/utils/format-name";
 
 const shimmerStyle = `
   @keyframes shimmer {
@@ -55,7 +56,7 @@ function TestimonialCardSkeleton({
       </div>
 
       <div className="flex items-center gap-4 w-full mt-2 pt-4 border-t border-white/10">
-        <SkeletonBlock className="w-14 h-14 rounded-full flex-shrink-0" />
+        <SkeletonBlock className="w-14 h-14 rounded-full shrink-0" />
         <div className="flex flex-col gap-2 flex-1">
           <SkeletonBlock className="w-32 h-4 rounded-md" />
           <SkeletonBlock className="w-24 h-3 rounded-md" />
@@ -67,7 +68,7 @@ function TestimonialCardSkeleton({
 
 function TestimonialsSkeleton() {
   return (
-    <section className="dark-light-background relative min-h-screen overflow-visible z-[2]">
+    <section className="dark-light-background relative min-h-screen overflow-visible z-2">
       <style>{shimmerStyle}</style>
 
       <div className="absolute inset-0 z-0 opacity-90 hidden lg:block">
@@ -86,13 +87,13 @@ function TestimonialsSkeleton() {
           <SkeletonBlock className="w-64 h-5 rounded-md" />
         </div>
 
-        <div className="lg:hidden z-20 w-full h-[450px] flex justify-center items-start pt-16 px-4">
+        <div className="lg:hidden z-20 w-full h-112.5 flex justify-center items-start pt-16 px-4">
           <div className="w-full max-w-md h-[90%]">
             <TestimonialCardSkeleton />
           </div>
         </div>
 
-        <div className="relative z-20 h-[420px] w-full max-w-7xl overflow-visible hidden lg:flex items-center justify-center">
+        <div className="relative z-20 h-105 w-full max-w-7xl overflow-visible hidden lg:flex items-center justify-center">
           <div
             className="absolute top-0 w-full h-full flex items-center justify-center"
             style={{ transform: "translateX(-40%) scale(0.85)", opacity: 0.4 }}
@@ -142,15 +143,14 @@ export function TestimonialsSection() {
         const response = await testimonialService.getTestimonials();
         if (response.success && Array.isArray(response.data)) {
           const mapped = response.data.map((item: any) => ({
-            name: item.name,
+            name: toTitleCase(item.name),
             title: item.role,
             imageSrc: item.image,
             testimonial: item.quote,
           }));
           setTestimonials(mapped);
         }
-      } catch (error) {
-        console.error("Failed to fetch testimonials", error);
+      } catch {
       } finally {
         setLoading(false);
       }
@@ -179,7 +179,7 @@ export function TestimonialsSection() {
   }, [currentIndex, loading]);
 
   return (
-    <section className="dark-light-background relative min-h-screen overflow-visible z-[2]">
+    <section className="dark-light-background relative min-h-screen overflow-visible z-2">
       <div className="absolute inset-0 z-0 opacity-90 hidden lg:block">
         <div className="blob bg-sky-400 top-0 left-0 animate-blob-1"></div>
         <div className="blob bg-indigo-400 top-0 right-0 animate-blob-2"></div>
@@ -188,14 +188,14 @@ export function TestimonialsSection() {
 
       <div className="absolute inset-0 z-0 opacity-60 lg:hidden">
         <div className="blob bg-sky-400 top-[5%] right-[-20%] animate-blob-1"></div>
-        <div className="blob bg-indigo-400 bottom-[5%] left-[-20 Domani animate-blob-3"></div>
+        <div className="blob bg-indigo-400 bottom-[5%] left-[-20%] animate-blob-3"></div>
       </div>
 
       <div className="relative flex min-h-screen flex-col items-center justify-center lg:overflow-hidden px-4 py-16 sm:px-6 sm:py-20">
         <div className="relative z-20 mb-16 sm:mb-24 text-center">
-          <h1 className="font-rubik text-4xl font-bold text-primary3 sm:text-5xl leading-tight">
+          <h2 className="font-rubik text-4xl font-bold text-primary3 sm:text-5xl leading-tight">
             Testimonials
-          </h1>
+          </h2>
           <p className="font-raleway mt-2 text-base text-bodytext sm:text-lg max-w-lg mx-auto">
             Sync with the experiences that define ICpEP SE.
           </p>
@@ -203,7 +203,7 @@ export function TestimonialsSection() {
 
         <div className="w-full flex flex-col items-center justify-center">
           {loading ? (
-            <div className="relative z-20 h-[420px] w-full max-w-2xl bg-white/10 animate-pulse rounded-3xl border border-white/20 backdrop-blur-md" />
+            <div className="relative z-20 h-105 w-full max-w-2xl bg-white/10 animate-pulse rounded-3xl border border-white/20 backdrop-blur-md" />
           ) : testimonials.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 font-raleway text-lg">
@@ -215,7 +215,7 @@ export function TestimonialsSection() {
               {/* mobile carousel */}
               <div
                 ref={scrollContainerRef}
-                className="lg:hidden z-20 w-full h-[450px] flex overflow-x-auto snap-x snap-mandatory scroll-smooth"
+                className="lg:hidden z-20 w-full h-112.5 flex overflow-x-auto hide-scrollbar snap-x snap-mandatory scroll-smooth"
                 style={
                   {
                     scrollbarWidth: "none",
@@ -226,7 +226,7 @@ export function TestimonialsSection() {
                 {testimonials.map((testimonial, index) => (
                   <div
                     key={index}
-                    className="w-full flex-shrink-0 snap-center flex justify-center pt-16 px-4 pb-4"
+                    className="w-full shrink-0 snap-center flex justify-center pt-16 px-4 pb-4"
                   >
                     <div className="w-full max-w-md h-[90%]">
                       <TestimonialCard {...testimonial} position={0} />
@@ -236,7 +236,7 @@ export function TestimonialsSection() {
               </div>
 
               {/* desktop carousel */}
-              <div className="relative z-20 h-[420px] w-full max-w-7xl overflow-visible hidden lg:block">
+              <div className="relative z-20 h-105 w-full max-w-7xl overflow-visible hidden lg:block">
                 {testimonials.map((testimonial, index) => {
                   const position = index - currentIndex;
                   let animateProps = {
@@ -297,12 +297,14 @@ export function TestimonialsSection() {
           <button
             onClick={handlePrev}
             disabled={loading || currentIndex === 0}
+            aria-label="Previous testimonial"
             className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
-            <ArrowLeft size={24} />
+            <ChevronLeft size={24} />
           </button>
           <button
             onClick={handleNext}
+            aria-label="Next testimonial"
             disabled={
               loading ||
               testimonials.length === 0 ||
@@ -310,7 +312,7 @@ export function TestimonialsSection() {
             }
             className="flex h-14 w-14 items-center justify-center rounded-full border border-primary1/40 bg-white/80 backdrop-blur-sm text-primary1 transition-all duration-300 hover:bg-primary1/10 active:scale-90 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
-            <ArrowRight size={24} />
+            <ChevronRight size={24} />
           </button>
         </div>
       </div>

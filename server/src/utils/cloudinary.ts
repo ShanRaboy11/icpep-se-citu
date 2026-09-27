@@ -1,4 +1,5 @@
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
+import { Readable } from 'stream';
 
 // Check Cloudinary credentials
 const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
@@ -19,13 +20,6 @@ if (CLOUDINARY_ENABLED) {
         api_key: CLOUDINARY_API_KEY,
         api_secret: CLOUDINARY_API_SECRET,
     });
-} else {
-    console.warn('⚠️ Cloudinary credentials missing or incomplete. Uploads will use a placeholder URL in development.');
-}
-if (CLOUDINARY_ENABLED) {
-    // Log masked info to help debugging without leaking secrets
-    const masked = `${String(CLOUDINARY_CLOUD_NAME).slice(0, 3)}***`;
-    console.log(`✅ Cloudinary configured. cloud_name=${masked}`);
 }
 
 /**
@@ -40,7 +34,6 @@ export const uploadToCloudinary = (
 ): Promise<UploadApiResponse> => {
     // If Cloudinary isn't configured, return a placeholder response to avoid 500s during local dev
     if (!CLOUDINARY_ENABLED) {
-        console.warn('⚠️ uploadToCloudinary called but Cloudinary is not configured. Returning placeholder URL.');
         return Promise.resolve({ secure_url: 'https://via.placeholder.com/1200x630.png?text=No+Image' } as any);
     }
 
@@ -65,22 +58,18 @@ export const uploadToCloudinary = (
 
             // Attach error handler on the upload stream to avoid unhandled rejections
             uploadStream.on('error', (err: Error) => {
-                console.error('Upload stream error:', err);
                 return reject(err);
             });
 
             // Create a readable stream from buffer
-            const { Readable } = require('stream');
             const stream = Readable.from(buffer);
 
             stream.on('error', (err: Error) => {
-                console.error('Readable stream error:', err);
                 return reject(err);
             });
 
             stream.pipe(uploadStream);
-        } catch (err) {
-            console.error('Cloudinary upload threw synchronously:', err);
+        } catch {
             // Fall back to placeholder instead of crashing the process
             return resolve({ secure_url: 'https://via.placeholder.com/1200x630.png?text=No+Image' } as any);
         }
@@ -92,22 +81,13 @@ export const uploadToCloudinary = (
  * @param url - Cloudinary URL of the file
  */
 export const deleteFromCloudinary = async (url: string): Promise<void> => {
-    try {
-        if (!CLOUDINARY_ENABLED) {
-            console.warn('⚠️ deleteFromCloudinary called but Cloudinary is not configured. Skipping delete.');
-            return;
-        }
-        // Extract public_id from URL
-        const urlParts = url.split('/');
-        const fileWithExtension = urlParts[urlParts.length - 1];
-        const folderName = urlParts[urlParts.length - 2];
-        const publicId = `${folderName}/${fileWithExtension.split('.')[0]}`;
+    if (!CLOUDINARY_ENABLED) return;
 
-        await cloudinary.uploader.destroy(publicId);
-    } catch (error) {
-        console.error('Error deleting from Cloudinary:', error);
-        throw error;
-    }
+    // .../upload/v1699999999/folder/sub/name.jpg -> folder/sub/name
+    const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)(?:\.[A-Za-z0-9]+)?(?:\?.*)?$/);
+    if (!match) return;
+
+    await cloudinary.uploader.destroy(decodeURIComponent(match[1]));
 };
 
 /**
@@ -121,13 +101,7 @@ export const uploadMultipleToCloudinary = async (
     folder: string
 ): Promise<UploadApiResponse[]> => {
     const uploadPromises = files.map((file) => uploadToCloudinary(file.buffer, folder));
-    try {
-        const results = await Promise.all(uploadPromises);
-        return results;
-    } catch (error) {
-        console.error('❌ Error uploading multiple files to Cloudinary:', error);
-        throw error;
-    }
+    return Promise.all(uploadPromises);
 };
 
 export default cloudinary;

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 interface CardStackProps {
   imageUrls: string[];
@@ -54,10 +55,13 @@ export function CardStack({ imageUrls }: CardStackProps) {
                 damping: 30,
               }}
             >
-              <img
+              <Image
                 src={url}
                 alt={`Image ${index + 1}`}
-                className="pointer-events-none h-full w-full object-cover"
+                fill
+                sizes="(min-width: 1024px) 28rem, 80vw"
+                priority={index === 0}
+                className="pointer-events-none object-cover"
               />
             </motion.div>
           );

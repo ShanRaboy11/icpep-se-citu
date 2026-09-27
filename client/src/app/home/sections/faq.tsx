@@ -4,11 +4,10 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import faqService from "../../services/faq";
+import Button from "../../components/button";
+import { DEFAULT_FAQS, type DefaultFaq } from "../utils/default-faqs";
 
-interface FAQ {
-  question: string;
-  answer: string;
-}
+type FAQ = DefaultFaq;
 
 export function FAQSection() {
   const router = useRouter();
@@ -16,28 +15,7 @@ export function FAQSection() {
   const [faqs, setFaqs] = useState<FAQ[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const staticFaqs: FAQ[] = [
-    {
-      question: "What is the ICpEP SE CIT-U website for?",
-      answer:
-        "The website serves as the official platform for membership registration, announcements, events, and organization updates—making it easier for students to stay informed and connected.",
-    },
-    {
-      question: "How do I register as a member?",
-      answer:
-        "You can register directly through the Membership page. Fill out the form, upload the required documents, and wait for verification from the Registrar.",
-    },
-    {
-      question: "How do I check my membership status?",
-      answer:
-        "After registering, you can view your membership status on your profile page. Status updates (Pending, Verified, or Expired) are handled by the officers.",
-    },
-    {
-      question: "Can I still join events even if I’m not a member?",
-      answer:
-        "Some events are open to all, while others are exclusive to verified ICpEP SE members. Event details will indicate whether membership is required.",
-    },
-  ];
+  const staticFaqs: FAQ[] = DEFAULT_FAQS;
 
   useEffect(() => {
     const fetchFAQs = async () => {
@@ -52,8 +30,7 @@ export function FAQSection() {
         } else {
           setFaqs(staticFaqs);
         }
-      } catch (error) {
-        console.error("Failed to fetch FAQs, using static data:", error);
+      } catch {
         setFaqs(staticFaqs);
       } finally {
         setLoading(false);
@@ -73,62 +50,53 @@ export function FAQSection() {
 
       <div className="absolute inset-0 z-10 pointer-events-none">
         <Image
-          src="/question.svg"
+          src="/icons/ui/question.svg"
           alt="question mark"
           width={300}
           height={300}
-          className="hidden sm:block absolute top-[10%] left-[-4%] rotate-[-15deg] blur-[6px] opacity-60"
+          className="hidden sm:block absolute top-[10%] left-[-4%] -rotate-15 blur-[6px] opacity-60"
         />
         <Image
-          src="/question.svg"
+          src="/icons/ui/question.svg"
           alt="question mark"
           width={100}
           height={100}
-          className="hidden sm:block absolute top-[15%] right-[10%] sm:top-[3%] sm:right-[50%] rotate-[7deg] blur-[7px] opacity-40"
+          className="hidden sm:block absolute top-[15%] right-[10%] sm:top-[3%] sm:right-[50%] rotate-7 blur-[7px] opacity-40"
         />
         <Image
-          src="/question.svg"
+          src="/icons/ui/question.svg"
           alt="question mark"
           width={350}
           height={350}
-          className="hidden sm:block absolute bottom-[-10%] right-[-1%] rotate-[15deg] blur-[6px] opacity-70"
+          className="hidden sm:block absolute bottom-[-10%] right-[-1%] rotate-15 blur-[6px] opacity-70"
         />
         <Image
-          src="/question.svg"
+          src="/icons/ui/question.svg"
           alt="question mark"
           width={150}
           height={150}
-          className="hidden sm:block absolute bottom-[-5%] left-[30%] rotate-[-30deg] blur-[7px] opacity-50"
+          className="hidden sm:block absolute bottom-[-5%] left-[30%] -rotate-30 blur-[7px] opacity-50"
         />
       </div>
 
       {/* Content Layer */}
       <div className="relative z-20 max-w-7xl mx-auto px-6 md:px-12 py-40 pb-56 flex flex-col md:flex-row justify-between items-start w-full">
         <div className="w-full md:w-1/2 mb-10 md:mb-0 text-center md:text-left">
-          <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 mb-4 leading-tight">
+          <h2 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 mb-4 leading-tight">
             Any questions? <br /> We got you.
-          </h1>
+          </h2>
           <p className="font-raleway text-bodytext mb-8 text-base md:text-lg max-w-md mx-auto md:mx-0">
             Explore our FAQs or reach out for personalized support—our team is
             here to help you.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
-            <button
-              onClick={() => router.push("/contact-us")}
-              className="bg-primary1 hover:bg-primary2 text-white font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg cursor-pointer inline-flex items-center justify-center"
-            >
+          <div className="flex justify-center md:justify-start">
+            <Button variant="hero" onClick={() => router.push("/contact")}>
               Contact Us
-            </button>
-            <button
-              onClick={() => router.push("/faq")}
-              className="bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-buttonbg1 hover:border-primary1 hover:text-primary1 font-raleway font-semibold px-8 py-3 rounded-full transition-all duration-300 cursor-pointer"
-            >
-              More FAQs
-            </button>
+            </Button>
           </div>
         </div>
 
-        <div className="w-full md:w-1/2 min-h-[340px]">
+        <div className="w-full md:w-1/2 min-h-85">
           <div className="space-y-4">
             {loading
               ? [1, 2, 3, 4].map((i) => (

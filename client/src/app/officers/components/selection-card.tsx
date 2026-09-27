@@ -23,11 +23,11 @@ const SelectionCard: FC<SelectionCardProps> = ({
       onClick={onClick}
       className={`
         relative w-full rounded-3xl
-        shadow-lg 
+        shadow-lg
         ${shadowColorClass} ${className}
         group overflow-hidden isolate
-        cursor-default
-        transition-transform duration-300 ease-out hover:scale-[1.02]
+        cursor-pointer
+        transition-transform duration-300 ease-out hover:scale-[1.02] active:scale-[0.99]
       `}
     >
       {/* Background Gradient */}
@@ -43,7 +43,7 @@ const SelectionCard: FC<SelectionCardProps> = ({
         }}
       />
 
-      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-black/10 pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-linear-to-br from-white/20 via-transparent to-black/10 pointer-events-none z-0" />
 
       <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/20 pointer-events-none z-20" />
 
@@ -66,7 +66,7 @@ const SelectionCard: FC<SelectionCardProps> = ({
           <ChevronRight className="w-5 h-5 sm:w-8 sm:h-8" />
         </button>
 
-        <span className="font-rubik font-bold text-2xl sm:text-3xl md:text-4xl text-white drop-shadow-lg text-center leading-tight tracking-tight break-words max-w-full sm:max-w-[90%] pointer-events-none">
+        <span className="font-rubik font-bold text-2xl sm:text-3xl md:text-4xl text-white drop-shadow-lg text-center leading-tight tracking-tight wrap-break-words max-w-full sm:max-w-[90%] pointer-events-none">
           {title}
         </span>
       </div>

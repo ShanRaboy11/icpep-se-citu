@@ -43,7 +43,7 @@ export function PersonalInformation({
       
       {/* Header */}
       <div className="flex items-center gap-4 mb-4 pb-3 border-b border-primary1/5">
-        <div className="p-3 bg-primary1/10 rounded-2xl text-primary1 flex-shrink-0">
+        <div className="p-3 bg-primary1/10 rounded-2xl text-primary1 shrink-0">
           <User className="w-6 h-6" />
         </div>
         <div>
