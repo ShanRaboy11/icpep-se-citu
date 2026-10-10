@@ -476,7 +476,7 @@ export default function Login() {
               ? "Follow the steps to recover your account."
               : requiresPasswordChange
                 ? "For security reasons, you must change your password before accessing the system."
-                : "Please log in to access your account."}
+                : "Please log in to access your account. First time here? Use the one-time code emailed to your school email as your password."}
           </p>
         </div>
 

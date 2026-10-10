@@ -14,6 +14,9 @@ export interface User {
   };
   profilePicture?: string | null;
   isActive: boolean;
+  firstLogin?: boolean;
+  firstLoginCodeStatus?: 'pending' | 'sent' | 'failed' | 'no-email' | null;
+  firstLoginCodeExpires?: string | null;
   registeredBy?: {
     id: string;
     fullName: string;

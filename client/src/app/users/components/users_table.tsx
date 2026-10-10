@@ -24,10 +24,13 @@ interface UsersTableProps {
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
   onToggleActive: (user: User) => void;
+  onSendCode: (user: User) => void;
+  canResetLogin: boolean;
   onView: (user: User) => void;
   filterRole: string;
   filterMembership: string;
-  onFilterChange: (type: 'role' | 'membership', value: string) => void;
+  filterStatus: string;
+  onFilterChange: (type: 'role' | 'membership' | 'status', value: string) => void;
   sortField: SortField;
   sortDirection: SortDirection;
   onSortChange: (field: SortField, direction: SortDirection) => void;
@@ -41,9 +44,12 @@ export default function UsersTable({
   onEdit,
   onDelete,
   onToggleActive,
+  onSendCode,
+  canResetLogin,
   onView,
   filterRole,
   filterMembership,
+  filterStatus,
   onFilterChange,
   sortField,
   sortDirection,
@@ -66,11 +72,11 @@ export default function UsersTable({
   // shadow) and a scrolling inner container, so the scrollbar never pokes
   // past the rounded corners.
   const dropdownOuterStyle =
-    "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
+    "absolute z-30 min-w-full w-max max-w-[90vw] mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
   const dropdownInnerStyle =
     "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto themed-scrollbar";
   const dropdownItemStyle =
-    "flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
+    "flex items-center justify-between gap-3 whitespace-nowrap px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
   const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
   const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
 
@@ -91,6 +97,13 @@ export default function UsersTable({
     { value: "non-member", label: "Non-Member" },
   ];
 
+  const STATUS_OPTIONS = [
+    { value: "all", label: "All Statuses" },
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+    { value: "first-login", label: "Awaiting First Login" },
+  ];
+
   const SORT_OPTIONS: { value: SortField; label: string }[] = [
     { value: "studentNumber", label: "Student Number" },
     { value: "fullName", label: "Full Name" },
@@ -101,6 +114,7 @@ export default function UsersTable({
   ];
 
   const selectedRoleLabel = ROLE_OPTIONS.find((o) => o.value === filterRole)?.label ?? "All Roles";
+  const selectedStatusLabel = STATUS_OPTIONS.find((o) => o.value === filterStatus)?.label ?? "All Statuses";
   const selectedMembershipLabel = MEMBERSHIP_OPTIONS.find((o) => o.value === filterMembership)?.label ?? "All";
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -121,7 +135,7 @@ export default function UsersTable({
           <label className="font-raleway text-sm font-medium text-gray-700">
             Role:
           </label>
-          <div data-dropdown className="relative flex-1 sm:w-44 sm:flex-none">
+          <div data-dropdown className="relative flex-1 sm:w-56 sm:flex-none">
             <div
               className={`w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-50 ${
                 activeDropdown === "filterRole"
@@ -174,7 +188,7 @@ export default function UsersTable({
           <label className="font-raleway text-sm font-medium text-gray-700">
             Membership:
           </label>
-          <div data-dropdown className="relative flex-1 sm:w-48 sm:flex-none">
+          <div data-dropdown className="relative flex-1 sm:w-72 sm:flex-none">
             <div
               className={`w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-50 ${
                 activeDropdown === "filterMembership"
@@ -213,6 +227,61 @@ export default function UsersTable({
                       >
                         <span>{opt.label}</span>
                         {filterMembership === opt.value && (
+                          <Check className="w-4 h-4 text-primary1" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Status Filter */}
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <label className="font-raleway text-sm font-medium text-gray-700">
+            Status:
+          </label>
+          <div data-dropdown className="relative flex-1 sm:w-60 sm:flex-none">
+            <div
+              className={`w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-50 ${
+                activeDropdown === "filterStatus"
+                  ? "border-primary1 ring-4 ring-primary1/10"
+                  : ""
+              }`}
+              onClick={() =>
+                setActiveDropdown(
+                  activeDropdown === "filterStatus" ? null : "filterStatus"
+                )
+              }
+            >
+              <span className="font-rubik text-sm font-medium truncate">{selectedStatusLabel}</span>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 ml-1 shrink-0 transition-transform duration-300 ${
+                  activeDropdown === "filterStatus" ? "rotate-180" : ""
+                }`}
+              />
+            </div>
+            {activeDropdown === "filterStatus" && (
+              <>
+                <div className={dropdownOuterStyle}>
+                  <div className={dropdownInnerStyle}>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <div
+                        key={opt.value}
+                        className={`${dropdownItemStyle} ${
+                          filterStatus === opt.value
+                            ? dropdownItemSelectedStyle
+                            : dropdownItemHoverStyle
+                        }`}
+                        onClick={() => {
+                          onFilterChange("status", opt.value);
+                          setActiveDropdown(null);
+                        }}
+                      >
+                        <span>{opt.label}</span>
+                        {filterStatus === opt.value && (
                           <Check className="w-4 h-4 text-primary1" />
                         )}
                       </div>
@@ -388,6 +457,8 @@ export default function UsersTable({
                   onEdit={onEdit}
                   onDelete={onDelete}
                   onToggleActive={onToggleActive}
+                  onSendCode={onSendCode}
+                  canResetLogin={canResetLogin}
                   onView={onView}
                 />
               ))}

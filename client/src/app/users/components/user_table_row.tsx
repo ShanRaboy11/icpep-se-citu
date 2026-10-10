@@ -2,13 +2,15 @@
 
 import { User } from "../utils/user";
 import { format } from "date-fns";
-import { Eye, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
+import { Eye, Mail, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
 
 interface UserTableRowProps {
   user: User;
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
   onToggleActive: (user: User) => void;
+  onSendCode: (user: User) => void;
+  canResetLogin: boolean;
   onView: (user: User) => void;
 }
 
@@ -17,6 +19,8 @@ export default function UserTableRow({
   onEdit,
   onDelete,
   onToggleActive,
+  onSendCode,
+  canResetLogin,
   onView,
 }: UserTableRowProps) {
   const actionButton =
@@ -52,6 +56,15 @@ export default function UserTableRow({
     // New color for "local" (the default return)
     return "bg-secondary2/10 text-secondary2 border-secondary2/30";
   };
+
+  const codeStatus = user.firstLoginCodeStatus
+    ? {
+        pending: { label: "Code sending", style: "text-amber-600" },
+        sent: { label: "Code sent", style: "text-gray-500" },
+        failed: { label: "Code failed", style: "text-red-500" },
+        "no-email": { label: "No email", style: "text-red-500" },
+      }[user.firstLoginCodeStatus]
+    : null;
 
   const formatDate = (dateString: string) => {
     try {
@@ -148,6 +161,11 @@ export default function UserTableRow({
               {user.isActive ? "Active" : "Inactive"}
             </span>
           </div>
+          {codeStatus && (
+            <p className={`mt-1 text-center font-raleway text-xs ${codeStatus.style}`}>
+              {codeStatus.label}
+            </p>
+          )}
         </td>
         <td data-label="Actions" className="px-4 py-4 whitespace-nowrap text-center">
           <div className="flex flex-nowrap items-center justify-end gap-1 lg:grid lg:grid-cols-2 lg:justify-start lg:opacity-40 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
@@ -173,6 +191,23 @@ export default function UserTableRow({
               <Pencil size={14} />
               Edit
             </button>
+            {user.isActive && (user.firstLogin || canResetLogin) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSendCode(user);
+                }}
+                className={`${actionButton} hover:text-primary1 hover:bg-primary1/10`}
+                title={
+                  user.firstLogin
+                    ? "Send a new first-login code"
+                    : "Reset to first login and send a code"
+                }
+              >
+                <Mail size={14} />
+                {user.firstLogin ? "Send code" : "Reset login"}
+              </button>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();

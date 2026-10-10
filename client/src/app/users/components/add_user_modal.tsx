@@ -30,7 +30,6 @@ export interface NewUser {
   middleName?: string;
   email?: string;
   yearLevel?: number;
-  password: string;
   role: string;
   position?: string;
   department?: string;
@@ -49,7 +48,6 @@ export default function AddUserModal({
     middleName: "",
     email: "",
     yearLevel: undefined,
-    password: "",
     role: "student",
     position: "",
     department: "",
@@ -123,9 +121,7 @@ export default function AddUserModal({
       newErrors.studentNumber = `${idLabel} is required`;
     }
     const email = (formData.email ?? "").trim();
-    if (!isStudent && !email) {
-      newErrors.email = "Email is required for this role";
-    } else if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Enter a valid email address";
     }
     if (!formData.lastName.trim()) {
@@ -162,7 +158,6 @@ export default function AddUserModal({
       middleName: "",
       email: "",
       yearLevel: undefined,
-      password: "",
       role: "student",
       position: "",
       department: "",
@@ -306,10 +301,9 @@ export default function AddUserModal({
               </div>
             </div>
 
-            {/* Email — school email, used for password reset codes */}
             <div>
               <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
-                Email {isStudent ? <span className="text-gray-400 font-normal">(Optional)</span> : <span className="text-red-500">*</span>}
+                School Email <span className="text-gray-400 font-normal">(Optional)</span>
               </label>
               <input
                 type="email"
@@ -321,8 +315,12 @@ export default function AddUserModal({
                   errors.email ? "border-red-300 ring-2 ring-red-100" : ""
                 }`}
               />
-              {errors.email && (
+              {errors.email ? (
                 <p className="mt-1 text-sm text-red-600 font-raleway">{errors.email}</p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-500 font-raleway">
+                  Leave blank to use firstname.lastname@cit.edu. The first-login code is sent here.
+                </p>
               )}
             </div>
 
@@ -423,20 +421,6 @@ export default function AddUserModal({
               </div>
               )}
 
-              <div>
-                <label className="block font-raleway text-sm font-semibold text-gray-500 mb-2">
-                  Password <span className="text-gray-400 font-normal">(Default)</span>
-                </label>
-                <input
-                  type="text"
-                  name="password"
-                  value={formData.password}
-                  placeholder="Chapter default password"
-                  readOnly
-                  disabled
-                  className="w-full font-rubik text-base bg-gray-100 border border-gray-100 rounded-2xl px-4 py-3 text-gray-500 cursor-not-allowed select-none"
-                />
-              </div>
             </div>
 
             {/* Role and Membership */}
@@ -553,8 +537,9 @@ export default function AddUserModal({
             {/* Info Note */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="font-raleway text-sm text-blue-800">
-                <strong>Note:</strong> The password will be hashed before
-                storage. User should change it upon first login.
+                <strong>Note:</strong> A one-time first-login code is emailed
+                to the school email. The user signs in with it and chooses
+                their own password.
               </p>
             </div>
           </div>

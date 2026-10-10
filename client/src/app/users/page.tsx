@@ -18,6 +18,7 @@ import BackButton from "../components/back-button";
 import PageHeader from "../components/page-header";
 import {
   UserPlus,
+  Mail,
   Download,
   Upload,
   CheckCircle,
@@ -48,6 +49,9 @@ interface ApiUser {
   };
   profilePicture?: string;
   isActive: boolean;
+  firstLogin?: boolean;
+  firstLoginCodeStatus?: "pending" | "sent" | "failed" | "no-email" | null;
+  firstLoginCodeExpires?: string | null;
   registeredBy?: {
     _id: string;
     firstName: string;
@@ -226,6 +230,10 @@ export default function UsersListPage() {
   // Filter and Sort state - MOVED FROM UsersTable
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterMembership, setFilterMembership] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userToReset, setUserToReset] = useState<User | null>(null);
+  const [sendCodesTargets, setSendCodesTargets] = useState<User[] | null>(null);
   const [sortField, setSortField] = useState<SortField>("yearLevel");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -300,7 +308,13 @@ export default function UsersListPage() {
         user.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (user.yearLevel && user.yearLevel.toString().includes(searchQuery));
 
-      return roleMatch && membershipMatch && searchMatch;
+      const statusMatch =
+        filterStatus === "all" ||
+        (filterStatus === "active" && user.isActive) ||
+        (filterStatus === "inactive" && !user.isActive) ||
+        (filterStatus === "first-login" && user.firstLogin === true);
+
+      return roleMatch && membershipMatch && statusMatch && searchMatch;
     });
   };
 
@@ -376,6 +390,10 @@ export default function UsersListPage() {
     fetchAllUsers();
   }, []);
 
+  useEffect(() => {
+    setIsAdmin(localStorage.getItem("userRole") === "admin");
+  }, []);
+
   // Update displayed users when page, filters, OR SORT changes
   useEffect(() => {
     updateDisplayedUsers();
@@ -384,6 +402,7 @@ export default function UsersListPage() {
     allUsers,
     filterRole,
     filterMembership,
+    filterStatus,
     sortField,
     sortDirection,
     searchQuery,
@@ -426,6 +445,9 @@ export default function UsersListPage() {
           },
           profilePicture: user.profilePicture,
           isActive: user.isActive,
+          firstLogin: user.firstLogin !== false,
+          firstLoginCodeStatus: user.firstLoginCodeStatus ?? null,
+          firstLoginCodeExpires: user.firstLoginCodeExpires ?? null,
           registeredBy: user.registeredBy
             ? {
                 id: user.registeredBy._id,
@@ -469,9 +491,14 @@ export default function UsersListPage() {
   };
 
   // Reset to page 1 when filters or sort changes
-  const handleFilterChange = (type: "role" | "membership", value: string) => {
+  const handleFilterChange = (
+    type: "role" | "membership" | "status",
+    value: string,
+  ) => {
     if (type === "role") {
       setFilterRole(value);
+    } else if (type === "status") {
+      setFilterStatus(value);
     } else {
       setFilterMembership(value);
     }
@@ -820,6 +847,82 @@ export default function UsersListPage() {
     }
   };
 
+  const sendCode = async (user: User, force: boolean) => {
+    try {
+      const response: ApiResponse<unknown> = await fetchWithAuth(
+        `${API_BASE_URL}/users/${user.id}/send-first-login-code`,
+        { method: "POST", body: JSON.stringify({ force }) },
+      );
+      if (response.success) {
+        await fetchAllUsers();
+        setSuccessModal({
+          show: true,
+          title: "Code On Its Way",
+          message: response.message || `A new first-login code is being sent to ${user.fullName}.`,
+        });
+      }
+    } catch (error) {
+      setErrorModal({
+        show: true,
+        title: "Could Not Send Code",
+        message: error instanceof Error ? error.message : "Failed to send the first-login code.",
+      });
+    }
+  };
+
+  const handleSendCode = (user: User) => {
+    if (user.firstLogin) {
+      void sendCode(user, false);
+    } else {
+      setUserToReset(user);
+    }
+  };
+
+  const handleSendPendingCodes = () => {
+    const targets = getFilteredUsers().filter(
+      (user) => user.firstLogin && user.isActive,
+    );
+    if (targets.length === 0) {
+      setErrorModal({
+        show: true,
+        title: "Nobody To Send To",
+        message:
+          "None of the accounts currently shown are waiting on a first login. Filter by 'Awaiting First Login' to see who is.",
+      });
+      return;
+    }
+    setSendCodesTargets(targets);
+  };
+
+  const confirmSendCodes = async () => {
+    const targets = sendCodesTargets;
+    setSendCodesTargets(null);
+    if (!targets) return;
+    try {
+      const response: ApiResponse<{ queued: number; skipped: number }> =
+        await fetchWithAuth(`${API_BASE_URL}/users/send-first-login-codes`, {
+          method: "POST",
+          body: JSON.stringify({
+            studentNumbers: targets.map((user) => user.studentNumber),
+          }),
+        });
+      if (response.success) {
+        setSuccessModal({
+          show: true,
+          title: "Sending Codes",
+          message: response.message || "First-login codes are being sent.",
+        });
+        setTimeout(() => void fetchAllUsers(), 5000);
+      }
+    } catch (error) {
+      setErrorModal({
+        show: true,
+        title: "Could Not Send Codes",
+        message: error instanceof Error ? error.message : "Failed to send first-login codes.",
+      });
+    }
+  };
+
   const handleViewUser = (user: User) => {
     setSelectedUser(user);
     setIsViewModalOpen(true);
@@ -908,7 +1011,16 @@ export default function UsersListPage() {
               </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
+            <div className="mb-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
+              <Button
+                variant="heroOutline"
+                rounded="lg"
+                onClick={handleSendPendingCodes}
+                className="flex items-center justify-center gap-1.5 px-2 py-2 text-xs sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+              >
+                <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Send Codes
+              </Button>
               <Button
                 variant="heroOutline"
                 rounded="lg"
@@ -948,9 +1060,12 @@ export default function UsersListPage() {
               onEdit={handleEditUser}
               onDelete={handleDeleteUser}
               onToggleActive={handleToggleActive}
+              onSendCode={handleSendCode}
+              canResetLogin={isAdmin}
               onView={handleViewUser}
               filterRole={filterRole}
               filterMembership={filterMembership}
+              filterStatus={filterStatus}
               onFilterChange={handleFilterChange}
               sortField={sortField}
               sortDirection={sortDirection}
@@ -1283,6 +1398,36 @@ export default function UsersListPage() {
           confirmText="Delete"
           cancelText="Cancel"
           type="danger"
+        />
+      )}
+
+      {userToReset && (
+        <ConfirmDialog
+          isOpen
+          onClose={() => setUserToReset(null)}
+          onConfirm={() => {
+            const target = userToReset;
+            setUserToReset(null);
+            void sendCode(target, true);
+          }}
+          title="Reset To First Login"
+          message={`${userToReset.fullName} already chose a password. This replaces it with a new one-time code emailed to them and signs them out. Continue?`}
+          confirmText="Reset"
+          cancelText="Cancel"
+          type="warning"
+        />
+      )}
+
+      {sendCodesTargets && (
+        <ConfirmDialog
+          isOpen
+          onClose={() => setSendCodesTargets(null)}
+          onConfirm={confirmSendCodes}
+          title="Send First-Login Codes"
+          message={`Email a new one-time code to ${sendCodesTargets.length} account(s) currently shown that are waiting on a first login?`}
+          confirmText="Send Codes"
+          cancelText="Cancel"
+          type="warning"
         />
       )}
 
