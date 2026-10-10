@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { getJwtSecret, getDefaultPassword, getJwtExpiresIn } from "../config/env";
+import { getJwtSecret, getJwtExpiresIn, getSchoolEmailDomain, getFirstLoginCodeDays } from "../config/env";
 
 const original = { ...process.env };
 afterEach(() => {
@@ -23,28 +23,21 @@ describe("getJwtSecret", () => {
   });
 });
 
-describe("getDefaultPassword", () => {
-  it("uses DEFAULT_PASSWORD when set", () => {
-    process.env.DEFAULT_PASSWORD = "Chapter#2026";
-    expect(getDefaultPassword()).toBe("Chapter#2026");
+describe("first-login settings", () => {
+  it("defaults the school email domain and lets it be set", () => {
+    delete process.env.SCHOOL_EMAIL_DOMAIN;
+    expect(getSchoolEmailDomain()).toBe("cit.edu");
+    process.env.SCHOOL_EMAIL_DOMAIN = "@school.example";
+    expect(getSchoolEmailDomain()).toBe("school.example");
   });
 
-  it("falls back when unset outside production", () => {
-    delete process.env.DEFAULT_PASSWORD;
-    process.env.NODE_ENV = "development";
-    expect(getDefaultPassword()).toBe("123456");
-  });
-
-  it("refuses the built-in fallback in production", () => {
-    delete process.env.DEFAULT_PASSWORD;
-    process.env.NODE_ENV = "production";
-    expect(() => getDefaultPassword()).toThrow(/DEFAULT_PASSWORD/);
-  });
-
-  it("accepts a configured value in production", () => {
-    process.env.DEFAULT_PASSWORD = "Chapter#2026";
-    process.env.NODE_ENV = "production";
-    expect(getDefaultPassword()).toBe("Chapter#2026");
+  it("defaults the code lifetime to 7 days and ignores nonsense", () => {
+    delete process.env.FIRST_LOGIN_CODE_DAYS;
+    expect(getFirstLoginCodeDays()).toBe(7);
+    process.env.FIRST_LOGIN_CODE_DAYS = "3";
+    expect(getFirstLoginCodeDays()).toBe(3);
+    process.env.FIRST_LOGIN_CODE_DAYS = "abc";
+    expect(getFirstLoginCodeDays()).toBe(7);
   });
 });
 

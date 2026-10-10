@@ -8,6 +8,7 @@ import sendEmail from "../utils/email";
 import { DEVELOPER_STUDENT_NUMBERS } from "../config/developers";
 import { getJwtSecret, getJwtExpiresIn } from "../config/env";
 import { recordAudit } from "../utils/audit";
+import { normalizeFirstLoginCode } from "../utils/first-login-code";
 import { hashResetCode, resetCodeMatches, MAX_RESET_ATTEMPTS } from "../utils/reset-code";
 
 export interface AuthRequest extends Request {
@@ -52,7 +53,11 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check password
-    const isPasswordCorrect = await user.comparePassword(password);
+    let isPasswordCorrect = await user.comparePassword(password);
+    if (!isPasswordCorrect && user.firstLogin) {
+      const code = normalizeFirstLoginCode(password);
+      isPasswordCorrect = code !== null && (await user.comparePassword(code));
+    }
 
     if (!isPasswordCorrect) {
       return res.status(401).json({
@@ -88,6 +93,18 @@ export const login = async (req: Request, res: Response) => {
         success: false,
         message:
           "Your account has been deactivated. Please contact an administrator.",
+      });
+    }
+
+    if (
+      user.firstLogin &&
+      user.firstLoginCodeExpires &&
+      user.firstLoginCodeExpires.getTime() < Date.now()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Your first-login code has expired. Ask an officer to send you a new one.",
       });
     }
 
@@ -182,6 +199,8 @@ export const firstLoginPasswordChange = async (
     // Update password
     user.password = newPassword;
     user.firstLogin = false;
+    user.firstLoginCodeStatus = null;
+    user.firstLoginCodeExpires = null;
     user.$locals.keepSessions = true;
     await user.save();
 
@@ -265,6 +284,8 @@ export const changePassword = async (
     // Update password
     user.password = newPassword;
     user.firstLogin = false;
+    user.firstLoginCodeStatus = null;
+    user.firstLoginCodeExpires = null;
     user.$locals.keepSessions = true;
     await user.save();
 
@@ -508,6 +529,9 @@ export const resetPassword = async (req: Request, res: Response) => {
     }
 
     user.password = String(password);
+    user.firstLogin = false;
+    user.firstLoginCodeStatus = null;
+    user.firstLoginCodeExpires = null;
     user.resetPasswordCode = undefined;
     user.resetPasswordExpire = undefined;
     user.resetPasswordAttempts = 0;

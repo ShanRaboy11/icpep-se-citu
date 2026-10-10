@@ -4,7 +4,9 @@ import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { sendNotification } from "../utils/notification";
 import { escapeRegExp } from "../utils/regex";
-import { getDefaultPassword } from "../config/env";
+import { issueFirstLoginCode } from "../utils/first-login-code";
+import { buildSchoolEmail } from "../utils/school-email";
+import { queueFirstLoginEmail } from "../utils/first-login-mail";
 import { recordAudit } from "../utils/audit";
 
 // Interface for request with authenticated user
@@ -101,7 +103,7 @@ export const getAllUsers = async (
     // Execute query
     let query = User.find(filter);
     query = canSeeEveryone
-      ? query.populate("registeredBy", "firstName lastName middleName role")
+      ? query.select("+firstLogin").populate("registeredBy", "firstName lastName middleName role")
       : query.select(PUBLIC_DIRECTORY_FIELDS);
     const users = await query.sort(sort).skip(skip).limit(limitNum).lean();
 
@@ -178,7 +180,6 @@ export const createUser = async (
       lastName,
       firstName,
       middleName,
-      password: submittedPassword,
       role = "student",
       yearLevel,
       membershipStatus,
@@ -186,7 +187,6 @@ export const createUser = async (
       position,
       department,
     } = req.body;
-    const password = submittedPassword || getDefaultPassword();
 
     // Validation
     if (!studentNumber || !lastName || !firstName) {
@@ -213,15 +213,7 @@ export const createUser = async (
       return;
     }
 
-    // Non-students need an email on file: it's where password reset codes go.
     const cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
-    if (role !== "student" && !cleanEmail) {
-      res.status(400).json({
-        success: false,
-        message: "An email is required for this role",
-      });
-      return;
-    }
     if (cleanEmail && !EMAIL_PATTERN.test(cleanEmail)) {
       res.status(400).json({
         success: false,
@@ -229,6 +221,8 @@ export const createUser = async (
       });
       return;
     }
+    const accountEmail = cleanEmail || buildSchoolEmail(firstName, lastName);
+    const { code, expires } = issueFirstLoginCode();
 
     // Officer and faculty titles live in different fields depending on role.
     const positionFields = {
@@ -312,8 +306,10 @@ export const createUser = async (
       lastName,
       firstName,
       middleName: middleName || null,
-      email: cleanEmail || null,
-      password,
+      email: accountEmail,
+      password: code,
+      firstLoginCodeStatus: accountEmail ? "pending" : "no-email",
+      firstLoginCodeExpires: expires,
       role,
       // Year level only means something for students and officers, who are
       // students too; faculty don't get one.
@@ -333,9 +329,21 @@ export const createUser = async (
       details: { role: newUser.role },
     });
 
+    if (accountEmail) {
+      queueFirstLoginEmail({
+        userId: newUser._id.toString(),
+        email: accountEmail,
+        firstName: newUser.firstName,
+        code,
+        expires,
+      });
+    }
+
     res.status(201).json({
       success: true,
-      message: "User created successfully",
+      message: accountEmail
+        ? `User created. A first-login code is being sent to ${accountEmail}.`
+        : "User created, but no school email could be worked out, so no first-login code was sent.",
       data: newUser,
     });
   } catch (error: any) {
@@ -366,7 +374,6 @@ interface UploadFailure {
 }
 
 const UPLOAD_BATCH_SIZE = 25;
-const MIN_PASSWORD_LENGTH = 6;
 
 // bcryptjs is pure JavaScript, so hashing one password per new account made big
 // uploads crawl (and block the server). Most rows share the default password,
@@ -383,18 +390,31 @@ const createPasswordHasher = () => {
   };
 };
 
-const createUserWithHashedPassword = async (
-  data: Record<string, unknown> & { password: string },
+const createUserWithFirstLoginCode = async (
+  data: Record<string, unknown> & { firstName: string; lastName: string },
   hashPassword: (plain: string) => Promise<string>,
 ) => {
-  if (data.password.length < MIN_PASSWORD_LENGTH) {
-    throw new Error(
-      `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
-    );
-  }
-  const user = new User({ ...data, password: await hashPassword(data.password) });
+  const { code, expires } = issueFirstLoginCode();
+  const email = buildSchoolEmail(data.firstName, data.lastName);
+  const user = new User({
+    ...data,
+    email,
+    password: await hashPassword(code),
+    firstLoginCodeStatus: email ? "pending" : "no-email",
+    firstLoginCodeExpires: expires,
+  });
   user.$locals.passwordAlreadyHashed = true;
-  return user.save();
+  const saved = await user.save();
+  if (email) {
+    queueFirstLoginEmail({
+      userId: saved._id.toString(),
+      email,
+      firstName: saved.firstName,
+      code,
+      expires,
+    });
+  }
+  return saved;
 };
 const MISSING_FIELDS_REASON =
   "Missing required fields (studentNumber, firstName, lastName)";
@@ -526,13 +546,12 @@ export const bulkUploadUsers = async (
           return;
         }
 
-        const newUser = await createUserWithHashedPassword(
+        const newUser = await createUserWithFirstLoginCode(
           {
             studentNumber: userData.studentNumber,
             lastName: userData.lastName,
             firstName: userData.firstName,
             middleName: userData.middleName || null,
-            password: userData.password || getDefaultPassword(),
             role: assignableRole(userData.role, req.user?.role) || "student",
             yearLevel: userData.yearLevel || null,
             membershipStatus,
@@ -760,13 +779,12 @@ export const syncUpsertBatch = async (
             ? userData.position || null
             : null;
 
-        await createUserWithHashedPassword(
+        await createUserWithFirstLoginCode(
           {
             studentNumber: userData.studentNumber,
             lastName: userData.lastName,
             firstName: userData.firstName,
             middleName: userData.middleName || null,
-            password: userData.password || getDefaultPassword(),
             role,
             yearLevel: userData.yearLevel || null,
             position,
@@ -1097,6 +1115,163 @@ export const deleteUser = async (
       success: false,
       message: "Error deleting user",
     });
+  }
+};
+
+const reissueFirstLoginCode = async (
+  user: UserDoc,
+  restartFirstLogin = false,
+): Promise<string | null> => {
+  const email = user.email || buildSchoolEmail(user.firstName, user.lastName);
+  const { code, expires } = issueFirstLoginCode();
+  if (email) user.email = email;
+  user.password = code;
+  if (restartFirstLogin) user.firstLogin = true;
+  user.firstLoginCodeStatus = email ? "pending" : "no-email";
+  user.firstLoginCodeExpires = expires;
+  await user.save();
+  if (!email) return null;
+  queueFirstLoginEmail({
+    userId: user._id.toString(),
+    email,
+    firstName: user.firstName,
+    code,
+    expires,
+  });
+  return email;
+};
+
+export const sendFirstLoginCode = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, message: "Invalid user ID" });
+      return;
+    }
+
+    const user = await User.findById(id).select("+firstLogin");
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+    const restart = req.user?.role === "admin" && req.body?.force === true;
+    if (!user.firstLogin && !restart) {
+      res.status(400).json({
+        success: false,
+        message: "This account has already set its own password",
+      });
+      return;
+    }
+    if (user.role === "admin" && req.user?.role !== "admin") {
+      res.status(403).json({
+        success: false,
+        message: "Only admins can send a code to an admin account",
+      });
+      return;
+    }
+
+    const email = await reissueFirstLoginCode(user, restart);
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        message: "No school email could be worked out for this account",
+      });
+      return;
+    }
+
+    await recordAudit({
+      action: "user.first-login-code",
+      actorId: req.user?.id,
+      targetId: id,
+      details: { restart },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `A new first-login code is being sent to ${email}`,
+      data: {
+        firstLoginCodeStatus: user.firstLoginCodeStatus,
+        firstLoginCodeExpires: user.firstLoginCodeExpires,
+      },
+    });
+  } catch {
+    res.status(500).json({
+      success: false,
+      message: "Error sending first-login code",
+    });
+  }
+};
+
+export const sendFirstLoginCodes = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const studentNumbers: string[] = Array.isArray(req.body?.studentNumbers)
+      ? req.body.studentNumbers
+          .filter((value: unknown): value is string => typeof value === "string")
+          .map((value: string) => value.trim().toUpperCase())
+          .filter(Boolean)
+      : [];
+
+    if (studentNumbers.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: "Choose which accounts to send codes to",
+      });
+      return;
+    }
+    if (studentNumbers.length > 2000) {
+      res.status(400).json({
+        success: false,
+        message: "Send codes to at most 2000 accounts at a time",
+      });
+      return;
+    }
+
+    const found = await User.find({ studentNumber: { $in: studentNumbers } })
+      .select("+firstLogin")
+      .lean();
+    const eligible = found.filter(
+      (user) =>
+        user.firstLogin !== false &&
+        user.isActive &&
+        (user.role !== "admin" || req.user?.role === "admin"),
+    );
+
+    await recordAudit({
+      action: "user.first-login-codes-bulk",
+      actorId: req.user?.id,
+      details: { requested: studentNumbers.length, accounts: eligible.length },
+    });
+
+    res.status(202).json({
+      success: true,
+      message: `First-login codes are being sent to ${eligible.length} account(s).`,
+      data: {
+        queued: eligible.length,
+        skipped: studentNumbers.length - eligible.length,
+      },
+    });
+
+    for (let i = 0; i < eligible.length; i += UPLOAD_BATCH_SIZE) {
+      const users = await User.find({
+        _id: { $in: eligible.slice(i, i + UPLOAD_BATCH_SIZE).map((user) => user._id) },
+      });
+      for (const user of users) {
+        await reissueFirstLoginCode(user).catch(() => undefined);
+      }
+    }
+  } catch {
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: "Error sending first-login codes",
+      });
+    }
   }
 };
 

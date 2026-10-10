@@ -29,14 +29,12 @@ import siteRoutes from "./routes/site.routes";
 import auditRoutes from "./routes/audit.routes";
 import startAnnouncementScheduler from "./utils/scheduler";
 import { escapeRegExp } from "./utils/regex";
-import { getJwtSecret, getDefaultPassword } from "./config/env";
+import { getJwtSecret } from "./config/env";
 import { enforceMaintenanceMode } from "./middleware/maintenance.middleware";
 import { rateLimit } from "./utils/rate-limit";
 
-// Refuse to start without a usable JWT secret (and, in production, a
-// deliberate default password for new accounts)
+// Refuse to start without a usable JWT secret
 getJwtSecret();
-getDefaultPassword();
 
 // Initialize express app
 const app: Application = express();

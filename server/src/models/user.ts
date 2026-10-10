@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
-import { getDefaultPassword } from "../config/env";
 
 // Interface for User document
 export interface IUser extends Document {
@@ -41,6 +40,8 @@ export interface IUser extends Document {
   registeredByName: string;
   resetPasswordCode?: string;
   resetPasswordAttempts?: number;
+  firstLoginCodeStatus?: "pending" | "sent" | "failed" | "no-email" | null;
+  firstLoginCodeExpires?: Date | null;
   resetPasswordExpire?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -84,7 +85,6 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Password is required"],
       minlength: 6,
-      default: () => getDefaultPassword(),
       select: false,
     },
     role: {
@@ -160,6 +160,15 @@ const userSchema = new Schema<IUser>(
     resetPasswordExpire: {
       type: Date,
       select: false,
+    },
+    firstLoginCodeStatus: {
+      type: String,
+      enum: ["pending", "sent", "failed", "no-email", null],
+      default: null,
+    },
+    firstLoginCodeExpires: {
+      type: Date,
+      default: null,
     },
     resetPasswordAttempts: {
       type: Number,
