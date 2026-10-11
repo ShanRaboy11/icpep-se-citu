@@ -26,6 +26,10 @@ interface UsersTableProps {
   onToggleActive: (user: User) => void;
   onSendCode: (user: User) => void;
   canResetLogin: boolean;
+  selectedIds: Set<string>;
+  onToggleSelect: (user: User) => void;
+  onSelectAllShown: () => void;
+  onClearSelection: () => void;
   onView: (user: User) => void;
   filterRole: string;
   filterMembership: string;
@@ -46,6 +50,10 @@ export default function UsersTable({
   onToggleActive,
   onSendCode,
   canResetLogin,
+  selectedIds,
+  onToggleSelect,
+  onSelectAllShown,
+  onClearSelection,
   onView,
   filterRole,
   filterMembership,
@@ -362,6 +370,28 @@ export default function UsersTable({
           </button>
         </div>
 
+        <div className="flex items-center gap-3 font-raleway text-sm font-medium">
+          <button
+            type="button"
+            onClick={onSelectAllShown}
+            className="text-primary1 hover:underline cursor-pointer"
+          >
+            Select all awaiting first login
+          </button>
+          {selectedIds.size > 0 && (
+            <>
+              <span className="text-gray-600">{selectedIds.size} selected</span>
+              <button
+                type="button"
+                onClick={onClearSelection}
+                className="text-gray-500 hover:underline cursor-pointer"
+              >
+                Clear
+              </button>
+            </>
+          )}
+        </div>
+
         <div className="ml-auto font-raleway text-sm text-gray-600 font-medium">
           {users.length > 0 ? (
             <>
@@ -459,6 +489,8 @@ export default function UsersTable({
                   onToggleActive={onToggleActive}
                   onSendCode={onSendCode}
                   canResetLogin={canResetLogin}
+                  selected={selectedIds.has(user.id)}
+                  onToggleSelect={onToggleSelect}
                   onView={onView}
                 />
               ))}

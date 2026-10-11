@@ -1,6 +1,7 @@
 "use client";
 
 import { User } from "../utils/user";
+import Checkbox from "@/app/components/checkbox";
 import { format } from "date-fns";
 import { Eye, Mail, Pencil, Trash2, UserCheck, UserX } from "lucide-react";
 
@@ -11,6 +12,8 @@ interface UserTableRowProps {
   onToggleActive: (user: User) => void;
   onSendCode: (user: User) => void;
   canResetLogin: boolean;
+  selected: boolean;
+  onToggleSelect: (user: User) => void;
   onView: (user: User) => void;
 }
 
@@ -21,6 +24,8 @@ export default function UserTableRow({
   onToggleActive,
   onSendCode,
   canResetLogin,
+  selected,
+  onToggleSelect,
   onView,
 }: UserTableRowProps) {
   const actionButton =
@@ -85,9 +90,20 @@ export default function UserTableRow({
         }}
       >
         <td data-label="Student Number" data-primary="media" className="px-4 py-4 whitespace-nowrap text-center">
-          <span className="font-raleway text-sm font-medium text-primary3">
-            {user.studentNumber}
-          </span>
+          <div className="flex items-center justify-center gap-2">
+            {user.isActive && user.firstLogin && (
+              <span onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={selected}
+                  onChange={() => onToggleSelect(user)}
+                  label={`Select ${user.fullName}`}
+                />
+              </span>
+            )}
+            <span className="font-raleway text-sm font-medium text-primary3">
+              {user.studentNumber}
+            </span>
+          </div>
         </td>
         <td data-label="Full Name" data-primary="" className="px-4 py-4 whitespace-nowrap">
           <span className="font-raleway text-sm text-center text-gray-900">

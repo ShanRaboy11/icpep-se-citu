@@ -233,6 +233,7 @@ export default function UsersListPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isAdmin, setIsAdmin] = useState(false);
   const [userToReset, setUserToReset] = useState<User | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [sendCodesTargets, setSendCodesTargets] = useState<User[] | null>(null);
   const [sortField, setSortField] = useState<SortField>("yearLevel");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -312,7 +313,7 @@ export default function UsersListPage() {
         filterStatus === "all" ||
         (filterStatus === "active" && user.isActive) ||
         (filterStatus === "inactive" && !user.isActive) ||
-        (filterStatus === "first-login" && user.firstLogin === true);
+        (filterStatus === "first-login" && user.firstLogin === true && user.isActive);
 
       return roleMatch && membershipMatch && statusMatch && searchMatch;
     });
@@ -878,16 +879,43 @@ export default function UsersListPage() {
     }
   };
 
-  const handleSendPendingCodes = () => {
-    const targets = getFilteredUsers().filter(
+  const handleToggleSelect = (user: User) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(user.id)) next.delete(user.id);
+      else next.add(user.id);
+      return next;
+    });
+  };
+
+  const handleSelectAllShown = () => {
+    const awaiting = getFilteredUsers().filter(
       (user) => user.firstLogin && user.isActive,
     );
+    if (awaiting.length === 0) {
+      setErrorModal({
+        show: true,
+        title: "Nobody Awaiting First Login",
+        message:
+          "No active account in the current list is waiting on a first login.",
+      });
+      return;
+    }
+    setSelectedIds(new Set(awaiting.map((user) => user.id)));
+  };
+
+  const handleSendPendingCodes = () => {
+    const pool =
+      selectedIds.size > 0
+        ? allUsers.filter((user) => selectedIds.has(user.id))
+        : getFilteredUsers();
+    const targets = pool.filter((user) => user.isActive && user.firstLogin);
     if (targets.length === 0) {
       setErrorModal({
         show: true,
         title: "Nobody To Send To",
         message:
-          "None of the accounts currently shown are waiting on a first login. Filter by 'Awaiting First Login' to see who is.",
+          "None of the chosen accounts are waiting on a first login. Tick accounts in the table, or filter by 'Awaiting First Login'.",
       });
       return;
     }
@@ -912,6 +940,7 @@ export default function UsersListPage() {
           title: "Sending Codes",
           message: response.message || "First-login codes are being sent.",
         });
+        setSelectedIds(new Set());
         setTimeout(() => void fetchAllUsers(), 5000);
       }
     } catch (error) {
@@ -1019,7 +1048,7 @@ export default function UsersListPage() {
                 className="flex items-center justify-center gap-1.5 px-2 py-2 text-xs sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
               >
                 <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                Send Codes
+                {selectedIds.size > 0 ? `Send Codes (${selectedIds.size})` : "Send Codes"}
               </Button>
               <Button
                 variant="heroOutline"
@@ -1062,6 +1091,10 @@ export default function UsersListPage() {
               onToggleActive={handleToggleActive}
               onSendCode={handleSendCode}
               canResetLogin={isAdmin}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+              onSelectAllShown={handleSelectAllShown}
+              onClearSelection={() => setSelectedIds(new Set())}
               onView={handleViewUser}
               filterRole={filterRole}
               filterMembership={filterMembership}
@@ -1424,7 +1457,7 @@ export default function UsersListPage() {
           onClose={() => setSendCodesTargets(null)}
           onConfirm={confirmSendCodes}
           title="Send First-Login Codes"
-          message={`Email a new one-time code to ${sendCodesTargets.length} account(s) currently shown that are waiting on a first login?`}
+          message={`Email a new one-time code to ${sendCodesTargets.length} account(s)?`}
           confirmText="Send Codes"
           cancelText="Cancel"
           type="warning"
