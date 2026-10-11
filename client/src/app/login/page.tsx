@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, AlertCircle, X, Check, CheckCircle } from "lucide-react";
+import Checkbox from "@/app/components/checkbox";
 import Image from "next/image";
 import axios from "axios";
 import Button from "@/app/components/button";
@@ -731,12 +732,7 @@ export default function Login() {
 
             <div className="flex items-center justify-between text-sm font-[Raleway]">
               <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-sky-500 focus:ring-sky-500 focus:ring-offset-0 transition-all cursor-pointer"
-                />
+                <Checkbox checked={rememberMe} onChange={setRememberMe} />
                 <span className="text-gray-600 group-hover:text-gray-900 transition-colors">
                   Remember me
                 </span>
