@@ -26,6 +26,8 @@ While maintenance mode is on, every route below except `/api/auth/*` and `/api/s
 | `GET /search` | `council-officer` | |
 | `GET /stats` | `council-officer` | member counts for dashboards |
 | `POST /bulk-upload` | `council-officer` | Excel roster import |
+| `POST /send-first-login-codes` | `council-officer` | body `{ "studentNumbers": [...] }`: re-issues and emails first-login codes to those accounts that are active and still on first login (the rest are skipped); answers 202 and works in the background |
+| `POST /:id/send-first-login-code` | `council-officer` | issues a fresh code for one account still on first login and emails it; `{ "force": true }` (admin only) also restarts first login for an account that already chose a password |
 | `POST /sync-delete` | `council-officer` | roster sync: deactivates *students* missing from the uploaded file (officers, faculty and admins are left alone; non-admins can't deactivate more than half of active students in one run) |
 | `POST /sync-upsert-batch` | `council-officer` | roster sync: batched upsert |
 | `GET /` | any authenticated user | filtering/sorting/pagination |

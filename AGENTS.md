@@ -40,7 +40,7 @@ server/   Express, TypeScript, Mongoose
 - **Roles**: `student`, `council-officer`, `committee-officer`, `faculty`, `admin`. `admin` bypasses every role check server-side (`authorizeRole` in `auth.middleware.ts`). See [docs/architecture.md](docs/architecture.md#roles--permissions).
 - **Singleton settings pattern**: `MembershipSettings` and `SiteSettings` are both "there is only ever one document" models — `findOne()` with a lazy self-healing create if it doesn't exist yet. Follow this pattern for any new sitewide toggle rather than inventing a new one.
 - **Public GET, guarded mutation**: most resources follow `GET /` and `GET /:id` public, `POST`/`PUT`/`PATCH`/`DELETE` behind `authenticateToken` + `authorizeRoles('council-officer')`. Check `docs/api-reference.md` before assuming a route needs auth.
-- **Env-driven config lives in `server/src/config/env.ts`**, not scattered `process.env` reads — `getJwtSecret()`, `getJwtExpiresIn()`, `getDefaultPassword()`. Add new required/validated env vars there.
+- **Env-driven config lives in `server/src/config/env.ts`**, not scattered `process.env` reads — `getJwtSecret()`, `getJwtExpiresIn()`, `getSchoolEmailDomain()`. Add new required/validated env vars there.
 - **Tests**: server uses Vitest (`server/src/tests/`), client uses Vitest for pure-function unit tests only (`client/src/tests/`) — not component/UI tests. Mock at the module boundary (`vi.mock`), not with a real database or a real Next.js render.
 - **No browser automation**: this repo is developed without Puppeteer/Playwright by convention — don't reintroduce headless-browser testing or screenshotting without being asked.
 

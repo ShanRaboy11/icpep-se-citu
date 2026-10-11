@@ -98,7 +98,9 @@ Copy `.env.example` and fill in real values. The ones that change behavior:
 | Variable | Purpose |
 | -------- | ------- |
 | `JWT_SECRET` | **Required.** The server refuses to start without it (at least 16 characters, use a long random string). |
-| `DEFAULT_PASSWORD` | Password given to new accounts when none is supplied; users must change it at first login. **Required in production** (the server won't start without it); falls back to `123456` in development. |
+| `SCHOOL_EMAIL_DOMAIN` | Domain of the school emails (`firstname.lastname@cit.edu`) that first-login codes are sent to. Defaults to `cit.edu`. |
+| `FIRST_LOGIN_CODE_DAYS` | How long a new account's first-login code stays usable. Defaults to `7`. |
+| `FIRST_LOGIN_MAIL_INTERVAL_MS` | Pause between first-login emails, so a roster upload doesn't trip the mail server's limits. Defaults to `2000`. |
 | `JWT_EXPIRES_IN` | How long a login stays valid, e.g. `12h` or `3d`. Defaults to `1d`. Resetting a password signs out all of that account's sessions. |
 | `NEXT_PUBLIC_SITE_URL` | The deployed site's public URL, used for the sitemap, canonical links and structured data. Defaults to the production domain. |
 | `TRUST_PROXY` | Number of reverse proxies in front of the server (e.g. `1` on Render) so rate limits see the real client IP. Leave unset when the server is exposed directly. |
