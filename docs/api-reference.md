@@ -62,10 +62,10 @@ While maintenance mode is on, every route below except `/api/auth/*` and `/api/s
 | `GET /` | public | |
 | `GET /tag/:tag` | public | |
 | `POST /:id/report` | public | rate-limited |
-| `GET /:id` | public | |
+| `GET /:id` | public | counts a view; add `?countView=false` for server-side fetches (metadata) that shouldn't |
 | `GET /my/events` | any authenticated user | |
 | `POST /`, `PATCH /:id`, `DELETE /:id` | `council-officer` or own post (`canManagePost`) | |
-| `PATCH /:id` (publish toggle) | `council-officer` or own post | |
+| `PATCH /:id/publish` | `council-officer` or own post | publish toggle |
 
 ## Announcements — `/api/announcements`
 
@@ -123,6 +123,5 @@ All routes expect an authenticated user and operate on that user's own notificat
 
 | Method & path | Auth |
 | --- | --- |
-| `GET /health` | public — `{ status, database }`, outside `/api` |
-| `GET /` | public — API index |
-| `GET /api` | public — lists available route prefixes |
+| `GET /health` | public — `{ success, status }`, outside `/api` |
+| `GET /`, `GET /api` | public — just `{ success, message }`; no route list or environment details |
