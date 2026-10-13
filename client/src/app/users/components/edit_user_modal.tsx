@@ -483,11 +483,11 @@ export default function EditUserModal({
               variant="heroOutline"
               type="button"
               onClick={onClose}
-              className="px-4 py-2 sm:px-6 sm:py-3"
+              className="whitespace-nowrap px-4 py-2 sm:px-6 sm:py-3"
             >
               Cancel
             </Button>
-            <Button variant="hero" type="submit" className="px-5 py-2 sm:px-8 sm:py-3">
+            <Button variant="hero" type="submit" className="whitespace-nowrap px-5 py-2 sm:px-8 sm:py-3">
               Save Changes
             </Button>
           </div>

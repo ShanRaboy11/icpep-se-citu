@@ -64,7 +64,7 @@ export default function ConfirmDialog({
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center animate-scale-in">
+      <div className="relative bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl text-center animate-scale-in">
         <div
           className={`w-14 h-14 ${styles.bg} rounded-2xl flex items-center justify-center mx-auto mb-5`}
         >
@@ -80,7 +80,7 @@ export default function ConfirmDialog({
           <Button
             variant="heroOutline"
             onClick={onClose}
-            className="flex-1 py-2 sm:py-3"
+            className="flex-1 whitespace-nowrap px-4 py-2 sm:py-3"
           >
             {cancelText}
           </Button>
@@ -90,7 +90,7 @@ export default function ConfirmDialog({
               onConfirm();
               onClose();
             }}
-            className="flex-1 py-2 sm:py-3"
+            className="flex-1 whitespace-nowrap px-4 py-2 sm:py-3"
           >
             {confirmText}
           </Button>

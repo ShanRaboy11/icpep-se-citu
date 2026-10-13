@@ -494,7 +494,7 @@ export default function ExcelUploadModal({
             type="button"
             variant="heroOutline"
             onClick={handleClose}
-            className="px-4 py-2 sm:px-6 sm:py-3"
+            className="whitespace-nowrap px-4 py-2 sm:px-6 sm:py-3"
           >
             Cancel
           </Button>
@@ -503,7 +503,7 @@ export default function ExcelUploadModal({
             variant="hero"
             onClick={handleUpload}
             disabled={validCount === 0 || isProcessing}
-            className="px-5 py-2 sm:px-8 sm:py-3"
+            className="whitespace-nowrap px-5 py-2 sm:px-8 sm:py-3"
           >
             {isProcessing
               ? "Processing..."
