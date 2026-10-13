@@ -377,8 +377,7 @@ export const getEventById = async (
       return;
     }
 
-    // Increment views
-    await event.incrementViews();
+    if (req.query.countView !== "false") await event.incrementViews();
 
     res.status(200).json({
       success: true,

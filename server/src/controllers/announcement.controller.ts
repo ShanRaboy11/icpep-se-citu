@@ -352,8 +352,7 @@ export const getAnnouncementById = async (
       return;
     }
 
-    // Increment views
-    await announcement.incrementViews();
+    if (req.query.countView !== "false") await announcement.incrementViews();
 
     res.status(200).json({
       success: true,

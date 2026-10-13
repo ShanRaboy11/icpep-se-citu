@@ -21,7 +21,7 @@ const API_URL = (() => {
 
 async function fetchEvent(id: string): Promise<RawEvent | null> {
   try {
-    const res = await fetch(`${API_URL}/events/${id}`, { next: { revalidate: 300 } });
+    const res = await fetch(`${API_URL}/events/${id}?countView=false`, { next: { revalidate: 300 } });
     if (!res.ok) return null;
     const json = await res.json();
     return json?.data ?? null;
