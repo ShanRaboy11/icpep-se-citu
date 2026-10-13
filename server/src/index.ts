@@ -141,14 +141,6 @@ app.use(
   })
 );
 
-// 4. Request logging middleware (development only)
-if (process.env.NODE_ENV === "development") {
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    console.log(`${req.method} ${req.path}`);
-    next();
-  });
-}
-
 // 5. Request limits for the whole API, on top of the stricter login and reset
 // limits. Generous enough for the Excel roster sync, which sends many batches.
 app.use(
@@ -183,11 +175,7 @@ const connectDB = async (): Promise<void> => {
     }
 
     // Connect to MongoDB
-    const conn = await mongoose.connect(process.env.MONGO_URI);
-
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    console.log(`Database: ${conn.connection.name}`);
-
+    await mongoose.connect(process.env.MONGO_URI);
   } catch (error) {
     // Nothing works without the database: exit with the error left to Node to print
     process.exitCode = 1;
@@ -197,54 +185,12 @@ const connectDB = async (): Promise<void> => {
 
 connectDB();
 
-// Health check route
 app.get("/health", (req: Request, res: Response) => {
-  res.status(200).json({
-    success: true,
-    message: "Server is running",
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || "development",
-    database:
-      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
-  });
+  res.status(200).json({ success: true, status: "healthy" });
 });
 
-// Root route
-app.get("/", (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: "ICPEP CITU API Server",
-    version: "1.0.0",
-    endpoints: {
-      health: "/health",
-      api: "/api",
-    },
-  });
-});
-
-// API base route
-app.get("/api", (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: "ICPEP CITU API",
-    version: "1.0.0",
-    availableRoutes: [
-      "/api/auth",
-      "/api/users",
-      "/api/announcements",
-      "/api/events",
-      "/api/memberships",
-      "/api/notifications",
-      "/api/officers",
-      "/api/faculty",
-      "/api/sponsors",
-      "/api/testimonials",
-      "/api/faqs",
-      "/api/availability",
-      "/api/meetings",
-    ],
-  });
+app.get(["/", "/api"], (req: Request, res: Response) => {
+  res.json({ success: true, message: "ICPEP CITU API" });
 });
 
 app.use("/api/auth", authRoutes);
@@ -271,8 +217,6 @@ app.use((req: Request, res: Response) => {
   res.status(404).json({
     success: false,
     message: "Route not found",
-    path: req.path,
-    method: req.method,
   });
 });
 
@@ -288,47 +232,20 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log(
-    `Server running in ${
-      process.env.NODE_ENV || "development"
-    } mode on port ${PORT}`
-  );
-  console.log(`Health check: http://localhost:${PORT}/health`);
-  console.log(`API: http://localhost:${PORT}/api`);
-  console.log(
-    `MongoDB: ${
-      mongoose.connection.readyState === 1 ? "Connected" : "Connecting..."
-    }`
-  );
-});
+const server = app.listen(PORT);
 
 // Start scheduler after successful DB connection
 mongoose.connection.once("open", () => {
   startAnnouncementScheduler();
 });
 
-// Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("SIGTERM signal received: closing HTTP server");
+const shutdown = () => {
   server.close(() => {
-    console.log("HTTP server closed");
-    mongoose.connection.close(false).then(() => {
-      console.log("MongoDB connection closed");
-      process.exit(0);
-    });
+    mongoose.connection.close(false).then(() => process.exit(0));
   });
-});
+};
 
-process.on("SIGINT", () => {
-  console.log("SIGINT signal received: closing HTTP server");
-  server.close(() => {
-    console.log("HTTP server closed");
-    mongoose.connection.close(false).then(() => {
-      console.log("MongoDB connection closed");
-      process.exit(0);
-    });
-  });
-});
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
 export default app;
