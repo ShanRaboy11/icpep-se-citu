@@ -7,6 +7,7 @@ import Event from "../models/event";
 import Meeting from "../models/meeting";
 import User from "../models/user";
 import { isInTargetAudience } from "../utils/notification";
+import { canViewItem } from "../utils/visibility";
 
 // Get all notifications for the current user
 export const getNotifications = async (
@@ -313,7 +314,7 @@ export const markAsRead = async (
       } else {
         // Check Announcement
         const announcement = await Announcement.findById(relatedId);
-        if (announcement) {
+        if (announcement && canViewItem(req.user, announcement)) {
           notification = await Notification.create({
             recipient: userId,
             type: "announcement",
@@ -328,7 +329,7 @@ export const markAsRead = async (
         } else {
           // Check Event
           const event = await Event.findById(relatedId);
-          if (event) {
+          if (event && canViewItem(req.user, event)) {
             notification = await Notification.create({
               recipient: userId,
               type: "event",
