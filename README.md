@@ -105,7 +105,7 @@ Copy `.env.example` and fill in real values. The ones that change behavior:
 | `NEXT_PUBLIC_SITE_URL` | The deployed site's public URL, used for the sitemap, canonical links and structured data. Defaults to the production domain. |
 | `TRUST_PROXY` | Number of reverse proxies in front of the server (e.g. `1` on Render) so rate limits see the real client IP. Leave unset when the server is exposed directly. |
 | `SMTP_TLS_REJECT_UNAUTHORIZED` | Certificates are verified by default. Set to `false` only for a local mail catcher with a self-signed certificate. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_EMAIL`, `SMTP_PASSWORD`, `FROM_EMAIL`, `FROM_NAME`, `REPORT_EMAIL` | Outgoing email (reset codes, event reports). |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_EMAIL`, `SMTP_PASSWORD`, `FROM_EMAIL`, `FROM_NAME` | Outgoing email (first-login codes, resets, event reports). |
 
 Login, forgot-password, verify-code and reset-password are rate limited per IP and per account (in memory, reset on restart).
 

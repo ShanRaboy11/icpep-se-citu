@@ -18,6 +18,7 @@ import {
   Check,
   CreditCard,
   Wrench,
+  SlidersHorizontal,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -48,7 +49,10 @@ const baseSections = [
   },
   {
     label: "Admin",
-    links: [{ name: "Drafts", href: "/create/drafts", icon: FileText }],
+    links: [
+      { name: "Drafts", href: "/create/drafts", icon: FileText },
+      { name: "Site Content", href: "/create/content", icon: SlidersHorizontal },
+    ],
   },
 ];
 

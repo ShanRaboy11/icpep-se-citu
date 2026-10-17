@@ -4,6 +4,8 @@ import { canManagePost } from "../utils/ownership";
 import { escapeHtml } from "../utils/html";
 import { listVisibility, canViewItem } from "../utils/visibility";
 import { pickFields } from "../utils/pick";
+import { getOrCreateSettings } from "./siteSettings.controller";
+import { resolveContact } from "../utils/contact-settings";
 import { sanitizeRichText, isBlankRichText } from "../utils/rich-text";
 
 const EVENT_EDITABLE_FIELDS = [
@@ -787,18 +789,11 @@ export const reportEvent = async (
       return;
     }
 
-    const reportRecipient =
-      process.env.REPORT_EMAIL ||
-      process.env.FROM_EMAIL ||
-      process.env.SMTP_EMAIL;
-
-    if (!reportRecipient) {
-      res.status(500).json({
-        success: false,
-        message: "Reporting is not configured on the server yet",
-      });
-      return;
-    }
+    const official = resolveContact(await getOrCreateSettings()).contactEmail.toLowerCase();
+    const organizer = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(event.contact?.trim() ?? "")
+      ? event.contact!.trim().toLowerCase()
+      : null;
+    const recipients = [...new Set([organizer, official].filter((email): email is string => !!email))];
 
     const message = `Event reported: ${event.title}\n\nReason: ${reason}\n\nDetails:\n${details}`;
     const html = `
@@ -809,12 +804,23 @@ export const reportEvent = async (
       <p>${escapeHtml(details).replace(/\n/g, "<br/>")}</p>
     `;
 
-    await sendEmail({
-      email: reportRecipient,
-      subject: `Event Report: ${event.title}`,
-      message,
-      html,
-    });
+    let delivered = 0;
+    for (const email of recipients) {
+      try {
+        await sendEmail({ email, subject: `Event Report: ${event.title}`, message, html });
+        delivered += 1;
+      } catch {
+        continue;
+      }
+    }
+
+    if (delivered === 0) {
+      res.status(502).json({
+        success: false,
+        message: "The report could not be sent right now. Please try again later.",
+      });
+      return;
+    }
 
     res.status(200).json({ success: true, message: "Report sent" });
   } catch (error) {

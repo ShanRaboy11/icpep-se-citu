@@ -118,6 +118,8 @@ All routes expect an authenticated user and operate on that user's own notificat
 | --- | --- | --- |
 | `GET /settings` | public | `{ maintenanceMode, maintenanceMessage }` — always reachable, even during maintenance |
 | `GET /stats` | public | `{ members, events }` for the home page hero: active members and published events that already happened; cached for 5 minutes |
+| `PUT /contact` | `council-officer` | `{ contactEmail, facebookUrl, tiktokUrl }`: the official email and social links; an empty value goes back to the default. `GET /settings` returns the resolved values. Event reports go to the organizer's email, then to this official email |
+| `PUT /primer` | `council-officer` | multipart: a `file` (PDF, up to 10MB, stored on Cloudinary) or `url` (https link), or `clear=true` to go back to the bundled default; `GET /settings` returns the current `primerUrl` |
 | `PUT /settings` | `admin` | the only route besides `/api/auth/*` reachable during maintenance |
 
 ## Health / info

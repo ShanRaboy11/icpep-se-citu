@@ -5,7 +5,8 @@ import FirstVisitLoader from "./components/first-visit-loader";
 import ApiErrorNotice from "./components/api-error-notice";
 import ResponsiveTableToggle from "./components/responsive-table-toggle";
 import MaintenanceGate from "./components/maintenance-gate";
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SOCIAL_LINKS, DEFAULT_OG_IMAGE } from "./utils/site";
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, DEFAULT_OG_IMAGE } from "./utils/site";
+import { fetchSiteContact } from "./utils/site-contact";
 import "./globals.css";
 
 const raleway = Raleway({
@@ -39,7 +40,7 @@ export const metadata: Metadata = {
 
 // Describes the chapter itself, not any one page — read by search and AI
 // answer engines to ground "who is ICpEP.SE CIT-U" style questions.
-const organizationJsonLd = {
+const buildOrganizationJsonLd = (contact: Awaited<ReturnType<typeof fetchSiteContact>>) => ({
   "@context": "https://schema.org",
   "@type": "Organization",
   name: SITE_NAME,
@@ -47,14 +48,24 @@ const organizationJsonLd = {
   url: SITE_URL,
   logo: `${SITE_URL}/brand/icpep-logo.png`,
   description: SITE_DESCRIPTION,
-  sameAs: SOCIAL_LINKS,
-};
+  email: contact.contactEmail,
+  sameAs: [
+    contact.facebookUrl,
+    contact.tiktokUrl,
+    contact.instagramUrl,
+    contact.xUrl,
+    contact.youtubeUrl,
+    contact.linkedinUrl,
+  ].filter(Boolean),
+});
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const contact = await fetchSiteContact();
+
   try {
     preconnect(new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").origin);
   } catch {
@@ -66,7 +77,7 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildOrganizationJsonLd(contact)) }}
         />
 
         {/* First visit loading with entrance animation */}
