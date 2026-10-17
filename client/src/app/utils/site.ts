@@ -5,6 +5,8 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://icpep-se-citu.vercel.app"
 ).replace(/\/+$/, "");
 
+export const CHAPTER_FOUNDED_YEAR = 2023;
+
 export const SITE_NAME = "ICpEP.SE CIT-U Chapter";
 export const SITE_DESCRIPTION = "Unlocking Potential, One Bit at a Time";
 

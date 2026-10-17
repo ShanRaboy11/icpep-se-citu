@@ -5,12 +5,19 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Code, PenTool, BrainCircuit, Users } from "lucide-react";
 import Button from "../../components/button";
+import { api } from "@/app/services/api-client";
+import { useCachedFetch } from "@/app/utils/cached-fetch";
+import { CHAPTER_FOUNDED_YEAR } from "@/app/utils/site";
 
-const STATS = [
-  { value: "200+", label: "Active Members" },
-  { value: "15+", label: "Events Hosted" },
-  { value: "8", label: "Years Active" },
-];
+interface ChapterStats {
+  members: number;
+  events: number;
+}
+
+const fetchChapterStats = async (): Promise<ChapterStats> => {
+  const response = await api.get("/site/stats");
+  return response.data.data;
+};
 
 const SkillBox = ({
   icon,
@@ -33,6 +40,13 @@ const SkillBox = ({
 
 const Hero = () => {
   const router = useRouter();
+  const { data: chapterStats } = useCachedFetch("home-stats", fetchChapterStats);
+
+  const stats = [
+    { value: chapterStats?.members ?? 0, label: "Active Members" },
+    { value: chapterStats?.events ?? 0, label: "Events Hosted" },
+    { value: new Date().getFullYear() - CHAPTER_FOUNDED_YEAR, label: "Years Active" },
+  ].filter((stat) => stat.value > 0);
 
   return (
     <section className="light-dark-background relative isolate flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 sm:px-6">
@@ -117,11 +131,11 @@ const Hero = () => {
           </Button>
         </div>
 
-        <div className="mt-16 flex gap-8 sm:gap-16">
-          {STATS.map((stat) => (
+        <div className="mt-16 flex min-h-14 gap-8 sm:gap-16">
+          {stats.map((stat) => (
             <div key={stat.label} className="text-center">
               <div className="font-rubik text-2xl font-bold text-primary1 sm:text-3xl">
-                {stat.value}
+                {stat.value.toLocaleString()}
               </div>
               <div className="mt-1 font-raleway text-xs text-bodytext sm:text-sm">
                 {stat.label}

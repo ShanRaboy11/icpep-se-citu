@@ -117,6 +117,7 @@ All routes expect an authenticated user and operate on that user's own notificat
 | Method & path | Auth | Notes |
 | --- | --- | --- |
 | `GET /settings` | public | `{ maintenanceMode, maintenanceMessage }` — always reachable, even during maintenance |
+| `GET /stats` | public | `{ members, events }` for the home page hero: active members and published events that already happened; cached for 5 minutes |
 | `PUT /settings` | `admin` | the only route besides `/api/auth/*` reachable during maintenance |
 
 ## Health / info
