@@ -4,16 +4,50 @@ import Footer from "../components/footer";
 import DeveloperCard from "./components/developer-card";
 import Grid from "../components/grid";
 import PageHeader from "../components/page-header";
+import officerService from "../services/officer";
+import officerTermService from "../services/officerTerm";
+import { useCachedFetch } from "../utils/cached-fetch";
+
+const matchesName = (candidate: string, developer: string) => {
+  const text = candidate.toLowerCase();
+  const tokens = developer.toLowerCase().replace(/\b[a-z]\.\s*/g, "").split(/\s+/).filter(Boolean);
+  return tokens.every((token) => text.includes(token));
+};
+
+const fetchOfficerPhotos = async () => {
+  const [live, terms] = await Promise.all([
+    officerService.getPublicOfficers().catch(() => []),
+    officerTermService.getOfficerTerms().catch(() => ({ data: [] })),
+  ]);
+  const photos: { name: string; image: string; year: string }[] = [];
+  for (const officer of live || []) {
+    if (officer.profilePicture) {
+      photos.push({ name: `${officer.firstName} ${officer.lastName}`, image: officer.profilePicture, year: "9999" });
+    }
+  }
+  for (const term of Array.isArray(terms?.data) ? terms.data : []) {
+    if (term.image) photos.push({ name: term.name, image: term.image, year: term.termYear || "" });
+  }
+  return photos;
+};
 
 export default function DevelopersPage() {
-  const developers = [
+  const { data: officerPhotos } = useCachedFetch("developer-photos", fetchOfficerPhotos);
+
+  const officerPhoto = (name: string) =>
+    (officerPhotos ?? [])
+      .filter((photo) => matchesName(photo.name, name))
+      .sort((a, b) => b.year.localeCompare(a.year))[0]?.image;
+
+  const team = [
     {
       name: "Maica C. Eupinado",
       title: "UI/UX",
       desc: "Designer",
-      imageSrc: "/team/eupinado.png",
-      bgSrc: "/team/bg-mai.png",
+      imageSrc: "/team/eupinado.avif",
+      bgSrc: "/team/bg-mai.avif",
       imageClassName: "scale-[0.95] origin-bottom",
+      officerImageClassName: "scale-[1.1] origin-bottom",
       details: [
         "3rd Year Batch Representative, 6th Administration",
         "Head of Training and Seminar Committee, 6th Administration",
@@ -26,8 +60,9 @@ export default function DevelopersPage() {
       name: "Gio Christian D. Macatual",
       title: "Frontend",
       desc: "Developer",
-      imageSrc: "/team/macatual.png",
-      bgSrc: "/team/bg-gio.png",
+      imageSrc: "/team/macatual.avif",
+      bgSrc: "/team/bg-gio.avif",
+      officerImageClassName: "scale-[1.1] origin-bottom",
       details: [
         "Auditor, 6th Administration",
         "Asst. Head of Finance Committee, 6th Administration",
@@ -40,8 +75,9 @@ export default function DevelopersPage() {
       name: "Shan Michael V. Raboy",
       title: "Backend",
       desc: "Developer",
-      imageSrc: "/team/raboy.png",
-      bgSrc: "/team/bg-shan.png",
+      imageSrc: "/team/raboy.avif",
+      bgSrc: "/team/bg-shan.avif",
+      officerImageClassName: "scale-[1.1] origin-bottom",
       details: [
         "Vice President - Internal, 6th Administration",
         "Head of Internal Affairs Committee, 6th Administration",
@@ -55,9 +91,10 @@ export default function DevelopersPage() {
       name: "Trixie T. Dolera",
       title: "Fullstack",
       desc: "Developer",
-      imageSrc: "/team/dolera.png",
-      bgSrc: "/team/bg-rexi.png",
+      imageSrc: "/team/dolera.avif",
+      bgSrc: "/team/bg-rexi.avif",
       imageClassName: "scale-[1.095] origin-bottom",
+      officerImageClassName: "scale-[1.095] origin-bottom",
       details: [
         "Public Relations Officer, 6th Administration",
         "Asst. Head of Public Relations Committee, 6th Administration",
@@ -68,6 +105,13 @@ export default function DevelopersPage() {
       portfolioLink: "#",
     },
   ];
+
+  const developers = team.map(({ officerImageClassName, ...dev }) => {
+    const photo = officerPhoto(dev.name);
+    return photo
+      ? { ...dev, imageSrc: photo, imageClassName: officerImageClassName }
+      : dev;
+  });
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">

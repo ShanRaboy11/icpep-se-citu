@@ -44,6 +44,13 @@ const splitCouncilPosition = (
   return { position };
 };
 
+const COMMITTEE_ORDER = ["committee head", "head", "assistant head", "secretary", "member"];
+
+const committeeRank = (position: string) => {
+  const index = COMMITTEE_ORDER.indexOf(position.trim().toLowerCase());
+  return index === -1 ? COMMITTEE_ORDER.length : index;
+};
+
 const OfficersPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -113,7 +120,13 @@ const OfficersPage = () => {
 
     setLoading(true);
     (year ? fetchArchived() : fetchLive())
-      .then(setOfficers)
+      .then((list) =>
+        setOfficers(
+          isCouncil
+            ? list
+            : [...list].sort((a, b) => committeeRank(a.position) - committeeRank(b.position)),
+        ),
+      )
       .catch((error) => {
         setOfficers([]);
       })

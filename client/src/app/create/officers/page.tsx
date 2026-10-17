@@ -35,7 +35,7 @@ import officerTermService, {
   OfficerTermData,
 } from "@/app/services/officerTerm";
 import { getCurrentAcademicYear } from "@/app/utils/academic-year";
-import { shortDepartmentName } from "@/app/utils/department";
+import { shortDepartmentName, shortPositionTitle } from "@/app/utils/department";
 import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
 import { LoadingIndicator } from "@/app/components/loading";
 import { placeholderPhoto } from "@/app/utils/placeholder-photo";
@@ -147,17 +147,25 @@ type ArchiveFormErrors = {
 const archiveKey = (term: OfficerTermRow) =>
   `${term.termYear}::${term.sourceUserId || term.name.trim().toLowerCase()}`;
 
-const archiveAssignmentLabel = (term: OfficerTermRow) =>
+const departmentLabel = (term: OfficerTermRow) =>
   term.departmentType === "executive"
-    ? [term.position, term.role].filter(Boolean).join(" ")
-    : `${term.position} · ${shortDepartmentName(term.committeeName)}`;
+    ? "Executive"
+    : shortDepartmentName(term.committeeName) || "Committee";
 
-// A student can be an executive officer and sit on a committee (or several) in
-// the same year, so each row also lists that person's other assignments.
-const otherAssignments = (term: OfficerTermRow, all: OfficerTermRow[]) =>
-  all
-    .filter((other) => other._id !== term._id && archiveKey(other) === archiveKey(term))
-    .map(archiveAssignmentLabel);
+const groupArchiveTerms = (terms: OfficerTermRow[]) => {
+  const groups = new Map<string, OfficerTermRow[]>();
+  for (const term of terms) {
+    const key = archiveKey(term);
+    groups.set(key, [...(groups.get(key) ?? []), term]);
+  }
+  return [...groups.values()].map((group) =>
+    [...group].sort(
+      (a, b) =>
+        Number(b.departmentType === "executive") - Number(a.departmentType === "executive") ||
+        departmentLabel(a).localeCompare(departmentLabel(b)),
+    ),
+  );
+};
 
 export default function OfficersPage() {
   // --- STATE ---
@@ -241,7 +249,7 @@ export default function OfficersPage() {
     "saving" | "publishing" | null
   >(null);
   const [archiveShowDeleteModal, setArchiveShowDeleteModal] = useState(false);
-  const [archiveItemToDelete, setArchiveItemToDelete] = useState<string | null>(
+  const [archiveItemToDelete, setArchiveItemToDelete] = useState<string[] | null>(
     null,
   );
   const [archiveShowSuccessModal, setArchiveShowSuccessModal] = useState(false);
@@ -286,7 +294,7 @@ export default function OfficersPage() {
         const image = o.profilePicture || placeholderPhoto(name, o.gender);
 
         const committeeSummary = [
-          o.committeeTitle,
+          shortPositionTitle(o.committeeTitle),
           shortDepartmentName(o.committeeDepartment || o.department),
         ]
           .filter(Boolean)
@@ -604,17 +612,17 @@ export default function OfficersPage() {
     if (archiveFileInputRef.current) archiveFileInputRef.current.value = "";
   };
 
-  const confirmArchiveDelete = (id: string) => {
-    setArchiveItemToDelete(id);
+  const confirmArchiveDelete = (ids: string[]) => {
+    setArchiveItemToDelete(ids);
     setArchiveShowDeleteModal(true);
   };
 
   const handleArchiveDelete = async () => {
     if (!archiveItemToDelete) return;
     try {
-      await officerTermService.deleteOfficerTerm(archiveItemToDelete);
+      await Promise.all(archiveItemToDelete.map((id) => officerTermService.deleteOfficerTerm(id)));
       setArchiveTerms((prev) =>
-        prev.filter((t) => t._id !== archiveItemToDelete),
+        prev.filter((t) => !archiveItemToDelete.includes(t._id)),
       );
       setArchiveShowDeleteModal(false);
       setArchiveItemToDelete(null);
@@ -1174,17 +1182,14 @@ export default function OfficersPage() {
                                           className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0 cursor-pointer"
                                         >
                                           <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0">
-                                            {user.profilePicture ? (
-                                              <img
-                                                src={user.profilePicture}
-                                                alt=""
-                                                className="w-full h-full object-cover"
-                                              />
-                                            ) : (
-                                              <div className="w-full h-full flex items-center justify-center font-raleway text-gray-500 text-xs">
-                                                {user.firstName[0]}
-                                              </div>
-                                            )}
+                                            <img
+                                              src={
+                                                user.profilePicture ||
+                                                placeholderPhoto(`${user.firstName} ${user.lastName}`, user.gender)
+                                              }
+                                              alt=""
+                                              className="w-full h-full object-cover"
+                                            />
                                           </div>
                                           <div>
                                             <p className="font-raleway font-semibold text-gray-800 text-sm">
@@ -2324,8 +2329,16 @@ export default function OfficersPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {archiveFilteredItems.map((item) => {
-                                const isEditing = archiveEditingId === item._id;
+                              {groupArchiveTerms(archiveFilteredItems).map((group) => {
+                                const item = group[0];
+                                const isEditing = group.some((term) => term._id === archiveEditingId);
+                                const positions = [
+                                  ...new Set(
+                                    group.map((term) =>
+                                      [shortPositionTitle(term.position), term.role].filter(Boolean).join(" · "),
+                                    ),
+                                  ),
+                                ];
                                 return (
                                   <tr
                                     key={item._id}
@@ -2333,18 +2346,14 @@ export default function OfficersPage() {
                                   >
                                     <td data-label="Photo" data-primary="media" className="px-6 sm:px-8 py-4">
                                       <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
-                                        {item.image ? (
-                                          <img
-                                            src={item.image}
-                                            alt={item.name}
-                                            className="w-full h-full object-cover"
-                                          />
-                                        ) : (
-                                          <Archive
-                                            size={14}
-                                            className="text-gray-300"
-                                          />
-                                        )}
+                                        <img
+                                          src={
+                                            group.find((term) => term.image)?.image ||
+                                            placeholderPhoto(item.name, group.find((term) => term.gender)?.gender)
+                                          }
+                                          alt={item.name}
+                                          className="w-full h-full object-cover"
+                                        />
                                       </div>
                                     </td>
                                     <td data-label="Name" data-primary="" className="px-4 py-4">
@@ -2359,33 +2368,26 @@ export default function OfficersPage() {
                                     </td>
                                     <td data-label="Position" className="px-4 py-4">
                                       <span className="text-xs text-gray-600 font-raleway">
-                                        {item.position}
-                                        {item.role ? ` · ${item.role}` : ""}
+                                        {positions.join(", ")}
                                       </span>
                                     </td>
                                     <td data-label="Department" className="px-4 py-4">
-                                      <div className="flex flex-col items-start gap-1.5">
-                                      <span
-                                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-raleway font-semibold border ${
-                                          item.departmentType === "executive"
-                                            ? "bg-primary1/8 text-primary1 border-primary1/30"
-                                            : "bg-primary2/8 text-primary2 border-primary2/30"
-                                        }`}
-                                      >
-                                        {item.departmentType === "executive"
-                                          ? "Executive"
-                                          : shortDepartmentName(item.committeeName) ||
-                                            "Committee"}
-                                      </span>
-                                      {otherAssignments(item, archiveTerms).map((label) => (
-                                        <span
-                                          key={label}
-                                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-raleway font-semibold border bg-gray-50 text-gray-600 border-gray-200"
-                                        >
-                                          <span aria-hidden>+</span>
-                                          {label}
-                                        </span>
-                                      ))}
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                        {group.map((term) => (
+                                          <button
+                                            key={term._id}
+                                            type="button"
+                                            onClick={() => handleArchiveEditClick(term)}
+                                            title={`Edit ${departmentLabel(term)}`}
+                                            className={`inline-flex cursor-pointer items-center gap-1.5 px-3 py-1 rounded-full text-xs font-raleway font-semibold border transition-colors hover:brightness-95 ${
+                                              term.departmentType === "executive"
+                                                ? "bg-primary1/8 text-primary1 border-primary1/30"
+                                                : "bg-primary2/8 text-primary2 border-primary2/30"
+                                            }`}
+                                          >
+                                            {departmentLabel(term)}
+                                          </button>
+                                        ))}
                                       </div>
                                     </td>
                                     <td data-label="Year" className="px-4 py-4">
@@ -2396,24 +2398,20 @@ export default function OfficersPage() {
                                     <td data-label="Actions" className="px-6 sm:px-8 py-4 text-right">
                                       <div className="inline-flex items-center gap-1 opacity-100 lg:opacity-40 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
                                         <button
-                                          onClick={() =>
-                                            handleArchiveEditClick(item)
-                                          }
+                                          onClick={() => handleArchiveEditClick(item)}
                                           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-raleway font-semibold whitespace-nowrap text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150 cursor-pointer"
                                           title="Edit"
                                         >
                                           <Pencil size={15} />
-                                        Edit
+                                          Edit
                                         </button>
                                         <button
-                                          onClick={() =>
-                                            confirmArchiveDelete(item._id)
-                                          }
+                                          onClick={() => confirmArchiveDelete(group.map((term) => term._id))}
                                           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-raleway font-semibold whitespace-nowrap text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150 cursor-pointer"
-                                          title="Delete"
+                                          title={group.length > 1 ? `Delete all ${group.length} entries` : "Delete"}
                                         >
                                           <Trash2 size={15} />
-                                        Delete
+                                          Delete
                                         </button>
                                       </div>
                                     </td>
