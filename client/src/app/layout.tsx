@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { preconnect } from "react-dom";
 import { Rubik, Raleway } from "next/font/google";
 import FirstVisitLoader from "./components/first-visit-loader";
 import ApiErrorNotice from "./components/api-error-notice";
@@ -54,6 +55,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  try {
+    preconnect(new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").origin);
+  } catch {
+  }
+
   return (
     <html lang="en">
       <body className={`${rubik.variable} ${raleway.variable} antialiased`}>

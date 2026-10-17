@@ -25,6 +25,7 @@ import eventService from "../services/event";
 import clsx from "clsx";
 import BackButton from "../components/back-button";
 import PageHeader from "../components/page-header";
+import { useDelayedFlag } from "@/app/components/skeleton";
 
 type ProcessedEvent = Event & {
   status: "Upcoming" | "Ongoing" | "Ended";
@@ -60,6 +61,7 @@ export default function EventsListPage() {
 
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(isLoading);
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -616,7 +618,10 @@ export default function EventsListPage() {
 
             <div ref={listTopRef}>
               {isLoading ? (
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch">
+                <div
+                  data-skeleton-hidden={showSkeleton ? undefined : ""}
+                  className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch"
+                >
                   {Array.from({ length: 6 }).map((_, idx) => (
                     <div
                       key={idx}
