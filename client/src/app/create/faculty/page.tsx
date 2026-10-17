@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import facultyService, { FacultyData } from "@/app/services/faculty";
 import { LoadingIndicator } from "@/app/components/loading";
+import GenderSelect, { GenderValue } from "@/app/components/gender-select";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 // --- INTERFACES ---
 interface FacultyMember {
@@ -25,6 +27,7 @@ interface FacultyMember {
   name: string;
   position: string;
   image?: string;
+  gender?: string | null;
   isActive: boolean;
 }
 
@@ -54,6 +57,7 @@ export default function FacultyPage() {
   const [isDragging, setIsDragging] = useState(false);
 
   const [formData, setFormData] = useState({ name: "", position: "" });
+  const [gender, setGender] = useState<GenderValue>("");
   const [errors, setErrors] = useState<FormErrors>({
     name: false,
     position: false,
@@ -94,6 +98,7 @@ export default function FacultyPage() {
     setEditingId(item._id);
     setIsEditingDraft(!item.isActive);
     setFormData({ name: item.name, position: item.position });
+    setGender((item.gender || "") as GenderValue);
     setPreview(item.image || null);
     setCover(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -103,6 +108,7 @@ export default function FacultyPage() {
     setEditingId(null);
     setIsEditingDraft(false);
     setFormData({ name: "", position: "" });
+    setGender("");
     setPreview(null);
     setCover(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -152,6 +158,7 @@ export default function FacultyPage() {
       const data: FacultyData = {
         name: formData.name,
         position: formData.position,
+        gender,
         image: cover || undefined,
         isActive: true,
       };
@@ -196,6 +203,7 @@ export default function FacultyPage() {
       const data: FacultyData = {
         name: formData.name,
         position: formData.position || "TBA",
+        gender,
         image: cover || undefined,
         isActive: false,
       };
@@ -511,6 +519,16 @@ export default function FacultyPage() {
                           </p>
                         )}
                       </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                          Placeholder Photo
+                        </label>
+                        <GenderSelect value={gender} onChange={setGender} />
+                        <p className="text-xs text-gray-400 font-raleway">
+                          Shown when there&apos;s no photo. Auto picks one for you.
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -631,18 +649,11 @@ export default function FacultyPage() {
                               >
                                 <td data-label="Photo" data-primary="media" className="px-6 sm:px-8 py-4">
                                   <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
-                                    {item.image ? (
-                                      <img
-                                        src={item.image}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    ) : (
-                                      <Users
-                                        size={14}
-                                        className="text-gray-300"
-                                      />
-                                    )}
+                                    <img
+                                      src={item.image || placeholderPhoto(item.name, item.gender)}
+                                      alt={item.name}
+                                      className="w-full h-full object-cover"
+                                    />
                                   </div>
                                 </td>
                                 <td data-label="Name" data-primary="" className="px-4 py-4">

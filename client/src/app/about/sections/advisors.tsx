@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import AdvisorCard from "../components/advisor-card";
 import advisorService from "@/app/services/advisor";
 import { toTitleCase } from "@/app/officers/utils/format-name";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 // Types
 interface AdvisorItem {
@@ -130,7 +131,7 @@ const AdvisorsSection: FC = () => {
             name: toTitleCase(a.name),
             position: a.position,
             year: a.yearRange,
-            imageUrl: a.image || "/content/gle.png",
+            imageUrl: a.image || placeholderPhoto(a.name, a.gender),
           })),
         );
       } catch {

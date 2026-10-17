@@ -17,6 +17,7 @@ import facultyService from "../services/faculty";
 import officerTermService from "../services/officerTerm";
 import { getCurrentAcademicYear } from "../utils/academic-year";
 import { toTitleCase } from "../officers/utils/format-name";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 interface OfficerTerm {
   term: string;
@@ -44,7 +45,7 @@ const AboutPage: FC = () => {
           data.map((f: any) => ({
             name: toTitleCase(f.name),
             position: f.position,
-            imageUrl: f.image || "/content/gle.png",
+            imageUrl: f.image || placeholderPhoto(f.name, f.gender),
           })),
         );
       } catch {

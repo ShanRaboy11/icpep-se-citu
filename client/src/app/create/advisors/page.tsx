@@ -18,7 +18,9 @@ import {
 } from "lucide-react";
 import advisorService, { AdvisorData } from "@/app/services/advisor";
 import { LoadingIndicator } from "@/app/components/loading";
-import GenderSelect, { GenderValue } from "@/app/components/gender-select";
+import facultyService from "@/app/services/faculty";
+import Dropdown from "@/app/components/dropdown";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 // --- INTERFACES ---
 interface Advisor {
@@ -27,9 +29,18 @@ interface Advisor {
   position: string;
   yearRange: string;
   isCurrent: boolean;
+  faculty?: string | null;
   image?: string;
   gender?: string | null;
   isActive: boolean;
+}
+
+interface FacultyOption {
+  _id: string;
+  name: string;
+  position: string;
+  image?: string;
+  gender?: string | null;
 }
 
 type FormErrors = {
@@ -55,8 +66,6 @@ export default function AdvisorsPage() {
   });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -69,14 +78,13 @@ export default function AdvisorsPage() {
     yearRange: false,
   });
   const [isCurrent, setIsCurrent] = useState(false);
-  const [gender, setGender] = useState<GenderValue>("");
+  const [facultyId, setFacultyId] = useState("");
+  const [facultyOptions, setFacultyOptions] = useState<FacultyOption[]>([]);
 
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isEditingDraft, setIsEditingDraft] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [cover, setCover] = useState<File | null>(null);
 
   const fetchAdvisors = async () => {
     setIsLoadingList(true);
@@ -99,6 +107,15 @@ export default function AdvisorsPage() {
   };
 
   useEffect(() => {
+    facultyService
+      .getFaculty()
+      .then((response) =>
+        setFacultyOptions(Array.isArray(response.data) ? response.data : []),
+      )
+      .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
     fetchAdvisors();
   }, [editIdParam]);
 
@@ -111,9 +128,7 @@ export default function AdvisorsPage() {
       yearRange: item.yearRange,
     });
     setIsCurrent(item.isCurrent);
-    setGender((item.gender || "") as GenderValue);
-    setPreview(item.image || null);
-    setCover(null);
+    setFacultyId(item.faculty || "");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -122,10 +137,7 @@ export default function AdvisorsPage() {
     setIsEditingDraft(false);
     setFormData({ name: "", position: "", yearRange: "" });
     setIsCurrent(false);
-    setGender("");
-    setPreview(null);
-    setCover(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setFacultyId("");
     router.push("/create/advisors");
   };
 
@@ -153,7 +165,7 @@ export default function AdvisorsPage() {
 
   const validate = () => {
     const newErrors = {
-      name: !formData.name.trim(),
+      name: !facultyId && !formData.name.trim(),
       position: !formData.position.trim(),
       yearRange: !formData.yearRange.trim(),
     };
@@ -171,12 +183,11 @@ export default function AdvisorsPage() {
     setLoadingAction("publishing");
     try {
       const data: AdvisorData = {
-        name: formData.name,
+        faculty: facultyId || (editingId ? "" : undefined),
+        name: formData.name || undefined,
         position: formData.position,
         yearRange: formData.yearRange,
         isCurrent,
-        gender,
-        image: cover || undefined,
         isActive: true,
       };
       if (editingId) {
@@ -209,7 +220,7 @@ export default function AdvisorsPage() {
     setIsSubmitting(true);
     setLoadingAction("saving");
     setShowGlobalError(false);
-    if (!formData.name.trim()) {
+    if (!facultyId && !formData.name.trim()) {
       setErrors((p) => ({ ...p, name: true }));
       setShowGlobalError(true);
       setIsSubmitting(false);
@@ -218,11 +229,11 @@ export default function AdvisorsPage() {
     }
     try {
       const data: AdvisorData = {
-        name: formData.name,
+        faculty: facultyId || (editingId ? "" : undefined),
+        name: formData.name || undefined,
         position: formData.position || "TBA",
         yearRange: formData.yearRange || "TBA",
         isCurrent,
-        image: cover || undefined,
         isActive: false,
       };
       if (editingId) {
@@ -254,70 +265,6 @@ export default function AdvisorsPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors])
       setErrors((prev) => ({ ...prev, [name]: false }));
-  };
-
-  const resizeImage = (file: File, maxWidth = 1200): Promise<File> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        img.src = e.target?.result as string;
-      };
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const scaleSize = maxWidth / img.width;
-        canvas.width = maxWidth;
-        canvas.height = img.height * scaleSize;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return resolve(file);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) return resolve(file);
-            resolve(new File([blob], file.name, { type: file.type }));
-          },
-          file.type,
-          0.8,
-        );
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const MAX_IMAGE_SIZE_MB = 5;
-
-  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-      alert(`Image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
-    try {
-      const resized = await resizeImage(file);
-      setCover(resized);
-      setPreview(URL.createObjectURL(resized));
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    } catch {
-    }
-  };
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
-    if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-      alert(`Image must be ${MAX_IMAGE_SIZE_MB}MB or smaller.`);
-      return;
-    }
-    try {
-      const resized = await resizeImage(file);
-      setCover(resized);
-      setPreview(URL.createObjectURL(resized));
-    } catch {
-    }
   };
 
   const publishedItems = advisors.filter((item) => item.isActive);
@@ -406,115 +353,41 @@ export default function AdvisorsPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* LEFT — Upload */}
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
-                          Photo
-                        </label>
-                        <span className="text-xs text-gray-400 font-raleway">
-                          Max {MAX_IMAGE_SIZE_MB}MB
-                        </span>
-                      </div>
-
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleCoverChange}
-                        ref={fileInputRef}
-                      />
-
-                      {preview ? (
-                        <div className="relative group rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 h-56">
-                          <img
-                            src={preview}
-                            alt="advisor preview"
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
-                            <button
-                              type="button"
-                              onClick={() => fileInputRef.current?.click()}
-                              className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
-                            >
-                              Replace
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                try {
-                                  if (preview) URL.revokeObjectURL(preview);
-                                } catch {}
-                                setCover(null);
-                                setPreview(null);
-                              }}
-                              className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => fileInputRef.current?.click()}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ")
-                              fileInputRef.current?.click();
-                          }}
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            setIsDragging(true);
-                          }}
-                          onDragLeave={() => setIsDragging(false)}
-                          onDrop={handleDrop}
-                          className={`cursor-pointer h-56 rounded-xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center gap-4 ${
-                            isDragging
-                              ? "border-primary2 bg-primary2/5 scale-[1.01]"
-                              : "border-gray-200 bg-gray-50/80 hover:border-primary2/60 hover:bg-primary2/3"
-                          }`}
-                        >
-                          <div
-                            className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-                              isDragging
-                                ? "bg-primary2 text-white"
-                                : "bg-white text-primary2 shadow-md"
-                            }`}
-                          >
-                            <Upload size={22} strokeWidth={2.5} />
-                          </div>
-                          <div className="text-center">
-                            <p className="text-sm font-bold text-gray-700 font-rubik">
-                              {isDragging ? "Drop it!" : "Upload photo"}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-1 font-raleway">
-                              Drag & drop or click · PNG, JPG
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
+                  <div className="grid grid-cols-1 gap-8">
                     {/* RIGHT — Info */}
                     <div className="space-y-6">
                       <div className="space-y-2">
                         <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
-                          Full Name <span className="text-red-500">*</span>
+                          Faculty Member <span className="text-red-500">*</span>
                         </label>
-                        <input
-                          name="name"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          placeholder="e.g., Engr. Lindl Michael Enario"
-                          className={`${inputCls} ${errors.name ? "border-red-300 ring-2 ring-red-100" : ""}`}
+                        <Dropdown
+                          variant="field"
+                          value={facultyId}
+                          invalid={errors.name}
+                          placeholder="Select a faculty member"
+                          options={[
+                            {
+                              value: "",
+                              label: formData.name ? `Keep ${formData.name}` : "Select a faculty member",
+                            },
+                            ...facultyOptions.map((member) => ({
+                              value: member._id,
+                              label: `${member.name} — ${member.position}`,
+                            })),
+                          ]}
+                          onChange={(value) => {
+                            setFacultyId(value);
+                            setErrors((prev) => ({ ...prev, name: false }));
+                          }}
                         />
-                        {errors.name && (
+                        {errors.name ? (
                           <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
                             <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
-                            Name is required
+                            Choose a faculty member
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-400 font-raleway">
+                            Add people on the Faculty page first. Name and photo come from there.
                           </p>
                         )}
                       </div>
@@ -555,16 +428,6 @@ export default function AdvisorsPage() {
                             Year range is required
                           </p>
                         )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
-                          Placeholder Photo
-                        </label>
-                        <GenderSelect value={gender} onChange={setGender} />
-                        <p className="text-xs text-gray-400 font-raleway">
-                          Which placeholder shows when there&apos;s no photo. Auto picks one for you.
-                        </p>
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -712,18 +575,11 @@ export default function AdvisorsPage() {
                               >
                                 <td data-label="Photo" data-primary="media" className="px-6 sm:px-8 py-4">
                                   <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
-                                    {item.image ? (
-                                      <img
-                                        src={item.image}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    ) : (
-                                      <GraduationCap
-                                        size={14}
-                                        className="text-gray-300"
-                                      />
-                                    )}
+                                    <img
+                                      src={item.image || placeholderPhoto(item.name, item.gender)}
+                                      alt={item.name}
+                                      className="w-full h-full object-cover"
+                                    />
                                   </div>
                                 </td>
                                 <td data-label="Name" data-primary="" className="px-4 py-4">

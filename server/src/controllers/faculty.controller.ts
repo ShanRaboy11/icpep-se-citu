@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Faculty from '../models/faculty';
 import { uploadToCloudinary } from '../utils/cloudinary';
+import { parseGender } from '../utils/gender';
 
 export const createFaculty = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -17,6 +18,7 @@ export const createFaculty = async (req: Request, res: Response): Promise<void> 
       name,
       position,
       image: imageUrl,
+      gender: parseGender(req.body.gender),
       isActive: isActive !== undefined ? isActive : true,
       displayOrder: displayOrder || 0,
     });
@@ -81,6 +83,7 @@ export const updateFaculty = async (req: Request, res: Response): Promise<void> 
     if (position) faculty.position = position;
     if (isActive !== undefined) faculty.isActive = isActive === true || isActive === 'true';
     if (displayOrder !== undefined) faculty.displayOrder = displayOrder;
+    if (req.body.gender !== undefined) faculty.gender = parseGender(req.body.gender);
 
     if (req.file) {
       const uploadResult = await uploadToCloudinary(req.file.buffer, 'faculty');
