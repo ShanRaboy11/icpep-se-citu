@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import advisorService, { AdvisorData } from "@/app/services/advisor";
 import { LoadingIndicator } from "@/app/components/loading";
+import GenderSelect, { GenderValue } from "@/app/components/gender-select";
 
 // --- INTERFACES ---
 interface Advisor {
@@ -27,6 +28,7 @@ interface Advisor {
   yearRange: string;
   isCurrent: boolean;
   image?: string;
+  gender?: string | null;
   isActive: boolean;
 }
 
@@ -67,6 +69,7 @@ export default function AdvisorsPage() {
     yearRange: false,
   });
   const [isCurrent, setIsCurrent] = useState(false);
+  const [gender, setGender] = useState<GenderValue>("");
 
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [isLoadingList, setIsLoadingList] = useState(true);
@@ -108,6 +111,7 @@ export default function AdvisorsPage() {
       yearRange: item.yearRange,
     });
     setIsCurrent(item.isCurrent);
+    setGender((item.gender || "") as GenderValue);
     setPreview(item.image || null);
     setCover(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -118,6 +122,7 @@ export default function AdvisorsPage() {
     setIsEditingDraft(false);
     setFormData({ name: "", position: "", yearRange: "" });
     setIsCurrent(false);
+    setGender("");
     setPreview(null);
     setCover(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -170,6 +175,7 @@ export default function AdvisorsPage() {
         position: formData.position,
         yearRange: formData.yearRange,
         isCurrent,
+        gender,
         image: cover || undefined,
         isActive: true,
       };
@@ -549,6 +555,16 @@ export default function AdvisorsPage() {
                             Year range is required
                           </p>
                         )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                          Placeholder Photo
+                        </label>
+                        <GenderSelect value={gender} onChange={setGender} />
+                        <p className="text-xs text-gray-400 font-raleway">
+                          Which placeholder shows when there&apos;s no photo. Auto picks one for you.
+                        </p>
                       </div>
 
                       <div className="flex items-center justify-between">

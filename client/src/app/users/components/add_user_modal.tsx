@@ -16,6 +16,7 @@ import {
 } from "../utils/user_options";
 import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
 import { useBodyScrollLock } from "@/app/utils/use-body-scroll-lock";
+import GenderSelect, { GenderValue } from "@/app/components/gender-select";
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export interface NewUser {
   firstName: string;
   middleName?: string;
   email?: string;
+  gender?: GenderValue;
   yearLevel?: number;
   role: string;
   position?: string;
@@ -47,6 +49,7 @@ export default function AddUserModal({
     firstName: "",
     middleName: "",
     email: "",
+    gender: "",
     yearLevel: undefined,
     role: "student",
     position: "",
@@ -157,6 +160,7 @@ export default function AddUserModal({
       firstName: "",
       middleName: "",
       email: "",
+      gender: "",
       yearLevel: undefined,
       role: "student",
       position: "",
@@ -299,6 +303,16 @@ export default function AddUserModal({
                   </p>
                 )}
               </div>
+            </div>
+
+            <div>
+              <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
+                Placeholder Photo
+              </label>
+              <GenderSelect
+                value={formData.gender ?? ""}
+                onChange={(gender) => setFormData((prev) => ({ ...prev, gender }))}
+              />
             </div>
 
             <div>

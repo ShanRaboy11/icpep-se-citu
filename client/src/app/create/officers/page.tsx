@@ -39,6 +39,7 @@ import { shortDepartmentName } from "@/app/utils/department";
 import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
 import { LoadingIndicator } from "@/app/components/loading";
 import { placeholderPhoto } from "@/app/utils/placeholder-photo";
+import GenderSelect, { GenderValue } from "@/app/components/gender-select";
 
 // --- DATA CONFIGURATION ---
 const departments: Record<string, any> = {
@@ -124,6 +125,7 @@ const ordinalYear = (n: number) => {
 
 interface OfficerTermRow {
   _id: string;
+  gender?: string | null;
   name: string;
   position: string;
   role?: string;
@@ -210,6 +212,7 @@ export default function OfficersPage() {
     name: "",
     position: "",
     role: "",
+    gender: "" as GenderValue,
     committeeName: "",
     termYear: getCurrentAcademicYear(),
   });
@@ -280,7 +283,7 @@ export default function OfficersPage() {
           !!o.committeeDepartment ||
           o.role === "committee-officer";
         const name = `${o.firstName} ${o.lastName}`;
-        const image = o.profilePicture || placeholderPhoto(name);
+        const image = o.profilePicture || placeholderPhoto(name, o.gender);
 
         const committeeSummary = [
           o.committeeTitle,
@@ -370,7 +373,7 @@ export default function OfficersPage() {
     }));
     setPreview(
       user.profilePicture ||
-        placeholderPhoto(`${user.firstName} ${user.lastName}`),
+        placeholderPhoto(`${user.firstName} ${user.lastName}`, user.gender),
     );
     setSearchResults([]);
     setSearchQuery("");
@@ -575,6 +578,7 @@ export default function OfficersPage() {
       name: item.name,
       position: item.position,
       role: item.role || "",
+      gender: (item.gender || "") as GenderValue,
       committeeName: item.committeeName || "",
       termYear: item.termYear,
     });
@@ -591,6 +595,7 @@ export default function OfficersPage() {
       name: "",
       position: "",
       role: "",
+      gender: "" as GenderValue,
       committeeName: "",
       termYear: getCurrentAcademicYear(),
     });
@@ -646,6 +651,7 @@ export default function OfficersPage() {
         : undefined,
     termYear: archiveFormData.termYear,
     image: archiveCover || undefined,
+    gender: archiveFormData.gender,
     isActive,
   });
 
@@ -1918,6 +1924,18 @@ export default function OfficersPage() {
                                 Name is required
                               </p>
                             )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                              Placeholder Photo
+                            </label>
+                            <GenderSelect
+                              value={archiveFormData.gender}
+                              onChange={(gender) =>
+                                setArchiveFormData((prev) => ({ ...prev, gender }))
+                              }
+                            />
                           </div>
 
                           <div className="space-y-2">

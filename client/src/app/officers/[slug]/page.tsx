@@ -81,7 +81,7 @@ const OfficersPage = () => {
             name: formatOfficerName(o.firstName, o.lastName, o.middleName),
             image:
               o.profilePicture ||
-              placeholderPhoto(`${o.firstName} ${o.lastName}`),
+              placeholderPhoto(`${o.firstName} ${o.lastName}`, o.gender),
           };
         }
         return {
@@ -89,7 +89,7 @@ const OfficersPage = () => {
           name: formatOfficerName(o.firstName, o.lastName, o.middleName),
           image:
             o.profilePicture ||
-            placeholderPhoto(`${o.firstName} ${o.lastName}`),
+            placeholderPhoto(`${o.firstName} ${o.lastName}`, o.gender),
         };
       });
     };
@@ -107,7 +107,7 @@ const OfficersPage = () => {
         // Manually-entered archive rows are already typed as "Last, First" —
         // just normalize the casing rather than reordering them.
         name: toTitleCase(t.name),
-        image: t.image || placeholderPhoto(t.name),
+        image: t.image || placeholderPhoto(t.name, t.gender),
       }));
     };
 

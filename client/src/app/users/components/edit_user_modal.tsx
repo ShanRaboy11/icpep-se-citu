@@ -16,6 +16,7 @@ import {
 } from "../utils/user_options";
 import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
 import { useBodyScrollLock } from "@/app/utils/use-body-scroll-lock";
+import GenderSelect, { GenderValue } from "@/app/components/gender-select";
 
 interface EditUserModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export default function EditUserModal({
     firstName: user.firstName,
     lastName: user.lastName,
     middleName: user.middleName || "",
+    gender: (user.gender || "") as GenderValue,
     role: user.role,
     // Convert yearLevel to string for the select input.
     // Use an empty string if it's null or undefined.
@@ -150,6 +152,7 @@ export default function EditUserModal({
             : (formData.membershipStatus as "local" | "regional" | "both"),
       },
       isActive: formData.isActive,
+      gender: formData.gender || null,
       updatedAt: new Date().toISOString(),
     };
 
@@ -241,6 +244,16 @@ export default function EditUserModal({
                 onChange={handleChange}
                 className="w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 text-gray-800 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10"
                 placeholder="Santos"
+              />
+            </div>
+
+            <div>
+              <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
+                Placeholder Photo
+              </label>
+              <GenderSelect
+                value={formData.gender}
+                onChange={(gender) => setFormData((prev) => ({ ...prev, gender }))}
               />
             </div>
 

@@ -10,6 +10,7 @@ export interface Officer {
   department?: string;
   yearLevel?: number;
   profilePicture?: string;
+  gender?: string | null;
   email?: string;
   studentNumber: string;
   // A student can hold both a council and a committee assignment at once —

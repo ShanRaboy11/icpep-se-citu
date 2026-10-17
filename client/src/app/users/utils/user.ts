@@ -13,6 +13,7 @@ export interface User {
     validUntil?: Date;
   };
   profilePicture?: string | null;
+  gender?: 'male' | 'female' | null;
   isActive: boolean;
   firstLogin?: boolean;
   firstLoginCodeStatus?: 'pending' | 'sent' | 'failed' | 'no-email' | null;

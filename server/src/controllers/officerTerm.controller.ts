@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import OfficerTerm from '../models/officerTerm';
 import { uploadToCloudinary } from '../utils/cloudinary';
+import { parseGender } from '../utils/gender';
 
 export const createOfficerTerm = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -29,6 +30,7 @@ export const createOfficerTerm = async (req: Request, res: Response): Promise<vo
       committeeName: departmentType === 'committee' ? committeeName : null,
       termYear,
       image: imageUrl,
+      gender: parseGender(req.body.gender),
       isActive: isActive !== undefined ? isActive : true,
       displayOrder: displayOrder || 0,
     });
@@ -123,6 +125,7 @@ export const updateOfficerTerm = async (req: Request, res: Response): Promise<vo
     if (termYear) term.termYear = termYear;
     if (isActive !== undefined) term.isActive = isActive === true || isActive === 'true';
     if (displayOrder !== undefined) term.displayOrder = displayOrder;
+    if (req.body.gender !== undefined) term.gender = parseGender(req.body.gender);
 
     if (req.file) {
       const uploadResult = await uploadToCloudinary(req.file.buffer, 'officer-terms');

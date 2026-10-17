@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Advisor from '../models/advisor';
 import { uploadToCloudinary } from '../utils/cloudinary';
+import { parseGender } from '../utils/gender';
 
 export const createAdvisor = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -19,6 +20,7 @@ export const createAdvisor = async (req: Request, res: Response): Promise<void> 
       yearRange,
       isCurrent: isCurrent === true || isCurrent === 'true',
       image: imageUrl,
+      gender: parseGender(req.body.gender),
       isActive: isActive !== undefined ? isActive : true,
       displayOrder: displayOrder || 0,
     });
@@ -89,6 +91,7 @@ export const updateAdvisor = async (req: Request, res: Response): Promise<void> 
     if (isCurrent !== undefined) advisor.isCurrent = isCurrent === true || isCurrent === 'true';
     if (isActive !== undefined) advisor.isActive = isActive === true || isActive === 'true';
     if (displayOrder !== undefined) advisor.displayOrder = displayOrder;
+    if (req.body.gender !== undefined) advisor.gender = parseGender(req.body.gender);
 
     if (req.file) {
       const uploadResult = await uploadToCloudinary(req.file.buffer, 'advisors');

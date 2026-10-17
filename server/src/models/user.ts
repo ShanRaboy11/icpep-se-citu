@@ -29,6 +29,7 @@ export interface IUser extends Document {
     validUntil?: Date;
   };
   profilePicture?: string;
+  gender?: "male" | "female" | null;
   isActive: boolean;
   registeredBy?: mongoose.Types.ObjectId | IUser;
   firstLogin: boolean;
@@ -133,6 +134,11 @@ const userSchema = new Schema<IUser>(
     },
     profilePicture: {
       type: String,
+      default: null,
+    },
+    gender: {
+      type: String,
+      enum: ["male", "female", null],
       default: null,
     },
     isActive: {

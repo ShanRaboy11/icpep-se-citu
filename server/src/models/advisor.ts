@@ -6,6 +6,7 @@ export interface IAdvisor extends Document {
   yearRange: string; // e.g. "2022 - Present", "2020 - 2022"
   isCurrent: boolean; // shown in the Home page's current Council Officers & Faculty roster
   image: string;
+  gender?: 'male' | 'female' | null;
   isActive: boolean;
   displayOrder: number;
   createdAt: Date;
@@ -19,6 +20,7 @@ const AdvisorSchema: Schema = new Schema(
     yearRange: { type: String, required: true, trim: true },
     isCurrent: { type: Boolean, default: false },
     image: { type: String, required: false },
+    gender: { type: String, enum: ['male', 'female', null], default: null },
     isActive: { type: Boolean, default: true },
     displayOrder: { type: Number, default: 0 },
   },

@@ -6,6 +6,7 @@ import { sendNotification } from "../utils/notification";
 import { escapeRegExp } from "../utils/regex";
 import { issueFirstLoginCode } from "../utils/first-login-code";
 import { buildSchoolEmail } from "../utils/school-email";
+import { parseGender } from "../utils/gender";
 import { queueFirstLoginEmail } from "../utils/first-login-mail";
 import { recordAudit } from "../utils/audit";
 
@@ -186,6 +187,7 @@ export const createUser = async (
       email,
       position,
       department,
+      gender,
     } = req.body;
 
     // Validation
@@ -307,6 +309,7 @@ export const createUser = async (
       firstName,
       middleName: middleName || null,
       email: accountEmail,
+      gender: parseGender(gender),
       password: code,
       firstLoginCodeStatus: accountEmail ? "pending" : "no-email",
       firstLoginCodeExpires: expires,
@@ -833,6 +836,7 @@ const MANAGED_EDITABLE_FIELDS = [
   "yearLevel",
   "membershipStatus",
   "isActive",
+  "gender",
 ];
 
 const pickFields = (source: Record<string, unknown>, fields: string[]) =>
@@ -890,6 +894,8 @@ export const updateUser = async (
       req.body,
       isSelfService ? SELF_EDITABLE_FIELDS : MANAGED_EDITABLE_FIELDS,
     );
+
+    if ("gender" in updates) updates.gender = parseGender(updates.gender);
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
