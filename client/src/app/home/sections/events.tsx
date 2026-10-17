@@ -1,152 +1,70 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import { Event } from "@/app/events/utils/event";
 import EventCard from "@/app/home/components/event-card";
 import eventService from "@/app/services/event";
 import Button from "@/app/components/button";
+import { Skeleton, SkeletonGate } from "@/app/components/skeleton";
+import { useCachedFetch } from "@/app/utils/cached-fetch";
 
-const shimmerStyle = `
-  @keyframes shimmer {
-    0% { background-position: -800px 0; }
-    100% { background-position: 800px 0; }
-  }
-  .skeleton-shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255,255,255,0.04) 0px,
-      rgba(255,255,255,0.10) 40px,
-      rgba(255,255,255,0.04) 80px
-    );
-    background-size: 800px 100%;
-    animation: shimmer 1.6s infinite linear;
-  }
-`;
+const fetchFeaturedEvents = async (): Promise<Event[]> => {
+  const response = await eventService.getEvents({
+    isPublished: true,
+    limit: 3,
+    sort: "-eventDate",
+  });
+  if (!response.success || !Array.isArray(response.data)) return [];
+  return response.data.map((item: any) => ({
+    id: item.id || item._id,
+    title: item.title,
+    status: new Date(item.eventDate) > new Date() ? "Upcoming" : "Ended",
+    date: item.eventDate || item.date || new Date().toISOString(),
+    endDate: item.endDate,
+    mode: (item.mode === "Online" ? "Online" : "Onsite") as "Online" | "Onsite",
+    location: item.location || "TBA",
+    organizer: {
+      name:
+        typeof item.organizer === "string"
+          ? item.organizer
+          : item.organizer?.name || "ICpEP.SE CIT-U",
+      avatarImageUrl: "/brand/icpep-logo.png",
+    },
+    tags: item.tags || [],
+    bannerImageUrl: item.coverImage || item.imageUrl || "/placeholder.png",
+    description: item.description || "",
+    content: item.content,
+    details: [],
+    galleryImageUrls: item.galleryImages || [],
+  }));
+};
 
-function SkeletonBlock({ className = "" }: { className?: string }) {
-  return (
-    <div className={`skeleton-shimmer rounded-lg bg-white/5 ${className}`} />
-  );
-}
+const CARD_WIDTH = "w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.34rem)]";
 
 function EventCardSkeleton() {
   return (
-    <div className="rounded-2xl overflow-hidden border border-white/10 bg-white/5 flex flex-col">
-      <SkeletonBlock className="w-full h-48 rounded-none" />
-
-      <div className="flex flex-col gap-3 p-5 flex-1">
-        <div className="flex items-center gap-2">
-          <SkeletonBlock className="w-20 h-5 rounded-full" />
-          <SkeletonBlock className="w-16 h-5 rounded-full" />
-        </div>
-
-        <SkeletonBlock className="w-full h-6 rounded-md" />
-        <SkeletonBlock className="w-3/4 h-6 rounded-md" />
-
-        <div className="flex items-center gap-2 mt-1">
-          <SkeletonBlock className="w-4 h-4 rounded-sm" />
-          <SkeletonBlock className="w-36 h-4 rounded-md" />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <SkeletonBlock className="w-4 h-4 rounded-sm" />
-          <SkeletonBlock className="w-28 h-4 rounded-md" />
-        </div>
-
-        <div className="flex items-center gap-2 mt-1">
-          <SkeletonBlock className="w-14 h-5 rounded-full" />
-          <SkeletonBlock className="w-18 h-5 rounded-full" />
-          <SkeletonBlock className="w-12 h-5 rounded-full" />
-        </div>
-
-        <div className="flex items-center gap-3 mt-auto pt-4 border-t border-white/10">
-          <SkeletonBlock className="w-8 h-8 rounded-full shrink-0" />
-          <SkeletonBlock className="w-32 h-4 rounded-md" />
-        </div>
+    <div
+      className={`${CARD_WIDTH} flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white`}
+    >
+      <Skeleton className="h-48 w-full rounded-none" />
+      <div className="flex flex-col gap-3 p-5">
+        <Skeleton className="h-5 w-24 rounded-full" />
+        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-6 w-3/4" />
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="h-4 w-28" />
       </div>
     </div>
   );
 }
 
-function EventsSkeleton() {
-  return (
-    <section className="light-dark-background relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 py-16 sm:py-20">
-      <style>{shimmerStyle}</style>
-
-      <div className="relative z-10 w-full max-w-7xl mx-auto transform -translate-y-8">
-        <div className="mb-12 md:mb-16 flex flex-col items-center gap-3">
-          <SkeletonBlock className="w-56 h-10 rounded-md" />
-          <SkeletonBlock className="w-72 h-5 rounded-md" />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          <EventCardSkeleton />
-          <EventCardSkeleton />
-          <EventCardSkeleton />
-        </div>
-
-        <div className="mt-16 flex justify-center">
-          <SkeletonBlock className="w-40 h-11 rounded-full" />
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function EventsSection() {
   const router = useRouter();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await eventService.getEvents({
-          isPublished: true,
-          limit: 3,
-          sort: "-eventDate",
-        });
-
-        if (response.success && Array.isArray(response.data)) {
-          const mapped: Event[] = response.data.map((item: any) => ({
-            id: item.id || item._id,
-            title: item.title,
-            status:
-              new Date(item.eventDate) > new Date() ? "Upcoming" : "Ended",
-            date: item.eventDate || item.date || new Date().toISOString(),
-            endDate: item.endDate,
-            mode: (item.mode === "Online" ? "Online" : "Onsite") as
-              | "Online"
-              | "Onsite",
-            location: item.location || "TBA",
-            organizer: {
-              name:
-                typeof item.organizer === "string"
-                  ? item.organizer
-                  : item.organizer?.name || "ICpEP.SE CIT-U",
-              avatarImageUrl: "/brand/icpep-logo.png",
-            },
-            tags: item.tags || [],
-            bannerImageUrl:
-              item.coverImage || item.imageUrl || "/placeholder.png",
-            description: item.description || "",
-            content: item.content,
-            details: [],
-            galleryImageUrls: item.galleryImages || [],
-          }));
-          setEvents(mapped);
-        }
-      } catch {
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEvents();
-  }, []);
+  const { data, loading } = useCachedFetch("home-events", fetchFeaturedEvents);
+  const events = data ?? [];
 
   return (
-    <section className="light-dark-background relative min-h-screen flex items-center justify-center overflow-hidden px-4 sm:px-6 py-16 sm:py-20">
+    <section className="light-dark-background relative flex items-center justify-center overflow-hidden px-4 sm:px-6 py-16 sm:py-20">
       <div className="relative z-10 w-full max-w-7xl mx-auto transform -translate-y-8">
         <div className="mb-12 md:mb-16 text-center relative">
           <h2 className="relative font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
@@ -157,29 +75,24 @@ export function EventsSection() {
           </p>
         </div>
 
-        <div
-          className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-center items-stretch ${
-            loading || events.length > 0 ? "min-h-112.5" : "min-h-0"
-          }`}
-        >
+        <div className="flex flex-wrap justify-center items-stretch gap-8">
           {loading ? (
-            [1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-120 w-full rounded-2xl bg-white/5 animate-pulse border border-white/10 relative overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-linear-to-t from-black/20 to-transparent" />
-              </div>
-            ))
+            <SkeletonGate loading>
+              {[1, 2, 3].map((i) => (
+                <EventCardSkeleton key={i} />
+              ))}
+            </SkeletonGate>
           ) : events.length === 0 ? (
-            <div className="col-span-full text-center py-10">
+            <div className="w-full text-center py-10">
               <p className="text-gray-500 font-raleway text-lg">
                 No events available at the moment.
               </p>
             </div>
           ) : (
             events.map((event) => (
-              <EventCard key={event.id} event={event} hideRSVP={true} />
+              <div key={event.id} className={`${CARD_WIDTH} flex`}>
+                <EventCard event={event} hideRSVP={true} />
+              </div>
             ))
           )}
         </div>
