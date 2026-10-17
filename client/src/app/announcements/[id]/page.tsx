@@ -178,7 +178,7 @@ export default function AnnouncementDetailPage() {
   }
 
   const title = announcement.title;
-  const imageUrl = announcement.imageUrl || "/default-image.jpg";
+  const imageUrl = announcement.imageUrl || "/placeholders/placeholder.svg";
   const galleryImageUrls: string[] = announcement.galleryImages ?? [];
   const isMeeting = announcement.type.toLowerCase() === "meeting";
 

@@ -113,7 +113,7 @@ export default function EventsListPage() {
             const organizerRaw = evt["organizer"];
             const organizer =
               typeof organizerRaw === "string"
-                ? { name: organizerRaw, avatarImageUrl: "/brand/icpep-logo.png" }
+                ? { name: organizerRaw, avatarImageUrl: "/brand/icpep-logo.avif" }
                 : (organizerRaw as Record<string, unknown> | undefined)
                   ? {
                       name: String(
@@ -122,10 +122,10 @@ export default function EventsListPage() {
                       avatarImageUrl: String(
                         (organizerRaw as Record<string, unknown>)[
                           "avatarImageUrl"
-                        ] ?? "/brand/icpep-logo.png",
+                        ] ?? "/brand/icpep-logo.avif",
                       ),
                     }
-                  : { name: "", avatarImageUrl: "/brand/icpep-logo.png" };
+                  : { name: "", avatarImageUrl: "/brand/icpep-logo.avif" };
 
             const tags = Array.isArray(evt["tags"])
               ? (evt["tags"] as unknown[]).map((t) => String(t))

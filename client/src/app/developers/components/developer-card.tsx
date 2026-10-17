@@ -57,7 +57,7 @@ export default function DeveloperCard({
 
           <div className="absolute -top-3.75 left-5 w-[120%] h-[120%] z-0 md:hidden">
             <Image
-              src="/brand/icpep-logo.png"
+              src="/brand/icpep-logo.avif"
               alt={`${name}`}
               fill
               className="object-contain object-bottom opacity-10"

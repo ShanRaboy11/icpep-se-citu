@@ -28,10 +28,10 @@ const fetchFeaturedEvents = async (): Promise<Event[]> => {
         typeof item.organizer === "string"
           ? item.organizer
           : item.organizer?.name || "ICpEP.SE CIT-U",
-      avatarImageUrl: "/brand/icpep-logo.png",
+      avatarImageUrl: "/brand/icpep-logo.avif",
     },
     tags: item.tags || [],
-    bannerImageUrl: item.coverImage || item.imageUrl || "/placeholder.png",
+    bannerImageUrl: item.coverImage || item.imageUrl || "/placeholders/placeholder.svg",
     description: item.description || "",
     content: item.content,
     details: [],

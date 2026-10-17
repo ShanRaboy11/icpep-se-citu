@@ -1,5 +1,5 @@
-const WOMAN = "/placeholders/woman.png";
-const MAN = "/placeholders/man.png";
+const WOMAN = "/placeholders/woman.avif";
+const MAN = "/placeholders/man.avif";
 
 export const placeholderPhoto = (seed: string, gender?: string | null): string => {
   if (gender === "male") return MAN;

@@ -83,7 +83,7 @@ const Hero = () => {
       <div className="relative z-20 mx-auto -mt-6 flex w-full max-w-5xl flex-col items-center px-4 py-24 text-center sm:-mt-10 sm:py-32">
         <div className="group relative mb-6 h-20 w-20 sm:h-28 sm:w-28">
           <Image
-            src="/brand/icpep-logo.png"
+            src="/brand/icpep-logo.avif"
             alt="ICpEP Logo"
             fill
             priority

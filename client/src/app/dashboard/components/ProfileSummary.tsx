@@ -35,7 +35,7 @@ export const ProfileSummary: FC<ProfileSummaryProps> = ({
               fill
               className="object-cover"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = "/content/gle.png";
+                (e.target as HTMLImageElement).src = "/content/gle.avif";
               }}
             />
           ) : (

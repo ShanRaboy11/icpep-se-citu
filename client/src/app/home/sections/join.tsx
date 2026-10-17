@@ -62,7 +62,7 @@ export function WhyJoinSection() {
   ];
 
   const galleryImages = [
-    "/content/whyicpep.png",
+    "/content/whyicpep.avif",
     "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?q=80&w=2070&auto=format&fit=crop",
   ];

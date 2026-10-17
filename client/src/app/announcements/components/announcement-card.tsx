@@ -35,7 +35,7 @@ export function AnnouncementCard({
       <div className="md:flex h-full">
         <div className="relative md:w-1/3 h-48 md:h-full">
           <Image
-            src={imageUrl ?? "/content/gle.png"}
+            src={imageUrl ?? "/content/gle.avif"}
             alt={title}
             fill
             sizes="(min-width: 768px) 33vw, 100vw"

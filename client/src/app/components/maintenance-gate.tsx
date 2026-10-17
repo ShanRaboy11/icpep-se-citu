@@ -46,7 +46,7 @@ function MaintenanceScreen({ message }: { message: string }) {
       <div className="flex max-w-md flex-col items-center gap-6 text-center">
         <div className="relative h-24 w-24">
           <Image
-            src="/brand/icpep-logo.png"
+            src="/brand/icpep-logo.avif"
             alt="ICpEP Logo"
             fill
             className="object-contain"
