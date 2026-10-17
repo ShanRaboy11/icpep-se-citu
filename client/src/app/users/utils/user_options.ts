@@ -25,15 +25,3 @@ export const MEMBERSHIP_OPTIONS: Option[] = [
   { value: "regional", label: "Regional Member" },
   { value: "both", label: "Both (Local & Regional)" },
 ];
-
-// Split into a non-scrolling outer wrapper (owns the rounding/border/
-// shadow) and a scrolling inner container, so the scrollbar never pokes
-// past the rounded corners.
-export const dropdownOuterStyle =
-  "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
-export const dropdownInnerStyle =
-  "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto themed-scrollbar";
-export const dropdownItemStyle =
-  "flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
-export const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
-export const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
