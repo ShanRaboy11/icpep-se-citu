@@ -26,7 +26,7 @@ const FacultyMemberCard: FC<FacultyMember> = ({ name, imageUrl }) => {
 
         {/* photo */}
         <div className="relative w-24 h-24 sm:w-40 sm:h-40 p-1.5 sm:p-2 bg-white rounded-full border-2 border-primary1/40 shadow-sm z-10 group-hover:shadow-md group-hover:border-primary1 transition-all duration-300">
-          <div className="relative w-full h-full rounded-full overflow-hidden">
+          <div className="relative w-full h-full rounded-full overflow-hidden bg-linear-to-b from-sky-100 to-sky-200">
             <Image
               src={imageUrl}
               alt={`Profile of ${name}`}

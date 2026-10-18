@@ -236,11 +236,9 @@ export default function DraftsPage() {
   const EmptyState = ({
     icon: Icon,
     label,
-    href,
   }: {
     icon: any;
     label: string;
-    href: string;
   }) => (
     <div className="py-20 flex flex-col items-center gap-5 text-gray-300">
       <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
@@ -254,11 +252,6 @@ export default function DraftsPage() {
           Nothing saved here yet
         </p>
       </div>
-      <Link href={href}>
-        <button className="px-5 py-2.5 text-xs font-bold font-rubik text-primary2 border-2 border-primary2/30 hover:border-primary2 hover:bg-primary2/5 rounded-xl transition-all duration-200 cursor-pointer">
-          Create {label}
-        </button>
-      </Link>
     </div>
   );
 
@@ -305,7 +298,7 @@ export default function DraftsPage() {
 
     if (filtered.length === 0)
       return (
-        <EmptyState icon={Icon} label={tabCfg.emptyLabel} href={basePath} />
+        <EmptyState icon={Icon} label={tabCfg.emptyLabel} />
       );
 
     return (
@@ -374,7 +367,6 @@ export default function DraftsPage() {
         <EmptyState
           icon={ShoppingBag}
           label="merch item"
-          href="/create/merch"
         />
       );
     return (
@@ -430,7 +422,6 @@ export default function DraftsPage() {
         <EmptyState
           icon={Quote}
           label="testimonial"
-          href="/create/testimonials"
         />
       );
     return (
@@ -483,7 +474,7 @@ export default function DraftsPage() {
     const filtered = sponsors.filter((s) => !s.isActive);
     if (filtered.length === 0)
       return (
-        <EmptyState icon={Handshake} label="sponsor" href="/create/sponsors" />
+        <EmptyState icon={Handshake} label="sponsor" />
       );
     return (
       <div>

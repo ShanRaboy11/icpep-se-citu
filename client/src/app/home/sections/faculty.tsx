@@ -7,29 +7,7 @@ import officerService from "@/app/services/officer";
 import advisorService from "@/app/services/advisor";
 import { toTitleCase } from "@/app/officers/utils/format-name";
 import { placeholderPhoto } from "@/app/utils/placeholder-photo";
-
-const shimmerStyle = `
-  @keyframes shimmer {
-    0% { background-position: -800px 0; }
-    100% { background-position: 800px 0; }
-  }
-  .skeleton-shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255,255,255,0.04) 0px,
-      rgba(255,255,255,0.10) 40px,
-      rgba(255,255,255,0.04) 80px
-    );
-    background-size: 800px 100%;
-    animation: shimmer 1.6s infinite linear;
-  }
-`;
-
-function SkeletonBlock({ className = "" }: { className?: string }) {
-  return (
-    <div className={`skeleton-shimmer rounded-lg bg-white/5 ${className}`} />
-  );
-}
+import { Skeleton as SkeletonBlock, SkeletonGate } from "@/app/components/skeleton";
 
 function FacultyOfficerCardSkeleton() {
   return (
@@ -46,8 +24,6 @@ function FacultyOfficersSkeleton() {
 
   return (
     <section className="light-dark-background relative pt-28 pb-16 sm:pt-36 sm:pb-20">
-      <style>{shimmerStyle}</style>
-
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6">
         <div className="mb-12 md:mb-16 text-center flex flex-col items-center gap-3">
           <div className="flex flex-col items-center gap-2 sm:hidden">
@@ -114,7 +90,7 @@ export function FacultyOfficersSection() {
           (a: any) => ({
             name: toTitleCase(a.name),
             title: a.position,
-            image: a.image || placeholderPhoto(a.name),
+            image: a.image || placeholderPhoto(a.name, a.gender),
           }),
         );
 
@@ -126,7 +102,7 @@ export function FacultyOfficersSection() {
             title: o.position || "Officer",
             image:
               o.profilePicture ||
-              placeholderPhoto(`${o.firstName} ${o.lastName}`),
+              placeholderPhoto(`${o.firstName} ${o.lastName}`, o.gender),
           }),
         );
 
@@ -168,7 +144,11 @@ export function FacultyOfficersSection() {
   const SLIDE_OFFSET = MOBILE_CARD_WIDTH + MOBILE_GAP;
 
   if (loading) {
-    return <FacultyOfficersSkeleton />;
+    return (
+      <SkeletonGate loading>
+        <FacultyOfficersSkeleton />
+      </SkeletonGate>
+    );
   }
 
   return (

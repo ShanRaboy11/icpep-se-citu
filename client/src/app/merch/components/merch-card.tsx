@@ -51,7 +51,7 @@ const MerchCard: FC<MerchCardProps> = ({
       {/* Image */}
       <div className="relative w-full aspect-square bg-slate-100 overflow-hidden rounded-t-2xl">
         <Image
-          src={imageSrc || "/content/gle.png"}
+          src={imageSrc || "/content/gle.avif"}
           alt={name}
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"

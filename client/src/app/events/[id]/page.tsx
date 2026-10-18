@@ -98,7 +98,7 @@ export default function EventDetailPage() {
 
           const organizer =
             typeof e.organizer === "string"
-              ? { name: e.organizer, avatarImageUrl: "/brand/icpep-logo.png" }
+              ? { name: e.organizer, avatarImageUrl: "/brand/icpep-logo.avif" }
               : e.organizer && typeof e.organizer === "object"
                 ? {
                     name: (e.organizer as Record<string, unknown>).name
@@ -110,9 +110,9 @@ export default function EventDetailPage() {
                           (e.organizer as Record<string, unknown>)
                             .avatarImageUrl,
                         )
-                      : "/brand/icpep-logo.png",
+                      : "/brand/icpep-logo.avif",
                   }
-                : { name: "", avatarImageUrl: "/brand/icpep-logo.png" };
+                : { name: "", avatarImageUrl: "/brand/icpep-logo.avif" };
 
           const mode =
             typeof e.mode === "string" && e.mode.toLowerCase() === "online"
@@ -128,7 +128,7 @@ export default function EventDetailPage() {
             location: e.location || "TBA",
             organizer: {
               name: organizer.name || "",
-              avatarImageUrl: organizer.avatarImageUrl || "/brand/icpep-logo.png",
+              avatarImageUrl: organizer.avatarImageUrl || "/brand/icpep-logo.avif",
             },
             tags: Array.isArray(e.tags) ? e.tags : [],
             bannerImageUrl: toImageUrl(

@@ -1,50 +1,38 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import { GlassCard } from "../../components/glass-card";
 import FeaturedAnnouncementCard from "../components/featured-announcement";
 import MiniAnnouncementCard from "../components/mini-announcement";
 import announcementService from "@/app/services/announcement";
 import { Announcement } from "../../announcements/utils/announcements";
 import Button from "../../components/button";
+import { Skeleton, SkeletonGate } from "@/app/components/skeleton";
+import { useCachedFetch } from "@/app/utils/cached-fetch";
+
+const fetchLatestAnnouncements = async (): Promise<Announcement[]> => {
+  const response = await announcementService.getAnnouncements({
+    isPublished: true,
+    limit: 4,
+    sort: "-publishDate",
+  });
+  if (!response.success || !Array.isArray(response.data)) return [];
+  return response.data.map((item: any) => ({
+    id: item.id || item._id,
+    title: item.title,
+    description: item.description || "",
+    date: item.date || item.publishDate || new Date().toISOString(),
+    type: item.type,
+    imageUrl: item.imageUrl,
+    time: item.time,
+    location: item.location,
+  }));
+};
 
 export function AnnouncementsSection() {
   const router = useRouter();
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        const response = await announcementService.getAnnouncements({
-          isPublished: true,
-          limit: 4,
-          sort: "-publishDate",
-        });
-        if (response.success && Array.isArray(response.data)) {
-          const mapped = response.data.map((item: any) => ({
-            id: item.id || item._id,
-            title: item.title,
-            description: item.description || "",
-            date: item.date || item.publishDate || new Date().toISOString(),
-            type: item.type,
-            imageUrl: item.imageUrl,
-            time: item.time,
-            location: item.location,
-          }));
-          setAnnouncements(mapped);
-        }
-      } catch {
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAnnouncements();
-  }, []);
-
-  const latestAnnouncement = announcements[0];
-  const otherAnnouncements = announcements.slice(1, 4);
+  const { data, loading } = useCachedFetch("home-announcements", fetchLatestAnnouncements);
+  const announcements = data ?? [];
 
   return (
     <section className="dark-light-background relative overflow-hidden py-28 px-4 sm:px-6">
@@ -71,42 +59,42 @@ export function AnnouncementsSection() {
         </div>
 
         {loading ? (
-          <>
-            <GlassCard variant="roomy">
-              <div className="h-100 w-full animate-pulse bg-white/5 rounded-xl" />
-            </GlassCard>
-            <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-flow-col lg:auto-cols-fr">
-              {[1, 2, 3].map((i) => (
+          <SkeletonGate loading>
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+              {[1, 2].map((i) => (
                 <GlassCard variant="roomy" key={i}>
-                  <div className="h-64 w-full animate-pulse bg-white/5 rounded-xl" />
+                  <Skeleton className="h-64 w-full rounded-xl" />
                 </GlassCard>
               ))}
             </div>
-          </>
+          </SkeletonGate>
         ) : announcements.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 font-raleway text-lg">
               No announcements available at the moment.
             </p>
           </div>
+        ) : announcements.length === 1 ? (
+          <GlassCard variant="roomy">
+            <FeaturedAnnouncementCard announcement={announcements[0]} />
+          </GlassCard>
         ) : (
-          <>
-            {latestAnnouncement && (
-              <GlassCard variant="roomy">
-                <FeaturedAnnouncementCard announcement={latestAnnouncement} />
-              </GlassCard>
-            )}
-
-            {otherAnnouncements.length > 0 && (
-              <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-flow-col lg:auto-cols-fr items-stretch content-stretch">
-                {otherAnnouncements.map((announcement) => (
-                  <GlassCard variant="roomy" key={announcement.id}>
-                    <MiniAnnouncementCard announcement={announcement} />
-                  </GlassCard>
-                ))}
+          <div className="grid grid-cols-1 items-stretch gap-8 sm:grid-cols-2">
+            {announcements.map((announcement, index) => (
+              <div
+                key={announcement.id}
+                className={
+                  announcements.length % 2 === 1 && index === announcements.length - 1
+                    ? "sm:col-span-2 sm:w-[calc(50%-1rem)] sm:justify-self-center"
+                    : ""
+                }
+              >
+                <GlassCard variant="roomy">
+                  <MiniAnnouncementCard announcement={announcement} />
+                </GlassCard>
               </div>
-            )}
-          </>
+            ))}
+          </div>
         )}
 
         <div className="mt-8 flex justify-center sm:hidden">

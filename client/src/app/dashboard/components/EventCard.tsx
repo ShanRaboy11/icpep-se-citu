@@ -43,7 +43,7 @@ export const EventCard: FC<EventCardProps> = ({
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           onError={(e) => {
             // fallback if image not found
-            (e.target as HTMLImageElement).src = "/content/gle.png";
+            (e.target as HTMLImageElement).src = "/content/gle.avif";
           }}
         />
         <div className="absolute top-4 right-4">

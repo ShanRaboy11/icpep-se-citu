@@ -52,7 +52,7 @@ export function LoadingScreen({ showEntrance = true }: { showEntrance?: boolean 
           }}
         >
           <Image
-            src="/brand/icpep-logo.png"
+            src="/brand/icpep-logo.avif"
             alt="ICpEP Logo"
             fill
             className="object-contain"

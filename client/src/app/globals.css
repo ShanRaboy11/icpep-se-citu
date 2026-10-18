@@ -1142,3 +1142,23 @@ html {
   height: 0;
   pointer-events: none;
 }
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -800px 0;
+  }
+  100% {
+    background-position: 800px 0;
+  }
+}
+
+.skeleton-block {
+  background: linear-gradient(90deg, #e5e7eb 0px, #f3f4f6 120px, #e5e7eb 240px);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.4s infinite linear;
+}
+
+[data-skeleton-hidden] .skeleton-block,
+[data-skeleton-hidden] .animate-pulse {
+  visibility: hidden;
+}

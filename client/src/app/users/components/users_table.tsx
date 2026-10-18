@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { User } from "../utils/user";
 import UserTableRow from "./user_table_row";
-import { ChevronUp, ChevronDown, Check } from "lucide-react";
-import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
+import { ChevronUp, ChevronDown } from "lucide-react";
+import Dropdown from "@/app/components/dropdown";
 
 type SortField =
   | "studentNumber"
@@ -73,21 +73,6 @@ export default function UsersTable({
     }
   };
 
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  useDropdownDismiss(activeDropdown !== null, () => setActiveDropdown(null));
-
-  // Split into a non-scrolling outer wrapper (owns the rounding/border/
-  // shadow) and a scrolling inner container, so the scrollbar never pokes
-  // past the rounded corners.
-  const dropdownOuterStyle =
-    "absolute z-30 min-w-full w-max max-w-[90vw] mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
-  const dropdownInnerStyle =
-    "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto themed-scrollbar";
-  const dropdownItemStyle =
-    "flex items-center justify-between gap-3 whitespace-nowrap px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
-  const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
-  const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
-
   const ROLE_OPTIONS = [
     { value: "all", label: "All Roles" },
     { value: "student", label: "Student" },
@@ -121,9 +106,6 @@ export default function UsersTable({
     { value: "updatedAt", label: "Last Updated" },
   ];
 
-  const selectedRoleLabel = ROLE_OPTIONS.find((o) => o.value === filterRole)?.label ?? "All Roles";
-  const selectedStatusLabel = STATUS_OPTIONS.find((o) => o.value === filterStatus)?.label ?? "All Statuses";
-  const selectedMembershipLabel = MEMBERSHIP_OPTIONS.find((o) => o.value === filterMembership)?.label ?? "All";
 
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return null;
@@ -143,52 +125,12 @@ export default function UsersTable({
           <label className="font-raleway text-sm font-medium text-gray-700">
             Role:
           </label>
-          <div data-dropdown className="relative flex-1 sm:w-56 sm:flex-none">
-            <div
-              className={`w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-50 ${
-                activeDropdown === "filterRole"
-                  ? "border-primary1 ring-4 ring-primary1/10"
-                  : ""
-              }`}
-              onClick={() =>
-                setActiveDropdown(activeDropdown === "filterRole" ? null : "filterRole")
-              }
-            >
-              <span className="font-rubik text-sm font-medium truncate">{selectedRoleLabel}</span>
-              <ChevronDown
-                className={`w-4 h-4 text-gray-400 ml-1 shrink-0 transition-transform duration-300 ${
-                  activeDropdown === "filterRole" ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-            {activeDropdown === "filterRole" && (
-              <>
-                <div className={dropdownOuterStyle}>
-                  <div className={dropdownInnerStyle}>
-                    {ROLE_OPTIONS.map((opt) => (
-                      <div
-                        key={opt.value}
-                        className={`${dropdownItemStyle} ${
-                          filterRole === opt.value
-                            ? dropdownItemSelectedStyle
-                            : dropdownItemHoverStyle
-                        }`}
-                        onClick={() => {
-                          onFilterChange("role", opt.value);
-                          setActiveDropdown(null);
-                        }}
-                      >
-                        <span>{opt.label}</span>
-                        {filterRole === opt.value && (
-                          <Check className="w-4 h-4 text-primary1" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <Dropdown
+            value={filterRole}
+            options={ROLE_OPTIONS}
+            onChange={(value) => onFilterChange("role", value)}
+            className="flex-1 sm:w-56 sm:flex-none"
+          />
         </div>
 
         {/* Membership Filter */}
@@ -196,54 +138,12 @@ export default function UsersTable({
           <label className="font-raleway text-sm font-medium text-gray-700">
             Membership:
           </label>
-          <div data-dropdown className="relative flex-1 sm:w-72 sm:flex-none">
-            <div
-              className={`w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-50 ${
-                activeDropdown === "filterMembership"
-                  ? "border-primary1 ring-4 ring-primary1/10"
-                  : ""
-              }`}
-              onClick={() =>
-                setActiveDropdown(
-                  activeDropdown === "filterMembership" ? null : "filterMembership"
-                )
-              }
-            >
-              <span className="font-rubik text-sm font-medium truncate">{selectedMembershipLabel}</span>
-              <ChevronDown
-                className={`w-4 h-4 text-gray-400 ml-1 shrink-0 transition-transform duration-300 ${
-                  activeDropdown === "filterMembership" ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-            {activeDropdown === "filterMembership" && (
-              <>
-                <div className={dropdownOuterStyle}>
-                  <div className={dropdownInnerStyle}>
-                    {MEMBERSHIP_OPTIONS.map((opt) => (
-                      <div
-                        key={opt.value}
-                        className={`${dropdownItemStyle} ${
-                          filterMembership === opt.value
-                            ? dropdownItemSelectedStyle
-                            : dropdownItemHoverStyle
-                        }`}
-                        onClick={() => {
-                          onFilterChange("membership", opt.value);
-                          setActiveDropdown(null);
-                        }}
-                      >
-                        <span>{opt.label}</span>
-                        {filterMembership === opt.value && (
-                          <Check className="w-4 h-4 text-primary1" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <Dropdown
+            value={filterMembership}
+            options={MEMBERSHIP_OPTIONS}
+            onChange={(value) => onFilterChange("membership", value)}
+            className="flex-1 sm:w-72 sm:flex-none"
+          />
         </div>
 
         {/* Status Filter */}
@@ -251,54 +151,12 @@ export default function UsersTable({
           <label className="font-raleway text-sm font-medium text-gray-700">
             Status:
           </label>
-          <div data-dropdown className="relative flex-1 sm:w-60 sm:flex-none">
-            <div
-              className={`w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-50 ${
-                activeDropdown === "filterStatus"
-                  ? "border-primary1 ring-4 ring-primary1/10"
-                  : ""
-              }`}
-              onClick={() =>
-                setActiveDropdown(
-                  activeDropdown === "filterStatus" ? null : "filterStatus"
-                )
-              }
-            >
-              <span className="font-rubik text-sm font-medium truncate">{selectedStatusLabel}</span>
-              <ChevronDown
-                className={`w-4 h-4 text-gray-400 ml-1 shrink-0 transition-transform duration-300 ${
-                  activeDropdown === "filterStatus" ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-            {activeDropdown === "filterStatus" && (
-              <>
-                <div className={dropdownOuterStyle}>
-                  <div className={dropdownInnerStyle}>
-                    {STATUS_OPTIONS.map((opt) => (
-                      <div
-                        key={opt.value}
-                        className={`${dropdownItemStyle} ${
-                          filterStatus === opt.value
-                            ? dropdownItemSelectedStyle
-                            : dropdownItemHoverStyle
-                        }`}
-                        onClick={() => {
-                          onFilterChange("status", opt.value);
-                          setActiveDropdown(null);
-                        }}
-                      >
-                        <span>{opt.label}</span>
-                        {filterStatus === opt.value && (
-                          <Check className="w-4 h-4 text-primary1" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <Dropdown
+            value={filterStatus}
+            options={STATUS_OPTIONS}
+            onChange={(value) => onFilterChange("status", value)}
+            className="flex-1 sm:w-60 sm:flex-none"
+          />
         </div>
 
         {/* The column headers are hidden on phones, so sorting moves here */}
@@ -306,54 +164,12 @@ export default function UsersTable({
           <label className="font-raleway text-sm font-medium text-gray-700">
             Sort:
           </label>
-          <div data-dropdown className="relative flex-1">
-            <div
-              className={`w-full bg-white border border-gray-200 rounded-2xl px-4 py-2.5 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-50 ${
-                activeDropdown === "sort"
-                  ? "border-primary1 ring-4 ring-primary1/10"
-                  : ""
-              }`}
-              onClick={() =>
-                setActiveDropdown(activeDropdown === "sort" ? null : "sort")
-              }
-            >
-              <span className="font-rubik text-sm font-medium truncate">
-                {SORT_OPTIONS.find((o) => o.value === sortField)?.label}
-              </span>
-              <ChevronDown
-                className={`w-4 h-4 text-gray-400 ml-1 shrink-0 transition-transform duration-300 ${
-                  activeDropdown === "sort" ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-            {activeDropdown === "sort" && (
-              <>
-                <div className={dropdownOuterStyle}>
-                  <div className={dropdownInnerStyle}>
-                    {SORT_OPTIONS.map((opt) => (
-                      <div
-                        key={opt.value}
-                        className={`${dropdownItemStyle} ${
-                          sortField === opt.value
-                            ? dropdownItemSelectedStyle
-                            : dropdownItemHoverStyle
-                        }`}
-                        onClick={() => {
-                          onSortChange(opt.value, sortDirection);
-                          setActiveDropdown(null);
-                        }}
-                      >
-                        <span>{opt.label}</span>
-                        {sortField === opt.value && (
-                          <Check className="w-4 h-4 text-primary1" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <Dropdown
+            value={sortField}
+            options={SORT_OPTIONS}
+            onChange={(value) => onSortChange(value as SortField, sortDirection)}
+            className="flex-1"
+          />
           <button
             type="button"
             onClick={() =>

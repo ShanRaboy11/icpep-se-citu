@@ -1,5 +1,6 @@
 "use client";
 
+import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useRef, useEffect } from "react";
 import {
   Edit2,
@@ -30,15 +31,18 @@ import Grid from "@/app/components/grid";
 import Button from "@/app/components/button";
 import Sidebar from "@/app/create/components/sidebar";
 import { GlassCard } from "../../components/glass-card";
-import officerService, { Officer as IOfficer } from "@/app/services/officer";
+import officerService, { Officer as IOfficer, StudentResult } from "@/app/services/officer";
+import { formatOfficerName } from "@/app/officers/utils/format-name";
+import SearchSelect from "@/app/components/search-select";
+import Dropdown from "@/app/components/dropdown";
 import officerTermService, {
   OfficerTermData,
 } from "@/app/services/officerTerm";
 import { getCurrentAcademicYear } from "@/app/utils/academic-year";
-import { shortDepartmentName } from "@/app/utils/department";
-import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
+import { shortDepartmentName, shortPositionTitle } from "@/app/utils/department";
 import { LoadingIndicator } from "@/app/components/loading";
 import { placeholderPhoto } from "@/app/utils/placeholder-photo";
+import GenderSelect, { GenderValue } from "@/app/components/gender-select";
 
 // --- DATA CONFIGURATION ---
 const departments: Record<string, any> = {
@@ -124,6 +128,7 @@ const ordinalYear = (n: number) => {
 
 interface OfficerTermRow {
   _id: string;
+  gender?: string | null;
   name: string;
   position: string;
   role?: string;
@@ -145,17 +150,31 @@ type ArchiveFormErrors = {
 const archiveKey = (term: OfficerTermRow) =>
   `${term.termYear}::${term.sourceUserId || term.name.trim().toLowerCase()}`;
 
-const archiveAssignmentLabel = (term: OfficerTermRow) =>
+const departmentLabel = (term: OfficerTermRow) =>
   term.departmentType === "executive"
-    ? [term.position, term.role].filter(Boolean).join(" ")
-    : `${term.position} · ${shortDepartmentName(term.committeeName)}`;
+    ? "Executive"
+    : shortDepartmentName(term.committeeName) || "Committee";
 
-// A student can be an executive officer and sit on a committee (or several) in
-// the same year, so each row also lists that person's other assignments.
-const otherAssignments = (term: OfficerTermRow, all: OfficerTermRow[]) =>
-  all
-    .filter((other) => other._id !== term._id && archiveKey(other) === archiveKey(term))
-    .map(archiveAssignmentLabel);
+const groupArchiveTerms = (terms: OfficerTermRow[]) => {
+  const groups = new Map<string, OfficerTermRow[]>();
+  for (const term of terms) {
+    const key = archiveKey(term);
+    groups.set(key, [...(groups.get(key) ?? []), term]);
+  }
+  return [...groups.values()]
+    .map((group) =>
+      [...group].sort(
+        (a, b) =>
+          Number(b.departmentType === "executive") - Number(a.departmentType === "executive") ||
+          departmentLabel(a).localeCompare(departmentLabel(b)),
+      ),
+    )
+    .sort(
+      (a, b) =>
+        a[0].name.localeCompare(b[0].name, undefined, { sensitivity: "base" }) ||
+        b[0].termYear.localeCompare(a[0].termYear),
+    );
+};
 
 export default function OfficersPage() {
   // --- STATE ---
@@ -180,8 +199,6 @@ export default function OfficersPage() {
   });
 
   // Dropdown State
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  useDropdownDismiss(activeDropdown !== null, () => setActiveDropdown(null));
 
   // Search State
   const [searchResults, setSearchResults] = useState<IOfficer[]>([]);
@@ -210,6 +227,7 @@ export default function OfficersPage() {
     name: "",
     position: "",
     role: "",
+    gender: "" as GenderValue,
     committeeName: "",
     termYear: getCurrentAcademicYear(),
   });
@@ -225,11 +243,12 @@ export default function OfficersPage() {
   const [archiveIsEditingDraft, setArchiveIsEditingDraft] = useState(false);
   const [archivePreview, setArchivePreview] = useState<string | null>(null);
   const [archiveCover, setArchiveCover] = useState<File | null>(null);
+  const [archiveSourceUserId, setArchiveSourceUserId] = useState<string | null>(null);
+  const [archiveSearch, setArchiveSearch] = useState("");
+  const [archiveSearchResults, setArchiveSearchResults] = useState<StudentResult[]>([]);
   const archiveFileInputRef = useRef<HTMLInputElement | null>(null);
   const [archiveIsDragging, setArchiveIsDragging] = useState(false);
   const [archiveYearFilter, setArchiveYearFilter] = useState("all");
-  const [archiveIsYearFilterOpen, setArchiveIsYearFilterOpen] = useState(false);
-  useDropdownDismiss(archiveIsYearFilterOpen, () => setArchiveIsYearFilterOpen(false));
   const [archiveIsCommitteeDropdownOpen, setArchiveIsCommitteeDropdownOpen] =
     useState(false);
   const [archiveShowGlobalError, setArchiveShowGlobalError] = useState(false);
@@ -238,7 +257,7 @@ export default function OfficersPage() {
     "saving" | "publishing" | null
   >(null);
   const [archiveShowDeleteModal, setArchiveShowDeleteModal] = useState(false);
-  const [archiveItemToDelete, setArchiveItemToDelete] = useState<string | null>(
+  const [archiveItemToDelete, setArchiveItemToDelete] = useState<string[] | null>(
     null,
   );
   const [archiveShowSuccessModal, setArchiveShowSuccessModal] = useState(false);
@@ -247,22 +266,10 @@ export default function OfficersPage() {
     description: "",
   });
 
-  // Shared dropdown styles. Split into a non-scrolling outer wrapper (owns
-  // the rounding/border/shadow) and a scrolling inner container, so the
-  // scrollbar never pokes past the rounded corners.
-  const dropdownOuterStyle =
-    "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
-  const dropdownInnerStyle =
-    "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto themed-scrollbar";
-  const dropdownItemStyle =
-    "flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
-  const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
-  const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
-
   const currentDeptData = departments[activeTab];
-  const displayedOfficers = officers.filter(
-    (o) => o.departmentId === activeTab,
-  );
+  const displayedOfficers = officers
+    .filter((o) => o.departmentId === activeTab)
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
 
   // --- FETCH DATA ---
   const fetchOfficers = async () => {
@@ -279,11 +286,11 @@ export default function OfficersPage() {
           !!o.committeeTitle ||
           !!o.committeeDepartment ||
           o.role === "committee-officer";
-        const name = `${o.firstName} ${o.lastName}`;
-        const image = o.profilePicture || placeholderPhoto(name);
+        const name = formatOfficerName(o.firstName, o.lastName, o.middleName);
+        const image = o.profilePicture || placeholderPhoto(name, o.gender);
 
         const committeeSummary = [
-          o.committeeTitle,
+          shortPositionTitle(o.committeeTitle),
           shortDepartmentName(o.committeeDepartment || o.department),
         ]
           .filter(Boolean)
@@ -362,15 +369,45 @@ export default function OfficersPage() {
     }
   };
 
+  const handleArchiveSearch = async (query: string) => {
+    setArchiveSearch(query);
+    if (query.trim().length < 2) {
+      setArchiveSearchResults([]);
+      return;
+    }
+    try {
+      setArchiveSearchResults(await officerService.searchStudents(query.trim()));
+    } catch {
+      setArchiveSearchResults([]);
+    }
+  };
+
+  const selectArchiveStudent = (student: StudentResult) => {
+    setArchiveSourceUserId(student._id);
+    setArchiveFormData((prev) => ({
+      ...prev,
+      name: formatOfficerName(student.firstName, student.lastName, student.middleName),
+      gender: ((student.gender as GenderValue) || prev.gender) ?? "",
+    }));
+    setArchiveSearch("");
+    setArchiveSearchResults([]);
+    setArchiveErrors((prev) => ({ ...prev, name: false }));
+  };
+
+  const clearArchiveStudent = () => {
+    setArchiveSourceUserId(null);
+    setArchiveFormData((prev) => ({ ...prev, name: "" }));
+  };
+
   const selectUser = (user: IOfficer) => {
     setSelectedUser(user);
     setFormData((prev) => ({
       ...prev,
-      name: `${user.firstName} ${user.lastName}`,
+      name: formatOfficerName(user.firstName, user.lastName, user.middleName),
     }));
     setPreview(
       user.profilePicture ||
-        placeholderPhoto(`${user.firstName} ${user.lastName}`),
+        placeholderPhoto(`${user.firstName} ${user.lastName}`, user.gender),
     );
     setSearchResults([]);
     setSearchQuery("");
@@ -569,12 +606,14 @@ export default function OfficersPage() {
 
   const handleArchiveEditClick = (item: OfficerTermRow) => {
     setArchiveEditingId(item._id);
+    setArchiveSourceUserId(item.sourceUserId || null);
     setArchiveIsEditingDraft(!item.isActive);
     setArchiveDepartmentType(item.departmentType);
     setArchiveFormData({
       name: item.name,
       position: item.position,
       role: item.role || "",
+      gender: (item.gender || "") as GenderValue,
       committeeName: item.committeeName || "",
       termYear: item.termYear,
     });
@@ -585,12 +624,16 @@ export default function OfficersPage() {
 
   const handleArchiveCancelEdit = () => {
     setArchiveEditingId(null);
+    setArchiveSourceUserId(null);
+    setArchiveSearch("");
+    setArchiveSearchResults([]);
     setArchiveIsEditingDraft(false);
     setArchiveDepartmentType("executive");
     setArchiveFormData({
       name: "",
       position: "",
       role: "",
+      gender: "" as GenderValue,
       committeeName: "",
       termYear: getCurrentAcademicYear(),
     });
@@ -599,17 +642,17 @@ export default function OfficersPage() {
     if (archiveFileInputRef.current) archiveFileInputRef.current.value = "";
   };
 
-  const confirmArchiveDelete = (id: string) => {
-    setArchiveItemToDelete(id);
+  const confirmArchiveDelete = (ids: string[]) => {
+    setArchiveItemToDelete(ids);
     setArchiveShowDeleteModal(true);
   };
 
   const handleArchiveDelete = async () => {
     if (!archiveItemToDelete) return;
     try {
-      await officerTermService.deleteOfficerTerm(archiveItemToDelete);
+      await Promise.all(archiveItemToDelete.map((id) => officerTermService.deleteOfficerTerm(id)));
       setArchiveTerms((prev) =>
-        prev.filter((t) => t._id !== archiveItemToDelete),
+        prev.filter((t) => !archiveItemToDelete.includes(t._id)),
       );
       setArchiveShowDeleteModal(false);
       setArchiveItemToDelete(null);
@@ -646,6 +689,8 @@ export default function OfficersPage() {
         : undefined,
     termYear: archiveFormData.termYear,
     image: archiveCover || undefined,
+    gender: archiveFormData.gender,
+    sourceUserId: archiveSourceUserId,
     isActive,
   });
 
@@ -1002,7 +1047,7 @@ export default function OfficersPage() {
                                 transition-all duration-200 cursor-pointer
                                 ${
                                   isActive
-                                    ? `${dept.bg} ${dept.color} ${dept.border} shadow-sm scale-[1.02]`
+                                    ? `${dept.bg} ${dept.color} ${dept.border}`
                                     : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"
                                 }
                               `}
@@ -1082,16 +1127,11 @@ export default function OfficersPage() {
                                   Replace
                                 </button>
                                 {!editingId && (
-                                  <button
-                                    type="button"
+                                  <RemoveButton variant="overlay"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       clearSelection();
-                                    }}
-                                    className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
-                                  >
-                                    Remove
-                                  </button>
+                                    }} />
                                 )}
                               </div>
                             </div>
@@ -1146,59 +1186,21 @@ export default function OfficersPage() {
                                 </button>
                               </div>
                             ) : (
-                              <div className="relative">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                                  <Search size={18} />
-                                </div>
-                                <input
-                                  type="text"
-                                  value={searchQuery}
-                                  onChange={(e) => handleSearch(e.target.value)}
-                                  placeholder="Search for a student..."
-                                  className="w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl pl-12 pr-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10"
-                                />
-                                {searchResults.length > 0 && (
-                                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-50">
-                                    <div className="max-h-60 overflow-y-auto themed-scrollbar">
-                                      {searchResults.map((user) => (
-                                        <button
-                                          key={user._id}
-                                          type="button"
-                                          onClick={() => selectUser(user)}
-                                          className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-50 last:border-0 cursor-pointer"
-                                        >
-                                          <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden shrink-0">
-                                            {user.profilePicture ? (
-                                              <img
-                                                src={user.profilePicture}
-                                                alt=""
-                                                className="w-full h-full object-cover"
-                                              />
-                                            ) : (
-                                              <div className="w-full h-full flex items-center justify-center font-raleway text-gray-500 text-xs">
-                                                {user.firstName[0]}
-                                              </div>
-                                            )}
-                                          </div>
-                                          <div>
-                                            <p className="font-raleway font-semibold text-gray-800 text-sm">
-                                              {user.firstName} {user.lastName}
-                                            </p>
-                                            <p className="font-raleway text-xs text-gray-500">
-                                              {user.studentNumber}
-                                            </p>
-                                          </div>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                {isSearching && (
-                                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                                    <LoadingIndicator size="sm" />
-                                  </div>
-                                )}
-                              </div>
+                              <SearchSelect
+                                query={searchQuery}
+                                onQueryChange={handleSearch}
+                                loading={isSearching}
+                                placeholder="Search for a student..."
+                                results={searchResults.map((user) => ({
+                                  id: user._id,
+                                  label: formatOfficerName(user.firstName, user.lastName, user.middleName),
+                                  detail: user.studentNumber,
+                                }))}
+                                onSelect={(id) => {
+                                  const user = searchResults.find((candidate) => candidate._id === id);
+                                  if (user) selectUser(user);
+                                }}
+                              />
                             )}
                           </div>
 
@@ -1211,72 +1213,19 @@ export default function OfficersPage() {
                                   Position{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
-                                <div data-dropdown className="relative">
-                                  <div
-                                    className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
-                                      activeDropdown === "position"
-                                        ? "bg-white border-primary1 ring-4 ring-primary1/10"
-                                        : ""
-                                    }`}
-                                    onClick={() =>
-                                      setActiveDropdown(
-                                        activeDropdown === "position"
-                                          ? null
-                                          : "position",
-                                      )
-                                    }
-                                  >
-                                    <span className="font-rubik text-base">
-                                      {formData.position || (
-                                        <span className="text-gray-400">
-                                          Select Position
-                                        </span>
-                                      )}
-                                    </span>
-                                    <ChevronDown
-                                      className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
-                                        activeDropdown === "position"
-                                          ? "rotate-180"
-                                          : ""
-                                      }`}
-                                    />
-                                  </div>
-                                  {activeDropdown === "position" && (
-                                    <>
-                                      <div className={dropdownOuterStyle}>
-                                        <div className={dropdownInnerStyle}>
-                                          {EXECUTIVE_POSITIONS.map((pos) => (
-                                            <div
-                                              key={pos}
-                                              className={`${dropdownItemStyle} ${
-                                                formData.position === pos
-                                                  ? dropdownItemSelectedStyle
-                                                  : dropdownItemHoverStyle
-                                              }`}
-                                              onClick={() => {
-                                                setFormData({
-                                                  ...formData,
-                                                  position: pos,
-                                                  role:
-                                                    pos ===
-                                                    "Batch Representative"
-                                                      ? formData.role
-                                                      : "",
-                                                });
-                                                setActiveDropdown(null);
-                                              }}
-                                            >
-                                              <span>{pos}</span>
-                                              {formData.position === pos && (
-                                                <Check className="w-4 h-4 text-primary1" />
-                                              )}
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
+                                <Dropdown
+                                  variant="field"
+                                  value={formData.position}
+                                  placeholder="Select Position"
+                                  options={EXECUTIVE_POSITIONS.map((pos) => ({ value: pos, label: pos }))}
+                                  onChange={(pos) =>
+                                    setFormData({
+                                      ...formData,
+                                      position: pos,
+                                      role: pos === "Batch Representative" ? formData.role : "",
+                                    })
+                                  }
+                                />
                               </div>
 
                               {/* Year Level Dropdown — only for Batch Representative */}
@@ -1286,67 +1235,13 @@ export default function OfficersPage() {
                                     Year Level{" "}
                                     <span className="text-red-500">*</span>
                                   </label>
-                                  <div data-dropdown className="relative">
-                                    <div
-                                      className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
-                                        activeDropdown === "yearLevel"
-                                          ? "bg-white border-primary1 ring-4 ring-primary1/10"
-                                          : ""
-                                      }`}
-                                      onClick={() =>
-                                        setActiveDropdown(
-                                          activeDropdown === "yearLevel"
-                                            ? null
-                                            : "yearLevel",
-                                        )
-                                      }
-                                    >
-                                      <span className="font-rubik text-base">
-                                        {formData.role || (
-                                          <span className="text-gray-400">
-                                            Select Year
-                                          </span>
-                                        )}
-                                      </span>
-                                      <ChevronDown
-                                        className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
-                                          activeDropdown === "yearLevel"
-                                            ? "rotate-180"
-                                            : ""
-                                        }`}
-                                      />
-                                    </div>
-                                    {activeDropdown === "yearLevel" && (
-                                      <>
-                                        <div className={dropdownOuterStyle}>
-                                          <div className={dropdownInnerStyle}>
-                                            {YEAR_LEVELS.map((yr) => (
-                                              <div
-                                                key={yr}
-                                                className={`${dropdownItemStyle} ${
-                                                  formData.role === yr
-                                                    ? dropdownItemSelectedStyle
-                                                    : dropdownItemHoverStyle
-                                                }`}
-                                                onClick={() => {
-                                                  setFormData({
-                                                    ...formData,
-                                                    role: yr,
-                                                  });
-                                                  setActiveDropdown(null);
-                                                }}
-                                              >
-                                                <span>{yr}</span>
-                                                {formData.role === yr && (
-                                                  <Check className="w-4 h-4 text-primary1" />
-                                                )}
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      </>
-                                    )}
-                                  </div>
+                                  <Dropdown
+                                    variant="field"
+                                    value={formData.role}
+                                    placeholder="Select Year"
+                                    options={YEAR_LEVELS.map((yr) => ({ value: yr, label: yr }))}
+                                    onChange={(role) => setFormData({ ...formData, role })}
+                                  />
                                 </div>
                               )}
                             </>
@@ -1359,67 +1254,13 @@ export default function OfficersPage() {
                                   Committee Name{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
-                                <div data-dropdown className="relative">
-                                  <div
-                                    className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
-                                      activeDropdown === "committee"
-                                        ? "bg-white border-primary1 ring-4 ring-primary1/10"
-                                        : ""
-                                    }`}
-                                    onClick={() =>
-                                      setActiveDropdown(
-                                        activeDropdown === "committee"
-                                          ? null
-                                          : "committee",
-                                      )
-                                    }
-                                  >
-                                    <span className="font-rubik text-base truncate pr-2">
-                                      {formData.role || (
-                                        <span className="text-gray-400">
-                                          Select Committee
-                                        </span>
-                                      )}
-                                    </span>
-                                    <ChevronDown
-                                      className={`w-5 h-5 text-gray-400 shrink-0 transition-transform duration-300 ${
-                                        activeDropdown === "committee"
-                                          ? "rotate-180"
-                                          : ""
-                                      }`}
-                                    />
-                                  </div>
-                                  {activeDropdown === "committee" && (
-                                    <>
-                                      <div className={dropdownOuterStyle}>
-                                        <div className={dropdownInnerStyle}>
-                                          {COMMITTEES_LIST.map((comm) => (
-                                            <div
-                                              key={comm}
-                                              className={`${dropdownItemStyle} ${
-                                                formData.role === comm
-                                                  ? dropdownItemSelectedStyle
-                                                  : dropdownItemHoverStyle
-                                              }`}
-                                              onClick={() => {
-                                                setFormData({
-                                                  ...formData,
-                                                  role: comm,
-                                                });
-                                                setActiveDropdown(null);
-                                              }}
-                                            >
-                                              <span>{comm}</span>
-                                              {formData.role === comm && (
-                                                <Check className="w-4 h-4 text-primary1" />
-                                              )}
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
+                                <Dropdown
+                                  variant="field"
+                                  value={formData.role}
+                                  placeholder="Select Committee"
+                                  options={COMMITTEES_LIST.map((comm) => ({ value: comm, label: comm }))}
+                                  onChange={(role) => setFormData({ ...formData, role })}
+                                />
                               </div>
 
                               {/* Specific Title Dropdown */}
@@ -1428,67 +1269,13 @@ export default function OfficersPage() {
                                   Specific Title{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
-                                <div data-dropdown className="relative">
-                                  <div
-                                    className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
-                                      activeDropdown === "title"
-                                        ? "bg-white border-primary1 ring-4 ring-primary1/10"
-                                        : ""
-                                    }`}
-                                    onClick={() =>
-                                      setActiveDropdown(
-                                        activeDropdown === "title"
-                                          ? null
-                                          : "title",
-                                      )
-                                    }
-                                  >
-                                    <span className="font-rubik text-base">
-                                      {formData.position || (
-                                        <span className="text-gray-400">
-                                          Select Role
-                                        </span>
-                                      )}
-                                    </span>
-                                    <ChevronDown
-                                      className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
-                                        activeDropdown === "title"
-                                          ? "rotate-180"
-                                          : ""
-                                      }`}
-                                    />
-                                  </div>
-                                  {activeDropdown === "title" && (
-                                    <>
-                                      <div className={dropdownOuterStyle}>
-                                        <div className={dropdownInnerStyle}>
-                                          {COMMITTEE_ROLES.map((role) => (
-                                            <div
-                                              key={role}
-                                              className={`${dropdownItemStyle} ${
-                                                formData.position === role
-                                                  ? dropdownItemSelectedStyle
-                                                  : dropdownItemHoverStyle
-                                              }`}
-                                              onClick={() => {
-                                                setFormData({
-                                                  ...formData,
-                                                  position: role,
-                                                });
-                                                setActiveDropdown(null);
-                                              }}
-                                            >
-                                              <span>{role}</span>
-                                              {formData.position === role && (
-                                                <Check className="w-4 h-4 text-primary1" />
-                                              )}
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
+                                <Dropdown
+                                  variant="field"
+                                  value={formData.position}
+                                  placeholder="Select Role"
+                                  options={COMMITTEE_ROLES.map((role) => ({ value: role, label: role }))}
+                                  onChange={(position) => setFormData({ ...formData, position })}
+                                />
                               </div>
                             </>
                           )}
@@ -1628,9 +1415,6 @@ export default function OfficersPage() {
                             <thead>
                               <tr className="bg-gray-50/80">
                                 <th className="px-6 sm:px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                  Photo
-                                </th>
-                                <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                   Name
                                 </th>
                                 <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
@@ -1659,19 +1443,8 @@ export default function OfficersPage() {
                                         : "hover:bg-gray-50/70"
                                     }`}
                                   >
-                                    {/* Photo */}
-                                    <td data-label="Photo" data-primary="media" className="px-6 sm:px-8 py-4">
-                                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
-                                        <img
-                                          src={officer.image}
-                                          alt={officer.name}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      </div>
-                                    </td>
-
                                     {/* Name */}
-                                    <td data-label="Name" data-primary="" className="px-4 py-4">
+                                    <td data-label="Name" data-primary="" className="px-6 sm:px-8 py-4">
                                       <div className="flex items-center gap-2">
                                         {isEditing && (
                                           <span className="w-1.5 h-1.5 rounded-full bg-primary1 animate-pulse shrink-0" />
@@ -1837,8 +1610,7 @@ export default function OfficersPage() {
                                 >
                                   Replace
                                 </button>
-                                <button
-                                  type="button"
+                                <RemoveButton variant="overlay"
                                   onClick={() => {
                                     try {
                                       if (archivePreview)
@@ -1846,11 +1618,7 @@ export default function OfficersPage() {
                                     } catch {}
                                     setArchiveCover(null);
                                     setArchivePreview(null);
-                                  }}
-                                  className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
-                                >
-                                  Remove
-                                </button>
+                                  }} />
                               </div>
                             </div>
                           ) : (
@@ -1905,19 +1673,52 @@ export default function OfficersPage() {
                             <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
                               Full Name <span className="text-red-500">*</span>
                             </label>
-                            <input
-                              name="name"
-                              value={archiveFormData.name}
-                              onChange={handleArchiveInputChange}
-                              placeholder="e.g., Dela Cruz, Juan"
-                              className={`${archiveInputCls} ${archiveErrors.name ? "border-red-300 ring-2 ring-red-100" : ""}`}
-                            />
+                            {archiveFormData.name ? (
+                              <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                                <span className="font-rubik text-base text-gray-800">{archiveFormData.name}</span>
+                                <button
+                                  type="button"
+                                  onClick={clearArchiveStudent}
+                                  className="cursor-pointer font-raleway text-sm font-semibold text-primary1 hover:underline"
+                                >
+                                  Change
+                                </button>
+                              </div>
+                            ) : (
+                              <SearchSelect
+                                query={archiveSearch}
+                                onQueryChange={handleArchiveSearch}
+                                invalid={archiveErrors.name}
+                                placeholder="Search the student list by name or number"
+                                results={archiveSearchResults.map((student) => ({
+                                  id: student._id,
+                                  label: formatOfficerName(student.firstName, student.lastName, student.middleName),
+                                  detail: student.studentNumber,
+                                }))}
+                                onSelect={(id) => {
+                                  const student = archiveSearchResults.find((candidate) => candidate._id === id);
+                                  if (student) selectArchiveStudent(student);
+                                }}
+                              />
+                            )}
                             {archiveErrors.name && (
                               <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
                                 <span className="inline-block w-1 h-1 bg-red-400 rounded-full" />
-                                Name is required
+                                Choose a student from the list
                               </p>
                             )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                              Placeholder Photo
+                            </label>
+                            <GenderSelect
+                              value={archiveFormData.gender}
+                              onChange={(gender) =>
+                                setArchiveFormData((prev) => ({ ...prev, gender }))
+                              }
+                            />
                           </div>
 
                           <div className="space-y-2">
@@ -2180,74 +1981,16 @@ export default function OfficersPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           {archiveYears.length > 0 && (
-                            <div data-dropdown className="relative">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setArchiveIsYearFilterOpen((prev) => !prev)
-                                }
-                                className={`flex items-center gap-1.5 text-xs font-bold font-rubik border px-3 py-2 rounded-full transition-all duration-200 cursor-pointer bg-white ${
-                                  archiveIsYearFilterOpen
-                                    ? "border-primary1 text-primary1 ring-4 ring-primary1/10"
-                                    : "text-primary1 border-primary1/20 hover:border-primary1/50"
-                                }`}
-                              >
-                                <span>
-                                  {archiveYearFilter === "all"
-                                    ? "All years"
-                                    : archiveYearFilter}
-                                </span>
-                                <ChevronDown
-                                  size={13}
-                                  className={`transition-transform duration-300 ${
-                                    archiveIsYearFilterOpen ? "rotate-180" : ""
-                                  }`}
-                                />
-                              </button>
-                              {archiveIsYearFilterOpen && (
-                                <>
-                                  <div className="absolute z-30 top-full right-0 mt-2 w-44 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
-                                    <div className="flex flex-col gap-1 p-2 max-h-56 overflow-y-auto themed-scrollbar">
-                                      <div
-                                        onClick={() => {
-                                          setArchiveYearFilter("all");
-                                          setArchiveIsYearFilterOpen(false);
-                                        }}
-                                        className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium ${
-                                          archiveYearFilter === "all"
-                                            ? dropdownItemSelectedStyle
-                                            : dropdownItemHoverStyle
-                                        }`}
-                                      >
-                                        <span>All years</span>
-                                        {archiveYearFilter === "all" && (
-                                          <Check className="w-4 h-4 text-primary1" />
-                                        )}
-                                      </div>
-                                      {archiveYears.map((y) => (
-                                        <div
-                                          key={y}
-                                          onClick={() => {
-                                            setArchiveYearFilter(y);
-                                            setArchiveIsYearFilterOpen(false);
-                                          }}
-                                          className={`flex items-center justify-between px-4 py-2.5 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium ${
-                                            archiveYearFilter === y
-                                              ? dropdownItemSelectedStyle
-                                              : dropdownItemHoverStyle
-                                          }`}
-                                        >
-                                          <span>{y}</span>
-                                          {archiveYearFilter === y && (
-                                            <Check className="w-4 h-4 text-primary1" />
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </>
-                              )}
-                            </div>
+                            <Dropdown
+                              variant="pill"
+                              align="right"
+                              value={archiveYearFilter}
+                              options={[
+                                { value: "all", label: "All years" },
+                                ...archiveYears.map((y) => ({ value: y, label: y })),
+                              ]}
+                              onChange={setArchiveYearFilter}
+                            />
                           )}
                           <button
                             onClick={fetchTerms}
@@ -2286,9 +2029,6 @@ export default function OfficersPage() {
                             <thead>
                               <tr className="bg-gray-50/80">
                                 <th className="px-6 sm:px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                  Photo
-                                </th>
-                                <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
                                   Name
                                 </th>
                                 <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
@@ -2306,30 +2046,22 @@ export default function OfficersPage() {
                               </tr>
                             </thead>
                             <tbody>
-                              {archiveFilteredItems.map((item) => {
-                                const isEditing = archiveEditingId === item._id;
+                              {groupArchiveTerms(archiveFilteredItems).map((group) => {
+                                const item = group[0];
+                                const isEditing = group.some((term) => term._id === archiveEditingId);
+                                const positions = [
+                                  ...new Set(
+                                    group.map((term) =>
+                                      [shortPositionTitle(term.position), term.role].filter(Boolean).join(" · "),
+                                    ),
+                                  ),
+                                ];
                                 return (
                                   <tr
                                     key={item._id}
                                     className={`group border-t border-gray-50 transition-all duration-200 ${isEditing ? "bg-primary1/5" : "hover:bg-gray-50/70"}`}
                                   >
-                                    <td data-label="Photo" data-primary="media" className="px-6 sm:px-8 py-4">
-                                      <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
-                                        {item.image ? (
-                                          <img
-                                            src={item.image}
-                                            alt={item.name}
-                                            className="w-full h-full object-cover"
-                                          />
-                                        ) : (
-                                          <Archive
-                                            size={14}
-                                            className="text-gray-300"
-                                          />
-                                        )}
-                                      </div>
-                                    </td>
-                                    <td data-label="Name" data-primary="" className="px-4 py-4">
+                                    <td data-label="Name" data-primary="" className="px-6 sm:px-8 py-4">
                                       <div className="flex items-center gap-2">
                                         {isEditing && (
                                           <span className="w-1.5 h-1.5 rounded-full bg-primary1 animate-pulse shrink-0" />
@@ -2341,33 +2073,26 @@ export default function OfficersPage() {
                                     </td>
                                     <td data-label="Position" className="px-4 py-4">
                                       <span className="text-xs text-gray-600 font-raleway">
-                                        {item.position}
-                                        {item.role ? ` · ${item.role}` : ""}
+                                        {positions.join(", ")}
                                       </span>
                                     </td>
                                     <td data-label="Department" className="px-4 py-4">
-                                      <div className="flex flex-col items-start gap-1.5">
-                                      <span
-                                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-raleway font-semibold border ${
-                                          item.departmentType === "executive"
-                                            ? "bg-primary1/8 text-primary1 border-primary1/30"
-                                            : "bg-primary2/8 text-primary2 border-primary2/30"
-                                        }`}
-                                      >
-                                        {item.departmentType === "executive"
-                                          ? "Executive"
-                                          : shortDepartmentName(item.committeeName) ||
-                                            "Committee"}
-                                      </span>
-                                      {otherAssignments(item, archiveTerms).map((label) => (
-                                        <span
-                                          key={label}
-                                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-raleway font-semibold border bg-gray-50 text-gray-600 border-gray-200"
-                                        >
-                                          <span aria-hidden>+</span>
-                                          {label}
-                                        </span>
-                                      ))}
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                        {group.map((term) => (
+                                          <button
+                                            key={term._id}
+                                            type="button"
+                                            onClick={() => handleArchiveEditClick(term)}
+                                            title={`Edit ${departmentLabel(term)}`}
+                                            className={`inline-flex cursor-pointer items-center gap-1.5 px-3 py-1 rounded-full text-xs font-raleway font-semibold border transition-colors hover:brightness-95 ${
+                                              term.departmentType === "executive"
+                                                ? "bg-primary1/8 text-primary1 border-primary1/30"
+                                                : "bg-primary2/8 text-primary2 border-primary2/30"
+                                            }`}
+                                          >
+                                            {departmentLabel(term)}
+                                          </button>
+                                        ))}
                                       </div>
                                     </td>
                                     <td data-label="Year" className="px-4 py-4">
@@ -2378,24 +2103,20 @@ export default function OfficersPage() {
                                     <td data-label="Actions" className="px-6 sm:px-8 py-4 text-right">
                                       <div className="inline-flex items-center gap-1 opacity-100 lg:opacity-40 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
                                         <button
-                                          onClick={() =>
-                                            handleArchiveEditClick(item)
-                                          }
+                                          onClick={() => handleArchiveEditClick(item)}
                                           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-raleway font-semibold whitespace-nowrap text-gray-400 hover:text-primary1 hover:bg-primary1/10 rounded-lg transition-all duration-150 cursor-pointer"
                                           title="Edit"
                                         >
                                           <Pencil size={15} />
-                                        Edit
+                                          Edit
                                         </button>
                                         <button
-                                          onClick={() =>
-                                            confirmArchiveDelete(item._id)
-                                          }
+                                          onClick={() => confirmArchiveDelete(group.map((term) => term._id))}
                                           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-raleway font-semibold whitespace-nowrap text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-150 cursor-pointer"
-                                          title="Delete"
+                                          title={group.length > 1 ? `Delete all ${group.length} entries` : "Delete"}
                                         >
                                           <Trash2 size={15} />
-                                        Delete
+                                          Delete
                                         </button>
                                       </div>
                                     </td>

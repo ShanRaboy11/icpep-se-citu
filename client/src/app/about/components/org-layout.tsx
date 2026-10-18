@@ -12,10 +12,10 @@ const OrgLayout: FC<{ section: SectionType }> = ({ section }) => {
   const allSixImages = [...images, ...images];
 
   const iconSquares = [
-    "/icons/illustrations/tools.png",
-    "/icons/illustrations/camera.png",
-    "/icons/illustrations/calculator.png",
-    "/icons/illustrations/coffee.png",
+    "/icons/illustrations/tools.avif",
+    "/icons/illustrations/camera.avif",
+    "/icons/illustrations/calculator.avif",
+    "/icons/illustrations/coffee.avif",
   ];
 
   const CubeFace = ({ src, transform }: { src: string; transform: string }) => (

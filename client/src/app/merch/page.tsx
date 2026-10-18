@@ -6,6 +6,7 @@ import Footer from "../components/footer";
 import Grid from "../components/grid";
 import MerchCard from "./components/merch-card";
 import PageHeader from "../components/page-header";
+import { useDelayedFlag } from "@/app/components/skeleton";
 import merchService, { MerchItem as ApiMerchItem } from "../services/merch";
 
 interface MerchItem {
@@ -28,7 +29,7 @@ const formatPrice = (prices: ApiMerchItem["prices"]): string => {
 const mapMerchItem = (item: ApiMerchItem): MerchItem => ({
   name: item.name,
   description: item.description,
-  imageSrc: item.image || "/content/gle.png",
+  imageSrc: item.image || "/content/gle.avif",
   price: formatPrice(item.prices),
   status: "Available",
   buyLink: item.orderLink,
@@ -37,6 +38,7 @@ const mapMerchItem = (item: ApiMerchItem): MerchItem => ({
 const MerchPage: FC = () => {
   const [merchandise, setMerchandise] = useState<MerchItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(loading);
 
   useEffect(() => {
     const fetchMerch = async () => {
@@ -74,7 +76,10 @@ const MerchPage: FC = () => {
             />
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div
+                data-skeleton-hidden={showSkeleton ? undefined : ""}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              >
                 {[1, 2, 3].map((i) => (
                   <div
                     key={i}

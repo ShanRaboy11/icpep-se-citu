@@ -1,5 +1,7 @@
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { Readable } from 'stream';
+import { randomUUID } from 'crypto';
+import { optimizeImage } from './optimize-image';
 
 // Check Cloudinary credentials
 const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
@@ -40,24 +42,57 @@ export const isSupportedImage = (buffer: Buffer): boolean => {
     return isJpeg || isPng || isGif || isWebp;
 };
 
+export const isPdf = (buffer: Buffer): boolean =>
+    buffer.length > 5 && buffer.subarray(0, 5).toString('ascii') === '%PDF-';
+
+export const uploadDocumentToCloudinary = async (
+    buffer: Buffer,
+    folder: string
+): Promise<UploadApiResponse> => {
+    if (!isPdf(buffer)) {
+        throw new Error('Unsupported document type');
+    }
+    if (!CLOUDINARY_ENABLED) {
+        throw new Error('Uploads are not configured');
+    }
+
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                resource_type: 'raw',
+                public_id: `${folder}/${randomUUID()}.pdf`,
+            },
+            (error, result) => {
+                if (error) return reject(error);
+                if (result) return resolve(result);
+                reject(new Error('Upload failed'));
+            }
+        );
+        uploadStream.on('error', reject);
+        Readable.from(buffer).pipe(uploadStream);
+    });
+};
+
 /**
  * Upload buffer to Cloudinary
  * @param buffer - File buffer from multer
  * @param folder - Cloudinary folder name
  * @returns Upload result with secure_url
  */
-export const uploadToCloudinary = (
+export const uploadToCloudinary = async (
     buffer: Buffer,
     folder: string
 ): Promise<UploadApiResponse> => {
     if (!isSupportedImage(buffer)) {
-        return Promise.reject(new Error('Unsupported image type'));
+        throw new Error('Unsupported image type');
     }
 
     // If Cloudinary isn't configured, return a placeholder response to avoid 500s during local dev
     if (!CLOUDINARY_ENABLED) {
-        return Promise.resolve({ secure_url: 'https://via.placeholder.com/1200x630.png?text=No+Image' } as any);
+        return { secure_url: 'https://via.placeholder.com/1200x630.png?text=No+Image' } as any;
     }
+
+    const optimized = await optimizeImage(buffer);
 
     return new Promise((resolve, reject) => {
         try {
@@ -65,11 +100,6 @@ export const uploadToCloudinary = (
                 {
                     folder,
                     resource_type: 'image',
-                    transformation: [
-                        { width: 1200, height: 630, crop: 'limit' },
-                        { quality: 'auto' },
-                        { fetch_format: 'auto' },
-                    ],
                 },
                 (error, result) => {
                     if (error) return reject(error);
@@ -84,7 +114,7 @@ export const uploadToCloudinary = (
             });
 
             // Create a readable stream from buffer
-            const stream = Readable.from(buffer);
+            const stream = Readable.from(optimized);
 
             stream.on('error', (err: Error) => {
                 return reject(err);

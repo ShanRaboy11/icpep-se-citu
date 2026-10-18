@@ -44,6 +44,13 @@ const splitCouncilPosition = (
   return { position };
 };
 
+const COMMITTEE_ORDER = ["committee head", "head", "assistant head", "secretary", "member"];
+
+const committeeRank = (position: string) => {
+  const index = COMMITTEE_ORDER.indexOf(position.trim().toLowerCase());
+  return index === -1 ? COMMITTEE_ORDER.length : index;
+};
+
 const OfficersPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -81,7 +88,7 @@ const OfficersPage = () => {
             name: formatOfficerName(o.firstName, o.lastName, o.middleName),
             image:
               o.profilePicture ||
-              placeholderPhoto(`${o.firstName} ${o.lastName}`),
+              placeholderPhoto(`${o.firstName} ${o.lastName}`, o.gender),
           };
         }
         return {
@@ -89,7 +96,7 @@ const OfficersPage = () => {
           name: formatOfficerName(o.firstName, o.lastName, o.middleName),
           image:
             o.profilePicture ||
-            placeholderPhoto(`${o.firstName} ${o.lastName}`),
+            placeholderPhoto(`${o.firstName} ${o.lastName}`, o.gender),
         };
       });
     };
@@ -107,13 +114,19 @@ const OfficersPage = () => {
         // Manually-entered archive rows are already typed as "Last, First" —
         // just normalize the casing rather than reordering them.
         name: toTitleCase(t.name),
-        image: t.image || placeholderPhoto(t.name),
+        image: t.image || placeholderPhoto(t.name, t.gender),
       }));
     };
 
     setLoading(true);
     (year ? fetchArchived() : fetchLive())
-      .then(setOfficers)
+      .then((list) =>
+        setOfficers(
+          isCouncil
+            ? list
+            : [...list].sort((a, b) => committeeRank(a.position) - committeeRank(b.position)),
+        ),
+      )
       .catch((error) => {
         setOfficers([]);
       })

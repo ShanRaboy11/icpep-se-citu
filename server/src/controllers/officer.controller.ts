@@ -42,7 +42,7 @@ const ANY_OFFICER_QUERY = {
 export const getOfficers = async (req: Request, res: Response) => {
   try {
     const officers = await User.find(ANY_OFFICER_QUERY).select(
-      "firstName lastName middleName role position department profilePicture email studentNumber yearLevel councilPosition councilYearLevel committeeDepartment committeeTitle"
+      "firstName lastName middleName role position department profilePicture gender email studentNumber yearLevel councilPosition councilYearLevel committeeDepartment committeeTitle"
     );
 
     res.status(200).json({ success: true, data: officers });
@@ -83,7 +83,7 @@ export const getPublicOfficers = async (req: Request, res: Response) => {
     }
 
     const officers = await User.find(query).select(
-      "firstName lastName middleName position department profilePicture role councilPosition councilYearLevel committeeDepartment committeeTitle"
+      "firstName lastName middleName position department profilePicture gender role councilPosition councilYearLevel committeeDepartment committeeTitle"
     );
 
     res.status(200).json({ success: true, data: officers });
@@ -232,6 +232,7 @@ export const updateOfficer = async (req: Request, res: Response) => {
               committeeName,
               termYear: archiveTermYear,
               image: updated?.profilePicture || null,
+              gender: user.gender ?? null,
               isActive: true,
             },
           },

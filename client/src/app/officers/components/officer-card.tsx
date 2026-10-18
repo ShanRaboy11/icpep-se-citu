@@ -1,5 +1,6 @@
 import React, { FC } from "react";
 import Image from "next/image";
+import { shortPositionTitle } from "@/app/utils/department";
 
 interface OfficerCardProps {
   position: string;
@@ -60,7 +61,7 @@ const OfficerCard: FC<OfficerCardProps> = ({
         
         <div className="pt-4 px-2 sm:pt-6 sm:px-4 z-20">
           <h2 className="font-rubik text-xs sm:text-2xl font-bold uppercase leading-tight tracking-tight text-white drop-shadow-md text-center">
-            {position}
+            {shortPositionTitle(position)}
           </h2>
           {role && (
             <p className="font-rubik text-[0.6rem] sm:text-base font-medium uppercase mt-0.5 sm:mt-1 opacity-90 tracking-widest text-white text-center">
@@ -75,11 +76,7 @@ const OfficerCard: FC<OfficerCardProps> = ({
 
           {image && (
             <div
-              className={`absolute left-1/2 -translate-x-1/2 z-10 ${
-                image.startsWith("/placeholders/")
-                  ? "bottom-4 sm:bottom-6 w-[160%] h-[125%]"
-                  : "bottom-0 w-[140%] h-[110%]"
-              }`}
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 w-[140%] h-[110%]"
             >
               <Image
                 src={image}

@@ -207,7 +207,7 @@ export default function OfficerDashboard({
             title: e.title,
             date: formatEventDate(e.eventDate, e.time),
             venue: e.location || "TBA",
-            imageUrl: e.coverImage || "/content/gle.png",
+            imageUrl: e.coverImage || "/content/gle.avif",
             status: eventStatus(e.eventDate),
           })),
         );

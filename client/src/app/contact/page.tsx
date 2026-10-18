@@ -10,6 +10,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { TbBrandTiktok } from "react-icons/tb";
+import { platformMeta } from "@/app/utils/social-platforms";
 import { useRouter } from "next/navigation";
 import Header from "../components/header";
 import Footer from "../components/footer";
@@ -18,10 +19,7 @@ import BackButton from "../components/back-button";
 import PageHeader from "../components/page-header";
 import Button from "../components/button";
 import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
-
-const CONTACT_EMAIL = "icpepse@cit.edu";
-const FACEBOOK_URL = "https://www.facebook.com/cituicpep";
-const TIKTOK_URL = "https://tiktok.com/@icpep.se.citu";
+import { useSiteContact } from "@/app/utils/use-site-contact";
 
 const SUBJECT_OPTIONS = [
   "Membership Inquiry",
@@ -120,6 +118,7 @@ type FormErrors = {
 };
 
 export default function ContactPage() {
+  const contact = useSiteContact();
   const router = useRouter();
   const subjectId = useId();
   const phoneId = useId();
@@ -207,10 +206,10 @@ export default function ContactPage() {
         subject === OTHER_SUBJECT ? customSubject : subject;
 
       const body = `Name: ${name}\nEmail: ${email}${phone ? `\nPhone: ${phone}` : ""}\n\n${message}`;
-      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(finalSubject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = `mailto:${contact.contactEmail}?subject=${encodeURIComponent(finalSubject)}&body=${encodeURIComponent(body)}`;
     } catch {
       setMailError(
-        `Something went wrong opening your mail app. You can reach us directly at ${CONTACT_EMAIL}.`,
+        `Something went wrong opening your mail app. You can reach us directly at ${contact.contactEmail}.`,
       );
     }
   };
@@ -428,32 +427,39 @@ export default function ContactPage() {
                       days.
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <a
-                      href={FACEBOOK_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Facebook"
-                      className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
-                    >
-                      <Facebook className="h-5 w-5" />
-                    </a>
-                    <a
-                      href={TIKTOK_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="TikTok"
-                      className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
-                    >
-                      <TbBrandTiktok className="h-5 w-5" />
-                    </a>
-                    <a
-                      href={`mailto:${CONTACT_EMAIL}`}
+                      href={`mailto:${contact.contactEmail}`}
                       title="Email us"
                       className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
                     >
                       <Mail className="h-5 w-5" />
                     </a>
+                    {contact.secondaryEmail && (
+                      <a
+                        href={`mailto:${contact.secondaryEmail}`}
+                        title="Email us (alternate)"
+                        className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
+                      >
+                        <Mail className="h-5 w-5" />
+                      </a>
+                    )}
+                    {contact.socialLinks.map(({ platform, url }) => {
+                      const meta = platformMeta(platform);
+                      if (!meta) return null;
+                      return (
+                        <a
+                          key={`${platform}-${url}`}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={meta.label}
+                          className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
+                        >
+                          <meta.Icon className="h-5 w-5" />
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

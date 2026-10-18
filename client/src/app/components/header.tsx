@@ -322,7 +322,7 @@ const Header = () => {
               aria-label="Go to Home"
             >
               <Image
-                src="/brand/icpep-logo.png"
+                src="/brand/icpep-logo.avif"
                 alt="ICPEP Logo"
                 width={55}
                 height={55}

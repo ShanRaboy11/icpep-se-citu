@@ -1,5 +1,6 @@
 "use client";
 
+import RemoveButton from "@/app/components/remove-button";
 import { useState, useRef } from "react";
 import {
   X,
@@ -315,15 +316,11 @@ export default function ExcelUploadModal({
                     </p>
                   </div>
                 </div>
-                <button
+                <RemoveButton
                   onClick={() => {
                     setFile(null);
                     setUploadedUsers([]);
-                  }}
-                  className="text-red-600 hover:text-red-700 font-raleway text-sm font-semibold cursor-pointer"
-                >
-                  Remove
-                </button>
+                  }} />
               </div>
 
               {/* Statistics */}

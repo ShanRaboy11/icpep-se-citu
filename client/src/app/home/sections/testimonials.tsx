@@ -6,130 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { TestimonialCard } from "@/app/home/components/testimonial-card";
 import testimonialService from "@/app/services/testimonial";
 import { toTitleCase } from "@/app/officers/utils/format-name";
-
-const shimmerStyle = `
-  @keyframes shimmer {
-    0% { background-position: -800px 0; }
-    100% { background-position: 800px 0; }
-  }
-  .skeleton-shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255,255,255,0.04) 0px,
-      rgba(255,255,255,0.10) 40px,
-      rgba(255,255,255,0.04) 80px
-    );
-    background-size: 800px 100%;
-    animation: shimmer 1.6s infinite linear;
-  }
-`;
-
-function SkeletonBlock({ className = "" }: { className?: string }) {
-  return (
-    <div className={`skeleton-shimmer rounded-lg bg-white/5 ${className}`} />
-  );
-}
-
-function TestimonialCardSkeleton({
-  scale = 1,
-  opacity = 1,
-}: {
-  scale?: number;
-  opacity?: number;
-}) {
-  return (
-    <div
-      className="w-full h-full rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm flex flex-col items-center justify-between p-8 gap-6"
-      style={{
-        transform: `scale(${scale})`,
-        opacity,
-        transition: "transform 0.3s, opacity 0.3s",
-      }}
-    >
-      <SkeletonBlock className="w-8 h-8 rounded-md self-start" />
-
-      <div className="flex flex-col gap-3 w-full flex-1 justify-center">
-        <SkeletonBlock className="w-full h-4 rounded-md" />
-        <SkeletonBlock className="w-full h-4 rounded-md" />
-        <SkeletonBlock className="w-4/5 h-4 rounded-md" />
-        <SkeletonBlock className="w-3/5 h-4 rounded-md" />
-      </div>
-
-      <div className="flex items-center gap-4 w-full mt-2 pt-4 border-t border-white/10">
-        <SkeletonBlock className="w-14 h-14 rounded-full shrink-0" />
-        <div className="flex flex-col gap-2 flex-1">
-          <SkeletonBlock className="w-32 h-4 rounded-md" />
-          <SkeletonBlock className="w-24 h-3 rounded-md" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TestimonialsSkeleton() {
-  return (
-    <section className="dark-light-background relative min-h-screen overflow-visible z-2">
-      <style>{shimmerStyle}</style>
-
-      <div className="absolute inset-0 z-0 opacity-90 hidden lg:block">
-        <div className="blob bg-sky-400 top-0 left-0 animate-blob-1"></div>
-        <div className="blob bg-indigo-400 top-0 right-0 animate-blob-2"></div>
-        <div className="blob bg-blue-300 bottom-0 left-1/4 animate-blob-3"></div>
-      </div>
-      <div className="absolute inset-0 z-0 opacity-60 lg:hidden">
-        <div className="blob bg-sky-400 top-[5%] right-[-20%] animate-blob-1"></div>
-        <div className="blob bg-indigo-400 bottom-[5%] left-[-20%] animate-blob-3"></div>
-      </div>
-
-      <div className="relative flex min-h-screen flex-col items-center justify-center px-4 py-16 sm:px-6 sm:py-20">
-        <div className="relative z-20 mb-16 sm:mb-24 text-center flex flex-col items-center gap-3">
-          <SkeletonBlock className="w-48 h-10 rounded-md" />
-          <SkeletonBlock className="w-64 h-5 rounded-md" />
-        </div>
-
-        <div className="lg:hidden z-20 w-full h-112.5 flex justify-center items-start pt-16 px-4">
-          <div className="w-full max-w-md h-[90%]">
-            <TestimonialCardSkeleton />
-          </div>
-        </div>
-
-        <div className="relative z-20 h-105 w-full max-w-7xl overflow-visible hidden lg:flex items-center justify-center">
-          <div
-            className="absolute top-0 w-full h-full flex items-center justify-center"
-            style={{ transform: "translateX(-40%) scale(0.85)", opacity: 0.4 }}
-          >
-            <div className="w-full max-w-2xl h-[90%]">
-              <TestimonialCardSkeleton />
-            </div>
-          </div>
-
-          <div
-            className="absolute top-0 w-full h-full flex items-center justify-center"
-            style={{ zIndex: 3 }}
-          >
-            <div className="w-full max-w-2xl h-[90%]">
-              <TestimonialCardSkeleton />
-            </div>
-          </div>
-
-          <div
-            className="absolute top-0 w-full h-full flex items-center justify-center"
-            style={{ transform: "translateX(40%) scale(0.85)", opacity: 0.4 }}
-          >
-            <div className="w-full max-w-2xl h-[90%]">
-              <TestimonialCardSkeleton />
-            </div>
-          </div>
-        </div>
-
-        <div className="relative z-30 mt-8 flex gap-4">
-          <SkeletonBlock className="w-14 h-14 rounded-full" />
-          <SkeletonBlock className="w-14 h-14 rounded-full" />
-        </div>
-      </div>
-    </section>
-  );
-}
+import { Skeleton, SkeletonGate } from "@/app/components/skeleton";
 
 export function TestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -203,7 +80,9 @@ export function TestimonialsSection() {
 
         <div className="w-full flex flex-col items-center justify-center">
           {loading ? (
-            <div className="relative z-20 h-105 w-full max-w-2xl bg-white/10 animate-pulse rounded-3xl border border-white/20 backdrop-blur-md" />
+            <SkeletonGate loading>
+              <Skeleton className="relative z-20 h-105 w-full max-w-2xl rounded-3xl" />
+            </SkeletonGate>
           ) : testimonials.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500 font-raleway text-lg">

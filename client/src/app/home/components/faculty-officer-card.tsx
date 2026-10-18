@@ -37,7 +37,7 @@ export default function FacultyOfficerCard({
     >
       <div className="relative w-full h-full flex items-center justify-start overflow-hidden rounded-[14px] bg-linear-to-br from-(--primary1) to-(--primary3)">
         <Image
-          src="/brand/icpep-logo.png"
+          src="/brand/icpep-logo.avif"
           alt="ICPEP Logo"
           width={300}
           height={300}

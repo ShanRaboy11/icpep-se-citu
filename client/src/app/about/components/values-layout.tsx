@@ -8,32 +8,32 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
   const coreValues = [
     {
       name: "Integrity",
-      iconUrl: "/icons/illustrations/integrity.png",
+      iconUrl: "/icons/illustrations/integrity.avif",
       position: "top-[15%] left-[2%] md:top-0 md:left-[-15%]",
       animationClass: "animate-pulse-subtle",
     },
     {
       name: "Passion",
-      iconUrl: "/icons/illustrations/passion.png",
+      iconUrl: "/icons/illustrations/passion.avif",
       position: "top-[-5%] right-[10%] md:top-[-10%] md:right-[-5%]",
       animationClass: "animate-pulse-subtle",
     },
     {
       name: "Excellence",
-      iconUrl: "/icons/illustrations/excellence.png",
+      iconUrl: "/icons/illustrations/excellence.avif",
       position:
         "top-[54%] -translate-y-1/2 right-[0%] md:top-1/2 md:right-[-25%]",
       animationClass: "animate-pulse-subtle",
     },
     {
       name: "Collaboration",
-      iconUrl: "/icons/illustrations/collaboration.png",
+      iconUrl: "/icons/illustrations/collaboration.avif",
       position: "bottom-[-6%] right-[8%] md:bottom-[-20%] md:right-[10%]",
       animationClass: "animate-pulse-subtle",
     },
     {
       name: "Service",
-      iconUrl: "/icons/illustrations/service.png",
+      iconUrl: "/icons/illustrations/service.avif",
       position: "bottom-[8%] left-[-5%] md:bottom-[10%] md:left-[-20%]",
       animationClass: "animate-pulse-subtle",
     },
@@ -198,7 +198,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
 
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 sm:w-48 sm:h-48 z-10">
           <Image
-            src="/brand/icpep-logo.png"
+            src="/brand/icpep-logo.avif"
             alt="ICpEP Logo"
             fill
             className="object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.4)]"

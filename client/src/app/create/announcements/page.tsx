@@ -1,5 +1,6 @@
 "use client";
 
+import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Sidebar from "../components/sidebar";
@@ -1129,8 +1130,7 @@ export default function AnnouncementsPage() {
                                   className="w-full h-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                  <button
-                                    type="button"
+                                  <RemoveButton variant="overlay"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       try {
@@ -1142,11 +1142,7 @@ export default function AnnouncementsPage() {
                                       setPreviews((prev) =>
                                         prev.filter((_, idx) => idx !== i),
                                       );
-                                    }}
-                                    className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
-                                  >
-                                    Remove
-                                  </button>
+                                    }} />
                                 </div>
                               </div>
                             ))}
@@ -1320,7 +1316,7 @@ export default function AnnouncementsPage() {
   <button
     type="button"
     onClick={() => setShowOrganizerInput(true)}
-    className="inline-flex items-center gap-1 px-4 py-1.5 rounded-xl border-2 border-primary2/30 text-primary2 hover:border-primary2 hover:bg-primary2/5 font-bold text-xs transition-all font-rubik cursor-pointer"
+    className="inline-flex items-center gap-1 px-4 py-1.5 rounded-full border-2 border-primary2/30 text-primary2 hover:border-primary2 hover:bg-primary2/5 font-bold text-xs transition-all font-rubik cursor-pointer"
     title="Add Organizer"
   >
     <Plus size={15} /> Add Organizer
@@ -1338,17 +1334,11 @@ export default function AnnouncementsPage() {
         onChange={(e) => setOrganizer(e.target.value)}
         className={`${inputCls(false)} flex-1`}
       />
-      <button
-        type="button"
+      <RemoveButton title="Remove Organizer"
         onClick={() => {
           setOrganizer("");
           setShowOrganizerInput(false);
-        }}
-        className="w-8 h-8 shrink-0 flex items-center justify-center rounded-xl border-2 border-red-100 text-red-400 hover:bg-red-50 transition-all cursor-pointer"
-        title="Remove Organizer"
-      >
-        <X size={13} />
-      </button>
+        }} />
     </div>
   )}
 </div>
@@ -1429,7 +1419,7 @@ export default function AnnouncementsPage() {
                               <button
                                 type="button"
                                 onClick={addAwardee}
-                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
+                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-full hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
                               >
                                 <Plus size={11} /> Add Awardee
                               </button>
@@ -1543,7 +1533,7 @@ export default function AnnouncementsPage() {
                                 <button
                                   type="button"
                                   onClick={addAgendaItem}
-                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
+                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-full hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
                                 >
                                   <Plus size={11} /> Add Item
                                 </button>
@@ -1566,13 +1556,8 @@ export default function AnnouncementsPage() {
                                       placeholder={`Agenda item ${i + 1}`}
                                       className="flex-1 rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-rubik text-gray-700 focus:outline-none focus:border-primary2 transition-all"
                                     />
-                                    <button
-                                      type="button"
-                                      onClick={() => removeAgendaItem(i)}
-                                      className="w-8 h-8 flex items-center justify-center rounded-xl border-2 border-red-100 text-red-400 hover:bg-red-50 transition-all cursor-pointer"
-                                    >
-                                      <X size={13} />
-                                    </button>
+                                    <RemoveButton variant="icon"
+                                      onClick={() => removeAgendaItem(i)} />
                                   </div>
                                 ))}
                               </div>
@@ -1609,7 +1594,7 @@ export default function AnnouncementsPage() {
                                     visibility: false,
                                   }));
                                 }}
-                                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-left border-2 transition-all duration-200 cursor-pointer ${isActive ? `${opt.bg} ${opt.color} ${opt.border} shadow-sm scale-[1.02]` : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"}`}
+                                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-left border-2 transition-all duration-200 cursor-pointer ${isActive ? `${opt.bg} ${opt.color} ${opt.border}` : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"}`}
                               >
                                 <span
                                   className={`w-2 h-2 rounded-full shrink-0 ${isActive ? opt.dot : "bg-gray-200"}`}

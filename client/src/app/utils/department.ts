@@ -5,3 +5,13 @@ export const shortDepartmentName = (name?: string | null): string =>
     .replace(/^Committee on\s+/i, "")
     .replace(/\s+Committee$/i, "")
     .trim();
+
+const SHORT_POSITIONS: Record<string, string> = {
+  "assistant head": "Asst. Head",
+  "committee head": "Head",
+};
+
+export const shortPositionTitle = (position?: string | null): string => {
+  const title = (position ?? "").trim();
+  return SHORT_POSITIONS[title.toLowerCase()] ?? title;
+};

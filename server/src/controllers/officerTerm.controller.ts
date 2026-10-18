@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import OfficerTerm from '../models/officerTerm';
 import { uploadToCloudinary } from '../utils/cloudinary';
+import mongoose from 'mongoose';
+import { parseGender } from '../utils/gender';
+
+const asUserId = (value: unknown) =>
+  typeof value === 'string' && mongoose.isValidObjectId(value) ? value : null;
 
 export const createOfficerTerm = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -29,6 +34,8 @@ export const createOfficerTerm = async (req: Request, res: Response): Promise<vo
       committeeName: departmentType === 'committee' ? committeeName : null,
       termYear,
       image: imageUrl,
+      gender: parseGender(req.body.gender),
+      sourceUserId: asUserId(req.body.sourceUserId),
       isActive: isActive !== undefined ? isActive : true,
       displayOrder: displayOrder || 0,
     });
@@ -123,6 +130,10 @@ export const updateOfficerTerm = async (req: Request, res: Response): Promise<vo
     if (termYear) term.termYear = termYear;
     if (isActive !== undefined) term.isActive = isActive === true || isActive === 'true';
     if (displayOrder !== undefined) term.displayOrder = displayOrder;
+    if (req.body.gender !== undefined) term.gender = parseGender(req.body.gender);
+    if (req.body.sourceUserId !== undefined) {
+      term.sourceUserId = asUserId(req.body.sourceUserId) as any;
+    }
 
     if (req.file) {
       const uploadResult = await uploadToCloudinary(req.file.buffer, 'officer-terms');

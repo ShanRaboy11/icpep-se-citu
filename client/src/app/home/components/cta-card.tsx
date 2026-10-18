@@ -1,6 +1,12 @@
 "use client";
 
+import siteService from "@/app/services/site";
+import { useCachedFetch } from "@/app/utils/cached-fetch";
+
 export const CallToActionCard = () => {
+  const { data: settings } = useCachedFetch("site-settings", () => siteService.getSettings());
+  const primerUrl = settings?.primerUrl || "/documents/primer.pdf";
+
   return (
     <div
       className={`relative w-full h-full overflow-hidden rounded-3xl backdrop-blur-xl border border-(--primary3)/20 shadow-lg bg-linear-to-br from-[#003599]/40 via-[#003599]/60 to-[#003599]/50 flex flex-col p-8`}
@@ -35,7 +41,7 @@ export const CallToActionCard = () => {
             Sponsor Us
           </a>
           <a
-            href="/documents/primer.pdf"
+            href={primerUrl}
             download="Sponsorship_Primer.pdf"
             target="_blank"
             rel="noopener noreferrer"

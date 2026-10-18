@@ -56,13 +56,13 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
         children: [
           { label: "Announcements", href: "/create/announcements" },
           { label: "Events", href: "/create/events" },
-          { label: "Merch", href: "/create/merch" },
-          { label: "Membership", href: "/create/membership" },
           { label: "Testimonials", href: "/create/testimonials" },
           { label: "Sponsors", href: "/create/sponsors" },
           { label: "Officers", href: "/create/officers" },
           { label: "Advisors", href: "/create/advisors" },
           { label: "Faculty", href: "/create/faculty" },
+          { label: "Merch", href: "/create/merch" },
+          { label: "Membership", href: "/create/membership" },
           { label: "Users", href: "/users" },
         ],
       });
@@ -120,7 +120,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     <div className="w-full min-h-screen bg-[#00609c] text-white font-rubik relative overflow-hidden flex flex-col">
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <Image
-          src="/content/gle.png"
+          src="/content/gle.avif"
           alt="Background"
           fill
           className="object-cover"
@@ -134,7 +134,7 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
           className="flex items-center gap-3 cursor-pointer group opacity-90 hover:opacity-100 transition-opacity"
         >
           <Image
-            src="/brand/icpep-logo.png"
+            src="/brand/icpep-logo.avif"
             alt="ICPEP Logo"
             width={56}
             height={56}

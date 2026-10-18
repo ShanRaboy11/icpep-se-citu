@@ -458,7 +458,7 @@ export default function Login() {
       <div className="relative z-10 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04),0_20px_40px_rgba(0,0,0,0.08)] rounded-2xl px-8 py-10 sm:px-10 w-[90%] max-w-md text-gray-800 border border-gray-50/50">
         <div className="flex flex-col items-center mb-6">
           <Image
-            src="/brand/icpep-logo.png"
+            src="/brand/icpep-logo.avif"
             alt="ICpEP Logo"
             width={64}
             height={64}

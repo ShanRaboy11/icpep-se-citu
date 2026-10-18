@@ -13,7 +13,6 @@ import { TestimonialsSection } from "./sections/testimonials";
 import { FacultyOfficersSection } from "./sections/faculty";
 import { PartnersSection } from "./sections/partner";
 import { FAQSection } from "./sections/faq";
-import { LoadingScreen } from "../components/loading";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -35,7 +34,7 @@ export default function LandingPage() {
   }, [router]);
 
   if (checkingSession) {
-    return <LoadingScreen showEntrance={false} />;
+    return <div className="min-h-screen bg-white" />;
   }
 
   return (

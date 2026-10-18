@@ -6,6 +6,10 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ISiteSettings extends Document {
   maintenanceMode: boolean;
   maintenanceMessage: string;
+  primerUrl: string;
+  contactEmail: string;
+  secondaryEmail: string;
+  socialLinks?: { platform: string; url: string }[];
   updatedBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -18,6 +22,13 @@ const SiteSettingsSchema: Schema = new Schema(
       type: String,
       trim: true,
       default: "We're making some improvements. Please check back soon.",
+    },
+    primerUrl: { type: String, trim: true, default: '' },
+    contactEmail: { type: String, trim: true, default: '' },
+    secondaryEmail: { type: String, trim: true, default: '' },
+    socialLinks: {
+      type: [new Schema({ platform: String, url: String }, { _id: false })],
+      default: undefined,
     },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },

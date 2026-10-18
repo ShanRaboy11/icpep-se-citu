@@ -1,21 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { X, UserPlus, AlertCircle, ChevronDown, Check } from "lucide-react";
+import { useState } from "react";
+import { X, UserPlus, AlertCircle } from "lucide-react";
 import { PiPlaceholder } from "react-icons/pi";
 import Button from "../../components/button";
 import {
   YEAR_OPTIONS,
   ROLE_OPTIONS as ALL_ROLE_OPTIONS,
   MEMBERSHIP_OPTIONS as BASE_MEMBERSHIP_OPTIONS,
-  dropdownOuterStyle,
-  dropdownInnerStyle,
-  dropdownItemStyle,
-  dropdownItemSelectedStyle,
-  dropdownItemHoverStyle,
 } from "../utils/user_options";
-import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
+import Dropdown from "@/app/components/dropdown";
 import { useBodyScrollLock } from "@/app/utils/use-body-scroll-lock";
+import GenderSelect, { GenderValue } from "@/app/components/gender-select";
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -29,6 +25,7 @@ export interface NewUser {
   firstName: string;
   middleName?: string;
   email?: string;
+  gender?: GenderValue;
   yearLevel?: number;
   role: string;
   position?: string;
@@ -47,6 +44,7 @@ export default function AddUserModal({
     firstName: "",
     middleName: "",
     email: "",
+    gender: "",
     yearLevel: undefined,
     role: "student",
     position: "",
@@ -55,8 +53,6 @@ export default function AddUserModal({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  useDropdownDismiss(activeDropdown !== null, () => setActiveDropdown(null));
 
   const isAdmin =
     typeof window !== "undefined" && localStorage.getItem("userRole") === "admin";
@@ -69,8 +65,6 @@ export default function AddUserModal({
     ...BASE_MEMBERSHIP_OPTIONS.slice(1),
   ];
 
-  const selectedYearLabel = YEAR_OPTIONS.find((o) => o.value === String(formData.yearLevel || ""))?.label ?? "Select Year Level";
-  const selectedRoleLabel = ROLE_OPTIONS.find((o) => o.value === formData.role)?.label ?? "Student";
   // Faculty aren't students, so they get an employee ID and no year level.
   // Everyone else (students and officers are students too) gets a student ID.
   const isFaculty = formData.role === "faculty";
@@ -80,37 +74,8 @@ export default function AddUserModal({
   const showsDepartment = formData.role === "committee-officer" || isFaculty;
   const idLabel = isFaculty ? "Employee ID Number" : "Student ID Number";
   const idPlaceholder = isFaculty ? "e.g. 2024-0001" : "23-2502-326";
-  const selectedMembershipLabel = MEMBERSHIP_OPTIONS.find((o) => o.value === formData.membershipStatus)?.label ?? "Non-Member";
 
   useBodyScrollLock(isOpen);
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [dropUp, setDropUp] = useState(false);
-
-  // An open list that would run past the bottom of the modal opens upward
-  // instead (when there is room above); otherwise it scrolls into view.
-  useEffect(() => {
-    if (!activeDropdown) {
-      setDropUp(false);
-      return;
-    }
-    const frame = requestAnimationFrame(() => {
-      const box = scrollRef.current?.getBoundingClientRect();
-      const panel = scrollRef.current?.querySelector("[data-dropdown-panel]");
-      if (!box || !panel || !panel.parentElement) return;
-
-      const rect = panel.getBoundingClientRect();
-      const spaceAbove = panel.parentElement.getBoundingClientRect().top - box.top;
-      const overflowsBelow = rect.bottom > box.bottom - 8;
-
-      if (overflowsBelow && spaceAbove > rect.height + 8) {
-        setDropUp(true);
-      } else {
-        panel.scrollIntoView({ block: "nearest", behavior: "smooth" });
-      }
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [activeDropdown]);
 
   if (!isOpen) return null;
 
@@ -157,6 +122,7 @@ export default function AddUserModal({
       firstName: "",
       middleName: "",
       email: "",
+      gender: "",
       yearLevel: undefined,
       role: "student",
       position: "",
@@ -218,7 +184,7 @@ export default function AddUserModal({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
-          <div ref={scrollRef} className={`space-y-4 overflow-y-auto themed-scrollbar px-6 sm:px-7 py-5 flex-1`}>
+          <div className={`space-y-4 overflow-y-auto themed-scrollbar px-6 sm:px-7 py-5 flex-1`}>
             {/* ID Number (student or employee) */}
             <div>
               <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
@@ -303,6 +269,16 @@ export default function AddUserModal({
 
             <div>
               <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
+                Placeholder Photo
+              </label>
+              <GenderSelect
+                value={formData.gender ?? ""}
+                onChange={(gender) => setFormData((prev) => ({ ...prev, gender }))}
+              />
+            </div>
+
+            <div>
+              <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
                 School Email <span className="text-gray-400 font-normal">(Optional)</span>
               </label>
               <input
@@ -366,55 +342,14 @@ export default function AddUserModal({
                 <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
                   Year Level
                 </label>
-                <div data-dropdown className="relative">
-                  <div
-                    className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
-                      activeDropdown === "yearLevel"
-                        ? "bg-white border-primary1 ring-4 ring-primary1/10"
-                        : errors.yearLevel ? "border-red-500" : ""
-                    }`}
-                    onClick={() =>
-                      setActiveDropdown(activeDropdown === "yearLevel" ? null : "yearLevel")
-                    }
-                  >
-                    <span className="font-rubik text-sm">{selectedYearLabel}</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
-                        activeDropdown === "yearLevel" ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-                  {activeDropdown === "yearLevel" && (
-                    <>
-                      <div
-                      data-dropdown-panel
-                      className={`${dropdownOuterStyle} scroll-mb-4 ${dropUp ? "bottom-full mb-2 mt-0!" : ""}`}
-                    >
-                        <div className={dropdownInnerStyle}>
-                          {YEAR_OPTIONS.map((opt) => (
-                            <div
-                              key={opt.value}
-                              className={`${dropdownItemStyle} ${
-                                String(formData.yearLevel || "") === opt.value
-                                  ? dropdownItemSelectedStyle
-                                  : dropdownItemHoverStyle
-                              }`}
-                              onClick={() => {
-                                setFormData((prev) => ({ ...prev, yearLevel: parseInt(opt.value) }));
-                                setActiveDropdown(null);
-                              }}
-                            >
-                              <span>{opt.label}</span>
-                              {String(formData.yearLevel || "") === opt.value && (
-                                <Check className="w-4 h-4 text-primary1" />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <Dropdown
+                  variant="field"
+                  value={String(formData.yearLevel || "")}
+                  invalid={!!errors.yearLevel}
+                  placeholder="Select Year Level"
+                  options={YEAR_OPTIONS}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, yearLevel: parseInt(value) }))}
+                />
                 {errors.yearLevel && (
                   <p className="mt-1 text-sm text-red-600 font-raleway">{errors.yearLevel}</p>
                 )}
@@ -430,53 +365,12 @@ export default function AddUserModal({
                 <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
                   Role
                 </label>
-                <div data-dropdown className="relative">
-                  <div
-                    className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
-                      activeDropdown === "role" ? "bg-white border-primary1 ring-4 ring-primary1/10" : ""
-                    }`}
-                    onClick={() =>
-                      setActiveDropdown(activeDropdown === "role" ? null : "role")
-                    }
-                  >
-                    <span className="font-rubik text-sm">{selectedRoleLabel}</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
-                        activeDropdown === "role" ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-                  {activeDropdown === "role" && (
-                    <>
-                      <div
-                      data-dropdown-panel
-                      className={`${dropdownOuterStyle} scroll-mb-4 ${dropUp ? "bottom-full mb-2 mt-0!" : ""}`}
-                    >
-                        <div className={dropdownInnerStyle}>
-                          {ROLE_OPTIONS.map((opt) => (
-                            <div
-                              key={opt.value}
-                              className={`${dropdownItemStyle} ${
-                                formData.role === opt.value
-                                  ? dropdownItemSelectedStyle
-                                  : dropdownItemHoverStyle
-                              }`}
-                              onClick={() => {
-                                setFormData((prev) => ({ ...prev, role: opt.value }));
-                                setActiveDropdown(null);
-                              }}
-                            >
-                              <span>{opt.label}</span>
-                              {formData.role === opt.value && (
-                                <Check className="w-4 h-4 text-primary1" />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <Dropdown
+                  variant="field"
+                  value={formData.role}
+                  options={ROLE_OPTIONS}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, role: value }))}
+                />
               </div>
 
               {/* Membership Status */}
@@ -484,53 +378,12 @@ export default function AddUserModal({
                 <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
                   Membership Status
                 </label>
-                <div data-dropdown className="relative">
-                  <div
-                    className={`w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
-                      activeDropdown === "membership" ? "bg-white border-primary1 ring-4 ring-primary1/10" : ""
-                    }`}
-                    onClick={() =>
-                      setActiveDropdown(activeDropdown === "membership" ? null : "membership")
-                    }
-                  >
-                    <span className="font-rubik text-sm">{selectedMembershipLabel}</span>
-                    <ChevronDown
-                      className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${
-                        activeDropdown === "membership" ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-                  {activeDropdown === "membership" && (
-                    <>
-                      <div
-                      data-dropdown-panel
-                      className={`${dropdownOuterStyle} scroll-mb-4 ${dropUp ? "bottom-full mb-2 mt-0!" : ""}`}
-                    >
-                        <div className={dropdownInnerStyle}>
-                          {MEMBERSHIP_OPTIONS.map((opt) => (
-                            <div
-                              key={opt.value}
-                              className={`${dropdownItemStyle} ${
-                                formData.membershipStatus === opt.value
-                                  ? dropdownItemSelectedStyle
-                                  : dropdownItemHoverStyle
-                              }`}
-                              onClick={() => {
-                                setFormData((prev) => ({ ...prev, membershipStatus: opt.value }));
-                                setActiveDropdown(null);
-                              }}
-                            >
-                              <span>{opt.label}</span>
-                              {formData.membershipStatus === opt.value && (
-                                <Check className="w-4 h-4 text-primary1" />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <Dropdown
+                  variant="field"
+                  value={formData.membershipStatus}
+                  options={MEMBERSHIP_OPTIONS}
+                  onChange={(value) => setFormData((prev) => ({ ...prev, membershipStatus: value }))}
+                />
               </div>
             </div>
 

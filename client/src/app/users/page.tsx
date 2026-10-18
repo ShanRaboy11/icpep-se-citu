@@ -48,6 +48,7 @@ interface ApiUser {
     membershipType: string | null;
   };
   profilePicture?: string;
+  gender?: "male" | "female" | null;
   isActive: boolean;
   firstLogin?: boolean;
   firstLoginCodeStatus?: "pending" | "sent" | "failed" | "no-email" | null;
@@ -445,6 +446,7 @@ export default function UsersListPage() {
             ),
           },
           profilePicture: user.profilePicture,
+          gender: user.gender ?? null,
           isActive: user.isActive,
           firstLogin: user.firstLogin !== false,
           firstLoginCodeStatus: user.firstLoginCodeStatus ?? null,
@@ -749,6 +751,7 @@ export default function UsersListPage() {
             role: updatedUser.role,
             yearLevel: updatedUser.yearLevel,
             membershipStatus: updatedUser.membershipStatus,
+            gender: updatedUser.gender ?? null,
           }),
         },
       );

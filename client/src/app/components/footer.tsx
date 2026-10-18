@@ -3,8 +3,11 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
+import { platformMeta } from "@/app/utils/social-platforms";
+import { useSiteContact } from "@/app/utils/use-site-contact";
 
 const Footer = () => {
+  const contact = useSiteContact();
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -22,7 +25,7 @@ const Footer = () => {
           <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-0">
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <Image
-                src="/brand/icpep-logo.png"
+                src="/brand/icpep-logo.avif"
                 alt="ICPEP Logo"
                 width={100}
                 height={100}
@@ -130,7 +133,7 @@ const Footer = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-sky-200">
                 Contact Us
               </span>
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-4">
                 <Link
                   href="/contact"
                   className="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-sky-100 transition-all hover:border-white hover:bg-white hover:text-[#00609c] active:scale-95"
@@ -139,35 +142,7 @@ const Footer = () => {
                   <span>Get in Touch</span>
                 </Link>
                 <a
-                  href="https://www.facebook.com/cituicpep"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/30 transition-all hover:border-white hover:bg-white active:scale-95"
-                >
-                  <Image
-                    src="/icons/social/fb.svg"
-                    alt="Facebook"
-                    width={18}
-                    height={18}
-                    className="opacity-80 transition-all group-hover:opacity-100 group-hover:filter-[invert(28%)_sepia(95%)_saturate(1985%)_hue-rotate(186deg)_brightness(93%)_contrast(101%)]"
-                  />
-                </a>
-                <a
-                  href="https://tiktok.com/@icpep.se.citu"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/30 transition-all hover:border-white hover:bg-white active:scale-95"
-                >
-                  <Image
-                    src="/icons/social/tiktok.svg"
-                    alt="TikTok"
-                    width={18}
-                    height={18}
-                    className="opacity-80 transition-all group-hover:opacity-100 group-hover:filter-[invert(28%)_sepia(95%)_saturate(1985%)_hue-rotate(186deg)_brightness(93%)_contrast(101%)]"
-                  />
-                </a>
-                <a
-                  href="mailto:icpepse@cit.edu"
+                  href={`mailto:${contact.contactEmail}`}
                   className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/30 transition-all hover:border-white hover:bg-white active:scale-95"
                 >
                   <Image
@@ -178,6 +153,22 @@ const Footer = () => {
                     className="opacity-80 transition-all group-hover:opacity-100 group-hover:filter-[invert(28%)_sepia(95%)_saturate(1985%)_hue-rotate(186deg)_brightness(93%)_contrast(101%)]"
                   />
                 </a>
+                {contact.socialLinks.map(({ platform, url }) => {
+                  const meta = platformMeta(platform);
+                  if (!meta) return null;
+                  return (
+                    <a
+                      key={`${platform}-${url}`}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={meta.label}
+                      className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white/80 transition-all hover:border-white hover:bg-white hover:text-[#00609c] active:scale-95"
+                    >
+                      <meta.Icon className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </div>
