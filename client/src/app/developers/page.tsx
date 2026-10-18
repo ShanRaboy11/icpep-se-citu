@@ -44,10 +44,8 @@ export default function DevelopersPage() {
       name: "Maica C. Eupinado",
       title: "UI/UX",
       desc: "Designer",
-      imageSrc: "/team/eupinado.avif",
       bgSrc: "/team/bg-mai.avif",
-      imageClassName: "scale-[0.95] origin-bottom",
-      officerImageClassName: "scale-[1.1] origin-bottom",
+      imageClassName: "scale-[1.1] origin-bottom",
       details: [
         "3rd Year Batch Representative, 6th Administration",
         "Head of Training and Seminar Committee, 6th Administration",
@@ -60,9 +58,8 @@ export default function DevelopersPage() {
       name: "Gio Christian D. Macatual",
       title: "Frontend",
       desc: "Developer",
-      imageSrc: "/team/macatual.avif",
       bgSrc: "/team/bg-gio.avif",
-      officerImageClassName: "scale-[1.1] origin-bottom",
+      imageClassName: "scale-[1.1] origin-bottom",
       details: [
         "Auditor, 6th Administration",
         "Asst. Head of Finance Committee, 6th Administration",
@@ -75,9 +72,8 @@ export default function DevelopersPage() {
       name: "Shan Michael V. Raboy",
       title: "Backend",
       desc: "Developer",
-      imageSrc: "/team/raboy.avif",
       bgSrc: "/team/bg-shan.avif",
-      officerImageClassName: "scale-[1.1] origin-bottom",
+      imageClassName: "scale-[1.1] origin-bottom",
       details: [
         "Vice President - Internal, 6th Administration",
         "Head of Internal Affairs Committee, 6th Administration",
@@ -91,10 +87,8 @@ export default function DevelopersPage() {
       name: "Trixie T. Dolera",
       title: "Fullstack",
       desc: "Developer",
-      imageSrc: "/team/dolera.avif",
       bgSrc: "/team/bg-rexi.avif",
       imageClassName: "scale-[1.095] origin-bottom",
-      officerImageClassName: "scale-[1.095] origin-bottom",
       details: [
         "Public Relations Officer, 6th Administration",
         "Asst. Head of Public Relations Committee, 6th Administration",
@@ -106,12 +100,7 @@ export default function DevelopersPage() {
     },
   ];
 
-  const developers = team.map(({ officerImageClassName, ...dev }) => {
-    const photo = officerPhoto(dev.name);
-    return photo
-      ? { ...dev, imageSrc: photo, imageClassName: officerImageClassName }
-      : dev;
-  });
+  const developers = team.map((dev) => ({ ...dev, imageSrc: officerPhoto(dev.name) }));
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">

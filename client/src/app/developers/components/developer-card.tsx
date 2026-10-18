@@ -9,7 +9,7 @@ interface DeveloperCardProps {
   name: string;
   title: string;
   desc: string;
-  imageSrc: string;
+  imageSrc?: string;
   bgSrc: string;
   details: string[];
   githubLink?: string;
