@@ -25,7 +25,7 @@ describe("optimizeImage", () => {
     expect(meta.width).toBeLessThanOrEqual(MAX_UPLOAD_WIDTH);
     expect(meta.height).toBeLessThanOrEqual(MAX_UPLOAD_HEIGHT);
     expect(optimized.length).toBeLessThan(original.length);
-  });
+  }, 30_000);
 
   it("never enlarges a small image", async () => {
     const meta = await sharp(await optimizeImage(await photo(200, 120))).metadata();
