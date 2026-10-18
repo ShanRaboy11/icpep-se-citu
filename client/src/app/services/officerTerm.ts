@@ -12,6 +12,7 @@ export interface OfficerTermData {
     isActive?: boolean;
     displayOrder?: number;
     gender?: "male" | "female" | "" | null;
+    sourceUserId?: string | null;
 }
 
 const officerTermService = {
@@ -27,6 +28,7 @@ const officerTermService = {
         if (data.isActive !== undefined) formData.append('isActive', String(data.isActive));
         if (data.displayOrder !== undefined) formData.append('displayOrder', String(data.displayOrder));
         if (data.gender !== undefined) formData.append('gender', data.gender ?? '');
+        if (data.sourceUserId !== undefined) formData.append('sourceUserId', data.sourceUserId ?? '');
 
         const response = await api.post('/officer-terms', formData);
         return response.data;
@@ -59,6 +61,7 @@ const officerTermService = {
         if (data.isActive !== undefined) formData.append('isActive', String(data.isActive));
         if (data.displayOrder !== undefined) formData.append('displayOrder', String(data.displayOrder));
         if (data.gender !== undefined) formData.append('gender', data.gender ?? '');
+        if (data.sourceUserId !== undefined) formData.append('sourceUserId', data.sourceUserId ?? '');
 
         const response = await api.put(`/officer-terms/${id}`, formData);
         return response.data;
