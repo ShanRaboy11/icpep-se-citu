@@ -904,7 +904,7 @@ const AvailabilityPage: FunctionComponent = () => {
                             setFocusedSlot(null);
                             setIsFocusLocked(false);
                           }}
-                          className={`${pillBase} bg-sky-50 text-sky-600 hover:bg-sky-100 cursor-pointer`}
+                          className={`${pillBase} bg-primary1/10 text-primary1 hover:bg-primary1/20 cursor-pointer`}
                           title="Clear selected time"
                         >
                           <Clock className="w-3 h-3" />
@@ -914,7 +914,7 @@ const AvailabilityPage: FunctionComponent = () => {
                       ) : viewingId ? (
                         <button
                           onClick={() => setViewingId(null)}
-                          className={`${pillBase} bg-sky-50 text-sky-600 hover:bg-sky-100 cursor-pointer`}
+                          className={`${pillBase} bg-primary1/10 text-primary1 hover:bg-primary1/20 cursor-pointer`}
                         >
                           <Users className="w-3 h-3" />
                           View{" "}

@@ -1,5 +1,6 @@
 "use client";
 
+import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "@/app/create/components/sidebar";
 import Header from "@/app/components/header";
@@ -430,19 +431,14 @@ export default function MerchPage() {
                                 >
                                   Replace
                                 </button>
-                                <button
-                                  type="button"
+                                <RemoveButton variant="overlay"
                                   onClick={() => {
                                     try {
                                       if (preview) URL.revokeObjectURL(preview);
                                     } catch {}
                                     setCover(null);
                                     setPreview(null);
-                                  }}
-                                  className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
-                                >
-                                  Remove
-                                </button>
+                                  }} />
                               </div>
                             </div>
                           ) : (
@@ -620,9 +616,9 @@ export default function MerchPage() {
                           <button
                             type="button"
                             onClick={handleAddPrice}
-                            className="flex items-center justify-center gap-1.5 px-5 py-3 bg-linear-to-r from-primary1 to-primary2 text-white text-sm font-bold font-rubik rounded-xl shadow-md shadow-primary2/20 hover:shadow-primary2/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary1 hover:bg-primary2 text-white rounded-full text-xs font-semibold font-raleway shadow-md transition-all duration-300 cursor-pointer"
                           >
-                            <Plus size={14} /> Add
+                            <Plus size={12} /> Add
                           </button>
                         </div>
                         {priceError && (

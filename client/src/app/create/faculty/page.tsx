@@ -1,5 +1,6 @@
 "use client";
 
+import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Sidebar from "@/app/create/components/sidebar";
@@ -423,19 +424,14 @@ export default function FacultyPage() {
                             >
                               Replace
                             </button>
-                            <button
-                              type="button"
+                            <RemoveButton variant="overlay"
                               onClick={() => {
                                 try {
                                   if (preview) URL.revokeObjectURL(preview);
                                 } catch {}
                                 setCover(null);
                                 setPreview(null);
-                              }}
-                              className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
-                            >
-                              Remove
-                            </button>
+                              }} />
                           </div>
                         </div>
                       ) : (
