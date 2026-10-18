@@ -9,11 +9,6 @@ export function useSiteContact() {
   return {
     contactEmail: data?.contactEmail || DEFAULT_CONTACT.contactEmail,
     secondaryEmail: data?.secondaryEmail || "",
-    facebookUrl: data?.facebookUrl || DEFAULT_CONTACT.facebookUrl,
-    tiktokUrl: data?.tiktokUrl || DEFAULT_CONTACT.tiktokUrl,
-    instagramUrl: data?.instagramUrl || "",
-    xUrl: data?.xUrl || "",
-    youtubeUrl: data?.youtubeUrl || "",
-    linkedinUrl: data?.linkedinUrl || "",
+    socialLinks: data?.socialLinks ?? DEFAULT_CONTACT.socialLinks,
   };
 }

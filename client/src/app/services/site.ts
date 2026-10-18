@@ -1,4 +1,5 @@
 import { api } from "./api-client";
+import type { SocialLink } from "@/app/utils/site";
 
 export interface SiteSettings {
   maintenanceMode: boolean;
@@ -6,23 +7,13 @@ export interface SiteSettings {
   primerUrl?: string;
   contactEmail?: string;
   secondaryEmail?: string;
-  facebookUrl?: string;
-  tiktokUrl?: string;
-  instagramUrl?: string;
-  xUrl?: string;
-  youtubeUrl?: string;
-  linkedinUrl?: string;
+  socialLinks?: SocialLink[];
 }
 
 export interface ContactDetails {
   contactEmail: string;
   secondaryEmail: string;
-  facebookUrl: string;
-  tiktokUrl: string;
-  instagramUrl: string;
-  xUrl: string;
-  youtubeUrl: string;
-  linkedinUrl: string;
+  socialLinks: SocialLink[];
 }
 
 const siteService = {

@@ -49,14 +49,7 @@ const buildOrganizationJsonLd = (contact: Awaited<ReturnType<typeof fetchSiteCon
   logo: `${SITE_URL}/brand/icpep-logo.png`,
   description: SITE_DESCRIPTION,
   email: contact.contactEmail,
-  sameAs: [
-    contact.facebookUrl,
-    contact.tiktokUrl,
-    contact.instagramUrl,
-    contact.xUrl,
-    contact.youtubeUrl,
-    contact.linkedinUrl,
-  ].filter(Boolean),
+  sameAs: contact.socialLinks.map((link) => link.url),
 });
 
 export default async function RootLayout({

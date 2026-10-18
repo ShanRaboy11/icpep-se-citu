@@ -1,40 +1,21 @@
 "use client";
 
+import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useEffect } from "react";
 import Button from "@/app/components/button";
+import Dropdown from "@/app/components/dropdown";
 import { LoadingIndicator } from "@/app/components/loading";
-import { Check } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import siteService, { ContactDetails } from "@/app/services/site";
 import { errorMessage } from "@/app/services/api-client";
 import { DEFAULT_CONTACT } from "@/app/utils/site";
+import { SOCIAL_PLATFORMS } from "@/app/utils/social-platforms";
 
 const FIELD_STYLE =
   "w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-rubik text-base text-gray-800 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10";
 
-const EMAILS: { key: keyof ContactDetails; label: string; optional?: boolean }[] = [
-  { key: "contactEmail", label: "Official Email" },
-  { key: "secondaryEmail", label: "Secondary Email", optional: true },
-];
-
-const SOCIALS: { key: keyof ContactDetails; label: string; optional?: boolean }[] = [
-  { key: "facebookUrl", label: "Facebook Page" },
-  { key: "tiktokUrl", label: "TikTok Account" },
-  { key: "instagramUrl", label: "Instagram", optional: true },
-  { key: "xUrl", label: "X (Twitter)", optional: true },
-  { key: "youtubeUrl", label: "YouTube", optional: true },
-  { key: "linkedinUrl", label: "LinkedIn", optional: true },
-];
-
-const BLANK: ContactDetails = {
-  contactEmail: "",
-  secondaryEmail: "",
-  facebookUrl: "",
-  tiktokUrl: "",
-  instagramUrl: "",
-  xUrl: "",
-  youtubeUrl: "",
-  linkedinUrl: "",
-};
+const PLATFORM_OPTIONS = SOCIAL_PLATFORMS.map(({ id, label }) => ({ value: id, label }));
+const MAX_LINKS = 12;
 
 export default function ContactCard() {
   const [form, setForm] = useState<ContactDetails>(DEFAULT_CONTACT);
@@ -49,12 +30,7 @@ export default function ContactCard() {
         setForm({
           contactEmail: settings.contactEmail || DEFAULT_CONTACT.contactEmail,
           secondaryEmail: settings.secondaryEmail || "",
-          facebookUrl: settings.facebookUrl || DEFAULT_CONTACT.facebookUrl,
-          tiktokUrl: settings.tiktokUrl || DEFAULT_CONTACT.tiktokUrl,
-          instagramUrl: settings.instagramUrl || "",
-          xUrl: settings.xUrl || "",
-          youtubeUrl: settings.youtubeUrl || "",
-          linkedinUrl: settings.linkedinUrl || "",
+          socialLinks: settings.socialLinks ?? DEFAULT_CONTACT.socialLinks,
         }),
       )
       .catch(() => undefined)
@@ -74,23 +50,20 @@ export default function ContactCard() {
     }
   };
 
-  const change = (field: keyof ContactDetails) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const updateLink = (index: number, change: Partial<ContactDetails["socialLinks"][number]>) =>
+    setForm((prev) => ({
+      ...prev,
+      socialLinks: prev.socialLinks.map((link, i) => (i === index ? { ...link, ...change } : link)),
+    }));
 
-  const renderField = ({ key, label, optional }: { key: keyof ContactDetails; label: string; optional?: boolean }) => (
-    <div key={key} className="space-y-2">
-      <label className="block text-sm font-bold font-raleway text-gray-700 ml-1">
-        {label} {optional && <span className="font-normal text-gray-400">(Optional)</span>}
-      </label>
-      <input
-        type={EMAILS.some((email) => email.key === key) ? "email" : "text"}
-        value={form[key]}
-        onChange={change(key)}
-        placeholder={DEFAULT_CONTACT[key] || (key.endsWith("Email") ? "name@cit.edu" : "https://")}
-        className={FIELD_STYLE}
-      />
-    </div>
-  );
+  const removeLink = (index: number) =>
+    setForm((prev) => ({ ...prev, socialLinks: prev.socialLinks.filter((_, i) => i !== index) }));
+
+  const addLink = () =>
+    setForm((prev) => ({
+      ...prev,
+      socialLinks: [...prev.socialLinks, { platform: "instagram", url: "" }],
+    }));
 
   return (
     <div className="bg-white rounded-4xl border border-gray-200 shadow-lg p-6 sm:p-10">
@@ -98,7 +71,6 @@ export default function ContactCard() {
         <h2 className="font-rubik text-xl font-bold text-primary3">Contact Details</h2>
         <p className="mt-1 font-raleway text-sm text-gray-400">
           Shown in the footer and on the contact page. Event reports are also sent to the official email.
-          Optional fields only appear on the site once filled in.
         </p>
       </div>
 
@@ -108,8 +80,69 @@ export default function ContactCard() {
         </div>
       ) : (
         <div className="space-y-8">
-          <div className="space-y-6">{EMAILS.map(renderField)}</div>
-          <div className="space-y-6">{SOCIALS.map(renderField)}</div>
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <label className="block text-sm font-bold font-raleway text-gray-700 ml-1">
+                Official Email <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                value={form.contactEmail}
+                onChange={(e) => setForm((prev) => ({ ...prev, contactEmail: e.target.value }))}
+                placeholder={DEFAULT_CONTACT.contactEmail}
+                className={FIELD_STYLE}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-bold font-raleway text-gray-700 ml-1">
+                Secondary Email <span className="font-normal text-gray-400">(Optional, any provider such as Gmail)</span>
+              </label>
+              <input
+                type="email"
+                value={form.secondaryEmail}
+                onChange={(e) => setForm((prev) => ({ ...prev, secondaryEmail: e.target.value }))}
+                placeholder="name@gmail.com"
+                className={FIELD_STYLE}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-rubik text-base font-bold text-primary3">Social media</h3>
+              <p className="font-raleway text-xs text-gray-400">Optional. Add as many links as you need.</p>
+            </div>
+
+            {form.socialLinks.map((link, index) => (
+              <div key={index} className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Dropdown
+                  variant="field"
+                  value={link.platform}
+                  options={PLATFORM_OPTIONS}
+                  onChange={(platform) => updateLink(index, { platform })}
+                  className="sm:w-48 sm:shrink-0"
+                />
+                <input
+                  value={link.url}
+                  onChange={(e) => updateLink(index, { url: e.target.value })}
+                  placeholder="https://"
+                  className={FIELD_STYLE}
+                />
+                <RemoveButton onClick={() => removeLink(index)} />
+              </div>
+            ))}
+
+            {form.socialLinks.length < MAX_LINKS && (
+              <button
+                type="button"
+                onClick={addLink}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-full border-2 border-gray-300 px-5 py-2 font-raleway text-sm font-semibold text-gray-700 transition-all duration-300 hover:border-primary1 hover:bg-buttonbg1 hover:text-primary1"
+              >
+                <Plus size={16} /> Add a social link
+              </button>
+            )}
+          </div>
 
           <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
             {notice ? (
@@ -123,7 +156,7 @@ export default function ContactCard() {
             ) : (
               <button
                 type="button"
-                onClick={() => save(BLANK, "Back to the defaults.")}
+                onClick={() => save(DEFAULT_CONTACT, "Back to the defaults.")}
                 disabled={saving}
                 className="cursor-pointer font-raleway text-sm font-semibold text-gray-500 hover:text-red-500 hover:underline"
               >

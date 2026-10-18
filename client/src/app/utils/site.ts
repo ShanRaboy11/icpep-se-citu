@@ -10,15 +10,22 @@ export const CHAPTER_FOUNDED_YEAR = 2023;
 export const SITE_NAME = "ICpEP.SE CIT-U Chapter";
 export const SITE_DESCRIPTION = "Unlocking Potential, One Bit at a Time";
 
-export const DEFAULT_CONTACT = {
+export interface SocialLink {
+  platform: string;
+  url: string;
+}
+
+export const DEFAULT_CONTACT: {
+  contactEmail: string;
+  secondaryEmail: string;
+  socialLinks: SocialLink[];
+} = {
   contactEmail: "icpepse@cit.edu",
   secondaryEmail: "",
-  facebookUrl: "https://www.facebook.com/cituicpep",
-  tiktokUrl: "https://tiktok.com/@icpep.se.citu",
-  instagramUrl: "",
-  xUrl: "",
-  youtubeUrl: "",
-  linkedinUrl: "",
+  socialLinks: [
+    { platform: "facebook", url: "https://www.facebook.com/cituicpep" },
+    { platform: "tiktok", url: "https://tiktok.com/@icpep.se.citu" },
+  ],
 };
 
 // The chapter cover photo, letterboxed to the 1200x630 size link previews

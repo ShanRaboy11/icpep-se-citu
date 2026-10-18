@@ -10,7 +10,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { TbBrandTiktok } from "react-icons/tb";
-import { FaInstagram, FaXTwitter, FaYoutube, FaLinkedinIn } from "react-icons/fa6";
+import { platformMeta } from "@/app/utils/social-platforms";
 import { useRouter } from "next/navigation";
 import Header from "../components/header";
 import Footer from "../components/footer";
@@ -429,24 +429,6 @@ export default function ContactPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
                     <a
-                      href={contact.facebookUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Facebook"
-                      className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
-                    >
-                      <Facebook className="h-5 w-5" />
-                    </a>
-                    <a
-                      href={contact.tiktokUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="TikTok"
-                      className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
-                    >
-                      <TbBrandTiktok className="h-5 w-5" />
-                    </a>
-                    <a
                       href={`mailto:${contact.contactEmail}`}
                       title="Email us"
                       className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
@@ -462,27 +444,22 @@ export default function ContactPage() {
                         <Mail className="h-5 w-5" />
                       </a>
                     )}
-                    {(
-                      [
-                        ["instagramUrl", "Instagram", FaInstagram],
-                        ["xUrl", "X", FaXTwitter],
-                        ["youtubeUrl", "YouTube", FaYoutube],
-                        ["linkedinUrl", "LinkedIn", FaLinkedinIn],
-                      ] as const
-                    )
-                      .filter(([key]) => contact[key])
-                      .map(([key, label, Icon]) => (
+                    {contact.socialLinks.map(({ platform, url }) => {
+                      const meta = platformMeta(platform);
+                      if (!meta) return null;
+                      return (
                         <a
-                          key={key}
-                          href={contact[key]}
+                          key={`${platform}-${url}`}
+                          href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          title={label}
+                          title={meta.label}
                           className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
                         >
-                          <Icon className="h-5 w-5" />
+                          <meta.Icon className="h-5 w-5" />
                         </a>
-                      ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>

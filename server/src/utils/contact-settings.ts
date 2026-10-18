@@ -1,32 +1,40 @@
-export const DEFAULT_CONTACT = {
+export const SOCIAL_PLATFORMS = [
+  "facebook",
+  "instagram",
+  "tiktok",
+  "youtube",
+  "x",
+  "threads",
+  "linkedin",
+  "discord",
+  "github",
+  "telegram",
+] as const;
+
+export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
+
+export interface SocialLink {
+  platform: SocialPlatform;
+  url: string;
+}
+
+export interface ContactSettings {
+  contactEmail: string;
+  secondaryEmail: string;
+  socialLinks: SocialLink[];
+}
+
+export const DEFAULT_CONTACT: ContactSettings = {
   contactEmail: "icpepse@cit.edu",
   secondaryEmail: "",
-  facebookUrl: "https://www.facebook.com/cituicpep",
-  tiktokUrl: "https://tiktok.com/@icpep.se.citu",
-  instagramUrl: "",
-  xUrl: "",
-  youtubeUrl: "",
-  linkedinUrl: "",
+  socialLinks: [
+    { platform: "facebook", url: "https://www.facebook.com/cituicpep" },
+    { platform: "tiktok", url: "https://tiktok.com/@icpep.se.citu" },
+  ],
 };
 
-export type ContactSettings = typeof DEFAULT_CONTACT;
-type ContactField = keyof ContactSettings;
-
+const MAX_LINKS = 12;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const EMAIL_FIELDS: [ContactField, string][] = [
-  ["contactEmail", "official email"],
-  ["secondaryEmail", "secondary email"],
-];
-
-const URL_FIELDS: [ContactField, string][] = [
-  ["facebookUrl", "Facebook"],
-  ["tiktokUrl", "TikTok"],
-  ["instagramUrl", "Instagram"],
-  ["xUrl", "X"],
-  ["youtubeUrl", "YouTube"],
-  ["linkedinUrl", "LinkedIn"],
-];
 
 const parseHttpsUrl = (value: string): string | null => {
   try {
@@ -37,15 +45,16 @@ const parseHttpsUrl = (value: string): string | null => {
   }
 };
 
-export const resolveContact = (stored: Partial<Record<ContactField, string>>): ContactSettings => ({
+export const resolveContact = (stored: {
+  contactEmail?: string;
+  secondaryEmail?: string;
+  socialLinks?: { platform: string; url: string }[] | null;
+}): ContactSettings => ({
   contactEmail: stored.contactEmail || DEFAULT_CONTACT.contactEmail,
   secondaryEmail: stored.secondaryEmail || "",
-  facebookUrl: stored.facebookUrl || DEFAULT_CONTACT.facebookUrl,
-  tiktokUrl: stored.tiktokUrl || DEFAULT_CONTACT.tiktokUrl,
-  instagramUrl: stored.instagramUrl || "",
-  xUrl: stored.xUrl || "",
-  youtubeUrl: stored.youtubeUrl || "",
-  linkedinUrl: stored.linkedinUrl || "",
+  socialLinks: stored.socialLinks
+    ? stored.socialLinks.map(({ platform, url }) => ({ platform: platform as SocialPlatform, url }))
+    : DEFAULT_CONTACT.socialLinks,
 });
 
 export const parseContactUpdate = (
@@ -53,23 +62,35 @@ export const parseContactUpdate = (
 ): { values: Partial<ContactSettings> } | { error: string } => {
   const values: Partial<ContactSettings> = {};
 
-  for (const [field, label] of EMAIL_FIELDS) {
-    if (body[field] === undefined) continue;
-    const email = String(body[field]).trim().toLowerCase();
-    if (email && !EMAIL_PATTERN.test(email)) return { error: `Enter a valid ${label}` };
-    values[field] = email;
+  if (body.contactEmail !== undefined) {
+    const email = String(body.contactEmail).trim().toLowerCase();
+    if (!EMAIL_PATTERN.test(email)) return { error: "Enter a valid official email" };
+    values.contactEmail = email;
   }
 
-  for (const [field, label] of URL_FIELDS) {
-    if (body[field] === undefined) continue;
-    const raw = String(body[field]).trim();
-    if (!raw) {
-      values[field] = "";
-      continue;
+  if (body.secondaryEmail !== undefined) {
+    const email = String(body.secondaryEmail).trim().toLowerCase();
+    if (email && !EMAIL_PATTERN.test(email)) return { error: "Enter a valid secondary email" };
+    values.secondaryEmail = email;
+  }
+
+  if (body.socialLinks !== undefined) {
+    if (!Array.isArray(body.socialLinks) || body.socialLinks.length > MAX_LINKS) {
+      return { error: `Add up to ${MAX_LINKS} social links` };
     }
-    const url = parseHttpsUrl(raw);
-    if (!url) return { error: `The ${label} link must be a full https:// link` };
-    values[field] = url;
+    const links: SocialLink[] = [];
+    for (const entry of body.socialLinks) {
+      const platform = String((entry as { platform?: unknown })?.platform ?? "");
+      const raw = String((entry as { url?: unknown })?.url ?? "").trim();
+      if (!raw) continue;
+      if (!(SOCIAL_PLATFORMS as readonly string[]).includes(platform)) {
+        return { error: "Pick a platform for every link" };
+      }
+      const url = parseHttpsUrl(raw);
+      if (!url) return { error: "Every social link must be a full https:// link" };
+      links.push({ platform: platform as SocialPlatform, url });
+    }
+    values.socialLinks = links;
   }
 
   return { values };
