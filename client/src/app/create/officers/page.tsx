@@ -103,6 +103,7 @@ const COMMITTEE_ROLES = [
   "Committee Head",
   "Assistant Head",
   "Secretary",
+  "Assistant Secretary",
   "Member",
 ];
 
@@ -526,7 +527,7 @@ export default function OfficersPage() {
       const committeeMembers = existing.filter(
         (o) => o.departmentId === "committee" && o.role === role,
       );
-      if (["Committee Head", "Assistant Head", "Secretary"].includes(pos)) {
+      if (["Committee Head", "Assistant Head", "Secretary", "Assistant Secretary"].includes(pos)) {
         if (committeeMembers.some((o) => o.position === pos)) {
           setError(`'${role}' already has a ${pos}.`);
           return false;

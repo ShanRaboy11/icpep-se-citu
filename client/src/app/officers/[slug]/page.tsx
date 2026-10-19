@@ -44,7 +44,7 @@ const splitCouncilPosition = (
   return { position };
 };
 
-const COMMITTEE_ORDER = ["committee head", "head", "assistant head", "secretary", "member"];
+const COMMITTEE_ORDER = ["committee head", "head", "assistant head", "secretary", "assistant secretary", "member"];
 
 const committeeRank = (position: string) => {
   const index = COMMITTEE_ORDER.indexOf(position.trim().toLowerCase());
