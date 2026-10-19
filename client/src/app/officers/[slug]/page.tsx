@@ -53,8 +53,8 @@ const committeeRank = (position: string) => {
 
 const councilRank = (position: string) => {
   const text = position.trim().toLowerCase();
-  if (/^president/.test(text)) return 0;
-  if (/(vice|vp)/.test(text)) {
+  if (/^president\b/.test(text)) return 0;
+  if (/\b(vice|vp)\b/.test(text)) {
     if (text.includes("internal")) return 1;
     if (text.includes("external")) return 2;
     return 1.5;
@@ -66,7 +66,7 @@ const councilRank = (position: string) => {
   if (text.includes("public information") || text === "pio") return 6;
   if (text.includes("public relations") || text === "pro") return 7;
   if (text.includes("ssg")) return 8;
-  const year = text.match(/^(d)/);
+  const year = text.match(/^(\d)/);
   if (year) return 9 + Number(year[1]);
   return 20;
 };
