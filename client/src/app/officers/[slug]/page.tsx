@@ -51,6 +51,33 @@ const committeeRank = (position: string) => {
   return index === -1 ? COMMITTEE_ORDER.length : index;
 };
 
+const councilRank = (position: string) => {
+  const text = position.trim().toLowerCase();
+  if (/^president/.test(text)) return 0;
+  if (/(vice|vp)/.test(text)) {
+    if (text.includes("internal")) return 1;
+    if (text.includes("external")) return 2;
+    return 1.5;
+  }
+  if (text.includes("assistant")) return 3.5;
+  if (text.includes("secretary")) return 3;
+  if (text.includes("treasurer")) return 4;
+  if (text.includes("auditor")) return 5;
+  if (text.includes("public information") || text === "pio") return 6;
+  if (text.includes("public relations") || text === "pro") return 7;
+  if (text.includes("ssg")) return 8;
+  const year = text.match(/^(d)/);
+  if (year) return 9 + Number(year[1]);
+  return 20;
+};
+
+const sortByRank = (list: DisplayOfficer[], rank: (position: string) => number) =>
+  [...list].sort(
+    (a, b) =>
+      rank(a.position) - rank(b.position) ||
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+  );
+
 const OfficersPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -121,11 +148,7 @@ const OfficersPage = () => {
     setLoading(true);
     (year ? fetchArchived() : fetchLive())
       .then((list) =>
-        setOfficers(
-          isCouncil
-            ? list
-            : [...list].sort((a, b) => committeeRank(a.position) - committeeRank(b.position)),
-        ),
+        setOfficers(sortByRank(list, isCouncil ? councilRank : committeeRank)),
       )
       .catch((error) => {
         setOfficers([]);
