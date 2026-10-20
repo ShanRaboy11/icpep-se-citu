@@ -24,6 +24,8 @@ import {
 import eventService from "../services/event";
 import clsx from "clsx";
 import BackButton from "../components/back-button";
+import Button from "../components/button";
+import { CHAPTER_FOUNDED_YEAR } from "../utils/site";
 import PageHeader from "../components/page-header";
 import { useDelayedFlag } from "@/app/components/skeleton";
 
@@ -45,7 +47,10 @@ const SHORT_MONTHS = [
   "Nov",
   "Dec",
 ];
-const YEARS = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
+const YEARS = Array.from(
+  { length: Math.max(1, new Date().getFullYear() - CHAPTER_FOUNDED_YEAR + 1) },
+  (_, i) => new Date().getFullYear() - i,
+);
 
 const CATEGORIES = [
   { name: "All", icon: <LayoutGrid size={16} /> },
@@ -453,24 +458,25 @@ export default function EventsListPage() {
                       )}
                     </div>
 
-                    <button
+                    <Button
+                      variant="hero"
+                      className="mt-5 w-full py-2.5 text-xs sm:px-5 sm:py-2.5 sm:text-sm"
                       onClick={() =>
                         filterStep === "year"
                           ? setFilterStep("month")
                           : setIsDateFilterOpen(false)
                       }
-                      className="w-full mt-5 py-2.5 bg-primary3 text-white rounded-xl font-rubik font-bold text-xs flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.97] transition-all shadow-lg shadow-primary3/10 cursor-pointer"
                     >
                       {filterStep === "year" ? (
                         <>
-                          Next <ChevronRight className="h-3.5 w-3.5" />
+                          Next <ChevronRight className="ml-1 inline h-3.5 w-3.5" />
                         </>
                       ) : (
                         <>
-                          Apply <Check className="h-3.5 w-3.5" />
+                          Apply <Check className="ml-1 inline h-3.5 w-3.5" />
                         </>
                       )}
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>

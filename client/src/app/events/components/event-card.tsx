@@ -47,9 +47,9 @@ export default function EventCard({ event }: Props) {
   return (
     <Link
       href={`/events/${event.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1"
     >
-      <div className="relative h-48 shrink-0 overflow-hidden bg-gray-100">
+      <div className="relative aspect-16/10 shrink-0 overflow-hidden bg-gray-100">
         {/* Image skeleton */}
         {!imgLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">

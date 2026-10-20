@@ -11,14 +11,6 @@ export const CallToActionCard = () => {
     <div
       className={`relative w-full h-full overflow-hidden rounded-3xl backdrop-blur-xl border border-(--primary3)/20 shadow-lg bg-linear-to-br from-[#003599]/40 via-[#003599]/60 to-[#003599]/50 flex flex-col p-8`}
     >
-      <div
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{
-          backgroundImage:
-            "radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)",
-          backgroundSize: "16px 16px",
-        }}
-      />
 
       <div
         className="absolute inset-0 opacity-50 pointer-events-none"

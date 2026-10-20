@@ -19,10 +19,10 @@ export default function EventCard({ event, hideRSVP = false }: Props) {
   });
 
   return (
-    <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1">
+    <div className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1">
       <Link
         href={`/events/${event.id}`}
-        className="relative h-48 shrink-0 overflow-hidden block"
+        className="relative aspect-16/10 shrink-0 overflow-hidden block"
       >
         <Image
           src={event.bannerImageUrl}
