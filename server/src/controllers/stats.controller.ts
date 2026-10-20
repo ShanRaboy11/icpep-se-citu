@@ -9,7 +9,7 @@ export const getPublicStats = async (req: Request, res: Response): Promise<void>
   try {
     if (!cached || Date.now() - cached.at > CACHE_MS) {
       const [members, events] = await Promise.all([
-        User.countDocuments({ isActive: true, "membershipStatus.isMember": true }),
+        User.countDocuments({ "membershipStatus.isMember": true }),
         Event.countDocuments({ isPublished: true, eventDate: { $lt: new Date() } }),
       ]);
       cached = { at: Date.now(), data: { members, events } };
