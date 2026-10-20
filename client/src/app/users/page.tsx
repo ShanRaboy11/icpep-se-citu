@@ -1028,7 +1028,7 @@ export default function UsersListPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder="Search users by name, student number, role, or year level..."
+                  placeholder="Search users by name, student number, role, or year level"
                   className="w-full bg-transparent ml-3 outline-none font-rubik text-sm sm:text-base font-medium text-primary3 placeholder:text-gray-400 placeholder:font-normal"
                 />
                 {searchQuery && (

@@ -1191,7 +1191,7 @@ export default function OfficersPage() {
                                 query={searchQuery}
                                 onQueryChange={handleSearch}
                                 loading={isSearching}
-                                placeholder="Search for a student..."
+                                placeholder="Search for a student"
                                 results={searchResults.map((user) => ({
                                   id: user._id,
                                   label: formatOfficerName(user.firstName, user.lastName, user.middleName),
