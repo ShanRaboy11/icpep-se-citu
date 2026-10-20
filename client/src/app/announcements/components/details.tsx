@@ -49,6 +49,13 @@ export default function AnnouncementDetails({
 
   const announcementType = announcement.type?.toLowerCase() || "";
 
+  const typeDot =
+    announcementType === "meeting"
+      ? "bg-indigo-300"
+      : announcementType === "achievement" || announcementType === "award"
+        ? "bg-teal-300"
+        : "bg-sky-300";
+
   const showAgenda = announcementType === "meeting" && announcement.agenda;
 
   const showAwardees =
@@ -59,9 +66,10 @@ export default function AnnouncementDetails({
     <div className="overflow-hidden rounded-3xl border border-primary1/15 bg-white shadow-lg">
       <div className="relative overflow-hidden bg-linear-to-br from-primary1 to-primary3 px-6 py-7 sm:px-8 sm:py-8">
         <div className="relative">
-          <span className="mb-4 inline-block rounded-full bg-white/15 px-4 py-1.5 font-rubik text-sm font-semibold text-white backdrop-blur-sm">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/30 bg-primary3/40 px-4 py-1.5 font-raleway text-sm font-semibold text-white">
+            <div className={`h-2 w-2 rounded-full ${typeDot}`} />
             {announcement.type}
-          </span>
+          </div>
           <h1 className="font-rubik text-2xl font-bold leading-tight text-white sm:text-4xl">
             {announcement.title}
           </h1>
