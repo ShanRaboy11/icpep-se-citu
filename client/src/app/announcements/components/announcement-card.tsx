@@ -23,13 +23,13 @@ export function AnnouncementCard({
 }: AnnouncementCardProps) {
   return (
     <div
-      className="bg-white rounded-[25px] shadow-lg shadow-gray-300
+      className="bg-white rounded-[25px] border border-primary1/15 shadow-lg shadow-gray-300
                  overflow-hidden mb-10 max-w-4xl mx-auto 
                  h-auto md:h-80 cursor-pointer
                  transition-all duration-300 ease-in-out
                  hover:shadow-2xl hover:shadow-primary1/40
                  hover:-translate-y-1 hover:scale-[1.02]
-                 hover:ring-2 hover:ring-primary1/50"
+                 hover:border-primary1/50 hover:ring-1 hover:ring-primary1/50"
       onClick={onClick}
     >
       <div className="md:flex h-full">
@@ -48,7 +48,7 @@ export function AnnouncementCard({
             <div className="mb-3 sm:mb-4">
               <span
                 className={`inline-block px-3 py-1 sm:px-4 sm:py-2 rounded-[10px] text-xs sm:text-sm font-raleway font-medium ${getTypeColor(
-                  type
+                  type,
                 )}`}
               >
                 {type}
