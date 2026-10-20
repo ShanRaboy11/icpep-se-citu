@@ -1,4 +1,4 @@
-import { getTypeColor, formatDate } from "../utils/announcements";
+import { formatDate } from "../utils/announcements";
 import RichContent from "@/app/components/rich-content";
 
 type AnnouncementLike = {
@@ -56,46 +56,45 @@ export default function AnnouncementDetails({
     announcement.awardees;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg">
-      <div className="pb-6 mb-6 border-b border-gray-100">
-        <div className="mb-4">
-          <span
-            className={`inline-block px-4 py-1.5 rounded-lg text-sm font-rubik font-semibold text-white ${getTypeColor(
-              announcement.type ?? "",
-            )}`}
-          >
+    <div className="overflow-hidden rounded-3xl border border-primary1/15 bg-white shadow-lg">
+      <div className="relative overflow-hidden bg-linear-to-br from-primary1 to-primary3 px-6 py-7 sm:px-8 sm:py-8">
+        <div className="relative">
+          <span className="mb-4 inline-block rounded-full bg-white/15 px-4 py-1.5 font-rubik text-sm font-semibold text-white backdrop-blur-sm">
             {announcement.type}
           </span>
-        </div>
-        <h1 className="font-rubik text-2xl sm:text-4xl font-bold text-primary3 mb-3">
-          {announcement.title}
-        </h1>
-        <div className="flex flex-col gap-1">
+          <h1 className="font-rubik text-2xl font-bold leading-tight text-white sm:text-4xl">
+            {announcement.title}
+          </h1>
           {announcement.publishDate && (
-            <p className="font-raleway text-sm text-gray-500">
+            <p className="mt-3 font-raleway text-sm text-white/80">
               Posted on {formatDate(announcement.publishDate as string)}
             </p>
           )}
         </div>
       </div>
 
-      <div>
+      <div className="p-6 sm:p-8">
         <RichContent
           value={announcement.content ?? announcement.description ?? ""}
           className="font-raleway text-gray-700 leading-relaxed text-base mb-8"
         />
-      </div>
 
       {showAgenda && (
         <div>
-          <h3 className="font-rubik text-lg sm:text-xl font-bold text-primary3 mb-4">
+          <h3 className="mb-4 flex items-center gap-3 font-rubik text-lg font-bold text-primary3 sm:text-xl">
+            <span className="h-6 w-1.5 rounded-full bg-primary1" />
             Agenda
           </h3>
           <ul className="space-y-2 font-raleway">
             {announcement.agenda!.map((item, index) => (
-              <li key={index} className="flex items-start text-gray-700">
-                <span className="text-primary1 mr-3 mt-1 font-bold">•</span>
-                <span>{item}</span>
+              <li
+                key={index}
+                className="flex items-start gap-3 rounded-2xl bg-buttonbg1/60 px-4 py-3 text-gray-700"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary1 font-rubik text-xs font-bold text-white">
+                  {index + 1}
+                </span>
+                <span className="pt-0.5">{item}</span>
               </li>
             ))}
           </ul>
@@ -104,33 +103,43 @@ export default function AnnouncementDetails({
 
       {showAwardees && (
         <div>
-          <h3 className="font-rubik text-lg sm:text-xl font-bold text-primary3 mb-4">
+          <h3 className="mb-4 flex items-center gap-3 font-rubik text-lg font-bold text-primary3 sm:text-xl">
+            <span className="h-6 w-1.5 rounded-full bg-primary1" />
             Award Recipients
           </h3>
           <div className="space-y-3">
             {announcement.awardees!.map((awardee, index) => (
               <div
                 key={index}
-                className="border-l-4 border-primary1 bg-blue-50 rounded-lg p-4"
+                className="flex items-center justify-between gap-4 rounded-2xl border border-primary1/15 bg-linear-to-r from-buttonbg1/60 to-white px-5 py-4 transition-colors hover:border-primary1/40"
               >
-                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-0">
-                  <h4 className="font-rubik font-bold text-primary3 text-base sm:text-lg">
+                <div className="min-w-0">
+                  <h4 className="font-rubik text-base font-bold leading-snug text-primary3 sm:text-lg">
                     {awardee.name}
                   </h4>
-                  {awardee.year && (
-                    <span className="w-fit font-raleway text-xs bg-primary1 text-white px-3 py-1 rounded-full font-semibold">
-                      {formatYearLevel(awardee.year)}
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                    <span className="font-raleway text-sm font-medium text-gray-500 sm:text-primary2">
+                      {awardee.award}
                     </span>
-                  )}
+                    {awardee.year && (
+                      <span className="flex items-center gap-2 font-raleway text-sm text-gray-500 sm:hidden">
+                        <span className="h-1 w-1 rounded-full bg-primary1" />
+                        {formatYearLevel(awardee.year)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <p className="font-raleway text-sm text-primary2 font-medium mt-2">
-                  {awardee.award}
-                </p>
+                {awardee.year && (
+                  <span className="hidden shrink-0 rounded-full border border-primary1/30 bg-white px-3.5 py-1 font-raleway text-xs font-semibold text-primary1 sm:inline-block">
+                    {formatYearLevel(awardee.year)}
+                  </span>
+                )}
               </div>
             ))}
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

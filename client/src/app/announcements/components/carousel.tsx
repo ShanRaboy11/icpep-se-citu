@@ -54,7 +54,7 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
   }, [emblaApi]);
 
   return (
-    <div className="relative group bg-white rounded-2xl shadow-md overflow-hidden">
+    <div className="relative group bg-white rounded-3xl shadow-lg overflow-hidden">
       <div className="embla" ref={emblaRef}>
         <div className="embla__container">
           {imageUrls.map((url, index) => (

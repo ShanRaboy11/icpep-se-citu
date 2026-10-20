@@ -15,15 +15,15 @@ const DetailRow = ({
   label: string;
   value: string;
 }) => (
-  <div className="flex items-center gap-4">
-    <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg bg-primary1/10 text-primary1">
+  <div className="flex items-center gap-4 rounded-2xl bg-buttonbg1/60 p-3.5">
+    <div className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl bg-primary1 text-white">
       {icon}
     </div>
-    <div>
+    <div className="min-w-0">
       <p className="font-raleway font-semibold text-primary3 leading-tight">
         {label}
       </p>
-      <p className="font-raleway text-bodytext leading-tight">{value}</p>
+      <p className="font-raleway text-bodytext leading-tight wrap-break-word">{value}</p>
     </div>
   </div>
 );
@@ -40,12 +40,13 @@ export default function DetailsSidebar({ announcement }: DetailsSidebarProps) {
   const locationLabel = isOnline ? "Platform" : "Location";
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-lg">
-      <h3 className="font-rubik text-xl sm:text-2xl font-bold text-primary3 mb-4 pb-2 border-b border-gray-100">
+    <div className="rounded-3xl border border-primary1/15 bg-white p-5 shadow-lg sm:p-6">
+      <h3 className="mb-5 flex items-center gap-3 font-rubik text-xl font-bold text-primary3 sm:text-2xl">
+        <span className="h-6 w-1.5 rounded-full bg-primary1" />
         {announcement.type} Details
       </h3>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <DetailRow
           icon={<Calendar className="h-6 w-6" />}
           label="Date"

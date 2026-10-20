@@ -10,7 +10,7 @@ export default function MeetingAttendanceCard({
   attendanceLink,
 }: MeetingAttendanceCardProps) {
   return (
-    <div className="rounded-2xl bg-linear-to-br from-primary3 to-secondary1 p-6 text-white shadow-lg">
+    <div className="rounded-3xl bg-linear-to-br from-primary3 to-secondary1 p-6 text-white shadow-lg">
       <h3 className="font-rubik text-xl font-bold text-white mb-4 pb-4 border-b border-white/20">
         Meeting Attendance
       </h3>

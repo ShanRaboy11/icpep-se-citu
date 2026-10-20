@@ -33,9 +33,9 @@ export default function OrganizerCard({ organizer, eventTitle, eventId }: Props)
   const avatarUrl = organizerData.avatarImageUrl || "/placeholders/placeholder-avatar.svg";
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg">
-      <div className="flex items-center gap-4 mb-5">
-        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-gray-100 shrink-0">
+    <div className="overflow-hidden rounded-3xl border border-primary1/15 bg-white shadow-lg">
+      <div className="flex items-center gap-4 bg-linear-to-r from-primary1/15 to-primary3/10 px-6 py-5">
+        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-white ring-2 ring-white shrink-0">
           {!imgError ? (
             <Image
               src={avatarUrl}
@@ -71,25 +71,18 @@ export default function OrganizerCard({ organizer, eventTitle, eventId }: Props)
           <p className="font-raleway text-sm text-bodytext">Event Organizer</p>
         </div>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-3 p-6">
         <button
           onClick={() =>
             (window.location.href = "mailto:icpep.seofficial2526@gmail.com")
           }
-          className="w-full bg-transparent border border-primary1 text-primary1 
-                     hover:bg-primary1 hover:text-white font-raleway font-semibold text-sm sm:text-base 
-                     py-2 px-4 rounded-lg cursor-pointer relative overflow-hidden 
-                     transition-all duration-300 ease-in-out active:scale-95 
-                     before:absolute before:inset-0 before:bg-linear-to-r 
-                     before:from-transparent before:via-white/40 before:to-transparent 
-                     before:-translate-x-full hover:before:translate-x-full 
-                     before:transition-transform before:duration-700"
+          className="w-full cursor-pointer rounded-xl bg-primary1 px-6 py-3 text-center font-raleway font-bold text-white shadow-md transition-all hover:scale-105 hover:bg-primary2"
         >
           Contact Host
         </button>
         <button
           onClick={() => setShowReportModal(true)}
-          className="w-full bg-transparent border border-gray-400 text-gray-600 hover:bg-gray-100 font-raleway font-semibold text-sm sm:text-base py-2 px-4 rounded-lg transition-all cursor-pointer active:scale-95"
+          className="w-full cursor-pointer rounded-xl border border-primary1/60 bg-transparent px-6 py-3 text-center font-raleway font-bold text-primary1 shadow-md transition-all hover:scale-105 hover:bg-primary1/10"
         >
           Report Event
         </button>

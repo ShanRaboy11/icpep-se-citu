@@ -128,7 +128,7 @@ export default function AnnouncementDetailPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-38 pb-12">
+        <main className="grow w-full max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
             <div className="lg:col-span-2 space-y-6">
               <div className="w-full h-64 rounded-lg bg-gray-100 animate-pulse" />
@@ -231,7 +231,7 @@ export default function AnnouncementDetailPage() {
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
 
-          <div className="w-full max-w-6xl mx-auto px-6 pt-38 pb-16">
+          <div className="w-full max-w-6xl xl:max-w-7xl mx-auto px-6 pt-38 pb-16">
             {/* back */}
             <div className="mb-8 flex justify-start">
               <BackButton onClick={handleBack} title="Back to Announcements" />

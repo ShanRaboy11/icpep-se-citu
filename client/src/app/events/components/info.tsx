@@ -13,15 +13,15 @@ const InfoDetailRow = ({
   line1: string;
   line2: string;
 }) => (
-  <div className="flex items-center gap-3 sm:gap-4">
-    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-buttonbg1 rounded-lg flex items-center justify-center text-primary1 shrink-0">
+  <div className="flex items-center gap-3 rounded-2xl bg-white/10 p-3.5 sm:gap-4 sm:p-4">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white sm:h-12 sm:w-12">
       {icon}
     </div>
-    <div>
-      <p className="font-raleway font-semibold text-primary3 leading-tight text-sm sm:text-base">
+    <div className="min-w-0">
+      <p className="font-raleway text-sm font-semibold leading-tight text-white sm:text-base">
         {line1}
       </p>
-      <p className="font-raleway text-bodytext leading-tight text-sm sm:text-base">
+      <p className="font-raleway text-sm leading-tight text-white/80 sm:text-base">
         {line2}
       </p>
     </div>
@@ -49,18 +49,18 @@ export default function EventInfo({ date, mode, location }: Props) {
   });
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+    <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
       <InfoDetailRow
-        icon={<CalendarDaysIcon className="h-7 w-7" />}
+        icon={<CalendarDaysIcon className="h-6 w-6" />}
         line1={formattedDate}
         line2={formattedTime}
       />
       <InfoDetailRow
         icon={
           mode === "Online" ? (
-            <ComputerDesktopIcon className="h-7 w-7" />
+            <ComputerDesktopIcon className="h-6 w-6" />
           ) : (
-            <MapPinIcon className="h-7 w-7" />
+            <MapPinIcon className="h-6 w-6" />
           )
         }
         line1={mode}

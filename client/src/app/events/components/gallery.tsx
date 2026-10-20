@@ -25,8 +25,9 @@ export default function EventGallery({ imageUrls }: Props) {
   if (validImages.length === 0) return null;
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg">
-      <h2 className="font-rubik text-xl sm:text-2xl font-bold text-primary3 mb-4 pb-2 border-b border-gray-100">
+    <div className="rounded-3xl border border-primary1/15 bg-white p-6 shadow-lg sm:p-8">
+      <h2 className="mb-5 flex items-center gap-3 font-rubik text-xl font-bold text-primary3 sm:text-2xl">
+        <span className="h-6 w-1.5 rounded-full bg-primary1" />
         Gallery
       </h2>
       <div className="grid grid-cols-3 gap-3">
@@ -34,7 +35,7 @@ export default function EventGallery({ imageUrls }: Props) {
           <div
             key={index}
             onClick={() => setLightboxIndex(index)}
-            className="relative aspect-square rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-gray-100"
+            className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-gray-100"
           >
             {!imageErrors[index] ? (
               <Image
@@ -69,7 +70,7 @@ export default function EventGallery({ imageUrls }: Props) {
           <div
             key={2}
             onClick={() => setLightboxIndex(2)}
-            className="relative aspect-square rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer bg-gray-100"
+            className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer bg-gray-100"
           >
             {!imageErrors[2] ? (
               <Image
@@ -103,7 +104,7 @@ export default function EventGallery({ imageUrls }: Props) {
         {imageUrls.length > 3 && (
           <div
             onClick={() => setLightboxIndex(2)}
-            className="group aspect-square cursor-pointer overflow-hidden relative rounded-xl shadow-sm bg-gray-100"
+            className="group aspect-square cursor-pointer overflow-hidden relative rounded-2xl bg-gray-100"
           >
             {!imageErrors[2] ? (
               <>

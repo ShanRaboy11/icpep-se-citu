@@ -191,7 +191,7 @@ export default function EventDetailPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="flex grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-38 pb-12">
+        <main className="flex grow w-full max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start w-full">
             <div className="lg:col-span-2 lg:sticky lg:top-28 h-fit space-y-6 order-2 lg:order-1">
               <div className="rounded-xl bg-gray-100 w-full h-64 animate-pulse" />
@@ -257,18 +257,22 @@ export default function EventDetailPage() {
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
-          <div className="grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-38 pb-16">
+          <div className="grow w-full max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-16">
             <div className="mb-8 flex justify-start">
               <BackButton onClick={handleBackToEvents} title="Back to Events" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
               <div className="lg:col-span-2 lg:sticky lg:top-28 h-fit space-y-6 order-2 lg:order-1">
-                <EventBanner
-                  imageUrl={event.bannerImageUrl}
-                  title={event.title}
-                />
-                <EventTags tags={event.tags || []} />
+                <div className="hidden lg:block">
+                  <EventBanner
+                    imageUrl={event.bannerImageUrl}
+                    title={event.title}
+                  />
+                </div>
+                <div className="hidden lg:block">
+                  <EventTags tags={event.tags || []} />
+                </div>
                 <OrganizerCard
                   organizer={event.organizer}
                   eventTitle={event.title}
@@ -277,12 +281,19 @@ export default function EventDetailPage() {
               </div>
 
               <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
-                <EventHeader status={event.status} title={event.title} />
-                <EventInfo
-                  date={event.date}
-                  mode={event.mode}
-                  location={event.location}
-                />
+                <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-primary1 to-primary3 p-6 shadow-lg sm:p-8">
+                  <div className="relative">
+                    <EventHeader status={event.status} title={event.title} />
+                    <EventInfo
+                      date={event.date}
+                      mode={event.mode}
+                      location={event.location}
+                    />
+                  </div>
+                </div>
+                <div className="lg:hidden">
+                  <EventTags tags={event.tags || []} />
+                </div>
                 {event.status === "Upcoming" && (
                   <RsvpCard
                     status={event.status}

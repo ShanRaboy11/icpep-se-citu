@@ -48,7 +48,7 @@ export default function RsvpCard({ status, date, rsvpLink }: Props) {
 
   if (status === "Ended") {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg text-center">
+      <div className="bg-linear-to-br from-buttonbg1 to-white border border-primary1/20 rounded-3xl p-6 sm:p-8 shadow-lg text-center">
         <h2 className="font-rubik font-bold text-xl sm:text-2xl text-primary3">
           Registration Closed
         </h2>
@@ -61,7 +61,7 @@ export default function RsvpCard({ status, date, rsvpLink }: Props) {
 
   if (status === "Ongoing") {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg text-center">
+      <div className="bg-linear-to-br from-buttonbg1 to-white border border-primary1/20 rounded-3xl p-6 sm:p-8 shadow-lg text-center">
         <div className="bg-blue-100 text-blue-800 font-raleway font-semibold px-4 py-2 rounded-full text-sm inline-flex items-center gap-2 mb-4">
           <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
           Event in Progress
@@ -77,7 +77,7 @@ export default function RsvpCard({ status, date, rsvpLink }: Props) {
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-lg transition-all duration-300">
+    <div className="bg-linear-to-br from-buttonbg1 to-white border border-primary1/20 rounded-3xl p-6 sm:p-8 shadow-lg transition-all duration-300">
       {hasRsvpd && !rsvpLink ? (
         <div>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">

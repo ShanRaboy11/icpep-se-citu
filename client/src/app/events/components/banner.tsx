@@ -13,7 +13,7 @@ export default function EventBanner({ imageUrl, title }: Props) {
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="relative aspect-square w-full rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(56,189,248,0.3)] bg-gray-100">
+    <div className="relative aspect-square w-full rounded-3xl overflow-hidden ring-4 ring-white shadow-lg bg-gray-100">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="animate-pulse bg-gray-200 w-full h-full" />
