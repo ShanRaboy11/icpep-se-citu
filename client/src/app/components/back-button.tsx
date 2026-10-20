@@ -16,26 +16,17 @@ export default function BackButton({
   icon: Icon = ChevronLeft,
   className = "",
 }: BackButtonProps) {
-  const isChevronLeft = Icon === ChevronLeft;
-
   return (
     <button
       onClick={onClick}
       title={title}
-      className={`relative flex h-12 w-12 cursor-pointer items-center justify-center
-        rounded-full border-2 border-primary1 text-primary1
-        overflow-hidden transition-all duration-300 ease-in-out
+      className={`flex h-12 w-12 cursor-pointer items-center justify-center
+        rounded-full border-[1.5px] border-primary1 bg-transparent text-primary1
+        transition-all duration-300 ease-in-out hover:bg-primary1/10
         active:scale-95 focus:outline-none focus-visible:ring-2
-        focus-visible:ring-primary1 focus-visible:ring-offset-2
-        before:absolute before:inset-0
-        before:bg-linear-to-r before:from-transparent
-        before:via-white/40 before:to-transparent
-        before:-translate-x-full hover:before:translate-x-full
-        before:transition-transform before:duration-700 ${className}`}
+        focus-visible:ring-primary1 focus-visible:ring-offset-2 ${className}`}
     >
-      <Icon
-        className={`h-6 w-6 ${isChevronLeft ? "animate-nudge-left translate-x-0.5" : ""}`}
-      />
+      <Icon className="h-6 w-6" />
     </button>
   );
 }

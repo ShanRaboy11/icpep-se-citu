@@ -400,13 +400,8 @@ const Header = () => {
           <div className="flex items-center gap-1.5 sm:gap-5">
             {role === "guest" && (
               <Button
-                className="sm:block bg-transparent border border-primary1 text-primary1
-                           hover:bg-primary1 hover:text-white font-raleway font-semibold
-                           text-sm sm:text-base py-2 px-4 rounded-lg relative overflow-hidden
-                           before:absolute before:inset-0 before:bg-linear-to-r
-                           before:from-transparent before:via-white/40 before:to-transparent
-                           before:-translate-x-full hover:before:translate-x-full
-                           before:transition-transform before:duration-700"
+                variant="hero"
+                className="px-5 py-1.5 sm:px-6 sm:py-2 text-sm sm:text-base"
                 onClick={handleLogin}
               >
                 Log In

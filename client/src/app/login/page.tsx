@@ -512,8 +512,8 @@ export default function Login() {
               )}
 
               <Button
-                variant="primary3"
-                className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+                variant="hero"
+                className="w-full mt-10"
                 type="submit"
                 disabled={isLoading}
               >
@@ -562,8 +562,8 @@ export default function Login() {
               )}
 
               <Button
-                variant="primary3"
-                className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+                variant="hero"
+                className="w-full mt-10"
                 type="submit"
                 disabled={isLoading}
               >
@@ -655,8 +655,8 @@ export default function Login() {
               <PasswordRequirements checks={passwordValidation.checks} />
 
               <Button
-                variant="primary3"
-                className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+                variant="hero"
+                className="w-full mt-10"
                 type="submit"
                 disabled={isLoading || !passwordValidation.isValid}
               >
@@ -750,8 +750,8 @@ export default function Login() {
             </div>
 
             <Button
-              variant="primary3"
-              className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+              variant="hero"
+              className="w-full mt-10"
               type="submit"
               disabled={isLoading}
             >
@@ -826,8 +826,8 @@ export default function Login() {
             <PasswordRequirements checks={passwordValidation.checks} />
 
             <Button
-              variant="primary3"
-              className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+              variant="hero"
+              className="w-full mt-10"
               type="submit"
               disabled={isLoading || !passwordValidation.isValid}
             >
@@ -894,8 +894,8 @@ export default function Login() {
               </p>
 
               <Button
-                variant="primary3"
-                className="w-full rounded-full bg-sky-400 text-white font-raleway font-semibold hover:bg-primary3 transition-colors duration-300"
+                variant="hero"
+                className="w-full"
                 onClick={handleSuccessModalClose}
               >
                 Continue to Login
