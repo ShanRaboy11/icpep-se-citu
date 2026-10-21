@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "../../components/skeleton";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -101,11 +102,8 @@ export function FAQSection() {
           <div className="space-y-4">
             {loading
               ? [1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="border-b border-gray-300/80 pb-6 animate-pulse"
-                  >
-                    <div className="h-7 w-3/4 bg-primary3/10 rounded-md" />
+                  <div key={i} className="border-b border-gray-300/80 pb-6">
+                    <Skeleton className="h-7 w-3/4" />
                   </div>
                 ))
               : faqs.map((faq, index) => (

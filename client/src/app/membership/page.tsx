@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton, useDelayedFlag } from "../components/skeleton";
 import { useEffect, useState, type FC } from "react";
 import Header from "../components/header";
 import Footer from "../components/footer";
@@ -16,6 +17,7 @@ const MembershipPage: FC = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [registrationUrl, setRegistrationUrl] = useState("");
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(loading);
 
   useEffect(() => {
     const load = async () => {
@@ -63,6 +65,17 @@ const MembershipPage: FC = () => {
                 </>
               }
             />
+
+            {loading && (
+              <div
+                data-skeleton-hidden={showSkeleton ? undefined : ""}
+                className="flex flex-col items-center justify-center gap-8 lg:flex-row"
+              >
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-120 w-full max-w-md rounded-3xl lg:w-1/3" />
+                ))}
+              </div>
+            )}
 
             {!loading && tiers.length > 0 && (
               <div className="w-full">

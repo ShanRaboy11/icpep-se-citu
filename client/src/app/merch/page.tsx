@@ -1,5 +1,7 @@
 "use client";
 
+import { MerchCardSkeleton } from "../components/skeleton-cards";
+import { readCache, writeCache } from "../utils/cached-fetch";
 import { useEffect, useState, type FC } from "react";
 import Header from "../components/header";
 import Footer from "../components/footer";
@@ -29,7 +31,7 @@ const formatPrice = (prices: ApiMerchItem["prices"]): string => {
 const mapMerchItem = (item: ApiMerchItem): MerchItem => ({
   name: item.name,
   description: item.description,
-  imageSrc: item.image || "/content/gle.avif",
+  imageSrc: item.image || "",
   price: formatPrice(item.prices),
   status: "Available",
   buyLink: item.orderLink,
@@ -42,11 +44,16 @@ const MerchPage: FC = () => {
 
   useEffect(() => {
     const fetchMerch = async () => {
+      const cached = readCache<MerchItem[]>("merch-list");
+      if (cached) {
+        setMerchandise(cached);
+        setLoading(false);
+      }
       try {
         const items = await merchService.getAll();
-        setMerchandise(
-          items.filter((item) => item.isActive).map(mapMerchItem),
-        );
+        const mapped = items.filter((item) => item.isActive).map(mapMerchItem);
+        setMerchandise(mapped);
+        writeCache("merch-list", mapped);
       } catch {
       } finally {
         setLoading(false);
@@ -81,18 +88,7 @@ const MerchPage: FC = () => {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
               >
                 {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="rounded-2xl overflow-hidden border border-gray-100 shadow-md animate-pulse"
-                  >
-                    <div className="aspect-square bg-gray-100" />
-                    <div className="p-6 space-y-3">
-                      <div className="h-5 w-2/3 bg-gray-100 rounded-md" />
-                      <div className="h-4 w-full bg-gray-100 rounded-md" />
-                      <div className="h-4 w-1/2 bg-gray-100 rounded-md" />
-                      <div className="h-12 w-full bg-gray-100 rounded-lg mt-4" />
-                    </div>
-                  </div>
+                  <MerchCardSkeleton key={i} />
                 ))}
               </div>
             ) : merchandise.length === 0 ? (

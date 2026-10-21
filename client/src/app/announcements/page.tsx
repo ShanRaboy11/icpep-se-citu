@@ -1,5 +1,8 @@
 "use client";
 
+import { useDelayedFlag } from "../components/skeleton";
+import { AnnouncementCardSkeleton } from "../components/skeleton-cards";
+import { readCache, writeCache } from "../utils/cached-fetch";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AnnouncementCard } from "./components/announcement-card";
@@ -27,7 +30,6 @@ import BackButton from "../components/back-button";
 import Button from "../components/button";
 import { CHAPTER_FOUNDED_YEAR } from "../utils/site";
 import PageHeader from "../components/page-header";
-import { LoadingIndicator } from "@/app/components/loading";
 
 interface Announcement {
   _id: string;
@@ -72,6 +74,7 @@ export default function AnnouncementsPage() {
   const [activeTab, setActiveTab] = useState<string>("All");
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(loading);
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,17 +91,24 @@ export default function AnnouncementsPage() {
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
+      const cached = readCache<Announcement[]>("announcements-list");
+      if (cached) {
+        setAnnouncements(cached);
+        setLoading(false);
+      }
       try {
-        setLoading(true);
+        if (!cached) setLoading(true);
         const response = await announcementService.getAnnouncements({
           isPublished: true,
           limit: 100,
           sort: "-publishDate",
         });
-        if (response.success && response.data)
+        if (response.success && response.data) {
           setAnnouncements(response.data as Announcement[]);
+          writeCache("announcements-list", response.data);
+        }
       } catch {
-        setError("Failed to load.");
+        if (!cached) setError("Failed to load.");
       } finally {
         setLoading(false);
       }
@@ -523,7 +533,11 @@ export default function AnnouncementsPage() {
 
             {/* announcement list */}
             {loading ? (
-              <LoadingIndicator label="Loading announcements..." className="py-16" />
+              <div data-skeleton-hidden={showSkeleton ? undefined : ""}>
+                {[1, 2, 3].map((i) => (
+                  <AnnouncementCardSkeleton key={i} />
+                ))}
+              </div>
             ) : (
               <div ref={listTopRef} className="pb-14 max-w-4xl mx-auto">
                 {filteredAnnouncements.length > 0 ? (

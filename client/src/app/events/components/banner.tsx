@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/app/components/skeleton";
 import { useState } from "react";
 import Image from "next/image";
 
@@ -16,7 +17,7 @@ export default function EventBanner({ imageUrl, title }: Props) {
     <div className="relative aspect-square w-full rounded-3xl overflow-hidden ring-4 ring-white shadow-lg bg-gray-100">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="animate-pulse bg-gray-200 w-full h-full" />
+          <Skeleton className="h-full w-full rounded-none" />
         </div>
       )}
       <Image

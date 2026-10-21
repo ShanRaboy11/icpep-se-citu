@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const PREFIX = "icpep-cache:";
 
-const readCache = <T,>(key: string): T | null => {
+export const readCache = <T,>(key: string): T | null => {
   try {
     const raw = sessionStorage.getItem(PREFIX + key);
     if (!raw) return null;
@@ -16,7 +16,7 @@ const readCache = <T,>(key: string): T | null => {
   }
 };
 
-const writeCache = (key: string, data: unknown) => {
+export const writeCache = (key: string, data: unknown) => {
   try {
     sessionStorage.setItem(PREFIX + key, JSON.stringify({ savedAt: Date.now(), data }));
   } catch {

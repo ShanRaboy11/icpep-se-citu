@@ -1,5 +1,7 @@
 "use client";
 
+import { DetailCardSkeleton } from "../../components/skeleton-cards";
+import { Skeleton, useDelayedFlag } from "../../components/skeleton";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import AnnouncementDetails from "../components/details";
@@ -92,6 +94,7 @@ export default function AnnouncementDetailPage() {
     null,
   );
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(loading);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -128,21 +131,19 @@ export default function AnnouncementDetailPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="grow w-full max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="w-full h-64 rounded-lg bg-gray-100 animate-pulse" />
-              <div className="h-6 w-3/4 bg-gray-100 rounded animate-pulse" />
-              <div className="space-y-3 mt-4">
-                <div className="h-4 bg-gray-100 rounded animate-pulse" />
-                <div className="h-4 bg-gray-100 rounded animate-pulse w-5/6" />
-                <div className="h-4 bg-gray-100 rounded animate-pulse w-4/6" />
-              </div>
+        <main
+          data-skeleton-hidden={showSkeleton ? undefined : ""}
+          className="grow w-full max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-12"
+        >
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              <Skeleton className="h-64 w-full rounded-3xl sm:h-96" />
+              <Skeleton className="h-40 w-full rounded-3xl" />
+              <DetailCardSkeleton lines={5} />
             </div>
 
-            <div className="lg:col-span-1 space-y-6">
-              <div className="h-12 w-full bg-gray-100 rounded animate-pulse" />
-              <div className="h-48 bg-gray-100 rounded animate-pulse" />
+            <div className="lg:col-span-1">
+              <DetailCardSkeleton lines={4} />
             </div>
           </div>
         </main>

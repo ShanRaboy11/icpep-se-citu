@@ -1,5 +1,6 @@
 "use client";
 
+import { EventCardSkeleton } from "@/app/components/skeleton-cards";
 import { useRouter } from "next/navigation";
 import { Event } from "@/app/events/utils/event";
 import EventCard from "@/app/home/components/event-card";
@@ -41,23 +42,6 @@ const fetchFeaturedEvents = async (): Promise<Event[]> => {
 
 const CARD_WIDTH = "w-full sm:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.34rem)]";
 
-function EventCardSkeleton() {
-  return (
-    <div
-      className={`${CARD_WIDTH} flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white`}
-    >
-      <Skeleton className="h-48 w-full rounded-none" />
-      <div className="flex flex-col gap-3 p-5">
-        <Skeleton className="h-5 w-24 rounded-full" />
-        <Skeleton className="h-6 w-full" />
-        <Skeleton className="h-6 w-3/4" />
-        <Skeleton className="h-4 w-40" />
-        <Skeleton className="h-4 w-28" />
-      </div>
-    </div>
-  );
-}
-
 export function EventsSection() {
   const router = useRouter();
   const { data, loading } = useCachedFetch("home-events", fetchFeaturedEvents);
@@ -79,7 +63,7 @@ export function EventsSection() {
           {loading ? (
             <SkeletonGate loading>
               {[1, 2, 3].map((i) => (
-                <EventCardSkeleton key={i} />
+                <EventCardSkeleton key={i} className={CARD_WIDTH} />
               ))}
             </SkeletonGate>
           ) : events.length === 0 ? (

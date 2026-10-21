@@ -1,5 +1,7 @@
 "use client";
 
+import { DetailCardSkeleton } from "../../components/skeleton-cards";
+import { Skeleton, useDelayedFlag } from "../../components/skeleton";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Event } from "../utils/event";
@@ -50,6 +52,7 @@ export default function EventDetailPage() {
 
   const [rawEvent, setRawEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(loading);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -191,32 +194,20 @@ export default function EventDetailPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="flex grow w-full max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start w-full">
-            <div className="lg:col-span-2 lg:sticky lg:top-28 h-fit space-y-6 order-2 lg:order-1">
-              <div className="rounded-xl bg-gray-100 w-full h-64 animate-pulse" />
-              <div className="h-8 w-3/4 bg-gray-100 rounded animate-pulse" />
-              <div className="h-12 w-full bg-gray-100 rounded animate-pulse" />
+        <main
+          data-skeleton-hidden={showSkeleton ? undefined : ""}
+          className="flex grow w-full max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-12"
+        >
+          <div className="grid w-full grid-cols-1 items-start gap-8 lg:grid-cols-5 lg:gap-12">
+            <div className="order-2 hidden space-y-6 lg:order-1 lg:col-span-2 lg:block">
+              <Skeleton className="aspect-square w-full rounded-3xl" />
+              <Skeleton className="h-8 w-40 rounded-full" />
+              <Skeleton className="h-56 w-full rounded-3xl" />
             </div>
 
-            <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
-              <div className="h-8 w-1/3 bg-gray-100 rounded animate-pulse" />
-              <div className="h-12 w-full bg-gray-100 rounded animate-pulse" />
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
-              </div>
-
-              <div className="space-y-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-6 bg-gray-100 rounded animate-pulse"
-                  />
-                ))}
-              </div>
+            <div className="order-1 space-y-8 lg:order-2 lg:col-span-3">
+              <Skeleton className="h-64 w-full rounded-3xl" />
+              <DetailCardSkeleton lines={5} />
             </div>
           </div>
         </main>

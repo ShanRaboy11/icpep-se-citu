@@ -1,5 +1,7 @@
 "use client";
 
+import { EventCardSkeleton } from "../components/skeleton-cards";
+import { readCache, writeCache } from "../utils/cached-fetch";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { Event } from "./utils/event";
@@ -82,8 +84,13 @@ export default function EventsListPage() {
 
   useEffect(() => {
     const fetchEvents = async () => {
+      const cached = readCache<Event[]>("events-list");
+      if (cached) {
+        setEvents(cached);
+        setIsLoading(false);
+      }
       try {
-        setIsLoading(true);
+        if (!cached) setIsLoading(true);
         const response = await eventService.getEvents({
           isPublished: true,
           sort: "-eventDate",
@@ -179,9 +186,10 @@ export default function EventsListPage() {
           });
 
           setEvents(transformedEvents as Event[]);
+          writeCache("events-list", transformedEvents);
         }
       } catch {
-        setError("Failed to load events. Please try again later.");
+        if (!cached) setError("Failed to load events. Please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -629,21 +637,7 @@ export default function EventsListPage() {
                   className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 items-stretch"
                 >
                   {Array.from({ length: 6 }).map((_, idx) => (
-                    <div
-                      key={idx}
-                      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 shadow-lg animate-pulse"
-                    >
-                      <div className="relative h-48 bg-gray-200" />
-                      <div className="flex flex-1 flex-col p-6 bg-white">
-                        <div className="h-4 w-32 bg-gray-200 rounded mb-3" />
-                        <div className="h-6 w-48 bg-gray-200 rounded mb-2" />
-                        <div className="h-4 w-full bg-gray-100 rounded mb-6" />
-                        <div className="mt-auto flex gap-2">
-                          <div className="h-8 w-24 bg-gray-200 rounded" />
-                          <div className="h-8 w-32 bg-gray-200 rounded ml-auto" />
-                        </div>
-                      </div>
-                    </div>
+                    <EventCardSkeleton key={idx} />
                   ))}
                 </div>
               ) : error ? (

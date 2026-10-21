@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-export function Skeleton({ className = "" }: { className?: string }) {
-  return <div aria-hidden className={`skeleton-block rounded-lg ${className}`} />;
+export function Skeleton({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
+  return <div aria-hidden style={style} className={`skeleton-block rounded-lg ${className}`} />;
 }
 
 export function useDelayedFlag(active: boolean, delay = 450) {

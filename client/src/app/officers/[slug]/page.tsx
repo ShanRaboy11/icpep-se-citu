@@ -1,5 +1,8 @@
 "use client";
 
+import { useDelayedFlag } from "../../components/skeleton";
+import { OfficerCardSkeleton } from "../../components/skeleton-cards";
+import { readCache, writeCache } from "../../utils/cached-fetch";
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
@@ -13,7 +16,6 @@ import { departments } from "../utils/officers";
 import { formatOfficerName, toTitleCase } from "../utils/format-name";
 import officerService from "../../services/officer";
 import officerTermService from "../../services/officerTerm";
-import { LoadingIndicator } from "@/app/components/loading";
 import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 interface DisplayOfficer {
@@ -90,6 +92,7 @@ const OfficersPage = () => {
 
   const [officers, setOfficers] = useState<DisplayOfficer[]>([]);
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(loading);
 
   useEffect(() => {
     if (!meta) {
@@ -145,11 +148,20 @@ const OfficersPage = () => {
       }));
     };
 
-    setLoading(true);
+    const cacheKey = `officers:${slug}:${year ?? "live"}`;
+    const cached = readCache<DisplayOfficer[]>(cacheKey);
+    if (cached) {
+      setOfficers(cached);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
     (year ? fetchArchived() : fetchLive())
-      .then((list) =>
-        setOfficers(sortByRank(list, isCouncil ? councilRank : committeeRank)),
-      )
+      .then((list) => {
+        const sorted = sortByRank(list, isCouncil ? councilRank : committeeRank);
+        setOfficers(sorted);
+        writeCache(cacheKey, sorted);
+      })
       .catch((error) => {
         setOfficers([]);
       })
@@ -220,7 +232,14 @@ const OfficersPage = () => {
             {/* officers */}
             <div className="w-full mb-24">
               {loading ? (
-                <LoadingIndicator label="Loading officers..." className="py-16" />
+                <div
+                  data-skeleton-hidden={showSkeleton ? undefined : ""}
+                  className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-8 justify-items-center"
+                >
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <OfficerCardSkeleton key={i} />
+                  ))}
+                </div>
               ) : officers.length === 0 ? (
                 <div className="py-20 text-center">
                   <p className="text-gray-400 font-raleway text-lg">

@@ -1,5 +1,6 @@
 "use client";
 
+import { Skeleton } from "@/app/components/skeleton";
 import { motion } from "framer-motion";
 import FallbackImage from "@/app/components/fallback-image";
 
@@ -88,9 +89,9 @@ export const TierCard = ({
         <div className="flex justify-start items-center space-x-4 h-30 pl-2">
           {loading
             ? [1, 2, 3].map((i) => (
-                <div
+                <Skeleton
                   key={i}
-                  className="rounded-2xl bg-white/40 animate-pulse border border-white/20"
+                  className="rounded-2xl!"
                   style={{
                     width: `${logoContainerSize}px`,
                     height: `${logoContainerSize}px`,

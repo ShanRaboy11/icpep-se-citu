@@ -1,6 +1,7 @@
 // components/event-card.tsx
 "use client";
 
+import { Skeleton } from "@/app/components/skeleton";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
@@ -53,7 +54,7 @@ export default function EventCard({ event }: Props) {
         {/* Image skeleton */}
         {!imgLoaded && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <div className="h-full w-full animate-pulse bg-gray-200" />
+            <Skeleton className="h-full w-full rounded-none" />
           </div>
         )}
 
