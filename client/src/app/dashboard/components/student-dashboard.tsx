@@ -148,7 +148,7 @@ export default function StudentDashboard() {
   }, []);
 
   if (loading) {
-    return <LoadingScreen showEntrance={false} />;
+    return <LoadingScreen />;
   }
 
   const isMember = !!user?.membershipStatus?.isMember;

@@ -33,7 +33,7 @@ export default function RequireRole({
   }, [router, roles, redirectTo]);
 
   if (!authorized) {
-    return <LoadingScreen showEntrance={false} />;
+    return <LoadingScreen />;
   }
 
   return <>{children}</>;

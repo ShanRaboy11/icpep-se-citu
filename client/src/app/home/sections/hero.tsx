@@ -86,6 +86,7 @@ const Hero = () => {
             src="/brand/icpep-logo.avif"
             alt="ICpEP Logo"
             fill
+            sizes="112px"
             priority
             className="object-contain drop-shadow-[0_15px_25px_rgba(0,53,153,0.3)] transition-transform duration-500 group-hover:scale-110"
           />

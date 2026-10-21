@@ -993,7 +993,7 @@ export default function UsersListPage() {
       : 0;
 
   if (isLoading) {
-    return <LoadingScreen showEntrance={false} />;
+    return <LoadingScreen />;
   }
 
   return (

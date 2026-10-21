@@ -29,7 +29,7 @@ export default function DashboardPage() {
   }, [router]);
 
   if (!role) {
-    return <LoadingScreen showEntrance={false} />;
+    return <LoadingScreen />;
   }
 
   if (role === "admin") return <OfficerDashboard variant="admin" />;

@@ -261,7 +261,7 @@ export default function OfficerDashboard({
   };
 
   if (loading) {
-    return <LoadingScreen showEntrance={false} />;
+    return <LoadingScreen />;
   }
 
   // /create/* and /users only admit council officers and admins, so the

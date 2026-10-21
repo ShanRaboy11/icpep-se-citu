@@ -59,6 +59,7 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
                 src={point.imageUrl}
                 alt={point.title}
                 fill
+                sizes="96px"
                 className="object-contain"
               />
             </div>

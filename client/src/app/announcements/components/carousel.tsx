@@ -66,6 +66,7 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
                 src={url}
                 alt={`Gallery image ${index + 1}`}
                 fill
+                sizes="(min-width: 1024px) 66vw, 100vw"
                 className="object-cover"
               />
             </div>

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { preconnect } from "react-dom";
 import { Rubik, Raleway } from "next/font/google";
-import FirstVisitLoader from "./components/first-visit-loader";
 import ApiErrorNotice from "./components/api-error-notice";
 import ResponsiveTableToggle from "./components/responsive-table-toggle";
 import MaintenanceGate from "./components/maintenance-gate";
@@ -59,6 +58,7 @@ export default async function RootLayout({
 }>) {
   const contact = await fetchSiteContact();
 
+  preconnect("https://res.cloudinary.com");
   try {
     preconnect(new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").origin);
   } catch {
@@ -73,10 +73,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(buildOrganizationJsonLd(contact)) }}
         />
 
-        {/* First visit loading with entrance animation */}
-        <FirstVisitLoader />
 
-        {/* Regular content - app/loading.jsx handles route changes automatically */}
         <MaintenanceGate>{children}</MaintenanceGate>
         <ApiErrorNotice />
         <ResponsiveTableToggle />

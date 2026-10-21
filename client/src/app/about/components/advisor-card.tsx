@@ -40,6 +40,7 @@ const AdvisorCard: FC<AdvisorCardProps> = ({
               fallback={placeholderPhoto(name)}
               alt={name}
               fill
+              sizes="(min-width: 1024px) 400px, 90vw"
               className="object-contain object-bottom drop-shadow-2xl"
             />
           </div>
@@ -50,6 +51,7 @@ const AdvisorCard: FC<AdvisorCardProps> = ({
           fallback={placeholderPhoto(name)}
           alt={name}
           fill
+          sizes="(min-width: 1024px) 400px, 90vw"
           className="object-cover object-top transition-transform duration-500 ease-in-out group-hover:scale-105"
         />
       )}

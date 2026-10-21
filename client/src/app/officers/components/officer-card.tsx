@@ -84,6 +84,7 @@ const OfficerCard: FC<OfficerCardProps> = ({
                 fallback={placeholderPhoto(name)}
                 alt={name}
                 fill
+                sizes="(min-width: 1280px) 280px, 45vw"
                 className="object-contain object-bottom drop-shadow-2xl"
               />
             </div>

@@ -56,6 +56,7 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
                   src={point.iconUrl}
                   alt={point.title}
                   fill
+                  sizes="96px"
                   className="object-contain"
                 />
               </div>

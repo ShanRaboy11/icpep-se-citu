@@ -201,6 +201,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
             src="/brand/icpep-logo.avif"
             alt="ICpEP Logo"
             fill
+            sizes="96px"
             className="object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.4)]"
           />
         </div>
@@ -223,6 +224,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
                 src={value.iconUrl}
                 alt={value.name}
                 fill
+                sizes="96px"
                 className="object-contain"
               />
             </div>
