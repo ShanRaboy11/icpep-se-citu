@@ -1,10 +1,10 @@
 "use client";
 
+import { FormCardSkeleton } from "@/app/components/skeleton-cards";
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Check } from "lucide-react";
 import RemoveButton from "@/app/components/remove-button";
-import { LoadingIndicator } from "@/app/components/loading";
 import siteService, { PhotoSection } from "@/app/services/site";
 import { errorMessage } from "@/app/services/api-client";
 import { DEFAULT_ABOUT_PHOTOS, DEFAULT_JOIN_PHOTOS, resolvePhotos } from "@/app/utils/site-photos";
@@ -125,9 +125,7 @@ export default function PhotosCard() {
       </div>
 
       {loading ? (
-        <div className="py-10">
-          <LoadingIndicator label="Loading..." />
-        </div>
+        <FormCardSkeleton />
       ) : (
         <div className="space-y-10">
           {SECTIONS.map((section) => (

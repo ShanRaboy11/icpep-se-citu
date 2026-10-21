@@ -1,9 +1,9 @@
 "use client";
 
+import { FormCardSkeleton } from "@/app/components/skeleton-cards";
 import React, { useEffect, useState } from "react";
 import Button from "@/app/components/button";
 import RemoveButton from "@/app/components/remove-button";
-import { LoadingIndicator } from "@/app/components/loading";
 import { Check, ChevronDown, ChevronUp, Pencil, Plus } from "lucide-react";
 import faqService, { FAQData } from "@/app/services/faq";
 import { errorMessage } from "@/app/services/api-client";
@@ -112,9 +112,7 @@ export default function FaqCard() {
       </div>
 
       {loading ? (
-        <div className="py-10">
-          <LoadingIndicator label="Loading..." />
-        </div>
+        <FormCardSkeleton />
       ) : (
         <div className="space-y-6">
           {faqs.length === 0 && !draft && (

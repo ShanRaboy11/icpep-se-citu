@@ -1,5 +1,6 @@
 "use client";
 
+import { FormCardSkeleton } from "@/app/components/skeleton-cards";
 import React, { useState, useEffect } from "react";
 import Sidebar from "@/app/create/components/sidebar";
 import Button from "@/app/components/button";
@@ -106,9 +107,7 @@ function MaintenancePageInner() {
                   </div>
 
                   {loading ? (
-                    <div className="py-16">
-                      <LoadingIndicator label="Loading settings..." />
-                    </div>
+                    <FormCardSkeleton fields={2} />
                   ) : (
                     <>
                       {maintenanceMode && (

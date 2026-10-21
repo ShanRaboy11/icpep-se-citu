@@ -1,5 +1,6 @@
 "use client";
 
+import { ListSkeleton } from "@/app/components/skeleton-cards";
 import { swapToFallback } from "@/app/components/fallback-image";
 import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useRef, useEffect } from "react";
@@ -1397,7 +1398,7 @@ export default function OfficersPage() {
 
                       {/* Table */}
                       {isLoadingList ? (
-                        <LoadingIndicator label="Loading officers..." className="py-16" />
+                        <ListSkeleton />
                       ) : displayedOfficers.length === 0 ? (
                         <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
                           <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
@@ -2012,7 +2013,7 @@ export default function OfficersPage() {
                       </div>
 
                       {archiveIsLoadingList ? (
-                        <LoadingIndicator label="Loading archive..." className="py-16" />
+                        <ListSkeleton />
                       ) : archiveFilteredItems.length === 0 ? (
                         <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
                           <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">

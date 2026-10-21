@@ -1,8 +1,8 @@
 "use client";
 
+import { FormCardSkeleton } from "@/app/components/skeleton-cards";
 import React, { useRef, useState, useEffect } from "react";
 import Button from "@/app/components/button";
-import { LoadingIndicator } from "@/app/components/loading";
 import { Check, ExternalLink, FileText, Upload } from "lucide-react";
 import siteService from "@/app/services/site";
 import { errorMessage } from "@/app/services/api-client";
@@ -70,9 +70,7 @@ export default function PrimerCard() {
       </div>
 
       {loading ? (
-        <div className="py-10">
-          <LoadingIndicator label="Loading..." />
-        </div>
+        <FormCardSkeleton />
       ) : (
         <div className="space-y-8">
           <div className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">

@@ -1,10 +1,10 @@
 "use client";
 
+import { FormCardSkeleton } from "@/app/components/skeleton-cards";
 import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useEffect } from "react";
 import Button from "@/app/components/button";
 import Dropdown from "@/app/components/dropdown";
-import { LoadingIndicator } from "@/app/components/loading";
 import { Check, Plus } from "lucide-react";
 import siteService, { ContactDetails } from "@/app/services/site";
 import { errorMessage } from "@/app/services/api-client";
@@ -75,9 +75,7 @@ export default function ContactCard() {
       </div>
 
       {loading ? (
-        <div className="py-10">
-          <LoadingIndicator label="Loading..." />
-        </div>
+        <FormCardSkeleton />
       ) : (
         <div className="space-y-8">
           <div className="space-y-6">

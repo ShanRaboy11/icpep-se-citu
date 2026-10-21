@@ -1,5 +1,6 @@
 "use client";
 
+import { ListSkeleton } from "@/app/components/skeleton-cards";
 import React, { useState, useEffect } from "react";
 import Sidebar from "@/app/create/components/sidebar";
 import Button from "@/app/components/button";
@@ -720,7 +721,7 @@ export default function MembershipPage() {
                   </div>
 
                   {isLoadingList ? (
-                    <LoadingIndicator label="Loading tiers..." className="py-16" />
+                    <ListSkeleton />
                   ) : tiers.length === 0 ? (
                     <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
                       <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">

@@ -1,5 +1,6 @@
 "use client";
 
+import { ListSkeleton } from "@/app/components/skeleton-cards";
 import { swapToFallback } from "@/app/components/fallback-image";
 import React, { useState, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -526,7 +527,7 @@ export default function AdvisorsPage() {
                   </div>
 
                   {isLoadingList ? (
-                    <LoadingIndicator label="Loading advisors..." className="py-16" />
+                    <ListSkeleton />
                   ) : publishedItems.length === 0 ? (
                     <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
                       <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
