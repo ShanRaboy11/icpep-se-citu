@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 export interface TestimonialCardProps {
   name: string;
@@ -35,7 +36,8 @@ export const TestimonialCard = ({
         transition={{ duration: 0.5, ease: "easeInOut" }}
       >
         <div className="relative h-24 w-24 sm:h-28 sm:w-28 rounded-full border-4 border-white bg-white shadow-md overflow-hidden">
-          <Image src={imageSrc} alt={name} fill className="object-cover" />
+          <FallbackImage src={imageSrc}
+          fallback={placeholderPhoto(name)} alt={name} fill className="object-cover" />
         </div>
       </motion.div>
 

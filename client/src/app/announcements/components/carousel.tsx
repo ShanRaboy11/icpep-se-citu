@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 
 interface CarouselProps {
   imageUrls: string[];
@@ -62,7 +62,7 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
               className="embla__slide relative h-64 sm:h-96 w-full"
               key={index}
             >
-              <Image
+              <FallbackImage
                 src={url}
                 alt={`Gallery image ${index + 1}`}
                 fill

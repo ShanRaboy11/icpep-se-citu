@@ -1,7 +1,7 @@
 "use client";
 
 import type { FC } from "react";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 import { Calendar, MapPin } from "lucide-react";
 
 interface EventCardProps {
@@ -35,16 +35,12 @@ export const EventCard: FC<EventCardProps> = ({
       className="flex flex-col rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 group cursor-pointer"
     >
       <div className="relative h-44 w-full overflow-hidden bg-slate-100">
-        <Image
+        <FallbackImage
           src={imageUrl}
           alt={title}
           fill
           sizes="(max-width: 768px) 100vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            // fallback if image not found
-            (e.target as HTMLImageElement).src = "/content/gle.avif";
-          }}
         />
         <div className="absolute top-4 right-4">
           <span

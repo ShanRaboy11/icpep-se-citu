@@ -1,5 +1,6 @@
 "use client";
 
+import { swapToFallback } from "@/app/components/fallback-image";
 import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -1174,6 +1175,7 @@ export default function EventsPage() {
                           <div className="relative group rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 h-56">
                             <img
                               src={previews[0]}
+                              onError={swapToFallback}
                               alt="preview"
                               className="w-full h-full object-cover"
                             />
@@ -1260,6 +1262,7 @@ export default function EventsPage() {
                                   >
                                     <img
                                       src={url}
+                                      onError={swapToFallback}
                                       alt="Gallery photo"
                                       className="w-full h-full object-cover"
                                     />
@@ -2109,6 +2112,7 @@ export default function EventsPage() {
                                       {item.coverImage ? (
                                         <img
                                           src={item.coverImage}
+                                          onError={swapToFallback}
                                           alt={item.title}
                                           className="w-full h-full object-cover"
                                         />

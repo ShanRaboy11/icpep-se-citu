@@ -1,5 +1,6 @@
 import React, { FC } from "react";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 import { shortPositionTitle } from "@/app/utils/department";
 
 interface OfficerCardProps {
@@ -78,8 +79,9 @@ const OfficerCard: FC<OfficerCardProps> = ({
             <div
               className="absolute bottom-0 left-1/2 -translate-x-1/2 z-10 w-[140%] h-[110%]"
             >
-              <Image
+              <FallbackImage
                 src={image}
+                fallback={placeholderPhoto(name)}
                 alt={name}
                 fill
                 className="object-contain object-bottom drop-shadow-2xl"

@@ -1,7 +1,8 @@
 "use client";
 
 import type { FC } from "react";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 import { User, Edit2, BadgeInfo } from "lucide-react";
 
 interface ProfileSummaryProps {
@@ -29,14 +30,12 @@ export const ProfileSummary: FC<ProfileSummaryProps> = ({
       <div className="flex items-center gap-4 mb-6">
         <div className="relative h-16 w-16 rounded-2xl overflow-hidden border-2 border-primary1 bg-slate-100 shrink-0">
           {imageUrl ? (
-            <Image
+            <FallbackImage
               src={imageUrl}
+              fallback={placeholderPhoto(name)}
               alt={name}
               fill
               className="object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/content/gle.avif";
-              }}
             />
           ) : (
             <div className="h-full w-full flex items-center justify-center text-primary1">

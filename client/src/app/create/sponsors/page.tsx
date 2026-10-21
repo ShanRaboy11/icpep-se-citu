@@ -1,5 +1,6 @@
 "use client";
 
+import { swapToFallback } from "@/app/components/fallback-image";
 import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
@@ -470,6 +471,7 @@ export default function SponsorsPage() {
                             <div className="relative group rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 h-56">
                               <img
                                 src={preview}
+                                onError={swapToFallback}
                                 alt="sponsor preview"
                                 className="w-full h-full object-contain p-6"
                               />
@@ -770,6 +772,7 @@ export default function SponsorsPage() {
                                         {item.image ? (
                                           <img
                                             src={item.image}
+                                            onError={swapToFallback}
                                             alt={item.name}
                                             className="w-full h-full object-contain p-1.5"
                                           />

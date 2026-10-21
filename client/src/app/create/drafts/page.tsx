@@ -1,5 +1,6 @@
 "use client";
 
+import { swapToFallback } from "@/app/components/fallback-image";
 import React, { useEffect, useState } from "react";
 import announcementService from "../../services/announcement";
 import eventService from "../../services/event";
@@ -382,6 +383,7 @@ export default function DraftsPage() {
                 {item.image ? (
                   <img
                     src={item.image}
+                    onError={swapToFallback}
                     alt={item.name}
                     className="w-full h-full object-cover"
                   />
@@ -437,6 +439,7 @@ export default function DraftsPage() {
                 {item.image ? (
                   <img
                     src={item.image}
+                    onError={swapToFallback}
                     alt={item.name}
                     className="w-full h-full object-cover"
                   />
@@ -489,6 +492,7 @@ export default function DraftsPage() {
                 {item.image ? (
                   <img
                     src={item.image}
+                    onError={swapToFallback}
                     alt={item.name}
                     className="w-full h-full object-contain p-1"
                   />

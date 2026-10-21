@@ -1,5 +1,6 @@
 "use client";
 
+import { swapToFallback } from "@/app/components/fallback-image";
 import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useRef, useEffect } from "react";
 import {
@@ -1113,6 +1114,7 @@ export default function OfficersPage() {
                             >
                               <img
                                 src={preview}
+                                onError={swapToFallback}
                                 alt="Preview"
                                 className="w-full h-full object-cover"
                               />
@@ -1598,6 +1600,7 @@ export default function OfficersPage() {
                             <div className="relative group rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 h-56">
                               <img
                                 src={archivePreview}
+                                onError={swapToFallback}
                                 alt="officer preview"
                                 className="w-full h-full object-cover"
                               />

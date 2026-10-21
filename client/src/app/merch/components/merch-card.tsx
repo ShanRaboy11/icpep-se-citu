@@ -3,7 +3,7 @@
 import { ShoppingBag } from "lucide-react";
 import type { FC } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 
 type MerchStatus = "Available" | "Coming Soon" | "Sold Out";
 
@@ -50,8 +50,8 @@ const MerchCard: FC<MerchCardProps> = ({
     >
       {/* Image */}
       <div className="relative w-full aspect-square bg-slate-100 overflow-hidden rounded-t-2xl">
-        <Image
-          src={imageSrc || "/content/gle.avif"}
+        <FallbackImage
+          src={imageSrc}
           alt={name}
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"

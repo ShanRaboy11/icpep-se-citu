@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 import {
   Announcement,
   formatDate,
@@ -20,7 +20,7 @@ export default function FeaturedAnnouncementCard({
   return (
     <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-2 lg:gap-12">
       <div className="relative h-60 w-full overflow-hidden rounded-2xl group order-first lg:order-last lg:h-80">
-        <Image
+        <FallbackImage
           src={announcement.imageUrl}
           alt={announcement.title}
           fill

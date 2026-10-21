@@ -1,5 +1,6 @@
 "use client";
 
+import { swapToFallback } from "@/app/components/fallback-image";
 import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -413,6 +414,7 @@ export default function FacultyPage() {
                         <div className="relative group rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 h-56">
                           <img
                             src={preview}
+                            onError={swapToFallback}
                             alt="faculty preview"
                             className="w-full h-full object-cover"
                           />
@@ -647,6 +649,7 @@ export default function FacultyPage() {
                                   <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
                                     <img
                                       src={item.image || placeholderPhoto(item.name, item.gender)}
+                                      onError={(e) => swapToFallback(e, placeholderPhoto(item.name, item.gender))}
                                       alt={item.name}
                                       className="w-full h-full object-cover"
                                     />

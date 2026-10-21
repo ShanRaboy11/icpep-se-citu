@@ -1,5 +1,6 @@
 import { FC } from "react";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 interface AdvisorCardProps {
   name: string;
@@ -34,8 +35,9 @@ const AdvisorCard: FC<AdvisorCardProps> = ({
         <>
           <div className="absolute bottom-0 left-1/2 h-[75%] w-[110%] -translate-x-1/2 rounded-t-full bg-white/20 backdrop-blur-sm" />
           <div className="absolute bottom-0 left-1/2 h-[95%] w-[130%] -translate-x-1/2">
-            <Image
+            <FallbackImage
               src={imageUrl}
+              fallback={placeholderPhoto(name)}
               alt={name}
               fill
               className="object-contain object-bottom drop-shadow-2xl"
@@ -43,8 +45,9 @@ const AdvisorCard: FC<AdvisorCardProps> = ({
           </div>
         </>
       ) : (
-        <Image
+        <FallbackImage
           src={imageUrl}
+          fallback={placeholderPhoto(name)}
           alt={name}
           fill
           className="object-cover object-top transition-transform duration-500 ease-in-out group-hover:scale-105"

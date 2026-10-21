@@ -1,6 +1,7 @@
 "use client";
 
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 import { useState } from "react";
 
 interface FacultyOfficerCardProps {
@@ -36,7 +37,7 @@ export default function FacultyOfficerCard({
         }`}
     >
       <div className="relative w-full h-full flex items-center justify-start overflow-hidden rounded-[14px] bg-linear-to-br from-(--primary1) to-(--primary3)">
-        <Image
+        <FallbackImage
           src="/brand/icpep-logo.avif"
           alt="ICPEP Logo"
           width={300}
@@ -50,8 +51,9 @@ export default function FacultyOfficerCard({
             isExpanded ? "translate-x-4 scale-105" : "translate-x-0 scale-100"
           }`}
         >
-          <Image
+          <FallbackImage
             src={image}
+            fallback={placeholderPhoto(name)}
             alt={name}
             width={200}
             height={300}

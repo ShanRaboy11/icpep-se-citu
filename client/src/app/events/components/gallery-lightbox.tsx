@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface GalleryLightboxProps {
@@ -77,7 +77,7 @@ export default function GalleryLightbox({
         className="relative z-0 flex h-full w-full items-center justify-center px-4 py-16 sm:px-20"
         onClick={onClose}
       >
-        <Image
+        <FallbackImage
           src={imageUrls[index]}
           alt={`Event photo ${index + 1}`}
           fill
@@ -109,7 +109,7 @@ export default function GalleryLightbox({
                   : "border-transparent opacity-50 hover:opacity-80"
               }`}
             >
-              <Image
+              <FallbackImage
                 src={url}
                 alt={`Thumbnail ${i + 1}`}
                 fill

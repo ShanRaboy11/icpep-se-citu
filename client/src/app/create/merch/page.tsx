@@ -1,5 +1,6 @@
 "use client";
 
+import { swapToFallback } from "@/app/components/fallback-image";
 import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "@/app/create/components/sidebar";
@@ -420,6 +421,7 @@ export default function MerchPage() {
                             <div className="relative group rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 h-56">
                               <img
                                 src={preview}
+                                onError={swapToFallback}
                                 alt="merch preview"
                                 className="w-full h-full object-contain p-4"
                               />
@@ -783,6 +785,7 @@ export default function MerchPage() {
                                       {item.image ? (
                                         <img
                                           src={item.image}
+                                          onError={swapToFallback}
                                           alt={item.name}
                                           className="w-full h-full object-cover"
                                         />

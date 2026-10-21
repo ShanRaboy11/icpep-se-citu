@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 import { Event } from "@/app/events/utils/event";
 import { CalendarPlus } from "lucide-react";
 
@@ -24,7 +24,7 @@ export default function EventCard({ event, hideRSVP = false }: Props) {
         href={`/events/${event.id}`}
         className="relative aspect-16/10 shrink-0 overflow-hidden block"
       >
-        <Image
+        <FallbackImage
           src={event.bannerImageUrl}
           alt={event.title}
           fill

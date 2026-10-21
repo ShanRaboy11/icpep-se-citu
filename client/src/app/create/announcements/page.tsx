@@ -1,5 +1,6 @@
 "use client";
 
+import { swapToFallback } from "@/app/components/fallback-image";
 import RemoveButton from "@/app/components/remove-button";
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -1126,6 +1127,7 @@ export default function AnnouncementsPage() {
                               >
                                 <img
                                   src={p}
+                                  onError={swapToFallback}
                                   alt={`preview-${i}`}
                                   className="w-full h-full object-cover"
                                 />

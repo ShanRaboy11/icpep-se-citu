@@ -1,5 +1,6 @@
 "use client";
 
+import { swapToFallback } from "@/app/components/fallback-image";
 import React, { useState, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Sidebar from "@/app/create/components/sidebar";
@@ -577,6 +578,7 @@ export default function AdvisorsPage() {
                                   <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
                                     <img
                                       src={item.image || placeholderPhoto(item.name, item.gender)}
+                                      onError={(e) => swapToFallback(e, placeholderPhoto(item.name, item.gender))}
                                       alt={item.name}
                                       className="w-full h-full object-cover"
                                     />

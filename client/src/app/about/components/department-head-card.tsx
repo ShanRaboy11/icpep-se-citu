@@ -1,7 +1,8 @@
 "use client";
 
 import { FC } from "react";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 interface FacultyMember {
   name: string;
@@ -30,8 +31,9 @@ const DepartmentHeadCard: FC<FacultyMember> = ({
 
         {/* photo */}
         <div className="relative w-36 h-36 sm:w-52 sm:h-52 rounded-full border-4 border-white bg-linear-to-b from-sky-100 to-sky-300 shadow-xl overflow-hidden">
-          <Image
+          <FallbackImage
             src={imageUrl}
+            fallback={placeholderPhoto(name)}
             alt={`Profile of ${name}`}
             fill
             sizes="(max-width: 640px) 144px, 208px"

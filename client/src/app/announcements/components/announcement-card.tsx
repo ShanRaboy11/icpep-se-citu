@@ -1,4 +1,4 @@
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 import { getTypeColor, formatDate } from "../utils/announcements";
 
 // Props for the card; imageUrl is optional because some announcements may not include one
@@ -34,8 +34,8 @@ export function AnnouncementCard({
     >
       <div className="md:flex h-full">
         <div className="relative md:w-1/3 h-48 md:h-full">
-          <Image
-            src={imageUrl ?? "/content/gle.avif"}
+          <FallbackImage
+            src={imageUrl}
             alt={title}
             fill
             sizes="(min-width: 768px) 33vw, 100vw"

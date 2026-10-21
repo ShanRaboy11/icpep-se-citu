@@ -1,5 +1,5 @@
 import CarouselGallery from "./carousel";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 
 interface AnnouncementMediaProps {
   title: string;
@@ -45,7 +45,7 @@ export default function AnnouncementMedia({
   if (allImages.length === 1) {
     return (
       <div className="bg-white rounded-3xl shadow-lg overflow-hidden relative h-64 sm:h-96 w-full">
-        <Image
+        <FallbackImage
           src={allImages[0]}
           alt={title}
           fill

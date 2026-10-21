@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 import { useState } from "react";
 import { FaGithub } from "react-icons/fa";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/solid";
@@ -67,8 +69,9 @@ export default function DeveloperCard({
 
           <div className="relative w-[90%] ml-auto mt-3 sm:mt-3 lg:mt-5 -mr-8">
             {imageSrc ? (
-              <Image
+              <FallbackImage
                 src={imageSrc}
+                fallback={placeholderPhoto(name)}
                 alt={`${name}`}
                 width={300}
                 height={300}

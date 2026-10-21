@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 
 export type Tier = "platinum" | "gold" | "silver" | "bronze";
 
@@ -110,7 +110,7 @@ export const TierCard = ({
                       height: `${logoContainerSize}px`,
                     }}
                   >
-                    <Image
+                    <FallbackImage
                       src={partner.logo}
                       alt={`${partner.name} logo`}
                       width={data.logoSize}
