@@ -26,10 +26,14 @@ type MenuItem = {
 const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   const router = useRouter();
   const [activeItem, setActiveItem] = useState<string | null>(null);
+  const [activeSub, setActiveSub] = useState<string | null>(null);
+  const [mobileSub, setMobileSub] = useState<string | null>(null);
 
   const getNavItems = (): MenuItem[] => {
     const baseItems: MenuItem[] = [
-      { label: "Home", href: "/home" },
+      userRole === "guest"
+        ? { label: "Home", href: "/home" }
+        : { label: "Dashboard", href: "/dashboard" },
       { label: "About", href: "/about" },
 
       {
@@ -54,15 +58,40 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
       baseItems.push({
         label: "Manage",
         children: [
-          { label: "Announcements", href: "/create/announcements" },
-          { label: "Events", href: "/create/events" },
-          { label: "Testimonials", href: "/create/testimonials" },
-          { label: "Sponsors", href: "/create/sponsors" },
-          { label: "Officers", href: "/create/officers" },
-          { label: "Advisors", href: "/create/advisors" },
-          { label: "Faculty", href: "/create/faculty" },
-          { label: "Merch", href: "/create/merch" },
-          { label: "Membership", href: "/create/membership" },
+          {
+            label: "Engagement",
+            children: [
+              { label: "Announcements", href: "/create/announcements" },
+              { label: "Events", href: "/create/events" },
+            ],
+          },
+          {
+            label: "Community",
+            children: [
+              { label: "Testimonials", href: "/create/testimonials" },
+              { label: "Sponsors", href: "/create/sponsors" },
+              { label: "Officers", href: "/create/officers" },
+              { label: "Advisors", href: "/create/advisors" },
+              { label: "Faculty", href: "/create/faculty" },
+            ],
+          },
+          {
+            label: "Commerce",
+            children: [
+              { label: "Merch", href: "/create/merch" },
+              { label: "Membership", href: "/create/membership" },
+            ],
+          },
+          {
+            label: "Admin",
+            children: [
+              { label: "Drafts", href: "/create/drafts" },
+              { label: "Site Content", href: "/create/content" },
+              ...(userRole === "admin"
+                ? [{ label: "Maintenance", href: "/create/maintenance" }]
+                : []),
+            ],
+          },
           { label: "Users", href: "/users" },
         ],
       });
@@ -91,7 +120,10 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   // screens also emit an emulated hover right before the click, which used to
   // open a submenu and have the click toggle it shut again straight away.
   const handleHoverEnter = (e: React.PointerEvent, label: string) => {
-    if (e.pointerType === "mouse") setActiveItem(label);
+    if (e.pointerType === "mouse") {
+      setActiveItem(label);
+      setActiveSub(null);
+    }
   };
 
   const handleHoverLeave = (e: React.PointerEvent) => {
@@ -107,6 +139,8 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
     // On wide screens the options panel is already showing, so a click keeps
     // it open; on phones the click is what expands and collapses the submenu.
     const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+    setActiveSub(null);
+    setMobileSub(null);
     setActiveItem((current) =>
       !isDesktop && current === item.label ? null : item.label,
     );
@@ -115,6 +149,11 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
   const activeChildren = activeItem
     ? navItems.find((item) => item.label === activeItem)?.children
     : undefined;
+  const isNested = Boolean(activeChildren?.some((child) => child.children));
+  const shownSub =
+    activeSub === null
+      ? activeChildren?.find((child) => child.children)
+      : activeChildren?.find((child) => child.label === activeSub && child.children);
 
   return (
     <div className="w-full min-h-screen bg-[#00609c] text-white font-rubik relative overflow-hidden flex flex-col">
@@ -269,21 +308,48 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
               </div>
 
               {activeItem === item.label && item.children && (
-                <div
-                  className={`md:hidden grid gap-x-4 pl-5 mt-1 mb-2 border-l-2 border-[#00a7ee]/30 animate-in slide-in-from-top-2 duration-200 ${
-                    item.children.length > 4 ? "grid-cols-2" : "grid-cols-1"
-                  }`}
-                >
-                  {item.children.map((child) => (
-                    <Link
-                      key={child.label}
-                      href={child.href || "#"}
-                      onClick={() => onExit()}
-                      className="py-1.5 text-base text-white/80 hover:text-[#00a7ee] cursor-pointer font-raleway"
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
+                <div className="md:hidden mt-1 mb-2 flex flex-col gap-1 border-l-2 border-[#00a7ee]/30 pl-5 animate-in slide-in-from-top-2 duration-200">
+                  {item.children.map((child) =>
+                    child.children ? (
+                      <div key={child.label}>
+                        <button
+                          type="button"
+                          onClick={() => setMobileSub((current) => (current === child.label ? null : child.label))}
+                          className="flex w-full cursor-pointer items-center justify-between py-1.5 text-left font-raleway text-xl text-white/80"
+                        >
+                          <span className={mobileSub === child.label ? "text-[#00a7ee]" : undefined}>{child.label}</span>
+                          <ChevronRight
+                            className={`h-4 w-4 text-white/50 transition-transform duration-300 ${
+                              mobileSub === child.label ? "rotate-90 text-[#00a7ee]" : ""
+                            }`}
+                          />
+                        </button>
+                        {mobileSub === child.label && (
+                          <div className="mb-1 ml-3 flex flex-col border-l border-white/15 pl-4 animate-in slide-in-from-top-1 duration-200">
+                            {child.children.map((page) => (
+                              <Link
+                                key={page.label}
+                                href={page.href || "#"}
+                                onClick={() => onExit()}
+                                className="cursor-pointer py-1.5 font-raleway text-base text-white/70 hover:text-[#00a7ee]"
+                              >
+                                {page.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Link
+                        key={child.label}
+                        href={child.href || "#"}
+                        onClick={() => onExit()}
+                        className="cursor-pointer py-1.5 font-raleway text-xl text-white/80 hover:text-[#00a7ee]"
+                      >
+                        {child.label}
+                      </Link>
+                    ),
+                  )}
                 </div>
               )}
             </div>
@@ -300,6 +366,67 @@ const Menu: React.FC<MenuProps> = ({ userRole, onExit }) => {
                 Welcome to your official ICPEP SE hub. Explore our events,
                 manage your membership, and connect with the community.
               </p>
+            </div>
+          ) : activeChildren && isNested ? (
+            <div className="animate-in fade-in slide-in-from-left-4 duration-300">
+              <h3 className="text-white/50 text-sm font-raleway mb-6 uppercase tracking-wider">
+                {activeItem}
+              </h3>
+              <div className="flex gap-12 lg:gap-16">
+                <div className="flex min-w-48 flex-col gap-6">
+                  {activeChildren.map((child) =>
+                    child.children ? (
+                      <button
+                        key={child.label}
+                        type="button"
+                        onPointerEnter={(e) => e.pointerType === "mouse" && setActiveSub(child.label)}
+                        onClick={() => setActiveSub(child.label)}
+                        className={`group flex cursor-pointer items-center justify-between gap-6 text-left text-2xl font-raleway font-light transition-colors ${
+                          shownSub?.label === child.label ? "text-[#00a7ee]" : "text-white hover:text-[#00a7ee]"
+                        }`}
+                      >
+                        {child.label}
+                        <ChevronRight
+                          className={`h-5 w-5 transition-opacity duration-300 ${
+                            shownSub?.label === child.label ? "opacity-100" : "opacity-0"
+                          }`}
+                        />
+                      </button>
+                    ) : (
+                      <Link
+                        key={child.label}
+                        href={child.href || "#"}
+                        onClick={() => onExit()}
+                        onPointerEnter={(e) => e.pointerType === "mouse" && setActiveSub("")}
+                        className="cursor-pointer text-2xl font-raleway font-light text-white transition-colors hover:text-[#00a7ee]"
+                      >
+                        {child.label}
+                      </Link>
+                    ),
+                  )}
+                </div>
+
+                {shownSub?.children && (
+                  <div
+                    key={shownSub.label}
+                    className="flex flex-col gap-6 border-l border-white/15 pl-12 lg:pl-16 animate-in fade-in slide-in-from-left-2 duration-200"
+                  >
+                    {shownSub.children.map((page) => (
+                      <Link
+                        key={page.label}
+                        href={page.href || "#"}
+                        onClick={() => onExit()}
+                        className="group flex w-fit cursor-pointer items-center gap-4"
+                      >
+                        <div className="h-px w-12 bg-white/30 transition-all duration-300 group-hover:w-20 group-hover:bg-[#00a7ee]" />
+                        <span className="text-2xl font-raleway font-light text-white transition-colors group-hover:text-[#00a7ee]">
+                          {page.label}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ) : activeChildren ? (
             <div className="animate-in fade-in slide-in-from-left-4 duration-300">
