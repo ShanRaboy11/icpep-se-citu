@@ -2,14 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 
 interface CardStackProps {
   imageUrls: string[];
 }
 
 export function CardStack({ imageUrls }: CardStackProps) {
-  const [cards, setCards] = useState(imageUrls);
+  const [cards, setCards] = useState(() => imageUrls.map((url, id) => ({ url, id })));
   const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
@@ -28,12 +28,12 @@ export function CardStack({ imageUrls }: CardStackProps) {
   return (
     <div className="relative h-full w-full flex items-center justify-center">
       <AnimatePresence initial={false}>
-        {cards.map((url, index) => {
+        {cards.map(({ url, id }, index) => {
           if (index > 2) return null;
 
           return (
             <motion.div
-              key={url}
+              key={id}
               className="absolute h-full w-full overflow-hidden rounded-2xl border border-white/30 bg-secondary1 shadow-2xl"
               style={{ transformOrigin: "center center" }}
               initial={{ scale: 0.95, opacity: 0 }}
@@ -55,7 +55,7 @@ export function CardStack({ imageUrls }: CardStackProps) {
                 damping: 30,
               }}
             >
-              <Image
+              <FallbackImage
                 src={url}
                 alt={`Image ${index + 1}`}
                 fill

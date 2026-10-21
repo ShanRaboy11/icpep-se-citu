@@ -1,8 +1,8 @@
 import express from 'express';
-import { getSiteSettings, updateSiteSettings, updatePrimer, updateContact } from '../controllers/siteSettings.controller';
+import { getSiteSettings, updateSiteSettings, updatePrimer, updateContact, setSitePhoto, clearSitePhoto } from '../controllers/siteSettings.controller';
 import { getPublicStats } from '../controllers/stats.controller';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.middleware';
-import { uploadPdf, MAX_PDF_SIZE_MB } from '../middleware/upload.middleware';
+import { upload, uploadPdf, MAX_PDF_SIZE_MB } from '../middleware/upload.middleware';
 
 const router = express.Router();
 
@@ -31,5 +31,23 @@ router.put(
   },
   updatePrimer
 );
+
+router.put(
+  '/photos/:section/:slot',
+  authenticateToken,
+  authorizeRoles('council-officer'),
+  (req, res, next) => {
+    upload.single('image')(req, res, (error) => {
+      if (error) {
+        res.status(400).json({ success: false, message: 'Upload a JPEG, PNG, WebP or GIF up to 5MB' });
+        return;
+      }
+      next();
+    });
+  },
+  setSitePhoto
+);
+
+router.delete('/photos/:section/:slot', authenticateToken, authorizeRoles('council-officer'), clearSitePhoto);
 
 export default router;

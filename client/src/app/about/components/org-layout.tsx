@@ -2,6 +2,7 @@
 
 import { FC } from "react";
 import Image from "next/image";
+import FallbackImage from "@/app/components/fallback-image";
 import { SectionType } from "../utils/types";
 
 const OrgLayout: FC<{ section: SectionType }> = ({ section }) => {
@@ -9,7 +10,7 @@ const OrgLayout: FC<{ section: SectionType }> = ({ section }) => {
     ? section.imageUrls
     : [section.imageUrls];
 
-  const allSixImages = [...images, ...images];
+  const allSixImages = Array.from({ length: 6 }, (_, i) => images[i % images.length]);
 
   const iconSquares = [
     "/icons/illustrations/tools.avif",
@@ -23,7 +24,7 @@ const OrgLayout: FC<{ section: SectionType }> = ({ section }) => {
       className="absolute inset-0 overflow-hidden bg-primary3"
       style={{ transform, backfaceVisibility: "hidden" }}
     >
-      <Image
+      <FallbackImage
         src={src}
         alt={section.title}
         fill

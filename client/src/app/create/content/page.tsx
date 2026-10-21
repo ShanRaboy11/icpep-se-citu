@@ -7,6 +7,8 @@ import Footer from "@/app/components/footer";
 import Grid from "@/app/components/grid";
 import PrimerCard from "@/app/create/components/primer-card";
 import ContactCard from "@/app/create/components/contact-card";
+import FaqCard from "@/app/create/components/faq-card";
+import PhotosCard from "@/app/create/components/photos-card";
 
 export default function SiteContentPage() {
   return (
@@ -23,7 +25,7 @@ export default function SiteContentPage() {
                 Site Content
               </h1>
               <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl">
-                Details that change from one administration to the next.
+                Details, FAQs and photos that change from one administration to the next.
               </p>
             </div>
 
@@ -35,6 +37,8 @@ export default function SiteContentPage() {
               <div className="flex-1 min-w-0 space-y-8">
                 <PrimerCard />
                 <ContactCard />
+                <FaqCard />
+                <PhotosCard />
               </div>
             </div>
           </div>

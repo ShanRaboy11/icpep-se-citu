@@ -104,7 +104,7 @@ All routes expect an authenticated user and operate on that user's own notificat
 
 ## FAQs — `/api/faqs`
 
-`GET /` public (feeds both the home page display and its FAQPage structured data); `GET /admin` and all mutations behind `admin` or `council-officer`.
+`GET /` public (feeds both the home page display and its FAQPage structured data); `GET /admin` and all mutations behind `admin` or `council-officer`. At most 8 FAQs can exist (create answers 400 beyond that); a question is up to 120 characters and an answer up to 500.
 
 ## Audit log — `/api/audit`
 
@@ -120,6 +120,8 @@ All routes expect an authenticated user and operate on that user's own notificat
 | `GET /stats` | public | `{ members, events }` for the home page hero: active members and published events that already happened; cached for 5 minutes |
 | `PUT /contact` | `council-officer` | `{ contactEmail, secondaryEmail, socialLinks: [{ platform, url }] }`: the official email (required), an optional second email and any number of social links (facebook, instagram, tiktok, youtube, x, threads, linkedin, discord, github, telegram; https only). `GET /settings` returns the resolved values, with the chapter's Facebook and TikTok as the defaults until links are saved. Event reports go to the organizer's email, then to the official email |
 | `PUT /primer` | `council-officer` | multipart: a `file` (PDF, up to 10MB, stored on Cloudinary) or `url` (https link), or `clear=true` to go back to the bundled default; `GET /settings` returns the current `primerUrl` |
+| `PUT /photos/:section/:slot` | `council-officer` | multipart `image` (JPEG, PNG, WebP or GIF, up to 5MB): replaces photo `slot` (0 to 2) of `join` (home page "Why Join ICpEP SE?") or `about` (the About page's "Engineered for Impact"). `GET /settings` returns `joinPhotos` and `aboutPhotos` as three entries each, where an empty entry means the bundled photo for that slot is shown |
+| `DELETE /photos/:section/:slot` | `council-officer` | puts the bundled photo back in that slot and deletes the uploaded one |
 | `PUT /settings` | `admin` | the only route besides `/api/auth/*` reachable during maintenance |
 
 ## Health / info

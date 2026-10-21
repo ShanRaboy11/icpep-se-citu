@@ -12,8 +12,8 @@ export interface IFAQ extends Document {
 
 const FAQSchema: Schema = new Schema(
   {
-    question: { type: String, required: true },
-    answer: { type: String, required: true },
+    question: { type: String, required: true, trim: true, maxlength: 120 },
+    answer: { type: String, required: true, trim: true, maxlength: 500 },
     category: { type: String, default: 'General' },
     isActive: { type: Boolean, default: true },
     displayOrder: { type: Number, default: 0 },

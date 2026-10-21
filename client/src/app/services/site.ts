@@ -8,7 +8,11 @@ export interface SiteSettings {
   contactEmail?: string;
   secondaryEmail?: string;
   socialLinks?: SocialLink[];
+  joinPhotos?: string[];
+  aboutPhotos?: string[];
 }
+
+export type PhotoSection = "join" | "about";
 
 export interface ContactDetails {
   contactEmail: string;
@@ -50,6 +54,23 @@ const siteService = {
       form,
     );
     return response.data.data.primerUrl;
+  },
+
+  setPhoto: async (section: PhotoSection, slot: number, file: File) => {
+    const form = new FormData();
+    form.append("image", file);
+    const response = await api.put<{ success: boolean; data: { photos: string[] } }>(
+      `/site/photos/${section}/${slot}`,
+      form,
+    );
+    return response.data.data.photos;
+  },
+
+  clearPhoto: async (section: PhotoSection, slot: number) => {
+    const response = await api.delete<{ success: boolean; data: { photos: string[] } }>(
+      `/site/photos/${section}/${slot}`,
+    );
+    return response.data.data.photos;
   },
 };
 

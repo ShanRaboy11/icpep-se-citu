@@ -1,6 +1,9 @@
 import { ArrowUpRight, Cpu, Rocket, Target, Network } from "lucide-react";
 import { CardStack } from "../components/photo-card";
 import React, { useRef, useEffect } from "react";
+import siteService from "@/app/services/site";
+import { useCachedFetch } from "@/app/utils/cached-fetch";
+import { DEFAULT_JOIN_PHOTOS, resolvePhotos } from "@/app/utils/site-photos";
 
 const BenefitCard = ({
   icon,
@@ -61,11 +64,8 @@ export function WhyJoinSection() {
     },
   ];
 
-  const galleryImages = [
-    "/content/whyicpep.avif",
-    "https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=2070&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?q=80&w=2070&auto=format&fit=crop",
-  ];
+  const { data: settings, loading } = useCachedFetch("site-settings", () => siteService.getSettings());
+  const galleryImages = resolvePhotos(settings?.joinPhotos, DEFAULT_JOIN_PHOTOS);
 
   const cardRef = useRef<HTMLDivElement | null>(null);
 
@@ -129,7 +129,7 @@ export function WhyJoinSection() {
 
             <div className="grid grid-cols-1 gap-8 lg:gap-6 lg:grid-cols-2">
               <div className="aspect-square w-full lg:h-118.75 lg:aspect-auto">
-                <CardStack imageUrls={galleryImages} />
+                {!loading && <CardStack key={galleryImages.join("|")} imageUrls={galleryImages} />}
               </div>
 
               <div className="flex flex-col gap-6">

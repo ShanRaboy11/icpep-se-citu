@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { DEFAULT_FAQS, type DefaultFaq } from "./utils/default-faqs";
-import { pageMetadata } from "@/app/utils/site";
+import { MAX_FAQS, pageMetadata } from "@/app/utils/site";
 
 export const metadata: Metadata = pageMetadata(
   "Home",
@@ -25,7 +25,7 @@ async function fetchFaqs(): Promise<DefaultFaq[]> {
     const faqs = items.filter(
       (f: DefaultFaq) => typeof f?.question === "string" && typeof f?.answer === "string",
     );
-    return faqs.length > 0 ? faqs : DEFAULT_FAQS;
+    return faqs.length > 0 ? faqs.slice(0, MAX_FAQS) : DEFAULT_FAQS;
   } catch {
     return DEFAULT_FAQS;
   }

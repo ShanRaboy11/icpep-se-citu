@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import faqService from "../../services/faq";
 import Button from "../../components/button";
 import { DEFAULT_FAQS, type DefaultFaq } from "../utils/default-faqs";
+import { MAX_FAQS } from "@/app/utils/site";
 
 type FAQ = DefaultFaq;
 
@@ -26,7 +27,7 @@ export function FAQSection() {
           Array.isArray(response.data) &&
           response.data.length > 0
         ) {
-          setFaqs(response.data);
+          setFaqs(response.data.slice(0, MAX_FAQS));
         } else {
           setFaqs(staticFaqs);
         }

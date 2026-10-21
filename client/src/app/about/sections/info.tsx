@@ -2,6 +2,9 @@
 
 import { useState, useEffect, FC } from "react";
 import { sections } from "../utils/info";
+import siteService from "@/app/services/site";
+import { useCachedFetch } from "@/app/utils/cached-fetch";
+import { DEFAULT_ABOUT_PHOTOS, resolvePhotos } from "@/app/utils/site-photos";
 import { motion } from "framer-motion";
 import OrgLayout from "../components/org-layout";
 import VisionLayout from "../components/vision-layout";
@@ -12,6 +15,7 @@ const TAB_DURATION = 7000;
 
 const InfoSection: FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const { data: settings } = useCachedFetch("site-settings", () => siteService.getSettings());
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -20,7 +24,11 @@ const InfoSection: FC = () => {
     return () => clearInterval(interval);
   }, [activeIndex]);
 
-  const activeSection = sections[activeIndex];
+  const baseSection = sections[activeIndex];
+  const activeSection =
+    baseSection.id === "org"
+      ? { ...baseSection, imageUrls: resolvePhotos(settings?.aboutPhotos, DEFAULT_ABOUT_PHOTOS) }
+      : baseSection;
 
   return (
     <>

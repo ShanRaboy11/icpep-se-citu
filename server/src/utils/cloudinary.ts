@@ -10,7 +10,7 @@ const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 const invalidCloudNameValues = ['website', 'cloud_name', 'your_cloud_name', 'example', 'example_cloud'];
 
-const CLOUDINARY_ENABLED = Boolean(
+export const CLOUDINARY_ENABLED = Boolean(
     CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET &&
     !invalidCloudNameValues.includes(String(CLOUDINARY_CLOUD_NAME).toLowerCase())
 );
@@ -27,7 +27,7 @@ if (CLOUDINARY_ENABLED) {
 // Folders this app uploads into; deletes are limited to these.
 const UPLOAD_FOLDERS = [
     'announcements', 'events', 'merch', 'advisors', 'faculty',
-    'officers', 'officer-terms', 'sponsors', 'testimonials',
+    'officers', 'officer-terms', 'sponsors', 'testimonials', 'site',
 ];
 
 // Looks at the file's own bytes rather than the type the client declared.

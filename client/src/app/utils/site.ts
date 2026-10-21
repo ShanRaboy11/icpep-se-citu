@@ -7,6 +7,11 @@ export const SITE_URL = (
 
 export const CHAPTER_FOUNDED_YEAR = 2023;
 
+export const MAX_FAQS = 8;
+export const MAX_FAQ_QUESTION = 120;
+export const MAX_FAQ_ANSWER = 500;
+export const SITE_PHOTO_SLOTS = 3;
+
 export const SITE_NAME = "ICpEP.SE CIT-U Chapter";
 export const SITE_DESCRIPTION = "Unlocking Potential, One Bit at a Time";
 
