@@ -1,8 +1,6 @@
-import dotenv from "dotenv";
-
-// Load environment variables as early as possible so modules that read process.env
-// (e.g., the Cloudinary utility) get the values during module initialization.
-dotenv.config();
+// Must stay the first import: imports are evaluated in order, and modules such as the
+// Cloudinary utility read process.env when they load.
+import "dotenv/config";
 
 import express, { Application, Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
