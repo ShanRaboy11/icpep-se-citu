@@ -2,70 +2,44 @@
 
 import type { FC, ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
+import Button from "@/app/components/button";
 
 interface QuickActionCardProps {
   title: string;
   description: string;
   icon: ReactNode;
   onClick?: () => void;
-  accentColor?: "primary" | "steel" | "sky";
   actionLabel?: string;
 }
-
-const accentStyles = {
-  primary: {
-    border: "border-blue-100 hover:border-blue-300",
-    bg: "bg-white hover:bg-blue-50/80",
-    icon: "text-[#003599] bg-blue-100/60",
-    button: "bg-[#003599] hover:bg-[#004ab3] text-white",
-  },
-  steel: {
-    border: "border-cyan-100 hover:border-cyan-300",
-    bg: "bg-white hover:bg-cyan-50/80",
-    icon: "text-[#006fa1] bg-cyan-100/60",
-    button: "bg-[#006fa1] hover:bg-[#007fb8] text-white",
-  },
-  sky: {
-    border: "border-sky-100 hover:border-sky-300",
-    bg: "bg-sky-50/30 hover:bg-sky-50/80",
-    icon: "text-[#0073AD] bg-sky-100/60",
-    button: "bg-[#0073AD] hover:bg-[#0086c9] text-white",
-  },
-};
 
 export const QuickActionCard: FC<QuickActionCardProps> = ({
   title,
   description,
   icon,
   onClick,
-  accentColor = "primary",
-  actionLabel = "Execute",
-}) => {
-  const styles = accentStyles[accentColor];
+  actionLabel = "Open",
+}) => (
+  <div
+    onClick={onClick}
+    className="group flex h-full w-full cursor-pointer flex-col rounded-2xl border border-sky-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-200 hover:bg-sky-50 hover:shadow-md"
+  >
+    <div className="mb-4 flex items-start gap-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100/80 text-[#0073AD] transition-all duration-300 group-hover:scale-110">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <h4 className="font-rubik text-base font-bold leading-snug text-primary3">{title}</h4>
+        <p className="mt-1 font-raleway text-sm leading-relaxed text-gray-500">{description}</p>
+      </div>
+    </div>
 
-  return (
-    <button
-      onClick={onClick}
-      className={`flex h-full flex-col justify-between text-left rounded-2xl p-4 pt-5 border shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 active:scale-[0.98] group w-full cursor-pointer ${styles.bg} ${styles.border}`}
-    >
-      <div className="flex items-center gap-3 mb-2 w-full">
-        <div
-          className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-110 ${styles.icon}`}
-        >
-          {icon}
-        </div>
-        <h4 className="font-rubik text-sm font-medium text-slate-800 tracking-tight leading-snug">
-          {title}
-        </h4>
-      </div>
-      <div
-        className={`w-full py-1.5 px-3 rounded-lg flex items-center justify-center gap-1.5 font-raleway font-semibold text-[11px] transition-all duration-300 ${styles.button}`}
-      >
-        <span>{actionLabel}</span>
-        <ChevronRight className="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
-      </div>
-    </button>
-  );
-};
+    <Button variant="hero" className="mt-auto w-full px-4 py-2.5 text-sm sm:px-4 sm:py-2.5">
+      <span className="inline-flex items-center justify-center gap-1.5">
+        {actionLabel}
+        <ChevronRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+      </span>
+    </Button>
+  </div>
+);
 
 export default QuickActionCard;

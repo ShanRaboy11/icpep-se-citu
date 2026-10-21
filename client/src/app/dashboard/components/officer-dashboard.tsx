@@ -1,5 +1,6 @@
 "use client";
 
+import ViewAllButton from "./ViewAllButton";
 import { motion, type Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -363,9 +364,7 @@ export default function OfficerDashboard({
                 Action Shortcuts
               </h3>
               <div
-                className={`grid grid-cols-2 sm:grid-cols-3 gap-3 ${
-                  variant === "admin" ? "md:grid-cols-6" : "md:grid-cols-5"
-                }`}
+                className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
               >
                 {canManage && (
                   <>
@@ -374,7 +373,6 @@ export default function OfficerDashboard({
                   description="Publish a new event."
                   icon={<CalendarPlus className="h-4 w-4" />}
                   onClick={() => router.push("/create/events")}
-                  accentColor="primary"
                   actionLabel="Create"
                 />
                 <QuickActionCard
@@ -382,7 +380,6 @@ export default function OfficerDashboard({
                   description="Broadcast announcements."
                   icon={<Megaphone className="h-4 w-4" />}
                   onClick={() => router.push("/create/announcements")}
-                  accentColor="steel"
                   actionLabel="Post"
                 />
                 <QuickActionCard
@@ -390,7 +387,6 @@ export default function OfficerDashboard({
                   description="Approve registrations."
                   icon={<UserCheck className="h-4 w-4" />}
                   onClick={() => router.push("/users")}
-                  accentColor="primary"
                   actionLabel="Verify"
                 />
                 <QuickActionCard
@@ -398,7 +394,6 @@ export default function OfficerDashboard({
                   description="Update shop items."
                   icon={<Package className="h-4 w-4" />}
                   onClick={() => router.push("/create/merch")}
-                  accentColor="steel"
                   actionLabel="Add"
                 />
                   </>
@@ -408,7 +403,6 @@ export default function OfficerDashboard({
                   description="Set office hours."
                   icon={<CalendarClock className="h-4 w-4" />}
                   onClick={() => router.push("/commeet")}
-                  accentColor="primary"
                   actionLabel="Schedule"
                 />
                 {variant === "admin" && (
@@ -417,7 +411,6 @@ export default function OfficerDashboard({
                     description="Suspend the site."
                     icon={<Wrench className="h-4 w-4" />}
                     onClick={() => router.push("/create/maintenance")}
-                    accentColor="steel"
                     actionLabel="Manage"
                   />
                 )}
@@ -455,12 +448,7 @@ export default function OfficerDashboard({
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => router.push("/create/maintenance")}
-                    className="rounded-full border-2 border-primary1 px-5 py-2 font-raleway text-xs font-semibold text-primary1 transition-all duration-300 hover:bg-primary1 hover:text-white cursor-pointer"
-                  >
-                    Manage maintenance
-                  </button>
+                  <ViewAllButton label="Manage maintenance" onClick={() => router.push("/create/maintenance")} />
                 </div>
               </motion.div>
             )}
@@ -484,13 +472,7 @@ export default function OfficerDashboard({
                       Upcoming Events
                     </h3>
 
-                    <button
-  onClick={() => router.push("/events")}
-  className="flex items-center justify-center gap-2 border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white text-xs font-raleway font-semibold px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg cursor-pointer w-55 sm:w-auto"
->
-  <span>View All Events</span>
-  <ChevronRight className="h-4 w-4" />
-</button>
+                    <ViewAllButton label="View All Events" onClick={() => router.push("/events")} />
                   </div>
                   {events.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -525,13 +507,7 @@ export default function OfficerDashboard({
                     <h3 className="font-rubik text-lg font-bold text-primary3 tracking-tight">
                       Recent Announcements
                     </h3>
-                    <button
-  onClick={() => router.push("/announcements")}
-  className="flex items-center justify-center gap-2 border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white text-xs font-raleway font-semibold px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg cursor-pointer w-55 sm:w-auto"
->
-  <span>View All</span>
-  <ChevronRight className="h-4 w-4" />
-</button>
+                    <ViewAllButton label="View All" onClick={() => router.push("/announcements")} />
                   </div>
                   {announcements.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

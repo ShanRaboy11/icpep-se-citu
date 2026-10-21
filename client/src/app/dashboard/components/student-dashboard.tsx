@@ -1,5 +1,6 @@
 "use client";
 
+import ViewAllButton from "./ViewAllButton";
 import { motion, type Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -206,13 +207,7 @@ export default function StudentDashboard() {
                     Upcoming Events
                   </h3>
 
-                  <button
-  onClick={() => router.push("/events")}
-  className="flex items-center justify-center gap-2 border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white text-xs font-raleway font-semibold px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg cursor-pointer w-55 sm:w-auto"
->
-  <span>Explore More Events</span>
-  <ChevronRight className="h-4 w-4" />
-</button>
+                  <ViewAllButton label="Explore More Events" onClick={() => router.push("/events")} />
                 </div>
                 {events.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-1">
@@ -266,13 +261,7 @@ export default function StudentDashboard() {
                     Latest Announcements
                   </h3>
 
-                  <button
-  onClick={() => router.push("/announcements")}
-  className="flex items-center justify-center gap-2 border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white text-xs font-raleway font-semibold px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg cursor-pointer w-55 sm:w-auto"
->
-  <span>View All Announcements</span>
-  <ChevronRight className="h-4 w-4" />
-</button>
+                  <ViewAllButton label="View All Announcements" onClick={() => router.push("/announcements")} />
                 </div>
                 {announcements.length > 0 ? (
                   <div className="flex flex-col gap-3">
