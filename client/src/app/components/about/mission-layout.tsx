@@ -46,29 +46,24 @@ const MissionLayout: FC<{ section: SectionType }> = ({ section }) => {
         {missionPoints.map((point, index) => (
           <div
             key={index}
-            className="flex items-center gap-3 md:gap-6 p-3 md:px-5 md:py-6 rounded-xl md:rounded-2xl border border-white/10
-                       bg-white/5 transition-all duration-300 group hover:bg-white/10"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
-              backgroundSize: "1rem 1rem",
-            }}
+            className="flex items-center gap-3 md:gap-6 p-3 md:px-5 md:py-6 rounded-xl md:rounded-2xl bg-white shadow-md
+                       transition-all duration-300 group hover:-translate-y-0.5 hover:shadow-lg"
           >
             <div className="relative shrink-0 w-12 h-12 md:w-24 md:h-24">
               <Image
                 src={point.imageUrl}
                 alt={point.title}
                 fill
-                sizes="96px"
+                sizes="(min-width: 768px) 256px, 128px"
                 className="object-contain"
               />
             </div>
 
             <div className="flex flex-col justify-center text-left">
-              <h4 className="font-rubik text-sm md:text-xl font-bold text-white leading-snug">
+              <h4 className="font-rubik text-sm md:text-xl font-bold text-primary3 leading-snug">
                 {point.title}
               </h4>
-              <p className="font-raleway text-[10px] md:text-base text-gray-300 mt-0.5 md:mt-1 leading-relaxed">
+              <p className="font-raleway text-[10px] md:text-base text-gray-600 mt-0.5 md:mt-1 leading-relaxed">
                 {point.description}
               </p>
             </div>

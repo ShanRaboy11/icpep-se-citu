@@ -201,7 +201,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
             src="/brand/icpep-logo.avif"
             alt="ICpEP Logo"
             fill
-            sizes="96px"
+            sizes="(min-width: 768px) 256px, 128px"
             className="object-contain drop-shadow-[0_5px_15px_rgba(0,0,0,0.4)]"
           />
         </div>
@@ -210,25 +210,20 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           <div
             key={value.name}
             className={`absolute ${value.position} ${value.animationClass} z-20
-              w-18.5 h-18.5 sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5
+              w-18.5 h-18.5 sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl bg-white shadow-md
               flex flex-col items-center justify-center gap-0.5 sm:gap-2 p-1 sm:p-4
-              transition-colors duration-300 hover:bg-white/10`}
-            style={{
-              backgroundImage:
-                "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
-              backgroundSize: "1rem 1rem",
-            }}
+              transition-shadow duration-300 hover:shadow-lg`}
           >
             <div className="relative w-9 h-9 sm:w-14 sm:h-14">
               <Image
                 src={value.iconUrl}
                 alt={value.name}
                 fill
-                sizes="96px"
+                sizes="(min-width: 768px) 256px, 128px"
                 className="object-contain"
               />
             </div>
-            <span className="font-rubik font-semibold text-white text-center text-[10px] sm:text-base leading-tight">
+            <span className="font-rubik font-semibold text-primary3 text-center text-[10px] sm:text-base leading-tight">
               {value.name}
             </span>
           </div>
