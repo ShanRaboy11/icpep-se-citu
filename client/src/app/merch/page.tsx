@@ -1,14 +1,14 @@
 "use client";
 
-import { MerchCardSkeleton } from "../components/skeleton-cards";
-import { readCache, writeCache } from "../utils/cached-fetch";
+import { MerchCardSkeleton } from "../components/feedback/skeleton-cards";
+import { readCache, writeCache } from "../hooks/use-cached-fetch";
 import { useEffect, useState, type FC } from "react";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import Grid from "../components/grid";
-import MerchCard from "./components/merch-card";
-import PageHeader from "../components/page-header";
-import { useDelayedFlag } from "@/app/components/skeleton";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import Grid from "../components/layout/grid";
+import MerchCard from "../components/merch/merch-card";
+import PageHeader from "../components/ui/page-header";
+import { useDelayedFlag } from "@/app/components/feedback/skeleton";
 import merchService, { MerchItem as ApiMerchItem } from "../services/merch";
 
 interface MerchItem {
@@ -63,7 +63,7 @@ const MerchPage: FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
         <div className="relative z-10 flex flex-col min-h-screen">

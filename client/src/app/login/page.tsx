@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, AlertCircle, X, Check, CheckCircle } from "lucide-react";
-import Checkbox from "@/app/components/checkbox";
+import Checkbox from "@/app/components/ui/checkbox";
 import Image from "next/image";
 import axios from "axios";
-import Button from "@/app/components/button";
+import Button from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
 import { api, errorMessage } from "@/app/services/api-client";
 const REMEMBERED_STUDENT_NUMBER_KEY = "rememberedStudentNumber";
@@ -879,7 +879,7 @@ export default function Login() {
 
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full animate-scaleIn">
+          <div className="bg-white rounded-2xl p-8 shadow-xl max-w-md w-full animate-scaleIn">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
                 <CheckCircle className="h-10 w-10 text-green-600" />

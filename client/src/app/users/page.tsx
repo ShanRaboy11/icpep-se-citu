@@ -2,20 +2,20 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { User } from "./utils/user";
-import Button from "../components/button";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import UsersTable from "./components/users_table";
-import UserStats from "./components/stats";
-import ExcelUploadModal from "./components/excel_upload_modal";
-import AddUserModal, { NewUser } from "./components/add_user_modal";
-import ConfirmDialog from "./components/confirm_dialog";
-import ViewUserModal from "./components/view_user_modal";
-import EditUserModal from "./components/edit_user_modal";
-import Grid from "../components/grid";
-import BackButton from "../components/back-button";
-import PageHeader from "../components/page-header";
+import { User } from "../utils/users/user";
+import Button from "../components/ui/button";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import UsersTable from "../components/users/users-table";
+import UserStats from "../components/users/stats";
+import ExcelUploadModal from "../components/users/excel-upload-modal";
+import AddUserModal, { NewUser } from "../components/users/add-user-modal";
+import ConfirmDialog from "../components/users/confirm-dialog";
+import ViewUserModal from "../components/users/view-user-modal";
+import EditUserModal from "../components/users/edit-user-modal";
+import Grid from "../components/layout/grid";
+import BackButton from "../components/ui/back-button";
+import PageHeader from "../components/ui/page-header";
 import {
   UserPlus,
   Mail,
@@ -29,9 +29,9 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { LoadingScreen } from "../components/loading";
-import { toTitleCase } from "../officers/utils/format-name";
-import { LoadingIndicator } from "@/app/components/loading";
+import { LoadingScreen } from "../components/feedback/loading";
+import { toTitleCase } from "../utils/officers/format-name";
+import { LoadingIndicator } from "@/app/components/feedback/loading";
 
 // Type definitions for API responses
 interface ApiUser {
@@ -997,7 +997,7 @@ export default function UsersListPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
         <div className="relative z-10 flex flex-col min-h-screen">
@@ -1020,7 +1020,6 @@ export default function UsersListPage() {
 
             <UserStats users={allUsers} />
 
-            {/* Search Bar */}
             <div className="mb-6 max-w-3xl mx-auto">
               <div className="flex items-center w-full bg-white border-2 border-primary1/20 rounded-2xl px-4 py-2 sm:px-5 sm:py-3 transition-all duration-300 hover:border-primary1 focus-within:border-primary1">
                 <Search className="h-5 w-5 text-primary1 shrink-0" />
@@ -1083,7 +1082,6 @@ export default function UsersListPage() {
               </Button>
             </div>
 
-            {/* Pass props to UsersTable */}
             <UsersTable
               users={displayedUsers}
               totalUsers={getFilteredUsers().length}
@@ -1165,7 +1163,7 @@ export default function UsersListPage() {
 
       {isUploading && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
+          <div className="bg-white rounded-2xl p-8 shadow-xl max-w-md w-full">
             <div className="text-center">
               <LoadingIndicator className="mb-6" />
 
@@ -1232,7 +1230,7 @@ export default function UsersListPage() {
               })
             }
           />
-          <div className="relative bg-white rounded-2xl p-8 shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto themed-scrollbar animate-scale-in">
+          <div className="relative bg-white rounded-2xl p-8 shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto themed-scrollbar animate-scale-in">
             <div className="text-center mb-5">
               {uploadResult.failed === 0 ? (
                 <CheckCircle className="w-14 h-14 text-green-500 mx-auto mb-3" />
@@ -1313,11 +1311,11 @@ export default function UsersListPage() {
               setSuccessModal({ show: false, title: "", message: "" })
             }
           />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl animate-scale-in">
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl animate-scale-in">
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
+                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg relative">
                   <svg
                     className="w-10 h-10 text-white"
                     fill="none"
@@ -1363,7 +1361,7 @@ export default function UsersListPage() {
               setErrorModal({ show: false, title: "", message: "" })
             }
           />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center animate-scale-in">
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center animate-scale-in">
             <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
               <XCircle className="w-6 h-6 text-red-500" />
             </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import RequireOfficer from "../components/require-officer";
+import RequireOfficer from "../components/layout/require-officer";
 
 export const metadata: Metadata = {
   title: "User Management",

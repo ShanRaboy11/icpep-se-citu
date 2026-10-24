@@ -1,30 +1,32 @@
 "use client";
 
-import { ListSkeleton } from "@/app/components/skeleton-cards";
-import { swapToFallback } from "@/app/components/fallback-image";
-import RemoveButton from "@/app/components/remove-button";
+import { inputClass, labelStyle } from "@/app/components/ui/form-styles";
+import ImageUploadField from "@/app/components/ui/image-upload-field";
+import ConfirmModal from "@/app/components/ui/confirm-modal";
+import SuccessModal from "@/app/components/ui/success-modal";
+import EditingBanner from "@/app/components/ui/editing-banner";
+import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
+import { swapToFallback } from "@/app/components/ui/fallback-image";
+import RemoveButton from "@/app/components/ui/remove-button";
 import React, { useState, useRef, useEffect } from "react";
-import Sidebar from "@/app/create/components/sidebar";
-import Header from "@/app/components/header";
-import Footer from "@/app/components/footer";
-import Grid from "@/app/components/grid";
-import Button from "@/app/components/button";
-import { GlassCard } from "../../components/glass-card";
+import Sidebar from "@/app/components/create/sidebar";
+import Header from "@/app/components/layout/header";
+import Footer from "@/app/components/layout/footer";
+import Grid from "@/app/components/layout/grid";
+import Button from "@/app/components/ui/button";
 import { useSearchParams } from "next/navigation";
 import {
   Pencil,
   Trash2,
   RefreshCw,
   AlertTriangle,
-  Upload,
   Plus,
   X,
   Tag,
   ShoppingBag,
-  ArrowUpRight,
-} from "lucide-react";
+  ArrowUpRight } from "lucide-react";
 import merchService, { MerchItem } from "@/app/services/merch";
-import { LoadingIndicator } from "@/app/components/loading";
+import { LoadingIndicator } from "@/app/components/feedback/loading";
 
 type FormErrors = {
   name: boolean;
@@ -321,8 +323,7 @@ export default function MerchPage() {
   const publishedItems = merchList.filter((item) => item.isActive);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
-      {/* Loading Overlay */}
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       {isSubmitting && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/90 backdrop-blur-md">
           <div className="flex flex-col items-center gap-5">
@@ -343,7 +344,7 @@ export default function MerchPage() {
         </div>
       )}
 
-      <main className="relative z-10 bg-[#f8f9fc] rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+      <main className="relative z-10 bg-surface rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
         <div className="relative z-10 flex flex-col min-h-screen">
@@ -367,29 +368,14 @@ export default function MerchPage() {
 
               <div className="flex-1 min-w-0 space-y-8">
                 {/* ── FORM CARD ── */}
-                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-md p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
                   editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
                 }`}>
-                    {/* Edit Banner */}
                     {editingId && (
-                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-linear-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-4xl">
-                        <div className="flex items-center gap-2 text-white">
-                          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                          <span className="text-sm font-bold font-rubik tracking-wide">
-                            EDITING MODE
-                          </span>
-                        </div>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                      <EditingBanner onCancel={handleCancelEdit} />
                     )}
 
                     <div className="flex flex-col gap-6">
-                      {/* Section Header */}
                       <div className="flex items-center justify-between">
                                              <p className="font-raleway text-gray-500 text-sm">
                                                Fill in the fields below
@@ -406,7 +392,7 @@ export default function MerchPage() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* LEFT — Image Upload */}
                         <div className="space-y-3">
-                          <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                          <label className={labelStyle}>
                             Product Image{" "}
                             <span className="text-red-400">*</span>
                           </label>
@@ -418,83 +404,25 @@ export default function MerchPage() {
                             ref={fileInputRef}
                           />
 
-                          {preview ? (
-                            <div className="relative group rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 h-56">
-                              <img
-                                src={preview}
-                                onError={swapToFallback}
-                                alt="merch preview"
-                                className="w-full h-full object-contain p-4"
-                              />
-                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100">
-                                <button
-                                  type="button"
-                                  onClick={() => fileInputRef.current?.click()}
-                                  className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
-                                >
-                                  Replace
-                                </button>
-                                <RemoveButton variant="overlay"
-                                  onClick={() => {
-                                    try {
-                                      if (preview) URL.revokeObjectURL(preview);
-                                    } catch {}
-                                    setCover(null);
-                                    setPreview(null);
-                                  }} />
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              role="button"
-                              tabIndex={0}
-                              onClick={() => fileInputRef.current?.click()}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" || e.key === " ")
-                                  fileInputRef.current?.click();
-                              }}
-                              onDragOver={(e) => {
-                                e.preventDefault();
-                                setIsDragging(true);
-                              }}
-                              onDragLeave={() => setIsDragging(false)}
-                              onDrop={handleDrop}
-                              className={`cursor-pointer h-56 rounded-xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center gap-4 ${
-                                isDragging
-                                  ? "border-primary2 bg-primary2/5 scale-[1.01]"
-                                  : showGlobalError && !cover && !editingId
-                                    ? "border-red-300 bg-red-50/50"
-                                    : "border-gray-200 bg-gray-50/80 hover:border-primary2/60 hover:bg-primary2/3"
-                              }`}
-                            >
-                              <div
-                                className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${
-                                  isDragging
-                                    ? "bg-primary2 text-white"
-                                    : "bg-white text-primary2 shadow-md"
-                                }`}
-                              >
-                                <Upload size={22} strokeWidth={2.5} />
-                              </div>
-                              <div className="text-center">
-                                <p className="text-sm font-bold text-gray-700 font-rubik">
-                                  {isDragging
-                                    ? "Drop it!"
-                                    : "Upload product image"}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1 font-raleway">
-                                  Drag & drop or click · PNG, JPG
-                                </p>
-                              </div>
-                            </div>
-                          )}
+                          <ImageUploadField
+                            preview={preview}
+                            alt="merch preview"
+                            title="Upload product image"
+                            hint="Drag & drop or click · PNG, JPG"
+                            isDragging={isDragging}
+                            invalid={showGlobalError && !cover && !editingId}
+                            fit="contain"
+                            onBrowse={() => fileInputRef.current?.click()}
+                            onDragChange={setIsDragging}
+                            onDrop={handleDrop}
+                            onRemove={() => { try { if (preview) URL.revokeObjectURL(preview); } catch {} setCover(null); setPreview(null); }}
+                          />
                         </div>
 
                         {/* RIGHT — Name, Description, Link */}
                         <div className="space-y-5">
-                          {/* Name */}
                           <div className="space-y-2">
-                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                            <label className={labelStyle}>
                               Item Name <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -503,9 +431,7 @@ export default function MerchPage() {
                               value={formData.name}
                               onChange={handleInputChange}
                               placeholder="e.g., ICPEP.SE Lanyard"
-                              className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
-                                errors.name ? "border-red-300 ring-2 ring-red-100" : ""
-                              }`}
+                              className={inputClass(Boolean(errors.name))}
                             />
                             {errors.name && (
                               <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
@@ -515,9 +441,8 @@ export default function MerchPage() {
                             )}
                           </div>
 
-                          {/* Description */}
                           <div className="space-y-2">
-                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                            <label className={labelStyle}>
                               Description{" "}
                               <span className="text-red-500">*</span>
                             </label>
@@ -527,9 +452,7 @@ export default function MerchPage() {
                               value={formData.descrip}
                               onChange={handleInputChange}
                               placeholder="e.g., Keep your essentials close..."
-                              className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
-                                errors.descrip ? "border-red-300 ring-2 ring-red-100" : ""
-                              }`}
+                              className={inputClass(Boolean(errors.descrip))}
                             />
                             {errors.descrip && (
                               <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
@@ -539,9 +462,8 @@ export default function MerchPage() {
                             )}
                           </div>
 
-                          {/* Order Link */}
                           <div className="space-y-2">
-                            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                            <label className={labelStyle}>
                               Order Form Link{" "}
                               <span className="text-red-500">*</span>
                             </label>
@@ -552,9 +474,7 @@ export default function MerchPage() {
                               value={formData.orderlink}
                               onChange={handleInputChange}
                               placeholder="https://example.com/order"
-                              className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 ${
-                                errors.orderlink ? "border-red-300 ring-2 ring-red-100" : ""
-                              }`}
+                              className={inputClass(Boolean(errors.orderlink))}
                             />
                             {errors.orderlink && (
                               <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
@@ -569,7 +489,7 @@ export default function MerchPage() {
                       {/* ── PRICES SECTION ── */}
                       <div className="mt-8 space-y-4">
                         <div className="flex items-center gap-2">
-                          <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                          <label className={labelStyle}>
                             Pricing Tiers{" "}
                             <span className="text-red-500">*</span>
                           </label>
@@ -578,7 +498,6 @@ export default function MerchPage() {
                           </span>
                         </div>
 
-                        {/* Add Price Row */}
                         <div
                           className={`flex flex-col sm:flex-row gap-3 p-4 rounded-xl border-2 transition-all ${
                             priceError
@@ -616,13 +535,13 @@ export default function MerchPage() {
                             }}
                             className="w-full sm:w-36 rounded-xl px-4 py-3 font-rubik text-sm border-2 border-gray-200 bg-white focus:border-primary2 outline-none transition-all"
                           />
-                          <button
+                          <Button variant="hero"
                             type="button"
                             onClick={handleAddPrice}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary1 hover:bg-primary2 text-white rounded-full text-xs font-semibold font-raleway shadow-md transition-all duration-300 cursor-pointer"
+                            className="px-4 py-2 text-xs sm:px-4 sm:py-2 sm:text-xs"
                           >
                             <Plus size={12} /> Add
-                          </button>
+                          </Button>
                         </div>
                         {priceError && (
                           <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
@@ -631,7 +550,6 @@ export default function MerchPage() {
                           </p>
                         )}
 
-                        {/* Price Tags */}
                         {prices.length > 0 && (
                           <div className="flex flex-wrap gap-2 pt-1">
                             {prices.map((p, index) => (
@@ -706,7 +624,6 @@ export default function MerchPage() {
 
                 {/* ── MANAGE LIST ── */}
                 <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
-                    {/* List Header */}
                     <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                       <div>
                         <h2 className="text-xl font-bold font-rubik text-primary3">
@@ -729,7 +646,6 @@ export default function MerchPage() {
                       </button>
                     </div>
 
-                    {/* Table */}
                     {isLoadingList ? (
                       <ListSkeleton />
                     ) : publishedItems.length === 0 ? (
@@ -780,7 +696,6 @@ export default function MerchPage() {
                                       : "hover:bg-gray-50/70"
                                   }`}
                                 >
-                                  {/* Image */}
                                   <td data-label="Image" data-primary="media" className="px-6 sm:px-8 py-4">
                                     <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center shrink-0">
                                       {item.image ? (
@@ -799,7 +714,6 @@ export default function MerchPage() {
                                     </div>
                                   </td>
 
-                                  {/* Name */}
                                   <td data-label="Name" data-primary="" className="px-4 py-4">
                                     <div className="flex items-center gap-2">
                                       {isEditing && (
@@ -816,7 +730,6 @@ export default function MerchPage() {
                                     )}
                                   </td>
 
-                                  {/* Prices */}
                                   <td data-label="Prices" className="px-4 py-4">
                                     <div className="flex flex-wrap gap-1">
                                       {item.prices?.map((p, idx) => (
@@ -830,7 +743,6 @@ export default function MerchPage() {
                                     </div>
                                   </td>
 
-                                  {/* Link */}
                                   <td data-label="Link" className="px-4 py-4">
                                     <a
                                       href={item.orderLink}
@@ -843,7 +755,6 @@ export default function MerchPage() {
                                     </a>
                                   </td>
 
-                                  {/* Actions */}
                                   <td data-label="Actions" className="px-6 sm:px-8 py-4 text-right">
                                     <div className="inline-flex items-center gap-1 opacity-100 lg:opacity-40 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 transition-opacity">
                                       <button
@@ -883,89 +794,23 @@ export default function MerchPage() {
       </div>
 
       {/* ── DELETE MODAL ── */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowDeleteModal(false)}
-          />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center">
-            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <AlertTriangle className="w-6 h-6 text-red-500" />
-            </div>
-            <h3 className="text-xl font-bold text-primary3 font-rubik mb-2">
-              Delete Item?
-            </h3>
-            <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
-              This will permanently remove the merchandise item. This action
-              cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="heroOutline"
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-2 sm:py-3"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="heroDanger"
-                onClick={handleDelete}
-                className="flex-1 py-2 sm:py-3"
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Delete Item?"
+        message="This will permanently remove the merchandise item. This action cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+      />
 
       {/* ── SUCCESS MODAL ── */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowSuccessModal(false)}
-          />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
-                  <svg
-                    className="w-10 h-10 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-primary3 font-rubik">
-                {successMessage.title}
-              </h3>
-              <p className="text-gray-400 text-sm font-raleway mt-2">
-                {successMessage.description}
-              </p>
-            </div>
-            <Button
-              variant="hero"
-              onClick={() => setShowSuccessModal(false)}
-              className="w-full py-2 text-sm sm:py-3"
-            >
-              Continue
-            </Button>
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        open={showSuccessModal}
+        title={successMessage.title}
+        description={successMessage.description}
+        buttonLabel="Continue"
+        onClose={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 }

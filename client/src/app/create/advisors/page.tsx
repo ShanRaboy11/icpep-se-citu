@@ -1,27 +1,30 @@
 "use client";
 
-import { ListSkeleton } from "@/app/components/skeleton-cards";
-import { swapToFallback } from "@/app/components/fallback-image";
-import React, { useState, useRef, useEffect } from "react";
+import { INPUT_CLASS as inputCls, labelStyle } from "@/app/components/ui/form-styles";
+import ConfirmModal from "@/app/components/ui/confirm-modal";
+import SuccessModal from "@/app/components/ui/success-modal";
+import EditingBanner from "@/app/components/ui/editing-banner";
+import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
+import { swapToFallback } from "@/app/components/ui/fallback-image";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import Sidebar from "@/app/create/components/sidebar";
-import Button from "@/app/components/button";
-import Header from "@/app/components/header";
-import Footer from "@/app/components/footer";
-import Grid from "@/app/components/grid";
+import Sidebar from "@/app/components/create/sidebar";
+import Button from "@/app/components/ui/button";
+import Header from "@/app/components/layout/header";
+import Footer from "@/app/components/layout/footer";
+import Grid from "@/app/components/layout/grid";
 import {
   Pencil,
   Trash2,
   RefreshCw,
   AlertTriangle,
-  Upload,
   GraduationCap,
   ImageIcon,
 } from "lucide-react";
 import advisorService, { AdvisorData } from "@/app/services/advisor";
-import { LoadingIndicator } from "@/app/components/loading";
+import { LoadingIndicator } from "@/app/components/feedback/loading";
 import facultyService from "@/app/services/faculty";
-import Dropdown from "@/app/components/dropdown";
+import Dropdown from "@/app/components/ui/dropdown";
 import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 // --- INTERFACES ---
@@ -270,11 +273,8 @@ export default function AdvisorsPage() {
   };
 
   const publishedItems = advisors.filter((item) => item.isActive);
-  const inputCls =
-    "w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10";
-
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       {isSubmitting && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/90 backdrop-blur-md">
           <div className="flex flex-col items-center gap-5">
@@ -295,7 +295,7 @@ export default function AdvisorsPage() {
         </div>
       )}
 
-      <main className="relative z-10 bg-[#f8f9fc] rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+      <main className="relative z-10 bg-surface rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
         <div className="relative z-10 flex flex-col min-h-screen">
@@ -318,29 +318,15 @@ export default function AdvisorsPage() {
               </aside>
 
               <div className="flex-1 min-w-0 space-y-8">
-                {/* FORM CARD */}
                 <div
-                  className={`bg-white rounded-4xl border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                  className={`bg-white rounded-4xl border transition-all duration-300 shadow-md p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
                     editingId
                       ? "border-primary1 ring-2 ring-primary1/20"
                       : "border-gray-200"
                   }`}
                 >
                   {editingId && (
-                    <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-linear-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-4xl">
-                      <div className="flex items-center gap-2 text-white">
-                        <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                        <span className="text-sm font-bold font-rubik tracking-wide">
-                          EDITING MODE
-                        </span>
-                      </div>
-                      <button
-                        onClick={handleCancelEdit}
-                        className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                    <EditingBanner onCancel={handleCancelEdit} />
                   )}
 
                   <div className="flex items-center justify-between mb-8">
@@ -359,7 +345,7 @@ export default function AdvisorsPage() {
                     {/* RIGHT — Info */}
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                        <label className={labelStyle}>
                           Faculty Member <span className="text-red-500">*</span>
                         </label>
                         <Dropdown
@@ -395,7 +381,7 @@ export default function AdvisorsPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                        <label className={labelStyle}>
                           Position <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -414,7 +400,7 @@ export default function AdvisorsPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                        <label className={labelStyle}>
                           Year Range <span className="text-red-500">*</span>
                         </label>
                         <input
@@ -454,7 +440,6 @@ export default function AdvisorsPage() {
                     </div>
                   </div>
 
-                  {/* ACTIONS */}
                   <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
                     {showGlobalError && (
                       <p className="text-red-400 text-xs font-bold font-raleway flex items-center gap-1.5">
@@ -502,7 +487,6 @@ export default function AdvisorsPage() {
                   </div>
                 </div>
 
-                {/* MANAGE LIST */}
                 <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
                   <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                     <div>
@@ -653,90 +637,22 @@ export default function AdvisorsPage() {
         <Footer />
       </div>
 
-      {/* DELETE MODAL */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowDeleteModal(false)}
-          />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center">
-            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <AlertTriangle className="w-6 h-6 text-red-500" />
-            </div>
-            <h3 className="text-xl font-bold text-primary3 font-rubik mb-2">
-              Delete Advisor?
-            </h3>
-            <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
-              This will permanently remove the advisor. This action cannot be
-              undone.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="heroOutline"
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-2 sm:py-3"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="heroDanger"
-                onClick={handleDelete}
-                className="flex-1 py-2 sm:py-3"
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Delete Advisor?"
+        message="This will permanently remove the advisor. This action cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+      />
 
-      {/* SUCCESS MODAL */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowSuccessModal(false)}
-          />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
-                  <svg
-                    className="w-10 h-10 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-primary3 font-rubik">
-                {successMessage.title}
-              </h3>
-              <p className="text-gray-400 text-sm font-raleway mt-2">
-                {successMessage.description}
-              </p>
-            </div>
-            <Button
-              variant="hero"
-              onClick={() => setShowSuccessModal(false)}
-              className="w-full py-2 text-sm sm:py-3"
-            >
-              Continue
-            </Button>
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        open={showSuccessModal}
+        title={successMessage.title}
+        description={successMessage.description}
+        buttonLabel="Continue"
+        onClose={() => setShowSuccessModal(false)}
+      />
     </div>
   );
 }

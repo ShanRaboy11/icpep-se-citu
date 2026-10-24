@@ -1,25 +1,27 @@
 "use client";
 
-import { ListSkeleton } from "@/app/components/skeleton-cards";
-import { swapToFallback } from "@/app/components/fallback-image";
-import RemoveButton from "@/app/components/remove-button";
+import VisibilityPicker from "@/app/components/create/visibility-picker";
+import FormDivider from "@/app/components/ui/form-divider";
+import { ERROR_CLASS as errorInputStyle, labelStyle, titleLabelStyle as titlelabelStyle, inputClass as inputCls } from "@/app/components/ui/form-styles";
+import ConfirmModal from "@/app/components/ui/confirm-modal";
+import SuccessModal from "@/app/components/ui/success-modal";
+import AddButton from "@/app/components/ui/add-button";
+import EditingBanner from "@/app/components/ui/editing-banner";
+import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
+import { swapToFallback } from "@/app/components/ui/fallback-image";
+import RemoveButton from "@/app/components/ui/remove-button";
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Sidebar from "../components/sidebar";
-import Header from "@/app/components/header";
-import Footer from "@/app/components/footer";
-import Grid from "../../components/grid";
-import Button from "../../components/button";
-import { GlassCard } from "../../components/glass-card";
+import Sidebar from "../../components/create/sidebar";
+import Header from "@/app/components/layout/header";
+import Footer from "@/app/components/layout/footer";
+import Grid from "../../components/layout/grid";
+import Button from "../../components/ui/button";
 import {
   Pencil,
   Trash2,
   RefreshCw,
   AlertTriangle,
-  Globe,
-  Users,
-  Shield,
-  Check,
   Upload,
   Plus,
   X,
@@ -28,12 +30,11 @@ import {
   MapPin,
   ChevronDown,
   ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+  ChevronRight } from "lucide-react";
 import eventService from "../../services/event";
-import { LoadingIndicator } from "@/app/components/loading";
-import RichTextEditor from "@/app/components/rich-text-editor";
-import { plainLength } from "@/app/components/rich-content";
+import { LoadingIndicator } from "@/app/components/feedback/loading";
+import RichTextEditor from "@/app/components/content/rich-text-editor";
+import { plainLength } from "@/app/components/content/rich-content";
 
 // Custom time picker constants
 const timeHours = Array.from({ length: 12 }, (_, i) =>
@@ -150,39 +151,6 @@ interface EventItem {
   details?: { title: string; items: string[] }[];
   galleryImages?: string[];
 }
-
-const VISIBILITY_OPTIONS = [
-  {
-    value: "public",
-    label: "Public",
-    sublabel: "Everyone can see this",
-    icon: Globe,
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
-    dot: "bg-emerald-500",
-  },
-  {
-    value: "members",
-    label: "Members Only",
-    sublabel: "Registered members",
-    icon: Users,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-    dot: "bg-blue-500",
-  },
-  {
-    value: "officers",
-    label: "Officers Only",
-    sublabel: "Organization officers",
-    icon: Shield,
-    color: "text-violet-600",
-    bg: "bg-violet-50",
-    border: "border-violet-200",
-    dot: "bg-violet-500",
-  },
-] as const;
 
 const predefinedTags = ["Workshop", "Seminar", "Training", "Webinar"];
 
@@ -773,24 +741,11 @@ export default function EventsPage() {
     }
   };
 
-  const labelStyle =
-    "block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1";
-  const titlelabelStyle =
-    "block text-sm font-bold font-raleway text-primary3 mb-2 ml-1";
-  const inputBaseStyle =
-    "w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400";
-  const inputFocusStyle =
-    "focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10";
-  const errorInputStyle = "border-red-300 ring-2 ring-red-100";
-
-  const inputCls = (hasError: boolean) =>
-    `${inputBaseStyle} ${inputFocusStyle} ${hasError ? errorInputStyle : ""}`;
-
   // Split into a non-scrolling outer wrapper (owns the rounding/border/shadow)
   // and a scrolling inner container, so the scrollbar never pokes past the
   // rounded corners.
   const dropdownOuterStyle =
-    "absolute z-30 w-full min-w-20 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
+    "absolute z-30 w-full min-w-20 mt-2 bg-white border border-gray-100 rounded-2xl shadow-lg overflow-hidden";
   const dropdownInnerStyle =
     "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto overflow-x-hidden themed-scrollbar";
   const dropdownItemStyle =
@@ -960,7 +915,7 @@ export default function EventsPage() {
               className="fixed inset-0 z-30"
               onClick={() => setActiveDatePicker(null)}
             />
-            <div className="absolute z-40 top-full left-0 mt-2 w-72 bg-white border border-gray-100 rounded-2xl shadow-xl p-4 font-rubik">
+            <div className="absolute z-40 top-full left-0 mt-2 w-72 bg-white border border-gray-100 rounded-2xl shadow-lg p-4 font-rubik">
               <div className="flex items-center justify-between mb-3 px-1">
                 <button
                   type="button"
@@ -1071,11 +1026,8 @@ export default function EventsPage() {
     );
   };
 
-  const Divider = () => <div className="w-full border-t border-gray-100 my-2" />;
-
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
-      {/* LOADING OVERLAY */}
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       {isSubmitting && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/90 backdrop-blur-md">
           <div className="flex flex-col items-center gap-5">
@@ -1096,14 +1048,13 @@ export default function EventsPage() {
         </div>
       )}
 
-      <main className="relative z-10 bg-[#f8f9fc] rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+      <main className="relative z-10 bg-surface rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
 
           <div className="grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
-            {/* PAGE HEADER */}
             <div className="mb-16 text-left">
               <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
                 Manage Events
@@ -1119,30 +1070,14 @@ export default function EventsPage() {
               </aside>
 
               <div className="flex-1 min-w-0 space-y-8">
-                {/* FORM CARD */}
-                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-md p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
                   editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
                 }`}>
-                    {/* Edit Banner */}
                     {editingId && (
-                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-linear-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-4xl">
-                        <div className="flex items-center gap-2 text-white">
-                          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                          <span className="text-sm font-bold font-rubik tracking-wide">
-                            EDITING MODE
-                          </span>
-                        </div>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                      <EditingBanner onCancel={handleCancelEdit} />
                     )}
 
                     <div className="flex flex-col gap-6">
-                      {/* Section Header */}
                       <div className="flex items-center justify-between">
                         <p className="font-raleway text-gray-500 text-sm">
                           Fill in the fields below
@@ -1155,7 +1090,6 @@ export default function EventsPage() {
                         </div>
                       </div>
 
-                      {/* COVER IMAGE */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <label className={labelStyle}>
@@ -1184,7 +1118,7 @@ export default function EventsPage() {
                               <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
+                                className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-md hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
                               >
                                 Replace
                               </button>
@@ -1232,12 +1166,11 @@ export default function EventsPage() {
                         )}
                       </div>
 
-                      {/* GALLERY (available once the event has ended) */}
                       {editingId &&
                         formData.date &&
                         new Date(formData.date) < new Date() && (
                           <>
-                            <Divider />
+                            <FormDivider className="my-2" />
                             <div className="space-y-3">
                               <div className="flex items-center justify-between">
                                 <label className={labelStyle}>
@@ -1298,9 +1231,8 @@ export default function EventsPage() {
                           </>
                         )}
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* TAGS */}
                       <div className="space-y-3">
                         <label className={labelStyle}>
                           Tags
@@ -1323,13 +1255,7 @@ export default function EventsPage() {
                             </button>
                           ))}
                           {!showTagInput ? (
-                            <button
-                              type="button"
-                              onClick={() => setShowTagInput(true)}
-                              className="flex items-center gap-1 px-4 py-2 border-2 border-dashed border-primary1/40 text-primary1 rounded-full hover:border-primary1 hover:bg-primary1/5 transition-all duration-300 font-raleway text-xs font-semibold cursor-pointer"
-                            >
-                              <Plus size={12} /> Custom
-                            </button>
+                            <AddButton onClick={() => setShowTagInput(true)}>Custom</AddButton>
                           ) : (
                             <div className="flex items-center gap-2">
                               <input
@@ -1349,7 +1275,7 @@ export default function EventsPage() {
                                 placeholder="Tag name..."
                                 autoFocus
                               />
-                              <button
+                              <Button variant="hero"
                                 type="button"
                                 onClick={() => {
                                   if (newTag.trim())
@@ -1357,20 +1283,20 @@ export default function EventsPage() {
                                   setNewTag("");
                                   setShowTagInput(false);
                                 }}
-                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary1 hover:bg-primary2 text-white rounded-full text-xs font-semibold font-raleway shadow-md transition-all duration-300 cursor-pointer"
+                                className="px-4 py-2 text-xs sm:px-4 sm:py-2 sm:text-xs"
                               >
                                 <Plus size={12} /> Add
-                              </button>
-                              <button
+                              </Button>
+                              <Button variant="cancelPill"
                                 type="button"
                                 onClick={() => {
                                   setNewTag("");
                                   setShowTagInput(false);
                                 }}
-                                className="px-4 py-2 border-2 border-gray-200 bg-white text-gray-500 rounded-full font-semibold text-xs font-raleway transition-all duration-300 hover:border-red-200 hover:bg-red-50 hover:text-red-500 cursor-pointer"
+                                
                               >
                                 Cancel
-                              </button>
+                              </Button>
                             </div>
                           )}
                         </div>
@@ -1398,9 +1324,8 @@ export default function EventsPage() {
                         )}
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* EVENT SCHEDULE */}
                       <div className="space-y-6">
                         <div>
                           <h3 className={`${titlelabelStyle}`}>
@@ -1412,7 +1337,6 @@ export default function EventsPage() {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-  {/* 1. Date Field (1 column) */}
   <div>
     <label className={labelStyle}>
       Date <span className="text-red-500">*</span>
@@ -1441,7 +1365,6 @@ export default function EventsPage() {
     )}
   </div>
 
-  {/* 2. Time Field (1 column) */}
   <div>
     <label className={labelStyle}>
       Time <span className="text-red-500">*</span>
@@ -1466,7 +1389,6 @@ export default function EventsPage() {
     )}
   </div>
 
-  {/* 3. Location Field (Spans remaining space) */}
   <div className="space-y-2 sm:col-span-2 lg:col-span-2">
     <label className={labelStyle}>
       Location
@@ -1488,7 +1410,6 @@ export default function EventsPage() {
   </div>
 </div>
 
-                        {/* Mode */}
                         <div className="space-y-2">
                           <label className={labelStyle}>
                             Event Mode
@@ -1511,20 +1432,13 @@ export default function EventsPage() {
 </div>
                         </div>
 
-                        {/* Admission */}
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <label className={labelStyle}>
                               Admission Prices
                             </label>
                             {!showAdmissionInput && (
-                              <button
-                                type="button"
-                                onClick={() => setShowAdmissionInput(true)}
-                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-full hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
-                              >
-                                <Plus size={11} /> Add
-                              </button>
+                              <AddButton onClick={() => setShowAdmissionInput(true)}>Add</AddButton>
                             )}
                           </div>
                           {showAdmissionInput && (
@@ -1549,7 +1463,7 @@ export default function EventsPage() {
                                 className="w-full sm:w-28 border-2 border-gray-200 bg-white rounded-xl px-4 py-2.5 font-rubik text-sm focus:outline-none focus:border-primary2 transition-all"
                               />
                               <div className="flex gap-2">
-                                <button
+                                <Button variant="hero"
                                   type="button"
                                   onClick={() => {
                                     if (!category.trim()) return;
@@ -1564,21 +1478,21 @@ export default function EventsPage() {
                                     setPrice("");
                                     setShowAdmissionInput(false);
                                   }}
-                                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary1 hover:bg-primary2 text-white rounded-full text-xs font-semibold font-raleway shadow-md transition-all duration-300 cursor-pointer"
+                                  className="px-4 py-2 text-xs sm:px-4 sm:py-2 sm:text-xs"
                                 >
                                   <Plus size={12} /> Add
-                                </button>
-                                <button
+                                </Button>
+                                <Button variant="cancelPill"
                                   type="button"
                                   onClick={() => {
                                     setCategory("");
                                     setPrice("");
                                     setShowAdmissionInput(false);
                                   }}
-                                  className="px-4 py-2 border-2 border-gray-200 bg-white text-gray-500 rounded-full font-semibold text-xs font-raleway transition-all duration-300 hover:border-red-200 hover:bg-red-50 hover:text-red-500 cursor-pointer"
+                                  
                                 >
                                   Cancel
-                                </button>
+                                </Button>
                               </div>
                             </div>
                           )}
@@ -1613,9 +1527,8 @@ export default function EventsPage() {
                         </div>
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* REGISTRATION */}
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <label className={titlelabelStyle}>
@@ -1735,9 +1648,8 @@ export default function EventsPage() {
                         )}
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* ORGANIZER & CONTACT */}
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className={labelStyle}>
@@ -1772,9 +1684,8 @@ export default function EventsPage() {
                         </div>
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* EVENT CONTENT */}
                       <div className="space-y-5">
                         <h3 className={titlelabelStyle}>
                           Event Content
@@ -1845,22 +1756,15 @@ export default function EventsPage() {
                         </div>
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* ADDITIONAL SECTIONS */}
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <label className={labelStyle}>
                             Additional Sections
                           </label>
                           {!showAdditionalInfo && (
-                            <button
-                              type="button"
-                              onClick={() => setShowAdditionalInfo(true)}
-                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-full hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
-                            >
-                              <Plus size={11} /> Add Section
-                            </button>
+                            <AddButton onClick={() => setShowAdditionalInfo(true)}>Add Section</AddButton>
                           )}
                         </div>
                         {showAdditionalInfo && (
@@ -1909,25 +1813,13 @@ export default function EventsPage() {
                                 />
                               </div>
                             ))}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setDetails((d) => [
-                                  ...d,
-                                  { title: "", body: "" },
-                                ])
-                              }
-                              className="w-full px-6 py-3.5 border-2 border-dashed border-primary2/30 text-primary2 rounded-xl hover:border-primary2 hover:bg-primary2/5 transition-all font-bold font-rubik text-sm flex items-center justify-center gap-2 cursor-pointer"
-                            >
-                              <Plus size={14} /> Add Another Section
-                            </button>
+                            <AddButton className="w-full" onClick={() => setDetails((d) => [...d, { title: "", body: "" }])}>Add Another Section</AddButton>
                           </div>
                         )}
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* RSVP */}
                       <div className="space-y-2">
                         <label className={labelStyle}>
                           RSVP Link
@@ -1942,55 +1834,13 @@ export default function EventsPage() {
                         />
                       </div>
 
-                      {/* VISIBILITY */}
-                      <div className="space-y-3">
-                        <label className={labelStyle}>
-                          Visibility
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {VISIBILITY_OPTIONS.map((opt) => {
-                            const Icon = opt.icon;
-                            const isActive = formData.visibility === opt.value;
-                            return (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() =>
-                                  setFormData((p) => ({
-                                    ...p,
-                                    visibility: opt.value,
-                                  }))
-                                }
-                                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-left border-2 transition-all duration-200 cursor-pointer ${isActive ? `${opt.bg} ${opt.color} ${opt.border}` : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"}`}
-                              >
-                                <span
-                                  className={`w-2 h-2 rounded-full shrink-0 ${isActive ? opt.dot : "bg-gray-200"}`}
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-bold font-rubik leading-tight">
-                                    {opt.label}
-                                  </p>
-                                  <p
-                                    className={`text-[14px] font-raleway font-semibold mt-0.5 truncate ${isActive ? "opacity-90" : "text-gray-300"}`}
-                                  >
-                                    {opt.sublabel}
-                                  </p>
-                                </div>
-                                {isActive && (
-                                  <Check
-                                    size={12}
-                                    className="shrink-0 opacity-70"
-                                  />
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      <VisibilityPicker
+                        value={formData.visibility}
+                        onChange={(visibility) => setFormData((p) => ({ ...p, visibility }))}
+                      />
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* ACTIONS */}
                       <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
                         {showGlobalError && (
                           <p className="text-red-500 text-sm font-raleway flex items-center gap-1.5">
@@ -2037,7 +1887,6 @@ export default function EventsPage() {
                     </div>
                 </div>
 
-                {/* MANAGE LIST */}
                 <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
                   <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
                     <div>
@@ -2197,109 +2046,22 @@ export default function EventsPage() {
         <Footer />
       </div>
 
-      {/* DELETE MODAL */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowDeleteModal(false)}
-          />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center">
-            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <AlertTriangle className="w-6 h-6 text-red-500" />
-            </div>
-            <h3 className="text-xl font-bold text-primary3 font-rubik mb-2">
-              Delete Event?
-            </h3>
-            <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
-              This will permanently remove the event. This action cannot be
-              undone.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="heroOutline"
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-2 sm:py-3"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="heroDanger"
-                onClick={handleDelete}
-                className="flex-1 py-2 sm:py-3"
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Delete Event?"
+        message="This will permanently remove the event. This action cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+      />
 
-      {/* SUCCESS MODAL */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => {
-              setShowSuccessModal(false);
-              setSubmitSuccess(false);
-            }}
-          />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
-                  <svg
-                    className="w-10 h-10 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-primary3 font-rubik">
-                {successMessage.title}
-              </h3>
-              <p className="text-gray-400 text-sm font-raleway mt-2">
-                {successMessage.description}
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="hero"
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  setSubmitSuccess(false);
-                  router.push("/events");
-                }}
-                className="w-full py-2 text-sm sm:py-3"
-              >
-                View Events
-              </Button>
-              <Button
-                variant="heroOutline"
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  setSubmitSuccess(false);
-                }}
-                className="w-full py-2 text-sm sm:py-3"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        open={showSuccessModal}
+        title={successMessage.title}
+        description={successMessage.description}
+        buttonLabel="View Events"
+        onClose={() => { setShowSuccessModal(false); setSubmitSuccess(false); router.push("/events"); }}
+      />
     </div>
   );
 }

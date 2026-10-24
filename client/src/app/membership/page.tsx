@@ -1,13 +1,13 @@
 "use client";
 
-import { Skeleton, useDelayedFlag } from "../components/skeleton";
+import { Skeleton, useDelayedFlag } from "../components/feedback/skeleton";
 import { useEffect, useState, type FC } from "react";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import Grid from "../components/grid";
-import MembershipCard from "./components/membership-card";
-import InteractiveCta from "./components/cta";
-import PageHeader from "../components/page-header";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import Grid from "../components/layout/grid";
+import MembershipCard from "../components/membership/membership-card";
+import InteractiveCta from "../components/membership/cta";
+import PageHeader from "../components/ui/page-header";
 import membershipService, {
   MembershipTierData,
 } from "../services/membership";
@@ -46,7 +46,7 @@ const MembershipPage: FC = () => {
   const useSpotlightLayout = tiers.length === 3;
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
         <div className="relative z-10 flex flex-col min-h-screen">
