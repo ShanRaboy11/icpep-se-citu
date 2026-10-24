@@ -34,16 +34,9 @@ import {
 import eventService from "../../services/event";
 import { LoadingIndicator } from "@/app/components/feedback/loading";
 import RichTextEditor from "@/app/components/content/rich-text-editor";
+import TimeSegmentInput from "@/app/components/ui/time-segment-input";
+import { timeHours, timeMinutes, timePeriods, parseTimeToPicker } from "@/app/utils/time";
 import { plainLength } from "@/app/components/content/rich-content";
-
-// Custom time picker constants
-const timeHours = Array.from({ length: 12 }, (_, i) =>
-  (i + 1).toString().padStart(2, "0")
-);
-const timeMinutes = Array.from({ length: 60 }, (_, i) =>
-  i.toString().padStart(2, "0")
-);
-const timePeriods = ["AM", "PM"];
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -93,28 +86,6 @@ function combineDateTime(
   const time24 = `${String(h).padStart(2, "0")}:${minute}`;
   const d = new Date(`${dateStr}T${time24}`);
   return isNaN(d.getTime()) ? "" : d.toISOString();
-}
-
-function parseTimeToPicker(timeStr: string): { hour: string; minute: string; period: string } {
-  if (!timeStr) return { hour: "08", minute: "00", period: "AM" };
-  const ampm = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (ampm) {
-    return {
-      hour: ampm[1].padStart(2, "0"),
-      minute: ampm[2],
-      period: ampm[3].toUpperCase(),
-    };
-  }
-  const h24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-  if (h24) {
-    let h = parseInt(h24[1]);
-    const m = h24[2];
-    const p = h >= 12 ? "PM" : "AM";
-    if (h === 0) h = 12;
-    else if (h > 12) h -= 12;
-    return { hour: h.toString().padStart(2, "0"), minute: m, period: p };
-  }
-  return { hour: "08", minute: "00", period: "AM" };
 }
 
 type FormErrors = {
@@ -172,7 +143,6 @@ export default function EventsPage() {
   const [regEndMinute, setRegEndMinute] = useState("00");
   const [regEndPeriod, setRegEndPeriod] = useState("AM");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loadingAction, setLoadingAction] = useState<
     "saving" | "publishing" | null
@@ -563,7 +533,6 @@ export default function EventsPage() {
           eventData,
           images.length > 0 ? images : undefined,
         );
-      setSubmitSuccess(true);
       setSuccessMessage({
         title:
           editingId && !isEditingDraft
@@ -601,7 +570,6 @@ export default function EventsPage() {
           eventData,
           images.length > 0 ? images : undefined,
         );
-      setSubmitSuccess(true);
       setSuccessMessage({
         title: editingId ? "Draft Updated!" : "Draft Saved!",
         description: editingId
@@ -744,126 +712,23 @@ export default function EventsPage() {
   // Split into a non-scrolling outer wrapper (owns the rounding/border/shadow)
   // and a scrolling inner container, so the scrollbar never pokes past the
   // rounded corners.
-  const dropdownOuterStyle =
-    "absolute z-30 w-full min-w-20 mt-2 bg-white border border-gray-100 rounded-2xl shadow-lg overflow-hidden";
-  const dropdownInnerStyle =
-    "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto overflow-x-hidden themed-scrollbar";
-  const dropdownItemStyle =
-    "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
-  const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
-  const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
-
   const renderTimeInput = (
     id: string,
     value: string,
     setValue: (v: string) => void,
     options: string[],
-    type: "hour" | "minute" | "period"
-  ) => {
-    const isOpen = activeTimeDropdown === id;
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
-      if (type === "period") {
-        if (val.toLowerCase().includes("p")) {
-          setValue("PM");
-          setTimeout(() => e.target.select(), 0);
-        } else if (val.toLowerCase().includes("a")) {
-          setValue("AM");
-          setTimeout(() => e.target.select(), 0);
-        }
-      } else {
-        if (val !== "" && !/^\d*$/.test(val)) return;
-        if (val.length > 2) return;
-        const num = parseInt(val);
-        if (val !== "") {
-          if (type === "minute" && num > 59) return;
-          if (type === "hour" && num > 12) return;
-        }
-        setValue(val);
-      }
-    };
-
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      if (activeTimeDropdown !== id) setActiveTimeDropdown(id);
-      e.target.select();
-    };
-
-    const handleMouseDown = (e: React.MouseEvent<HTMLInputElement>) => {
-      if (document.activeElement === e.currentTarget) {
-        if (activeTimeDropdown === id) {
-          setActiveTimeDropdown(null);
-        } else {
-          setActiveTimeDropdown(id);
-        }
-        e.preventDefault();
-        e.currentTarget.select();
-      }
-    };
-
-    const handleBlur = () => {
-      setTimeout(() => {
-        if (activeTimeDropdown === id) setActiveTimeDropdown(null);
-      }, 200);
-      if (type === "hour") {
-        let num = parseInt(value || "0");
-        if (num < 1) num = 1;
-        if (num > 12) num = 12;
-        setValue(num.toString().padStart(2, "0"));
-      } else if (type === "minute") {
-        let num = parseInt(value || "0");
-        if (num < 0) num = 0;
-        if (num > 59) num = 59;
-        setValue(num.toString().padStart(2, "0"));
-      } else if (type === "period") {
-        if (value !== "AM" && value !== "PM") setValue("AM");
-      }
-    };
-
-    return (
-      <div className="relative flex-1 h-full group">
-        <input
-          type="text"
-          className="w-full h-full text-center bg-transparent outline-none font-rubik text-base text-gray-700 font-medium placeholder-gray-300 transition-colors cursor-pointer caret-transparent focus:text-primary1 selection:bg-transparent selection:text-primary1"
-          value={value}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          onMouseDown={handleMouseDown}
-          onBlur={handleBlur}
-          maxLength={2}
-          autoComplete="off"
-        />
-        {isOpen && (
-          <>
-            <div
-              className={`${dropdownOuterStyle} left-1/2 -translate-x-1/2 text-center`}
-              onMouseDown={(e) => e.preventDefault()}
-            >
-              <div className={dropdownInnerStyle}>
-                {options.map((opt) => (
-                  <div
-                    key={opt}
-                    className={`justify-center ${dropdownItemStyle} ${
-                      value === opt
-                        ? dropdownItemSelectedStyle
-                        : dropdownItemHoverStyle
-                    }`}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setValue(opt);
-                      setActiveTimeDropdown(null);
-                    }}
-                  >
-                    <span>{opt}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  };
+    type: "hour" | "minute" | "period",
+  ) => (
+    <TimeSegmentInput
+      id={id}
+      value={value}
+      onChange={setValue}
+      options={options}
+      type={type}
+      activeId={activeTimeDropdown}
+      setActiveId={setActiveTimeDropdown}
+    />
+  );
 
   const renderDatePicker = (
     id: string,
@@ -2060,7 +1925,7 @@ export default function EventsPage() {
         title={successMessage.title}
         description={successMessage.description}
         buttonLabel="View Events"
-        onClose={() => { setShowSuccessModal(false); setSubmitSuccess(false); router.push("/events"); }}
+        onClose={() => { setShowSuccessModal(false); router.push("/events"); }}
       />
     </div>
   );

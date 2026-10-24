@@ -12,7 +12,7 @@ import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
 import { swapToFallback } from "@/app/components/ui/fallback-image";
 import RemoveButton from "@/app/components/ui/remove-button";
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Sidebar from "../../components/create/sidebar";
 import Header from "@/app/components/layout/header";
 import Footer from "@/app/components/layout/footer";
@@ -33,15 +33,6 @@ import {
   ChevronLeft,
   ChevronRight } from "lucide-react";
 
-// Custom time picker constants
-const timeHours = Array.from({ length: 12 }, (_, i) =>
-  (i + 1).toString().padStart(2, "0")
-);
-const timeMinutes = Array.from({ length: 60 }, (_, i) =>
-  i.toString().padStart(2, "0")
-);
-const timePeriods = ["AM", "PM"];
-
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
@@ -60,6 +51,8 @@ import announcementService, {
 } from "../../services/announcement";
 import { LoadingIndicator } from "@/app/components/feedback/loading";
 import RichTextEditor from "@/app/components/content/rich-text-editor";
+import TimeSegmentInput from "@/app/components/ui/time-segment-input";
+import { timeHours, timeMinutes, timePeriods, parseTimeToPicker } from "@/app/utils/time";
 import { plainLength } from "@/app/components/content/rich-content";
 
 type FormErrors = {
@@ -127,31 +120,6 @@ const TYPE_META: Record<
   },
 };
 
-// Helper: parse a saved time string ("08:30 AM" or "14:30") into picker state
-function parseTimeToPicker(timeStr: string): { hour: string; minute: string; period: string } {
-  if (!timeStr) return { hour: "08", minute: "00", period: "AM" };
-  // Try "hh:mm AM/PM" first
-  const ampm = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (ampm) {
-    return {
-      hour: ampm[1].padStart(2, "0"),
-      minute: ampm[2],
-      period: ampm[3].toUpperCase(),
-    };
-  }
-  // Try 24h "HH:MM"
-  const h24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-  if (h24) {
-    let h = parseInt(h24[1]);
-    const m = h24[2];
-    const p = h >= 12 ? "PM" : "AM";
-    if (h === 0) h = 12;
-    else if (h > 12) h -= 12;
-    return { hour: h.toString().padStart(2, "0"), minute: m, period: p };
-  }
-  return { hour: "08", minute: "00", period: "AM" };
-}
-
 export default function AnnouncementsPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("General");
   const [showOrganizerInput, setShowOrganizerInput] = useState(false);
@@ -185,7 +153,6 @@ export default function AnnouncementsPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loadingAction, setLoadingAction] = useState<
     "saving" | "publishing" | null
@@ -197,7 +164,6 @@ export default function AnnouncementsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-  const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -502,7 +468,6 @@ export default function AnnouncementsPage() {
           announcementData,
           images.length > 0 ? images : undefined,
         );
-      setSubmitSuccess(true);
       setSuccessMessage({
         title:
           editingId && !isEditingDraft
@@ -540,7 +505,6 @@ export default function AnnouncementsPage() {
           announcementData,
           images.length > 0 ? images : undefined,
         );
-      setSubmitSuccess(true);
       setSuccessMessage({
         title: editingId ? "Draft Updated!" : "Draft Saved!",
         description: editingId
@@ -582,8 +546,6 @@ export default function AnnouncementsPage() {
 
   const addAwardee = () =>
     setAwardees([...awardees, { name: "", program: "", year: "", award: "" }]);
-  const removeAwardee = (index: number) =>
-    setAwardees((prev) => prev.filter((_, i) => i !== index));
   const addAgendaItem = () => setAgenda((prev) => [...prev, ""]);
   const updateAgendaItem = (index: number, value: string) =>
     setAgenda((prev) => {
@@ -679,128 +641,24 @@ export default function AnnouncementsPage() {
   // Split into a non-scrolling outer wrapper (owns the rounding/border/shadow)
   // and a scrolling inner container, so the scrollbar never pokes past the
   // rounded corners.
-  const dropdownOuterStyle =
-    "absolute z-30 w-full min-w-20 mt-2 bg-white border border-gray-100 rounded-2xl shadow-lg overflow-hidden";
-  const dropdownInnerStyle =
-    "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto overflow-x-hidden themed-scrollbar";
-  const dropdownItemStyle =
-    "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
-  const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
-  const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
-
   const renderTimeInput = (
     id: string,
     value: string,
     setValue: (v: string) => void,
     options: string[],
-    type: "hour" | "minute" | "period"
-  ) => {
-    const isOpen = activeTimeDropdown === id;
+    type: "hour" | "minute" | "period",
+  ) => (
+    <TimeSegmentInput
+      id={id}
+      value={value}
+      onChange={setValue}
+      options={options}
+      type={type}
+      activeId={activeTimeDropdown}
+      setActiveId={setActiveTimeDropdown}
+    />
+  );
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
-      if (type === "period") {
-        if (val.toLowerCase().includes("p")) {
-          setValue("PM");
-          setTimeout(() => e.target.select(), 0);
-        } else if (val.toLowerCase().includes("a")) {
-          setValue("AM");
-          setTimeout(() => e.target.select(), 0);
-        }
-      } else {
-        if (val !== "" && !/^\d*$/.test(val)) return;
-        if (val.length > 2) return;
-        const num = parseInt(val);
-        if (val !== "") {
-          if (type === "minute" && num > 59) return;
-          if (type === "hour" && num > 12) return;
-        }
-        setValue(val);
-      }
-    };
-
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      if (activeTimeDropdown !== id) setActiveTimeDropdown(id);
-      e.target.select();
-    };
-
-    const handleMouseDown = (e: React.MouseEvent<HTMLInputElement>) => {
-      if (document.activeElement === e.currentTarget) {
-        if (activeTimeDropdown === id) {
-          setActiveTimeDropdown(null);
-        } else {
-          setActiveTimeDropdown(id);
-        }
-        e.preventDefault();
-        e.currentTarget.select();
-      }
-    };
-
-    const handleBlur = () => {
-      setTimeout(() => {
-        if (activeTimeDropdown === id) setActiveTimeDropdown(null);
-      }, 200);
-      if (type === "hour") {
-        let num = parseInt(value || "0");
-        if (num < 1) num = 1;
-        if (num > 12) num = 12;
-        setValue(num.toString().padStart(2, "0"));
-      } else if (type === "minute") {
-        let num = parseInt(value || "0");
-        if (num < 0) num = 0;
-        if (num > 59) num = 59;
-        setValue(num.toString().padStart(2, "0"));
-      } else if (type === "period") {
-        if (value !== "AM" && value !== "PM") setValue("AM");
-      }
-    };
-
-    return (
-      <div className="relative flex-1 h-full group">
-        <input
-          type="text"
-          className="w-full h-full text-center bg-transparent outline-none font-rubik text-base text-gray-700 font-medium placeholder-gray-300 transition-colors cursor-pointer caret-transparent focus:text-primary1 selection:bg-transparent selection:text-primary1"
-          value={value}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          onMouseDown={handleMouseDown}
-          onBlur={handleBlur}
-          maxLength={2}
-          autoComplete="off"
-        />
-        {isOpen && (
-          <>
-            <div
-              className={`${dropdownOuterStyle} left-1/2 -translate-x-1/2 text-center`}
-              onMouseDown={(e) => e.preventDefault()}
-            >
-              <div className={dropdownInnerStyle}>
-                {options.map((opt) => (
-                  <div
-                    key={opt}
-                    className={`justify-center ${dropdownItemStyle} ${
-                      value === opt
-                        ? dropdownItemSelectedStyle
-                        : dropdownItemHoverStyle
-                    }`}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setValue(opt);
-                      setActiveTimeDropdown(null);
-                    }}
-                  >
-                    <span>{opt}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  };
-
-  // --- Custom Date Picker Render (matching meeting dropdown UI) ---
   const renderDatePicker = (
     id: string,
     value: string,
@@ -1777,7 +1635,7 @@ export default function AnnouncementsPage() {
         title={successMessage.title}
         description={successMessage.description}
         buttonLabel="Continue"
-        onClose={() => { setShowSuccessModal(false); setSubmitSuccess(false); }}
+        onClose={() => { setShowSuccessModal(false); }}
       />
     </div>
   );
