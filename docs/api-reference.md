@@ -64,12 +64,15 @@ While maintenance mode is on, every route below except `/api/auth/*` and `/api/s
 | `POST /:id/report` | public | rate-limited |
 | `GET /:id` | public | counts a view; add `?countView=false` for server-side fetches (metadata) that shouldn't |
 | `GET /my/events` | any authenticated user | |
+| `GET /:id/rsvp` | any authenticated user | `{ rsvped, count }` for the caller; events with an external `rsvpLink` don't use this |
+| `POST /:id/rsvp` | any authenticated user | registers the caller (once) and returns `{ rsvped, count }`; `400` for events that have ended or use an `rsvpLink`. Event responses carry a public `rsvpCount`; who registered is never exposed |
+| `DELETE /:id/rsvp` | any authenticated user | cancels the caller's registration |
 | `POST /`, `PATCH /:id`, `DELETE /:id` | `council-officer` or own post (`canManagePost`) | |
 | `PATCH /:id/publish` | `council-officer` or own post | publish toggle |
 
 ## Announcements — `/api/announcements`
 
-Same shape as Events: public `GET /`, `GET /type/:type`, `GET /:id`; `GET /my/announcements` for any authenticated user; create/update/delete/publish-toggle behind `council-officer` or ownership.
+Same shape as Events: public `GET /`, `GET /type/:type`, `GET /:id`; `GET /my/announcements` for any authenticated user; create/update/delete/publish-toggle behind `council-officer` or ownership. A meeting announcement can carry `attendance` (a list of `{ name, position }`, up to 300 entries, shown publicly on the announcement), alongside the `attendees` field that holds the attendance form link.
 
 ## Advisors, Faculty, Sponsors, Testimonials — `/api/{advisors,faculty,sponsors,testimonials}`
 

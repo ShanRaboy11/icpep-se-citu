@@ -1,21 +1,22 @@
 import { Request, Response, NextFunction } from "express";
 import Announcement from "../models/announcement";
-import { canManagePost } from "../utils/ownership";
+import { canManagePost } from "../utils/auth/ownership";
 import {
   uploadToCloudinary,
   uploadMultipleToCloudinary,
   deleteFromCloudinary,
-} from "../utils/cloudinary";
+} from "../utils/media/cloudinary";
 import mongoose from "mongoose";
 import { notifyTargetAudience } from "../utils/notification";
-import { listVisibility, canViewItem } from "../utils/visibility";
+import { listVisibility, canViewItem } from "../utils/auth/visibility";
 import { pickFields } from "../utils/pick";
-import { sanitizeRichText, isBlankRichText } from "../utils/rich-text";
+import { sanitizeRichText, isBlankRichText } from "../utils/content/rich-text";
+import { parseAttendance } from "../utils/content/attendance";
 
 const ANNOUNCEMENT_EDITABLE_FIELDS = [
   "title", "description", "content", "type", "priority", "targetAudience",
   "isPublished", "publishDate", "date", "expiryDate", "time", "location",
-  "organizer", "contact", "attendees", "agenda", "awardees", "attachments",
+  "organizer", "contact", "attendees", "attendance", "agenda", "awardees", "attachments",
   "galleryImages", "imageUrl",
 ] as const;
 
@@ -68,6 +69,7 @@ export const createAnnouncement = async (
       organizer,
       contact,
       attendees,
+      attendance,
       agenda,
       awardees,
     } = req.body;
@@ -156,6 +158,12 @@ export const createAnnouncement = async (
     }
 
 
+    const parsedAttendance = attendance === undefined ? { values: [] } : parseAttendance(attendance);
+    if ("error" in parsedAttendance) {
+      res.status(400).json({ success: false, message: parsedAttendance.error });
+      return;
+    }
+
     // Validate required fields
     if (!title || !description || !content || isBlankRichText(String(content))) {
       res.status(400).json({
@@ -189,6 +197,7 @@ export const createAnnouncement = async (
       organizer,
       contact,
       attendees,
+      attendance: parsedAttendance.values,
       agenda: parsedAgenda,
       awardees: parsedAwardees,
       imageUrl,
@@ -491,6 +500,15 @@ export const updateAnnouncement = async (
           message: "A featured image is required to publish an announcement.",
         });
       return;
+    }
+
+    if (updateData.attendance !== undefined) {
+      const parsedAttendance = parseAttendance(updateData.attendance);
+      if ("error" in parsedAttendance) {
+        res.status(400).json({ success: false, message: parsedAttendance.error });
+        return;
+      }
+      updateData.attendance = parsedAttendance.values;
     }
 
     // Parse arrays if they are strings

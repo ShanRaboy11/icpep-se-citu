@@ -1,12 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import Event from "../models/event";
-import { canManagePost } from "../utils/ownership";
-import { escapeHtml } from "../utils/html";
-import { listVisibility, canViewItem } from "../utils/visibility";
+import { canManagePost } from "../utils/auth/ownership";
+import { escapeHtml } from "../utils/content/html";
+import { listVisibility, canViewItem } from "../utils/auth/visibility";
 import { pickFields } from "../utils/pick";
 import { getOrCreateSettings } from "./siteSettings.controller";
-import { resolveContact } from "../utils/contact-settings";
-import { sanitizeRichText, isBlankRichText } from "../utils/rich-text";
+import { resolveContact } from "../utils/content/contact-settings";
+import { sanitizeRichText, isBlankRichText } from "../utils/content/rich-text";
+import { isRsvpOpen } from "../utils/rsvp";
 
 const EVENT_EDITABLE_FIELDS = [
   "title", "description", "content", "tags", "priority", "targetAudience",
@@ -20,10 +21,10 @@ import {
   uploadToCloudinary,
   deleteFromCloudinary,
   uploadMultipleToCloudinary,
-} from "../utils/cloudinary";
+} from "../utils/media/cloudinary";
 import mongoose from "mongoose";
 import { notifyTargetAudience } from "../utils/notification";
-import sendEmail from "../utils/email";
+import sendEmail from "../utils/mail/email";
 
 // Local Multer file shape (avoid relying on global Express.Multer augmentation)
 type MulterFile = MulterLocal.MulterFile;
@@ -823,6 +824,82 @@ export const reportEvent = async (
     }
 
     res.status(200).json({ success: true, message: "Report sent" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const loadRsvpEvent = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400).json({ success: false, message: "Invalid event ID" });
+    return null;
+  }
+
+  const event = await Event.findById(id);
+  if (!event || !canViewItem(req.user, event)) {
+    res.status(404).json({ success: false, message: "Event not found" });
+    return null;
+  }
+  return event;
+};
+
+export const getMyRsvp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const event = await loadRsvpEvent(req, res);
+    if (!event) return;
+
+    const rsvped = Boolean(await Event.exists({ _id: event._id, rsvps: req.user?.id }));
+    res.status(200).json({ success: true, data: { rsvped, count: event.rsvpCount ?? 0 } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const rsvpToEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const event = await loadRsvpEvent(req, res);
+    if (!event) return;
+
+    if (event.rsvpLink) {
+      res.status(400).json({ success: false, message: "Register for this event through its link" });
+      return;
+    }
+    if (!isRsvpOpen(event)) {
+      res.status(400).json({ success: false, message: "This event has already ended" });
+      return;
+    }
+
+    const updated = await Event.findOneAndUpdate(
+      { _id: event._id, rsvps: { $ne: req.user?.id } },
+      { $addToSet: { rsvps: req.user?.id }, $inc: { rsvpCount: 1 } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: { rsvped: true, count: (updated ?? event).rsvpCount ?? 0 },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelRsvp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const event = await loadRsvpEvent(req, res);
+    if (!event) return;
+
+    const updated = await Event.findOneAndUpdate(
+      { _id: event._id, rsvps: req.user?.id },
+      { $pull: { rsvps: req.user?.id }, $inc: { rsvpCount: -1 } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: { rsvped: false, count: Math.max(0, (updated ?? event).rsvpCount ?? 0) },
+    });
   } catch (error) {
     next(error);
   }

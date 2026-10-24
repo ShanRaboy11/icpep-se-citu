@@ -9,6 +9,9 @@ import {
     getEventsByTag,
     getMyEvents,
     reportEvent,
+    getMyRsvp,
+    rsvpToEvent,
+    cancelRsvp,
 } from '../controllers/event.controller';
 import { authenticate, authorizeRoles, optionalAuth } from '../middleware/auth.middleware';
 import { rateLimit } from '../utils/rate-limit';
@@ -27,6 +30,10 @@ const reportRateLimit = rateLimit({
 });
 router.post('/:id/report', reportRateLimit, reportEvent);
 router.get('/:id', optionalAuth, getEventById);
+
+router.get('/:id/rsvp', authenticate, getMyRsvp);
+router.post('/:id/rsvp', authenticate, rsvpToEvent);
+router.delete('/:id/rsvp', authenticate, cancelRsvp);
 
 // Protected routes (require authentication)
 // Get user's own events - MUST be before /:id to avoid conflicts
