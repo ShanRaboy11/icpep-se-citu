@@ -39,11 +39,10 @@ const MembershipPage: FC = () => {
     load();
   }, []);
 
-  // The overlapping 3-column "spotlight" layout only makes sense for
-  // exactly 3 tiers with the highlighted one in the middle slot (the
-  // convention admins are expected to follow via display order). Any
-  // other count falls back to a plain centered wrap.
   const useSpotlightLayout = tiers.length === 3;
+  const spotlightTier = tiers.find((tier) => tier.isHighlighted);
+  const others = tiers.filter((tier) => tier !== spotlightTier);
+  const columns = spotlightTier ? [others[0], spotlightTier, others[1]] : tiers;
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
@@ -83,21 +82,21 @@ const MembershipPage: FC = () => {
                   <div className="group flex flex-col lg:flex-row justify-center items-center gap-16 lg:gap-8 lg:pt-12">
                     <div className="order-2 lg:order-1 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-8 group-hover:lg:-translate-x-8">
                       <MembershipCard
-                        {...tiers[0]}
+                        {...columns[0]}
                         isOpen={isOpen}
                         registrationUrl={registrationUrl}
                       />
                     </div>
                     <div className="order-1 lg:order-2 w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
                       <MembershipCard
-                        {...tiers[1]}
+                        {...columns[1]}
                         isOpen={isOpen}
                         registrationUrl={registrationUrl}
                       />
                     </div>
                     <div className="order-3 lg:order-3 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
                       <MembershipCard
-                        {...tiers[2]}
+                        {...columns[2]}
                         isOpen={isOpen}
                         registrationUrl={registrationUrl}
                       />

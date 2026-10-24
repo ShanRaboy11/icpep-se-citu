@@ -42,7 +42,7 @@ type FormErrors = {
 const ACCENT_OPTIONS: { value: "primary" | "steel" | "sky"; label: string }[] =
   [
     { value: "steel", label: "Steel (blue-cyan)" },
-    { value: "primary", label: "Primary (deep blue) — Spotlight" },
+    { value: "primary", label: "Primary (deep blue)" },
     { value: "sky", label: "Sky (light blue)" },
   ];
 

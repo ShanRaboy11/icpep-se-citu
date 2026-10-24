@@ -1,6 +1,12 @@
 import { Request, Response } from 'express';
 import MembershipTier from '../models/membershipTier';
 
+// Only one tier can be the spotlighted (center, larger) card at a time.
+const clearOtherSpotlights = async (tier: { _id: unknown; isHighlighted: boolean }) => {
+  if (!tier.isHighlighted) return;
+  await MembershipTier.updateMany({ _id: { $ne: tier._id } }, { isHighlighted: false });
+};
+
 export const createMembershipTier = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
@@ -26,6 +32,8 @@ export const createMembershipTier = async (req: Request, res: Response): Promise
       isActive: isActive !== undefined ? isActive : true,
       displayOrder: displayOrder || 0,
     });
+
+    await clearOtherSpotlights(created);
 
     res.status(201).json({
       success: true,
@@ -104,6 +112,7 @@ export const updateMembershipTier = async (req: Request, res: Response): Promise
     if (displayOrder !== undefined) tier.displayOrder = displayOrder;
 
     const updated = await tier.save();
+    await clearOtherSpotlights(updated);
 
     res.status(200).json({
       success: true,
