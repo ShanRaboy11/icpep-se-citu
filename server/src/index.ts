@@ -26,7 +26,7 @@ import membershipRoutes from "./routes/membership.routes";
 import siteRoutes from "./routes/site.routes";
 import auditRoutes from "./routes/audit.routes";
 import startAnnouncementScheduler from "./utils/scheduler";
-import { escapeRegExp } from "./utils/regex";
+import { escapeRegExp } from "./utils/content/regex";
 import { getJwtSecret } from "./config/env";
 import { enforceMaintenanceMode } from "./middleware/maintenance.middleware";
 import { rateLimit } from "./utils/rate-limit";

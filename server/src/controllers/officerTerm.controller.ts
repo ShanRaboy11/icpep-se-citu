@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import OfficerTerm from '../models/officerTerm';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary } from '../utils/media/cloudinary';
 import mongoose from 'mongoose';
 import { parseGender } from '../utils/gender';
 

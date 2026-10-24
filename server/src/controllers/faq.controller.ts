@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import FAQ from '../models/faq';
-import { MAX_FAQS, parseFaqInput } from '../utils/site-content';
+import { MAX_FAQS, parseFaqInput } from '../utils/content/site-content';
 
 export const createFAQ = async (req: Request, res: Response): Promise<void> => {
   try {

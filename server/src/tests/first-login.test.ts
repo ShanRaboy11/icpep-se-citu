@@ -5,15 +5,15 @@ vi.mock("../models/user", () => ({
   default: { updateOne: (...args: unknown[]) => updateOne(...args) },
 }));
 const sendEmail = vi.fn();
-vi.mock("../utils/email", () => ({ default: (...args: unknown[]) => sendEmail(...args) }));
+vi.mock("../utils/mail/email", () => ({ default: (...args: unknown[]) => sendEmail(...args) }));
 
-import { buildSchoolEmail } from "../utils/school-email";
+import { buildSchoolEmail } from "../utils/mail/school-email";
 import {
   generateFirstLoginCode,
   normalizeFirstLoginCode,
   issueFirstLoginCode,
-} from "../utils/first-login-code";
-import { queueFirstLoginEmail, flushFirstLoginEmails } from "../utils/first-login-mail";
+} from "../utils/auth/first-login-code";
+import { queueFirstLoginEmail, flushFirstLoginEmails } from "../utils/mail/first-login-mail";
 
 describe("buildSchoolEmail", () => {
   it("builds firstname.lastname@cit.edu", () => {

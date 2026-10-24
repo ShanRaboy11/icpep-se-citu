@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import SiteSettings from '../models/siteSettings';
-import { CLOUDINARY_ENABLED, deleteFromCloudinary, isPdf, uploadDocumentToCloudinary, uploadToCloudinary } from '../utils/cloudinary';
+import { CLOUDINARY_ENABLED, deleteFromCloudinary, isPdf, uploadDocumentToCloudinary, uploadToCloudinary } from '../utils/media/cloudinary';
 import { recordAudit } from '../utils/audit';
-import { parseContactUpdate, resolveContact } from '../utils/contact-settings';
-import { SITE_PHOTO_FIELDS, isSitePhotoSection, normalizePhotos, parsePhotoSlot } from '../utils/site-content';
+import { parseContactUpdate, resolveContact } from '../utils/content/contact-settings';
+import { SITE_PHOTO_FIELDS, isSitePhotoSection, normalizePhotos, parsePhotoSlot } from '../utils/content/site-content';
 
 export interface AuthRequest extends Request {
   user?: { id: string; role: string };

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Sponsor from '../models/sponsor';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary } from '../utils/media/cloudinary';
 
 export const createSponsor = async (req: Request, res: Response): Promise<void> => {
   try {

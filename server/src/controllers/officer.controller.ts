@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import User from "../models/user";
 import OfficerTerm from "../models/officerTerm";
-import { uploadToCloudinary } from "../utils/cloudinary";
+import { uploadToCloudinary } from "../utils/media/cloudinary";
 import { getCurrentAcademicYear } from "../utils/academic-year";
 import { formatOfficerName } from "../utils/format-name";
-import { escapeRegExp } from "../utils/regex";
+import { escapeRegExp } from "../utils/content/regex";
 
 // Mirrors the client's splitCouncilPosition (client/src/app/officers/[slug]/page.tsx)
 // so a live assignment archives under the same {position, role} shape the

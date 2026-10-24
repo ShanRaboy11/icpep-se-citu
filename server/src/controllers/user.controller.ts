@@ -3,11 +3,11 @@ import User, { IUser } from "../models/user";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { sendNotification } from "../utils/notification";
-import { escapeRegExp } from "../utils/regex";
-import { issueFirstLoginCode } from "../utils/first-login-code";
-import { buildSchoolEmail } from "../utils/school-email";
+import { escapeRegExp } from "../utils/content/regex";
+import { issueFirstLoginCode } from "../utils/auth/first-login-code";
+import { buildSchoolEmail } from "../utils/mail/school-email";
 import { parseGender } from "../utils/gender";
-import { queueFirstLoginEmail } from "../utils/first-login-mail";
+import { queueFirstLoginEmail } from "../utils/mail/first-login-mail";
 import { recordAudit } from "../utils/audit";
 
 // Interface for request with authenticated user

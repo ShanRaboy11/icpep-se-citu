@@ -2,14 +2,14 @@ import { Request, Response } from "express";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
-import { validatePassword } from "../utils/password_validator";
+import { validatePassword } from "../utils/auth/password-validator";
 import { sendNotification } from "../utils/notification";
-import sendEmail from "../utils/email";
+import sendEmail from "../utils/mail/email";
 import { DEVELOPER_STUDENT_NUMBERS } from "../config/developers";
 import { getJwtSecret, getJwtExpiresIn } from "../config/env";
 import { recordAudit } from "../utils/audit";
-import { normalizeFirstLoginCode } from "../utils/first-login-code";
-import { hashResetCode, resetCodeMatches, MAX_RESET_ATTEMPTS } from "../utils/reset-code";
+import { normalizeFirstLoginCode } from "../utils/auth/first-login-code";
+import { hashResetCode, resetCodeMatches, MAX_RESET_ATTEMPTS } from "../utils/auth/reset-code";
 
 export interface AuthRequest extends Request {
   user?: {

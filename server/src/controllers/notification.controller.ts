@@ -7,7 +7,7 @@ import Event from "../models/event";
 import Meeting from "../models/meeting";
 import User from "../models/user";
 import { isInTargetAudience } from "../utils/notification";
-import { canViewItem } from "../utils/visibility";
+import { canViewItem } from "../utils/auth/visibility";
 
 // Get all notifications for the current user
 export const getNotifications = async (

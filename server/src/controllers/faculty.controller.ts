@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Faculty from '../models/faculty';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary } from '../utils/media/cloudinary';
 import { parseGender } from '../utils/gender';
 
 export const createFaculty = async (req: Request, res: Response): Promise<void> => {

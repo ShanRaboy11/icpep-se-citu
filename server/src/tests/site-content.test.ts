@@ -6,7 +6,7 @@ import {
   normalizePhotos,
   parseFaqInput,
   parsePhotoSlot,
-} from "../utils/site-content";
+} from "../utils/content/site-content";
 
 describe("parseFaqInput", () => {
   it("trims a valid question and answer", () => {

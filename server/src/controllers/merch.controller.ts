@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Merch from '../models/merch';
-import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary, deleteFromCloudinary } from '../utils/media/cloudinary';
 
 export const createMerch = async (req: Request, res: Response): Promise<void> => {
   try {

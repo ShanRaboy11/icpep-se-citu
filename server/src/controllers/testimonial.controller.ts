@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import Testimonial from '../models/testimonial';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary } from '../utils/media/cloudinary';
 
 export const createTestimonial = async (req: Request, res: Response): Promise<void> => {
   try {

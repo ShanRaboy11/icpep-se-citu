@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { DEFAULT_CONTACT, parseContactUpdate, resolveContact } from "../utils/contact-settings";
+import { DEFAULT_CONTACT, parseContactUpdate, resolveContact } from "../utils/content/contact-settings";
 
 describe("resolveContact", () => {
   it("falls back to the chapter defaults until links have been saved", () => {

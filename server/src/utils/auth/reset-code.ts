@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { getJwtSecret } from "../config/env";
+import { getJwtSecret } from "../../config/env";
 
 export const MAX_RESET_ATTEMPTS = 5;
 

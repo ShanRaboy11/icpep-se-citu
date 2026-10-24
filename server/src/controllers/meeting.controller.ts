@@ -4,7 +4,7 @@ import Meeting from "../models/meeting";
 import { sendBulkNotifications } from "../utils/notification";
 import Availability from "../models/availability";
 import User from "../models/user";
-import { escapeRegExp } from "../utils/regex";
+import { escapeRegExp } from "../utils/content/regex";
 
 interface CreateMeetingBody {
   title: string;

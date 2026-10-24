@@ -1,4 +1,4 @@
-import { getSchoolEmailDomain } from "../config/env";
+import { getSchoolEmailDomain } from "../../config/env";
 
 const slug = (value: string): string =>
   value

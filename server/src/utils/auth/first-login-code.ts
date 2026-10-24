@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { getFirstLoginCodeDays } from "../config/env";
+import { getFirstLoginCodeDays } from "../../config/env";
 
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 const CODE_LENGTH = 8;
