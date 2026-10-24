@@ -7,9 +7,8 @@ import SuccessModal from "@/app/components/ui/success-modal";
 import EditingBanner from "@/app/components/ui/editing-banner";
 import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
 import { swapToFallback } from "@/app/components/ui/fallback-image";
-import RemoveButton from "@/app/components/ui/remove-button";
 import React, { useState, useRef, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Sidebar from "@/app/components/create/sidebar";
 import Header from "@/app/components/layout/header";
 import Footer from "@/app/components/layout/footer";
@@ -52,7 +51,6 @@ export default function TestimonialsPage() {
     message: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loadingAction, setLoadingAction] = useState<
     "saving" | "publishing" | null
@@ -65,7 +63,6 @@ export default function TestimonialsPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -168,7 +165,6 @@ export default function TestimonialsPage() {
         await testimonialService.updateTestimonial(editingId, payload);
       else await testimonialService.createTestimonial(payload);
       handleCancelEdit();
-      setSubmitSuccess(true);
       setSuccessMessage({
         title: editingId ? "Draft Updated!" : "Draft Saved!",
         description: editingId
@@ -211,7 +207,6 @@ export default function TestimonialsPage() {
         await testimonialService.updateTestimonial(editingId, payload);
       else await testimonialService.createTestimonial(payload);
       handleCancelEdit();
-      setSubmitSuccess(true);
       setSuccessMessage({
         title:
           editingId && !isEditingDraft
@@ -696,7 +691,7 @@ export default function TestimonialsPage() {
         title={successMessage.title}
         description={successMessage.description}
         buttonLabel="Continue"
-        onClose={() => { setShowSuccessModal(false); setSubmitSuccess(false); }}
+        onClose={() => { setShowSuccessModal(false); }}
       />
     </div>
   );

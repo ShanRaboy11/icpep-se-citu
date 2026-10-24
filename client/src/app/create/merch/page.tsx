@@ -7,7 +7,6 @@ import SuccessModal from "@/app/components/ui/success-modal";
 import EditingBanner from "@/app/components/ui/editing-banner";
 import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
 import { swapToFallback } from "@/app/components/ui/fallback-image";
-import RemoveButton from "@/app/components/ui/remove-button";
 import React, { useState, useRef, useEffect } from "react";
 import Sidebar from "@/app/components/create/sidebar";
 import Header from "@/app/components/layout/header";

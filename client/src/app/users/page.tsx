@@ -152,30 +152,6 @@ const validateMembershipType = (
   return null;
 };
 
-const parseMembershipStatus = (
-  membershipStatus?: string,
-): { isMember: boolean; membershipType: string | null } => {
-  if (!membershipStatus) {
-    return { isMember: false, membershipType: null };
-  }
-
-  const statusLower = membershipStatus.toLowerCase().trim();
-
-  if (
-    statusLower === "local" ||
-    statusLower === "regional" ||
-    statusLower === "both"
-  ) {
-    return { isMember: true, membershipType: statusLower };
-  }
-
-  if (statusLower === "member") {
-    return { isMember: true, membershipType: null };
-  }
-
-  return { isMember: false, membershipType: null };
-};
-
 const getAuthToken = (): string | null => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("authToken");
@@ -521,10 +497,6 @@ export default function UsersListPage() {
     setSortField(field);
     setSortDirection(direction);
     setCurrentPage(1); // Reset to first page when sorting changes
-  };
-
-  const handleBackToHome = () => {
-    router.push("/");
   };
 
   const handleAddUser = () => {

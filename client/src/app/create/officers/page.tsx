@@ -1011,7 +1011,6 @@ export default function OfficersPage() {
                           {Object.keys(departments).map((key) => {
                             const dept = departments[key];
                             const isActive = activeTab === key;
-                            const Icon = dept.icon;
                             return (
                               <button
                                 key={key}

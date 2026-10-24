@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import Sidebar from "@/app/components/create/sidebar";
 import Header from "@/app/components/layout/header";
 import Footer from "@/app/components/layout/footer";

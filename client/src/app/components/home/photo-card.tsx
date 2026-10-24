@@ -10,17 +10,14 @@ interface CardStackProps {
 
 export function CardStack({ imageUrls }: CardStackProps) {
   const [cards, setCards] = useState(() => imageUrls.map((url, id) => ({ url, id })));
-  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsAnimating(true);
       setCards((prev) => {
         const newCards = [...prev];
         newCards.push(newCards.shift()!);
         return newCards;
       });
-      setTimeout(() => setIsAnimating(false), 300);
     }, 4000);
     return () => clearInterval(interval);
   }, []);

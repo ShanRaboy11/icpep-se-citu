@@ -67,7 +67,6 @@ export default function AddUserModal({
   // Faculty aren't students, so they get an employee ID and no year level.
   // Everyone else (students and officers are students too) gets a student ID.
   const isFaculty = formData.role === "faculty";
-  const isStudent = formData.role === "student";
   const isOfficer = formData.role === "council-officer" || formData.role === "committee-officer";
   const showsPosition = isOfficer || isFaculty;
   const showsDepartment = formData.role === "committee-officer" || isFaculty;

@@ -16,7 +16,6 @@ export const MerchandiseCard: FC<MerchandiseCardProps> = ({
   name,
   price,
   imageUrl,
-  availableSizes = [],
   onClick,
 }) => {
   return (

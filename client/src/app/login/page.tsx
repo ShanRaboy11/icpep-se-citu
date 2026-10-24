@@ -296,7 +296,7 @@ export default function Login() {
     setError("");
 
     try {
-      const data = await apiCall("/auth/forgot-password", {
+      await apiCall("/auth/forgot-password", {
         method: "POST",
         body: JSON.stringify({ studentNumber }),
       });

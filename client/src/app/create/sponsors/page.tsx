@@ -7,7 +7,6 @@ import SuccessModal from "@/app/components/ui/success-modal";
 import EditingBanner from "@/app/components/ui/editing-banner";
 import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
 import { swapToFallback } from "@/app/components/ui/fallback-image";
-import RemoveButton from "@/app/components/ui/remove-button";
 import React, { useState, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Sidebar from "@/app/components/create/sidebar";
@@ -671,7 +670,7 @@ export default function SponsorsPage() {
                                   (TIER_CONFIG[a.type]?.rank || 9) -
                                   (TIER_CONFIG[b.type]?.rank || 9),
                               )
-                              .map((item, i) => {
+                              .map((item) => {
                                 const cfg =
                                   TIER_CONFIG[item.type] ||
                                   TIER_CONFIG["Bronze Sponsor"];
