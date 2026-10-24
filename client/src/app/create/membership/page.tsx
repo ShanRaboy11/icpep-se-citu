@@ -651,7 +651,7 @@ export default function MembershipPage() {
                       {editingId && (
                         <Button
                           type="button"
-                          variant="heroOutline"
+                          variant="heroCancel"
                           onClick={handleCancelEdit}
                           className="px-4 py-2 sm:px-6 sm:py-3"
                         >
@@ -793,7 +793,7 @@ export default function MembershipPage() {
                                           : "bg-cyan-50 text-cyan-600 border-cyan-200"
                                     }`}
                                   >
-                                    {tier.accentColor}
+                                    {tier.accentColor.charAt(0).toUpperCase() + tier.accentColor.slice(1)}
                                   </span>
                                 </td>
                                 <td data-label="Status" className="px-4 py-4">

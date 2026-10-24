@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Upload } from "lucide-react";
 import SearchSelect from "@/app/components/ui/search-select";
-import RemoveButton from "@/app/components/ui/remove-button";
+import Button from "@/app/components/ui/button";
+import RemovableTag from "@/app/components/ui/removable-tag";
 import officerService, { type Officer } from "@/app/services/officer";
 import { formatOfficerName } from "@/app/utils/officers/format-name";
 import { shortDepartmentName, shortPositionTitle } from "@/app/utils/department";
+import { matchRows, readListRows } from "@/app/utils/announcements/attendance-import";
+import { shortPosition } from "@/app/utils/announcements/attendance";
 
 export interface Attendee {
   name: string;
@@ -30,6 +34,15 @@ const toAttendee = (officer: Officer): Attendee => ({
 const sameAttendee = (a: Attendee, b: Attendee) =>
   a.name.toLowerCase() === b.name.toLowerCase() && a.position.toLowerCase() === b.position.toLowerCase();
 
+const lastName = (attendee: Attendee) => attendee.name.split(",")[0].trim();
+
+const tagLabel = (attendee: Attendee, all: Attendee[]) => {
+  const last = lastName(attendee);
+  const shared = all.filter((other) => lastName(other).toLowerCase() === last.toLowerCase()).length > 1;
+  const first = attendee.name.split(",")[1]?.trim().split(" ")[0];
+  return shared && first ? `${last}, ${first}` : last;
+};
+
 export default function AttendancePicker({
   value,
   onChange,
@@ -40,6 +53,8 @@ export default function AttendancePicker({
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [importNote, setImportNote] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     officerService
@@ -66,6 +81,19 @@ export default function AttendancePicker({
     setQuery("");
   };
 
+  const importList = async (file: File) => {
+    try {
+      const rows = await readListRows(file);
+      const { people, unmatched } = matchRows(rows, officers);
+      const found = people.map(toAttendee).filter((attendee) => !value.some((chosen) => sameAttendee(chosen, attendee)));
+      onChange([...value, ...found]);
+      const added = `${found.length} ${found.length === 1 ? "officer" : "officers"} added`;
+      setImportNote(unmatched > 0 ? `${added}. ${unmatched} ${unmatched === 1 ? "row" : "rows"} had no match.` : `${added}.`);
+    } catch {
+      setImportNote("That file could not be read. Use a .csv, .xlsx or .txt list of names.");
+    }
+  };
+
   return (
     <div className="space-y-3">
       <SearchSelect
@@ -77,22 +105,42 @@ export default function AttendancePicker({
         onSelect={add}
       />
 
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,.txt,.xlsx,.xls"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) importList(file);
+            e.target.value = "";
+          }}
+        />
+        <Button
+          type="button"
+          variant="heroOutline"
+          disabled={loading}
+          onClick={() => fileRef.current?.click()}
+          className="px-4 py-2 text-xs sm:px-4 sm:py-2 sm:text-xs"
+        >
+          <Upload size={12} />
+          Upload attendance list
+        </Button>
+        <span className="font-raleway text-xs text-gray-400">.csv, .xlsx or .txt with one name per row</span>
+      </div>
+
       {value.length > 0 && (
         <ul className="flex flex-wrap gap-2">
           {value.map((attendee) => (
-            <li
-              key={`${attendee.name}|${attendee.position}`}
-              className="flex items-center gap-2 rounded-full border border-primary1/20 bg-primary1/5 py-1 pl-4 pr-1.5"
-            >
-              <span className="font-rubik text-xs font-semibold text-primary3">
-                {attendee.name}
-                {attendee.position && <span className="ml-1.5 font-normal text-gray-500">{attendee.position}</span>}
-              </span>
-              <RemoveButton
-                variant="icon"
-                label={`Remove ${attendee.name}`}
-                onClick={() => onChange(value.filter((chosen) => !sameAttendee(chosen, attendee)))}
-                className="h-6 w-6 border-0 p-0"
+            <li key={`${attendee.name}|${attendee.position}`}>
+              <RemovableTag
+                label={tagLabel(attendee, value)}
+                detail={shortPosition(attendee.position)}
+                icon={false}
+                title={attendee.name}
+                removeLabel={`Remove ${attendee.name}`}
+                onRemove={() => onChange(value.filter((chosen) => !sameAttendee(chosen, attendee)))}
               />
             </li>
           ))}
@@ -100,7 +148,7 @@ export default function AttendancePicker({
       )}
 
       <p className="font-raleway text-xs text-gray-400">
-        {value.length === 0 ? "No one added yet." : `${value.length} ${value.length === 1 ? "officer" : "officers"} marked present.`}
+        {importNote ? `${importNote} ` : ""}{value.length === 0 ? "No one added yet." : `${value.length} ${value.length === 1 ? "officer" : "officers"} marked present.`}
       </p>
     </div>
   );

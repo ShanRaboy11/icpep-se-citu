@@ -4,6 +4,7 @@ import { User } from "../../utils/users/user";
 import UserTableRow from "./user-table-row";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import Dropdown from "@/app/components/ui/dropdown";
+import TextButton from "@/app/components/ui/text-button";
 
 type SortField =
   | "studentNumber"
@@ -192,13 +193,9 @@ export default function UsersTable({
           {selectedIds.size > 0 && (
             <>
               <span className="text-gray-600">{selectedIds.size} selected</span>
-              <button
-                type="button"
-                onClick={onClearSelection}
-                className="text-gray-500 hover:underline cursor-pointer"
-              >
+              <TextButton onClick={onClearSelection} className="text-xs">
                 Clear
-              </button>
+              </TextButton>
             </>
           )}
         </div>

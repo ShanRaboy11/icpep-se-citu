@@ -9,13 +9,14 @@ interface AddButtonProps {
   children: ReactNode;
   className?: string;
   disabled?: boolean;
+  dashed?: boolean;
 }
 
-export default function AddButton({ onClick, children, className = "", disabled }: AddButtonProps) {
+export default function AddButton({ onClick, children, className = "", disabled, dashed }: AddButtonProps) {
   return (
     <Button
       type="button"
-      variant="heroOutline"
+      variant={dashed ? "heroDashed" : "heroOutline"}
       onClick={onClick}
       disabled={disabled}
       className={`px-4 py-2 text-xs sm:px-4 sm:py-2 sm:text-xs ${className}`}

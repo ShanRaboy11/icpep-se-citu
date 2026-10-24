@@ -208,7 +208,7 @@ export default function FaqCard() {
                 </p>
               </div>
               <div className="flex flex-wrap justify-end gap-3">
-                <Button variant="heroOutline" onClick={() => setDraft(null)} disabled={busy} className="px-5 py-2 text-sm">
+                <Button variant="heroCancel" onClick={() => setDraft(null)} disabled={busy} className="px-5 py-2 text-sm">
                   Cancel
                 </Button>
                 <Button variant="hero" onClick={save} disabled={busy} className="px-6 py-2 text-sm">

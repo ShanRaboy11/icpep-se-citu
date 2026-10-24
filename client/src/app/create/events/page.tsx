@@ -2,10 +2,12 @@
 
 import VisibilityPicker from "@/app/components/create/visibility-picker";
 import FormDivider from "@/app/components/ui/form-divider";
+import TextButton from "@/app/components/ui/text-button";
 import { ERROR_CLASS as errorInputStyle, labelStyle, titleLabelStyle as titlelabelStyle, inputClass as inputCls } from "@/app/components/ui/form-styles";
 import ConfirmModal from "@/app/components/ui/confirm-modal";
 import SuccessModal from "@/app/components/ui/success-modal";
 import AddButton from "@/app/components/ui/add-button";
+import RemovableTag from "@/app/components/ui/removable-tag";
 import EditingBanner from "@/app/components/ui/editing-banner";
 import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
 import { swapToFallback } from "@/app/components/ui/fallback-image";
@@ -26,7 +28,6 @@ import {
   Plus,
   X,
   Calendar,
-  Tag,
   MapPin,
   ChevronDown,
   ChevronLeft,
@@ -199,10 +200,7 @@ export default function EventsPage() {
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const [organizer, setOrganizer] = useState("");
-  const [details, setDetails] = useState<{ title: string; body: string }[]>([
-    { title: "", body: "" },
-  ]);
-  const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+  const [details, setDetails] = useState<{ title: string; body: string }[]>([]);
 
   // Custom date picker state
   const [activeDatePicker, setActiveDatePicker] = useState<string | null>(null);
@@ -370,10 +368,8 @@ export default function EventsPage() {
       setDetails(
         item.details.map((d) => ({ title: d.title, body: d.items.join("\n") })),
       );
-      setShowAdditionalInfo(true);
     } else {
-      setDetails([{ title: "", body: "" }]);
-      setShowAdditionalInfo(false);
+      setDetails([]);
     }
     setPreviews(item.coverImage ? [item.coverImage] : []);
     setImages([]);
@@ -414,8 +410,7 @@ export default function EventsPage() {
     setRegEndHour("08");
     setRegEndMinute("00");
     setRegEndPeriod("AM");
-    setDetails([{ title: "", body: "" }]);
-    setShowAdditionalInfo(false);
+    setDetails([]);
     setMode("Onsite");
     setDateConflictError(false);
     setGalleryImages([]);
@@ -735,7 +730,7 @@ export default function EventsPage() {
     value: string,
     onChange: (val: string) => void,
     hasError = false,
-    placeholder = "Select date..."
+    placeholder = "Select date"
   ) => {
     const isOpen = activeDatePicker === id;
     const todayStr = new Date().toISOString().split("T")[0];
@@ -859,29 +854,21 @@ export default function EventsPage() {
               </div>
 
               <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center text-xs font-semibold">
-                <button
-                  type="button"
-                  className="text-primary1 hover:underline font-raleway cursor-pointer"
-                  onClick={(e) => {
+                <TextButton tone="link" className="text-xs" onClick={(e) => {
                     e.stopPropagation();
                     onChange(todayStr);
                     setActiveDatePicker(null);
-                  }}
-                >
-                  Today
-                </button>
+                  }}>
+                    Today
+                  </TextButton>
                 {value && (
-                  <button
-                    type="button"
-                    className="text-gray-400 hover:text-red-500 font-raleway cursor-pointer"
-                    onClick={(e) => {
+                  <TextButton className="text-xs" onClick={(e) => {
                       e.stopPropagation();
                       onChange("");
                       setActiveDatePicker(null);
-                    }}
-                  >
+                    }}>
                     Clear
-                  </button>
+                  </TextButton>
                 )}
               </div>
             </div>
@@ -1120,7 +1107,7 @@ export default function EventsPage() {
                             </button>
                           ))}
                           {!showTagInput ? (
-                            <AddButton onClick={() => setShowTagInput(true)}>Custom</AddButton>
+                            <AddButton dashed onClick={() => setShowTagInput(true)}>Custom</AddButton>
                           ) : (
                             <div className="flex items-center gap-2">
                               <input
@@ -1137,7 +1124,7 @@ export default function EventsPage() {
                                   }
                                 }}
                                 className="border-2 border-primary1 rounded-full px-4 py-2 font-rubik text-xs focus:outline-none focus:ring-4 focus:ring-primary1/10 w-32"
-                                placeholder="Tag name..."
+                                placeholder="Tag name"
                                 autoFocus
                               />
                               <Button variant="hero"
@@ -1168,22 +1155,7 @@ export default function EventsPage() {
                         {tags.length > 0 && (
                           <div className="flex flex-wrap gap-2">
                             {tags.map((tag, i) => (
-                              <span
-                                key={i}
-                                className="flex items-center gap-2 bg-primary1/10 border border-primary1/20 text-primary1 font-semibold font-raleway pl-3 pr-2 py-1.5 rounded-full text-xs"
-                              >
-                                <Tag size={11} />
-                                {tag}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setTags(tags.filter((_, idx) => idx !== i))
-                                  }
-                                  className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-red-100 hover:text-red-500 transition-colors cursor-pointer"
-                                >
-                                  <X size={11} />
-                                </button>
-                              </span>
+                              <RemovableTag key={i} label={tag} onRemove={() => setTags(tags.filter((_, idx) => idx !== i))} />
                             ))}
                           </div>
                         )}
@@ -1307,7 +1279,7 @@ export default function EventsPage() {
                             )}
                           </div>
                           {showAdmissionInput && (
-                            <div className="flex flex-col sm:flex-row gap-3 p-4 border-2 border-gray-100 rounded-xl bg-gray-50/60">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 border-2 border-gray-100 rounded-xl bg-gray-50/60">
                               <input
                                 type="text"
                                 placeholder="Category (e.g., General)"
@@ -1609,7 +1581,7 @@ export default function EventsPage() {
                             onChange={(html) =>
                               setFormData((prev) => ({ ...prev, body: html }))
                             }
-                            placeholder="Agenda / program highlights..."
+                            placeholder="Agenda / program highlights"
                             invalid={errors.body}
                           />
                           {errors.body && (
@@ -1628,18 +1600,18 @@ export default function EventsPage() {
                           <label className={labelStyle}>
                             Additional Sections
                           </label>
-                          {!showAdditionalInfo && (
-                            <AddButton onClick={() => setShowAdditionalInfo(true)}>Add Section</AddButton>
+                          {details.length === 0 && (
+                            <AddButton onClick={() => setDetails([{ title: "", body: "" }])}>Add Section</AddButton>
                           )}
                         </div>
-                        {showAdditionalInfo && (
+                        {details.length > 0 && (
                           <div className="space-y-4">
                             {details.map((section, idx) => (
                               <div
                                 key={idx}
                                 className="p-5 border-2 border-gray-100 rounded-xl bg-gray-50/50 space-y-3"
                               >
-                                <div className="flex gap-3">
+                                <div className="flex items-center gap-3">
                                   <input
                                     type="text"
                                     placeholder="Section header"
@@ -1716,7 +1688,7 @@ export default function EventsPage() {
                           {editingId && (
                             <Button
                               type="button"
-                              variant="heroOutline"
+                              variant="heroCancel"
                               onClick={handleCancelEdit}
                               className="px-4 py-2 sm:px-6 sm:py-3"
                             >

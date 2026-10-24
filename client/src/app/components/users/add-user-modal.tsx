@@ -388,7 +388,7 @@ export default function AddUserModal({
 
           <div className="flex justify-end gap-3 px-6 sm:px-7 pt-4 pb-6 sm:pb-7 border-t border-gray-100 shrink-0">
             <Button
-              variant="heroOutline"
+              variant="heroCancel"
               type="button"
               onClick={handleClose}
               className="whitespace-nowrap px-4 py-2 sm:px-6 sm:py-3"

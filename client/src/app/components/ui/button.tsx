@@ -14,6 +14,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     | "secondary2"
     | "hero"
     | "heroOutline"
+    | "heroCancel"
+    | "heroDashed"
     | "heroDanger"
     | "heroWarning"
     | "outlinePill"
@@ -52,6 +54,10 @@ const Button: React.FC<ButtonProps> = ({
     hero: `bg-primary1 hover:bg-primary2 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none text-white font-raleway font-semibold px-5 py-2 text-sm sm:px-8 sm:py-3 sm:text-base ${rounded === "lg" ? "rounded-2xl" : "rounded-full"} shadow-md hover:scale-105 transition-all duration-300 cursor-pointer`,
     // Outline CTA, matches the home hero "Learn More" button (pill by default)
     heroOutline: `bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-buttonbg1 hover:border-primary1 hover:text-primary1 font-raleway font-semibold px-5 py-2 text-sm sm:px-8 sm:py-3 sm:text-base ${rounded === "lg" ? "rounded-2xl" : "rounded-full"} transition-all duration-300 cursor-pointer`,
+    // Dashed outline CTA, for "add your own" actions
+    heroDashed: `bg-transparent border-2 border-dashed border-gray-300 text-gray-700 hover:bg-buttonbg1 hover:border-primary1 hover:text-primary1 font-raleway font-semibold px-5 py-2 text-sm sm:px-8 sm:py-3 sm:text-base ${rounded === "lg" ? "rounded-2xl" : "rounded-full"} transition-all duration-300 cursor-pointer`,
+    // Outline CTA that turns red on hover, for cancelling a form or edit
+    heroCancel: `bg-transparent border-2 border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-500 hover:text-red-600 font-raleway font-semibold px-5 py-2 text-sm sm:px-8 sm:py-3 sm:text-base ${rounded === "lg" ? "rounded-2xl" : "rounded-full"} transition-all duration-300 cursor-pointer`,
     // Same CTA pill family as "hero", but red — for a destructive action that
     // still needs to sit visually consistent next to hero/heroOutline buttons
     heroDanger: `bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none text-white font-raleway font-semibold px-5 py-2 text-sm sm:px-8 sm:py-3 sm:text-base ${rounded === "lg" ? "rounded-2xl" : "rounded-full"} shadow-md hover:scale-105 transition-all duration-300 cursor-pointer`,
@@ -60,8 +66,8 @@ const Button: React.FC<ButtonProps> = ({
     heroWarning: `bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none text-white font-raleway font-semibold px-5 py-2 text-sm sm:px-8 sm:py-3 sm:text-base ${rounded === "lg" ? "rounded-2xl" : "rounded-full"} shadow-md hover:scale-105 transition-all duration-300 cursor-pointer`,
     // Outlined pill that fills on hover; for secondary actions like "View all"
     outlinePill: "bg-transparent border-2 border-primary1 text-primary1 hover:bg-primary1 hover:text-white font-raleway font-semibold text-xs px-6 py-2 rounded-full shadow-md hover:scale-105 transition-all duration-300 cursor-pointer",
-    // Neutral pill that turns red on hover; for cancelling an inline form
-    cancelPill: "bg-white border-2 border-gray-200 text-gray-500 font-raleway font-semibold text-xs px-4 py-2 rounded-full hover:border-red-200 hover:bg-red-50 hover:text-red-500 transition-all duration-300 cursor-pointer",
+    // Outlined pill that turns red on hover; for cancelling an inline form
+    cancelPill: "bg-white border-2 border-gray-300 text-gray-700 font-raleway font-semibold text-xs px-4 py-2 rounded-full hover:border-red-500 hover:bg-red-50 hover:text-red-600 transition-all duration-300 cursor-pointer",
     // Destructive action (e.g. "Delete", "Yes, Delete")
     danger: "bg-red-500 hover:bg-red-600 text-white font-rubik font-semibold rounded-xl shadow-md shadow-red-200 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer",
     // Positive confirm/save action within compact editing UIs

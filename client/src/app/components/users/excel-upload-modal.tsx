@@ -478,7 +478,7 @@ export default function ExcelUploadModal({
         <div className="flex items-center justify-between px-6 sm:px-7 pt-4 pb-6 sm:pb-7 border-t border-gray-100 shrink-0">
           <Button
             type="button"
-            variant="heroOutline"
+            variant="heroCancel"
             onClick={handleClose}
             className="whitespace-nowrap px-4 py-2 sm:px-6 sm:py-3"
           >

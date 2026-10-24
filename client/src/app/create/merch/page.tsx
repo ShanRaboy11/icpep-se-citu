@@ -450,7 +450,7 @@ export default function MerchPage() {
                               name="descrip"
                               value={formData.descrip}
                               onChange={handleInputChange}
-                              placeholder="e.g., Keep your essentials close..."
+                              placeholder="e.g., Keep your essentials close"
                               className={inputClass(Boolean(errors.descrip))}
                             />
                             {errors.descrip && (
@@ -492,13 +492,13 @@ export default function MerchPage() {
                             Pricing Tiers{" "}
                             <span className="text-red-500">*</span>
                           </label>
-                          <span className="text-[10px] font-semibold text-gray-300 font-raleway">
+                          <span className="text-xs font-semibold text-gray-500 font-raleway">
                             (Add at least one)
                           </span>
                         </div>
 
                         <div
-                          className={`flex flex-col sm:flex-row gap-3 p-4 rounded-xl border-2 transition-all ${
+                          className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border-2 transition-all ${
                             priceError
                               ? "border-red-300 bg-red-50/30"
                               : "border-gray-200 bg-gray-50/60"
@@ -585,7 +585,7 @@ export default function MerchPage() {
                           {editingId && (
                             <Button
                               type="button"
-                              variant="heroOutline"
+                              variant="heroCancel"
                               onClick={handleCancelEdit}
                               className="px-4 py-2 sm:px-6 sm:py-3"
                             >

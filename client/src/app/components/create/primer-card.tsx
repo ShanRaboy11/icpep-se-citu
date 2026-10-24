@@ -3,6 +3,7 @@
 import { FormCardSkeleton } from "@/app/components/feedback/skeleton-cards";
 import React, { useRef, useState, useEffect } from "react";
 import Button from "@/app/components/ui/button";
+import TextButton from "@/app/components/ui/text-button";
 import { Check, ExternalLink, FileText, Upload } from "lucide-react";
 import siteService from "@/app/services/site";
 import { errorMessage } from "@/app/services/api-client";
@@ -149,13 +150,9 @@ export default function PrimerCard() {
               <span />
             )}
             {primerUrl && (
-              <button
-                type="button"
-                onClick={() => save({ clear: true }, "Primer reset to the default.")}
-                className="cursor-pointer font-raleway text-sm font-semibold text-gray-500 hover:text-red-500 hover:underline"
-              >
+              <TextButton onClick={() => save({ clear: true }, "Primer reset to the default.")}>
                 Reset to default
-              </button>
+              </TextButton>
             )}
           </div>
         </div>

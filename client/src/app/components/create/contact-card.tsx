@@ -1,6 +1,7 @@
 "use client";
 
 import { INPUT_CLASS } from "@/app/components/ui/form-styles";
+import TextButton from "@/app/components/ui/text-button";
 import { FormCardSkeleton } from "@/app/components/feedback/skeleton-cards";
 import RemoveButton from "@/app/components/ui/remove-button";
 import { useState, useEffect } from "react";
@@ -150,14 +151,9 @@ export default function ContactCard() {
                 {notice.ok && <Check size={14} />} {notice.text}
               </p>
             ) : (
-              <button
-                type="button"
-                onClick={() => save(DEFAULT_CONTACT, "Back to the defaults.")}
-                disabled={saving}
-                className="cursor-pointer font-raleway text-sm font-semibold text-gray-500 hover:text-red-500 hover:underline"
-              >
+              <TextButton onClick={() => save(DEFAULT_CONTACT, "Back to the defaults.")} disabled={saving}>
                 Reset to defaults
-              </button>
+              </TextButton>
             )}
             <Button
               variant="hero"

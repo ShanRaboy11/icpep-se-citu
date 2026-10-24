@@ -2,6 +2,7 @@
 
 import VisibilityPicker from "@/app/components/create/visibility-picker";
 import FormDivider from "@/app/components/ui/form-divider";
+import TextButton from "@/app/components/ui/text-button";
 import { ERROR_CLASS as errorInputStyle, labelStyle, titleLabelStyle as titlelabelStyle, inputClass as inputCls } from "@/app/components/ui/form-styles";
 import ConfirmModal from "@/app/components/ui/confirm-modal";
 import SuccessModal from "@/app/components/ui/success-modal";
@@ -25,7 +26,6 @@ import {
   AlertTriangle,
   Upload,
   Plus,
-  X,
   Megaphone,
   MapPin,
   Calendar,
@@ -62,7 +62,6 @@ type FormErrors = {
   summary: boolean;
   body: boolean;
   visibility: boolean;
-  attendanceLink?: boolean;
   agenda?: boolean;
   image?: boolean;
 };
@@ -174,7 +173,6 @@ export default function AnnouncementsPage() {
     summary: "",
     body: "",
     visibility: "",
-    attendanceLink: "",
     date: "",
     time: "",
     location: "",
@@ -186,7 +184,6 @@ export default function AnnouncementsPage() {
     summary: false,
     body: false,
     visibility: false,
-    attendanceLink: false,
     agenda: false,
     image: false,
   });
@@ -214,7 +211,6 @@ export default function AnnouncementsPage() {
               date: data.date || "",
               time: data.time || "",
               location: data.location || "",
-              attendanceLink: "",
             });
             if (data.time) {
               const parsed = parseTimeToPicker(data.time);
@@ -270,7 +266,6 @@ export default function AnnouncementsPage() {
       date: item.date ? new Date(item.date).toISOString().split("T")[0] : "",
       time: item.time || "",
       location: item.location || "",
-      attendanceLink: item.attendees || "",
       visibility: item.targetAudience?.includes("members")
         ? "members"
         : item.targetAudience?.includes("officers")
@@ -323,7 +318,6 @@ export default function AnnouncementsPage() {
       date: "",
       time: "",
       location: "",
-      attendanceLink: "",
     });
     setOrganizer("");
     setAwardees([{ name: "", program: "", year: "", award: "" }]);
@@ -411,7 +405,6 @@ export default function AnnouncementsPage() {
       time: `${timeHour}:${timeMinute} ${timePeriod}`,
       location: formData.location || undefined,
       organizer: organizer || undefined,
-      attendees: activeTab === "Meeting" ? formData.attendanceLink : undefined,
       awardees:
         activeTab === "Achievement"
           ? awardees.filter((a) => a.name.trim())
@@ -432,8 +425,6 @@ export default function AnnouncementsPage() {
       body: !formData.body.trim(),
       visibility: !formData.visibility.trim(),
     };
-    if (activeTab === "Meeting" && !formData.attendanceLink.trim())
-      newErrors.attendanceLink = true;
     if (activeTab === "Meeting" && !agenda.some((a) => a.trim()))
       newErrors.agenda = true;
     setErrors(newErrors);
@@ -546,6 +537,8 @@ export default function AnnouncementsPage() {
 
   const addAwardee = () =>
     setAwardees([...awardees, { name: "", program: "", year: "", award: "" }]);
+  const removeAwardee = (index: number) =>
+    setAwardees((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
   const addAgendaItem = () => setAgenda((prev) => [...prev, ""]);
   const updateAgendaItem = (index: number, value: string) =>
     setAgenda((prev) => {
@@ -664,7 +657,7 @@ export default function AnnouncementsPage() {
     value: string,
     onChange: (val: string) => void,
     hasError = false,
-    placeholder = "Select date..."
+    placeholder = "Select date"
   ) => {
     const isOpen = activeDatePicker === id;
     const todayStr = new Date().toISOString().split("T")[0];
@@ -788,29 +781,21 @@ export default function AnnouncementsPage() {
               </div>
 
               <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center text-xs font-semibold">
-                <button
-                  type="button"
-                  className="text-primary1 hover:underline font-raleway cursor-pointer"
-                  onClick={(e) => {
+                <TextButton tone="link" className="text-xs" onClick={(e) => {
                     e.stopPropagation();
                     onChange(todayStr);
                     setActiveDatePicker(null);
-                  }}
-                >
-                  Today
-                </button>
+                  }}>
+                    Today
+                  </TextButton>
                 {value && (
-                  <button
-                    type="button"
-                    className="text-gray-400 hover:text-red-500 font-raleway cursor-pointer"
-                    onClick={(e) => {
+                  <TextButton className="text-xs" onClick={(e) => {
                       e.stopPropagation();
                       onChange("");
                       setActiveDatePicker(null);
-                    }}
-                  >
+                    }}>
                     Clear
-                  </button>
+                  </TextButton>
                 )}
               </div>
             </div>
@@ -895,16 +880,15 @@ export default function AnnouncementsPage() {
                             </span>
                           )}
                           {previews.length > 0 && (
-                            <button
-                              type="button"
+                            <TextButton
                               onClick={() => {
                                 setImages([]);
                                 setPreviews([]);
                               }}
-                              className="text-xs font-bold text-red-400 hover:text-red-600 font-rubik flex items-center gap-1 transition-colors cursor-pointer"
+                              className="text-xs"
                             >
-                              <X size={11} /> Clear all
-                            </button>
+                              Clear all
+                            </TextButton>
                           )}
                         </div>
                         <input
@@ -1186,7 +1170,7 @@ export default function AnnouncementsPage() {
                             onChange={(html) =>
                               setFormData((prev) => ({ ...prev, body: html }))
                             }
-                            placeholder="Add full details, links, and information..."
+                            placeholder="Add full details, links, and information"
                             invalid={errors.body}
                           />
                           {errors.body && (
@@ -1227,7 +1211,7 @@ export default function AnnouncementsPage() {
                                       className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
                                     />
                                   </div>
-                                  <div className="sm:col-span-3">
+                                  <div className="sm:col-span-2">
                                     <input
                                       type="text"
                                       placeholder="Program (optional)"
@@ -1272,8 +1256,8 @@ export default function AnnouncementsPage() {
                                       className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
                                     />
                                   </div>
-                                  <div className="sm:col-span-1 flex items-center justify-end">
-                                    
+                                  <div className="sm:col-span-2 flex items-center justify-end">
+                                    <RemoveButton onClick={() => removeAwardee(idx)} disabled={awardees.length <= 1} />
                                   </div>
                                 </div>
                               ))}
@@ -1289,23 +1273,6 @@ export default function AnnouncementsPage() {
                             <label className={`${titlelabelStyle} mb-4`}>
                               Meeting Details
                             </label>
-                            <div>
-                              <label className={labelStyle}>
-                                Attendance Link
-                              </label>
-                              <input
-                                type="url"
-                                id="attendanceLink"
-                                name="attendanceLink"
-                                value={formData.attendanceLink}
-                                onChange={handleInputChange}
-                                placeholder="Link to attendance Google Sheet / Drive folder"
-                                className={inputCls(!!errors.attendanceLink)}
-                              />
-                              {errors.attendanceLink && (
-                                <p className="text-red-500 text-xs mt-1 ml-2 font-raleway">Attendance link is required for meetings</p>
-                              )}
-                            </div>
                             <div className="w-full">
                               <label className={labelStyle}>Officers Who Attended</label>
                               <AttendancePicker value={attendance} onChange={setAttendance} />
@@ -1335,8 +1302,7 @@ export default function AnnouncementsPage() {
                                       placeholder={`Agenda item ${i + 1}`}
                                       className="flex-1 rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-rubik text-gray-700 focus:outline-none focus:border-primary2 transition-all"
                                     />
-                                    <RemoveButton variant="icon"
-                                      onClick={() => removeAgendaItem(i)} />
+                                    <RemoveButton onClick={() => removeAgendaItem(i)} />
                                   </div>
                                 ))}
                               </div>
@@ -1389,7 +1355,7 @@ export default function AnnouncementsPage() {
                                 scheduleDate,
                                 (val) => setScheduleDate(val),
                                 false,
-                                "Select publish date..."
+                                "Select publish date"
                               )}
                             </div>
                             <div>
@@ -1428,7 +1394,7 @@ export default function AnnouncementsPage() {
                           {editingId && (
                             <Button
                               type="button"
-                              variant="heroOutline"
+                              variant="heroCancel"
                               onClick={handleCancelEdit}
                               className="px-4 py-2 sm:px-6 sm:py-3"
                             >
