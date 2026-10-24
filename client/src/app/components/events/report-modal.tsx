@@ -173,7 +173,7 @@ export default function ReportEventModal({
                 rows={4}
                 value={details}
                 onChange={(e) => setDetails(e.target.value)}
-                placeholder="Describe the issue..."
+                placeholder="Describe the issue"
                 className="mt-2 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 font-raleway font-normal text-gray-800 outline-none transition-all placeholder-gray-400 placeholder:font-normal focus:border-primary1 focus:bg-white focus:ring-4 focus:ring-primary1/10"
               />
             </div>
@@ -185,7 +185,7 @@ export default function ReportEventModal({
             <div className="flex items-center justify-end gap-3 pt-2">
               <Button
                 type="button"
-                variant="heroOutline"
+                variant="heroCancel"
                 onClick={handleClose}
                 className="px-5 py-2.5"
               >

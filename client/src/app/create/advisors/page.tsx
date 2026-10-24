@@ -452,7 +452,7 @@ export default function AdvisorsPage() {
                       {editingId && (
                         <Button
                           type="button"
-                          variant="heroOutline"
+                          variant="heroCancel"
                           onClick={handleCancelEdit}
                           className="px-4 py-2 sm:px-6 sm:py-3"
                         >

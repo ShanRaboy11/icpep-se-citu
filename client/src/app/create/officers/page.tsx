@@ -1,6 +1,7 @@
 "use client";
 
 import { labelStyle } from "@/app/components/ui/form-styles";
+import TextButton from "@/app/components/ui/text-button";
 import ConfirmModal from "@/app/components/ui/confirm-modal";
 import SuccessModal from "@/app/components/ui/success-modal";
 import EditingBanner from "@/app/components/ui/editing-banner";
@@ -1293,7 +1294,7 @@ export default function OfficersPage() {
                           {editingId && (
                             <Button
                               type="button"
-                              variant="heroOutline"
+                              variant="heroCancel"
                               onClick={handleCancelEdit}
                               className="px-4 py-2 sm:px-6 sm:py-3"
                             >
@@ -1648,13 +1649,9 @@ export default function OfficersPage() {
                             {archiveFormData.name ? (
                               <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
                                 <span className="font-rubik text-base text-gray-800">{archiveFormData.name}</span>
-                                <button
-                                  type="button"
-                                  onClick={clearArchiveStudent}
-                                  className="cursor-pointer font-raleway text-sm font-semibold text-primary1 hover:underline"
-                                >
+                                <TextButton tone="link" onClick={clearArchiveStudent}>
                                   Change
-                                </button>
+                                </TextButton>
                               </div>
                             ) : (
                               <SearchSelect
@@ -1901,7 +1898,7 @@ export default function OfficersPage() {
                           {archiveEditingId && (
                             <Button
                               type="button"
-                              variant="heroOutline"
+                              variant="heroCancel"
                               onClick={handleArchiveCancelEdit}
                               className="px-4 py-2 sm:px-6 sm:py-3"
                             >
@@ -2150,7 +2147,7 @@ export default function OfficersPage() {
             </p>
             <div className="flex gap-3">
               <Button
-                variant="heroOutline"
+                variant="heroCancel"
                 onClick={() => setArchiveShowDeleteModal(false)}
                 className="flex-1 py-2 sm:py-3"
               >

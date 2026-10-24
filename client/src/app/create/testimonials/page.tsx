@@ -467,7 +467,7 @@ export default function TestimonialsPage() {
                             name="message"
                             value={formData.message}
                             onChange={handleInputChange}
-                            placeholder="Share your experience, feedback, or thoughts here..."
+                            placeholder="Share your experience, feedback, or thoughts here"
                             rows={5}
                             className={`w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl pl-12 pr-4 py-3 outline-none transition-all placeholder-gray-400 focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10 resize-none ${
                               errors.message ? "border-red-300 ring-2 ring-red-100" : ""
@@ -493,7 +493,7 @@ export default function TestimonialsPage() {
                           {editingId && (
                             <Button
                               type="button"
-                              variant="heroOutline"
+                              variant="heroCancel"
                               onClick={handleCancelEdit}
                               className="px-4 py-2 sm:px-6 sm:py-3"
                             >

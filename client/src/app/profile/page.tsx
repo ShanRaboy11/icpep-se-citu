@@ -485,7 +485,7 @@ export default function ProfilePage() {
 
                       <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-2">
                         <Button
-                          variant="heroOutline"
+                          variant="heroCancel"
                           type="button"
                           onClick={closeEdit}
                           className="px-4 py-2 sm:px-6 sm:py-3"

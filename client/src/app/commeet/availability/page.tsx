@@ -1207,7 +1207,7 @@ const MeetingDetailsModal = ({
         </div>
 
         <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-gray-100">
-          <Button variant="cancel" onClick={onClose} className="px-6 py-2.5">
+          <Button variant="heroCancel" onClick={onClose} className="px-6 py-2.5">
             Cancel
           </Button>
           <Button
@@ -1273,7 +1273,7 @@ const DeleteConfirmationModal = ({
         </div>
 
         <div className="flex justify-center gap-3 pt-8 mt-2">
-          <Button variant="heroOutline" onClick={onClose} className="w-full px-6 py-3">
+          <Button variant="heroCancel" onClick={onClose} className="w-full px-6 py-3">
             Cancel
           </Button>
           <Button

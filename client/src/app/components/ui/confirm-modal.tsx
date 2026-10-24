@@ -32,7 +32,7 @@ export default function ConfirmModal({
         <h3 className="mb-2 font-rubik text-xl font-bold text-primary3">{title}</h3>
         <p className="mb-6 font-raleway text-sm leading-relaxed text-gray-400">{message}</p>
         <div className="flex gap-3">
-          <Button variant="heroOutline" onClick={onCancel} className="flex-1 py-2 sm:py-3">
+          <Button variant="heroCancel" onClick={onCancel} className="flex-1 py-2 sm:py-3">
             Cancel
           </Button>
           <Button variant="heroDanger" onClick={onConfirm} className="flex-1 py-2 sm:py-3">

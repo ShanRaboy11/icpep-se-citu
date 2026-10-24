@@ -364,7 +364,7 @@ export default function ContactPage() {
                       <>
                         <input
                           name="customSubject"
-                          placeholder="Type your subject here..."
+                          placeholder="Type your subject here"
                           onChange={() => clearError("customSubject")}
                           className={`${inputStyle} ${
                             errors.customSubject
@@ -385,7 +385,7 @@ export default function ContactPage() {
                   <Field
                     label="Message"
                     name="message"
-                    placeholder="Write your message here..."
+                    placeholder="Write your message here"
                     textarea
                     rows={6}
                     error={errors.message}
