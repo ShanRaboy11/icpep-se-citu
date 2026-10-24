@@ -1,4 +1,4 @@
-import { PLACEHOLDER_IMAGE } from "@/app/components/fallback-image";
+import { PLACEHOLDER_IMAGE } from "@/app/components/ui/fallback-image";
 
 export const DEFAULT_JOIN_PHOTOS = [PLACEHOLDER_IMAGE, PLACEHOLDER_IMAGE, PLACEHOLDER_IMAGE];
 

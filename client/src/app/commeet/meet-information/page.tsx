@@ -1,20 +1,20 @@
 "use client";
 
-import Header from "../../components/header";
-import Footer from "../../components/footer";
-import Grid from "../../components/grid";
-import BackButton from "../../components/back-button";
-import PageHeader from "../../components/page-header";
-import Button from "../../components/button";
+import Header from "../../components/layout/header";
+import Footer from "../../components/layout/footer";
+import Grid from "../../components/layout/grid";
+import BackButton from "../../components/ui/back-button";
+import PageHeader from "../../components/ui/page-header";
+import Button from "../../components/ui/button";
 import {
   normalizeMeetingLink,
   isValidMeetingLink,
   MEETING_LINK_ERROR,
-} from "../utils/meeting-link";
+} from "../../utils/commeet/meeting-link";
 import { FunctionComponent, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Check, X, ChevronDown } from "lucide-react";
-import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
+import { useDropdownDismiss } from "@/app/hooks/use-dropdown-dismiss";
 
 const departmentsList = [
   "All Officers",
@@ -156,7 +156,7 @@ const MeetInfoPage: FunctionComponent = () => {
   const errorStyle = "border-red-300 ring-2 ring-red-100";
 
   const dropdownContainerStyle =
-    "absolute z-30 w-full min-w-20 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
+    "absolute z-30 w-full min-w-20 mt-2 bg-white border border-gray-100 rounded-2xl shadow-lg overflow-hidden";
   // Scrolling lives on an inner wrapper so the scrollbar stays inside the
   // rounded corners instead of poking past them.
   const dropdownScrollStyle =
@@ -293,7 +293,7 @@ const MeetInfoPage: FunctionComponent = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
@@ -307,9 +307,7 @@ const MeetInfoPage: FunctionComponent = () => {
               <BackButton onClick={() => router.back()} title="Go Back" />
             </div>
 
-            {/* Centered Content Container for Form */}
             <div className="max-w-4xl mx-auto">
-              {/* Header Section */}
               <PageHeader
                 className="text-center mb-12"
                 badge="New Meeting"
@@ -322,15 +320,13 @@ const MeetInfoPage: FunctionComponent = () => {
                 }
               />
 
-              {/* Form Container */}
-              <div className="bg-white rounded-4xl border border-gray-200 shadow-lg p-8 sm:p-12 transition-all duration-300 hover:shadow-primary1/40 hover:-translate-y-2">
+              <div className="bg-white rounded-4xl border border-gray-200 shadow-md p-8 sm:p-12 transition-all duration-300 hover:shadow-primary1/40 hover:-translate-y-2">
                 {authHint && (
                   <div className="mb-4 p-3 rounded-xl bg-yellow-50 text-yellow-700 text-sm font-raleway border border-yellow-100">
                     {authHint}
                   </div>
                 )}
                 <div className="flex flex-col gap-6">
-                  {/* Title */}
                   <div className="w-full">
                     <label className={labelStyle}>
                       Meeting Title <span className="text-red-500">*</span>
@@ -354,7 +350,6 @@ const MeetInfoPage: FunctionComponent = () => {
                     )}
                   </div>
 
-                  {/* Agenda */}
                   <div className="w-full">
                     <label className={labelStyle}>
                       Agenda <span className="text-red-500">*</span>
@@ -378,7 +373,6 @@ const MeetInfoPage: FunctionComponent = () => {
                     )}
                   </div>
 
-                  {/* Meeting Link */}
                   <div className="w-full">
                     <label className={labelStyle}>
                       Meeting Link{" "}
@@ -411,9 +405,7 @@ const MeetInfoPage: FunctionComponent = () => {
                     )}
                   </div>
 
-                  {/* Time Frame (Start & End) */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {/* Start Time Selector */}
                     <div>
                       <label className={labelStyle}>
                         Start Time <span className="text-red-500">*</span>
@@ -453,7 +445,6 @@ const MeetInfoPage: FunctionComponent = () => {
                       </div>
                     </div>
 
-                    {/* End Time Selector */}
                     <div>
                       <label className={labelStyle}>
                         End Time <span className="text-red-500">*</span>
@@ -494,7 +485,6 @@ const MeetInfoPage: FunctionComponent = () => {
                     </div>
                   </div>
 
-                  {/* Department Selection (Multi-Select) */}
                   <div data-dropdown className="w-full relative">
                     <label className={labelStyle}>
                       Departments Involved <span className="text-red-500">*</span>
@@ -544,7 +534,6 @@ const MeetInfoPage: FunctionComponent = () => {
                       />
                     </div>
 
-                    {/* Dropdown Menu */}
                     {activeDropdown === "dept" && (
                       <>
                         <div className={dropdownContainerStyle}>
@@ -585,7 +574,6 @@ const MeetInfoPage: FunctionComponent = () => {
                       </span>
                     </label>
                     <div className="flex gap-4">
-                      {/* Value Input */}
                       <div className="flex-1">
                         <input
                           type="number"
@@ -596,7 +584,6 @@ const MeetInfoPage: FunctionComponent = () => {
                           onChange={(e) => setLimitValue(e.target.value)}
                         />
                       </div>
-                      {/* Unit Dropdown (Custom) */}
                       <div data-dropdown className="w-1/3 relative">
                         <div
                           className={`w-full h-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 cursor-pointer flex items-center justify-between text-gray-700 transition-all hover:bg-gray-100 ${
@@ -620,7 +607,6 @@ const MeetInfoPage: FunctionComponent = () => {
                           />
                         </div>
 
-                        {/* Options */}
                         {activeDropdown === "limitUnit" && (
                           <>
                             <div className={dropdownContainerStyle}>
@@ -657,7 +643,6 @@ const MeetInfoPage: FunctionComponent = () => {
                     )}
                   </div>
 
-                  {/* Action Button */}
                   <div className="mt-4 flex justify-end">
                     <Button
                       variant="hero"

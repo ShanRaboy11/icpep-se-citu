@@ -1,4 +1,7 @@
+import type { ComponentType } from "react";
 import { IconType } from "react-icons";
+import { SiGmail } from "react-icons/si";
+import { Mail } from "lucide-react";
 import {
   FaFacebookF,
   FaInstagram,
@@ -32,3 +35,15 @@ export const SOCIAL_PLATFORMS: SocialPlatform[] = [
 ];
 
 export const platformMeta = (id: string) => SOCIAL_PLATFORMS.find((platform) => platform.id === id);
+
+interface EmailMeta {
+  label: string;
+  Icon: ComponentType<{ className?: string; "aria-hidden"?: boolean | "true" | "false" }>;
+}
+
+const GMAIL_DOMAINS = ["gmail.com", "googlemail.com"];
+
+export const emailMeta = (email: string): EmailMeta =>
+  GMAIL_DOMAINS.includes(email.split("@")[1]?.toLowerCase() ?? "")
+    ? { label: "Gmail", Icon: SiGmail }
+    : { label: "Email", Icon: Mail };

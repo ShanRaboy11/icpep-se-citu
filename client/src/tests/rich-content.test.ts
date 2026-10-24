@@ -4,7 +4,7 @@ import {
   plainLength,
   plainTextToHtml,
   sanitizeRichText,
-} from "../app/components/rich-content";
+} from "../app/components/content/rich-content";
 
 describe("rich content helpers", () => {
   it("tells markup from legacy plain text", () => {

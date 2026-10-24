@@ -2,17 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Header from "../components/header";
-import Hero from "./sections/hero";
-import Footer from "../components/footer";
-import { AboutSection } from "./sections/about";
-import { WhyJoinSection } from "./sections/join";
-import { AnnouncementsSection } from "./sections/announcement";
-import { EventsSection } from "./sections/events";
-import { TestimonialsSection } from "./sections/testimonials";
-import { FacultyOfficersSection } from "./sections/faculty";
-import { PartnersSection } from "./sections/partner";
-import { FAQSection } from "./sections/faq";
+import Header from "../components/layout/header";
+import Hero from "../components/home/sections/hero";
+import Footer from "../components/layout/footer";
+import { AboutSection } from "../components/home/sections/about";
+import { WhyJoinSection } from "../components/home/sections/join";
+import { AnnouncementsSection } from "../components/home/sections/announcement";
+import { EventsSection } from "../components/home/sections/events";
+import { TestimonialsSection } from "../components/home/sections/testimonials";
+import { FacultyOfficersSection } from "../components/home/sections/faculty";
+import { PartnersSection } from "../components/home/sections/partner";
+import { FAQSection } from "../components/home/sections/faq";
 
 export default function LandingPage() {
   const router = useRouter();

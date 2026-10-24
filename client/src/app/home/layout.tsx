@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DEFAULT_FAQS, type DefaultFaq } from "./utils/default-faqs";
+import { DEFAULT_FAQS, type DefaultFaq } from "../utils/home/default-faqs";
 import { MAX_FAQS, pageMetadata } from "@/app/utils/site";
 
 export const metadata: Metadata = pageMetadata(

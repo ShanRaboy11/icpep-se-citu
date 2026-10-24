@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { preconnect } from "react-dom";
 import { Rubik, Raleway } from "next/font/google";
-import ApiErrorNotice from "./components/api-error-notice";
-import ResponsiveTableToggle from "./components/responsive-table-toggle";
-import MaintenanceGate from "./components/maintenance-gate";
+import ApiErrorNotice from "./components/feedback/api-error-notice";
+import ResponsiveTableToggle from "./components/layout/responsive-table-toggle";
+import MaintenanceGate from "./components/layout/maintenance-gate";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, DEFAULT_OG_IMAGE } from "./utils/site";
 import { fetchSiteContact } from "./utils/site-contact";
 import "./globals.css";

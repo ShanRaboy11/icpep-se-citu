@@ -1,21 +1,21 @@
 "use client";
 
-import { useDelayedFlag } from "../../components/skeleton";
-import { OfficerCardSkeleton } from "../../components/skeleton-cards";
-import { readCache, writeCache } from "../../utils/cached-fetch";
-import React, { useEffect, useState } from "react";
+import { useDelayedFlag } from "../../components/feedback/skeleton";
+import { OfficerCardSkeleton } from "../../components/feedback/skeleton-cards";
+import { readCache, writeCache } from "../../hooks/use-cached-fetch";
+import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
-import Header from "../../components/header";
-import Footer from "../../components/footer";
-import Grid from "../../components/grid";
-import OfficerCard from "../components/officer-card";
-import BackButton from "../../components/back-button";
+import Header from "../../components/layout/header";
+import Footer from "../../components/layout/footer";
+import Grid from "../../components/layout/grid";
+import OfficerCard from "../../components/officers/officer-card";
+import BackButton from "../../components/ui/back-button";
 
-import { departments } from "../utils/officers";
-import { formatOfficerName, toTitleCase } from "../utils/format-name";
+import { departments } from "../../utils/officers/officers";
+import { formatOfficerName, toTitleCase } from "../../utils/officers/format-name";
 import officerService from "../../services/officer";
-import officerTermService from "../../services/officerTerm";
+import officerTermService from "../../services/officer-term";
 import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 interface DisplayOfficer {
@@ -170,7 +170,7 @@ const OfficersPage = () => {
 
   if (!meta) {
     return (
-      <div className="min-h-screen bg-[#004e89] flex flex-col relative overflow-x-hidden">
+      <div className="min-h-screen bg-pageblue flex flex-col relative overflow-x-hidden">
         <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden grow">
           <Grid />
           <Header />
@@ -194,9 +194,8 @@ const OfficersPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#004e89] flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-pageblue flex flex-col relative overflow-x-hidden">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden grow">
-        {/* Background Grid */}
         <Grid />
 
         <div className="absolute -top-40 -left-60 w-140 h-140 bg-primary1/10 rounded-full filter blur-3xl opacity-60"></div>
@@ -206,12 +205,10 @@ const OfficersPage = () => {
           <Header />
 
           <div className="w-full max-w-7xl mx-auto px-6 pt-38">
-            {/* back */}
             <div className="mb-8 flex justify-start">
               <BackButton onClick={() => router.back()} title="Go Back" />
             </div>
 
-            {/* header */}
             <div className="mb-16 text-left">
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight">
@@ -229,7 +226,6 @@ const OfficersPage = () => {
               </p>
             </div>
 
-            {/* officers */}
             <div className="w-full mb-24">
               {loading ? (
                 <div
