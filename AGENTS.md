@@ -22,7 +22,7 @@ server/   Express, TypeScript, Mongoose
 
 1. Read [docs/architecture.md](docs/architecture.md) if you haven't touched this repo before — the auth model, role list and maintenance-mode enforcement aren't obvious from file names alone.
 2. Run the checks in [docs/conventions.md](docs/conventions.md#checks-to-run) before considering a change done. CI (`.github/workflows/ci.yml`) runs the same checks.
-3. `client/src/app/officers/utils/format-name.ts` and `client/src/app/utils/academic-year.ts` each have a byte-for-byte mirror in `server/src/utils/`. If you touch either file, update both — `npm run check:mirrors` fails the build otherwise.
+3. `client/src/app/utils/officers/format-name.ts` and `client/src/app/utils/academic-year.ts` each have a byte-for-byte mirror in `server/src/utils/`. If you touch either file, update both — `npm run check:mirrors` fails the build otherwise.
 4. Don't add `console.log`/`console.error` calls. Errors already surface through `ApiErrorNotice` on the client and JSON error responses on the server; extra logging was deliberately stripped out.
 
 ## Where things live
@@ -30,9 +30,17 @@ server/   Express, TypeScript, Mongoose
 - **Public pages**: `client/src/app/{home,about,events,officers,announcements,merch,membership,contact}/` — server-component `layout.tsx` per route holds `metadata`; the `page.tsx` underneath is a client component.
 - **Admin/officer tool**: `client/src/app/create/*` (content management, one folder per resource) and `client/src/app/users/` (user management). Both are gated by `RequireOfficer` (`council-officer` + `admin`). `client/src/app/create/maintenance/` is gated tighter, to `admin` only.
 - **Dashboard**: `client/src/app/dashboard/page.tsx` picks a variant based on role — `OfficerDashboard` (`variant="officer"` or `variant="admin"`) or `StudentDashboard` — all at the single `/dashboard` URL, not a role-named sub-route.
-- **Shared UI**: `client/src/app/components/` — `header.tsx`, `footer.tsx`, `button.tsx` (variant-based), `loading.tsx` (`LoadingScreen` for full-page, `LoadingIndicator` for inline), `require-role.tsx` / `require-officer.tsx` (client-side route guards), `maintenance-gate.tsx`.
+- **Components**: all components live under `client/src/app/components/`, never in a page's own folder. Pages (`page.tsx`) stay in their route folder, and that page's own components sit in `components/<feature>/` (`events/`, `announcements/`, `dashboard/`, `home/` with its `sections/`, `create/`, `users/` and so on). Shared building blocks are grouped by purpose:
+  - `ui/` — building blocks: `button.tsx` (variant-based), `dropdown.tsx`, `remove-button.tsx`, `view-all-button.tsx`, `fallback-image.tsx` (every remote image goes through it so a missing one shows `placeholder.svg`), `status-pill.tsx`, `section-heading.tsx`, `gradient-card.tsx`.
+  - `layout/` — `header.tsx`, `footer.tsx`, `menu.tsx`, `maintenance-gate.tsx`, `require-role.tsx` / `require-officer.tsx` (client-side route guards).
+  - `feedback/` — `loading.tsx` (`LoadingScreen` for full-page, `LoadingIndicator` for inline), `skeleton.tsx` and `skeleton-cards.tsx` (the shimmer skeletons every page loads with), `api-error-notice.tsx`.
+  - `content/` (rich text) and `list/` (the shared search, date/category filters and pagination used by the events and announcements lists).
+- **Hooks**: `client/src/app/hooks/` — `use-cached-fetch.ts` (stale-while-revalidate), `use-site-contact.ts`, `use-dropdown-dismiss.ts`, `use-body-scroll-lock.ts`.
+- **Client utils**: `client/src/app/utils/` holds helpers shared across pages; a feature's own types and helpers sit in `utils/<feature>/` (`events/`, `announcements/`, `officers/`, `users/`, `home/`, `about/`, `commeet/`), never in the route folder. API wrappers are in `client/src/app/services/`, one kebab-case file per resource.
+- **File names** are kebab-case everywhere, including page-level `components/` folders.
 - **Server routes/controllers/models**: `server/src/{routes,controllers,models}/`, one file per resource, same base name across all three.
 - **Server middleware**: `server/src/middleware/` — `auth.middleware.ts` (JWT verify + role checks), `auth-limits.ts` (login/reset rate limits), `maintenance.middleware.ts` (site-suspend enforcement), `upload.middleware.ts` (multer, memory storage → Cloudinary).
+- **Server utils**: `server/src/utils/` is grouped by purpose: `mail/` (sending and school-email checks), `auth/` (login codes, password rules, ownership and visibility checks), `media/` (Cloudinary and image optimizing), `content/` (rich text, validation helpers for site content, contact settings and attendance). `academic-year.ts` and `format-name.ts` stay at the top because they mirror client files.
 - **Public assets**: `client/public/` is organized into subfolders — `brand/`, `icons/{social,ui,illustrations,decorative}/`, `team/`, `content/`, `placeholders/`, `documents/`. Put new assets in the matching folder, not the root.
 
 ## Conventions worth internalizing

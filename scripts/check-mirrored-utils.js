@@ -9,7 +9,7 @@ const pairs = [
     "server/src/utils/academic-year.ts",
   ],
   [
-    "client/src/app/officers/utils/format-name.ts",
+    "client/src/app/utils/officers/format-name.ts",
     "server/src/utils/format-name.ts",
   ],
 ];
