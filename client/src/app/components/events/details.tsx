@@ -1,5 +1,6 @@
-import { Event } from "../utils/event";
-import RichContent from "@/app/components/rich-content";
+import SectionHeading from "@/app/components/ui/section-heading";
+import { Event } from "../../utils/events/event";
+import RichContent from "@/app/components/content/rich-content";
 
 interface Props {
   title: string;
@@ -14,11 +15,8 @@ export default function EventDetails({
   content,
 }: Props) {
   return (
-    <div className="rounded-3xl border border-primary1/15 bg-white p-6 shadow-lg sm:p-8">
-      <h2 className="mb-5 flex items-center gap-3 font-rubik text-xl font-bold text-primary3 sm:text-2xl">
-        <span className="h-6 w-1.5 rounded-full bg-primary1" />
-        Details
-      </h2>
+    <div className="rounded-3xl border border-primary1/15 bg-white p-6 shadow-md sm:p-8">
+      <SectionHeading className="mb-5">Details</SectionHeading>
 
       <div className="space-y-4 font-raleway text-sm leading-relaxed text-bodytext sm:text-base">
         <p>{description}</p>

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Button from "@/app/components/ui/button";
 import ReportEventModal from "./report-modal";
+import { useSiteContact } from "@/app/hooks/use-site-contact";
 
 interface Props {
   organizer?:
@@ -14,9 +16,11 @@ interface Props {
     | string;
   eventTitle?: string;
   eventId?: string;
+  contact?: string;
 }
 
-export default function OrganizerCard({ organizer, eventTitle, eventId }: Props) {
+export default function OrganizerCard({ organizer, eventTitle, eventId, contact }: Props) {
+  const siteContact = useSiteContact();
   const [imgError, setImgError] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
 
@@ -29,11 +33,12 @@ export default function OrganizerCard({ organizer, eventTitle, eventId }: Props)
       ? { name: organizer, avatarImageUrl: undefined }
       : organizer;
 
+  const hostEmail = contact && /^\S+@\S+\.\S+$/.test(contact) ? contact : siteContact.contactEmail;
   const name = organizerData.name || "Event Organizer";
   const avatarUrl = organizerData.avatarImageUrl || "/placeholders/placeholder-avatar.svg";
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-primary1/15 bg-white shadow-lg">
+    <div className="overflow-hidden rounded-3xl border border-primary1/15 bg-white shadow-md">
       <div className="flex items-center gap-4 bg-linear-to-r from-primary1/15 to-primary3/10 px-6 py-5">
         <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-white ring-2 ring-white shrink-0">
           {!imgError ? (
@@ -72,20 +77,22 @@ export default function OrganizerCard({ organizer, eventTitle, eventId }: Props)
         </div>
       </div>
       <div className="space-y-3 p-6">
-        <button
-          onClick={() =>
-            (window.location.href = "mailto:icpep.seofficial2526@gmail.com")
-          }
-          className="w-full cursor-pointer rounded-xl bg-primary1 px-6 py-3 text-center font-raleway font-bold text-white shadow-md transition-all hover:scale-105 hover:bg-primary2"
+        <Button
+          variant="hero"
+          rounded="lg"
+          className="w-full py-3"
+          onClick={() => (window.location.href = `mailto:${hostEmail}`)}
         >
           Contact Host
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="heroOutline"
+          rounded="lg"
+          className="w-full py-3"
           onClick={() => setShowReportModal(true)}
-          className="w-full cursor-pointer rounded-xl border border-primary1/60 bg-transparent px-6 py-3 text-center font-raleway font-bold text-primary1 shadow-md transition-all hover:scale-105 hover:bg-primary1/10"
         >
           Report Event
-        </button>
+        </Button>
       </div>
 
       {eventId && (

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import FallbackImage from "@/app/components/fallback-image";
+import FallbackImage from "@/app/components/ui/fallback-image";
 
 interface CarouselProps {
   imageUrls: string[];
@@ -54,7 +54,7 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
   }, [emblaApi]);
 
   return (
-    <div className="relative group bg-white rounded-3xl shadow-lg overflow-hidden">
+    <div className="relative group bg-white rounded-3xl shadow-md overflow-hidden">
       <div className="embla" ref={emblaRef}>
         <div className="embla__container">
           {imageUrls.map((url, index) => (
@@ -74,7 +74,6 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
         </div>
       </div>
 
-      {/* nav */}
       <button
         onClick={scrollPrev}
         aria-label="Previous image"

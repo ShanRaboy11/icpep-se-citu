@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
-import FallbackImage from "@/app/components/fallback-image";
+import FallbackImage from "@/app/components/ui/fallback-image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface GalleryLightboxProps {
@@ -83,7 +83,7 @@ export default function GalleryLightbox({
           fill
           sizes="100vw"
           onClick={(e) => e.stopPropagation()}
-          className="rounded-lg object-contain shadow-2xl"
+          className="rounded-lg object-contain shadow-xl"
         />
       </div>
 

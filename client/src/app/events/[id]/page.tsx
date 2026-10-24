@@ -1,24 +1,27 @@
 "use client";
 
-import { DetailCardSkeleton } from "../../components/skeleton-cards";
-import { Skeleton, useDelayedFlag } from "../../components/skeleton";
+import Button from "../../components/ui/button";
+import { toImageUrl } from "../../utils/image-url";
+import GradientCard from "../../components/ui/gradient-card";
+import { DetailCardSkeleton } from "../../components/feedback/skeleton-cards";
+import { Skeleton, useDelayedFlag } from "../../components/feedback/skeleton";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Event } from "../utils/event";
+import { Event } from "../../utils/events/event";
 import eventService from "../../services/event";
-import Header from "../../components/header";
-import Footer from "../../components/footer";
-import Grid from "../../components/grid";
-import EventHeader from "../components/header";
-import EventInfo from "../components/info";
-import OrganizerCard from "../components/organizer";
-import EventBanner from "../components/banner";
-import EventTags from "../components/tags";
-import RsvpCard from "../components/rsvp";
-import EventDetails from "../components/details";
-import EventGallery from "../components/gallery";
+import Header from "../../components/layout/header";
+import Footer from "../../components/layout/footer";
+import Grid from "../../components/layout/grid";
+import EventHeader from "../../components/events/header";
+import EventInfo from "../../components/events/info";
+import OrganizerCard from "../../components/events/organizer";
+import EventBanner from "../../components/events/banner";
+import EventTags from "../../components/events/tags";
+import RsvpCard from "../../components/events/rsvp";
+import EventDetails from "../../components/events/details";
+import EventGallery from "../../components/events/gallery";
 import { ChevronLeft } from "lucide-react";
-import BackButton from "../../components/back-button";
+import BackButton from "../../components/ui/back-button";
 
 type ProcessedEvent = Event & {
   status: "Upcoming" | "Ongoing" | "Ended";
@@ -43,6 +46,8 @@ interface RawEvent {
   details?: unknown[];
   galleryImages?: string[];
   rsvpLink?: string;
+  rsvpCount?: number;
+  contact?: string;
 }
 
 export default function EventDetailPage() {
@@ -62,18 +67,6 @@ export default function EventDetailPage() {
         const res = await eventService.getEventById(id);
         if (res && res.success && res.data) {
           const e = res.data as RawEvent;
-
-          const toImageUrl = (url: unknown) => {
-            if (!url || typeof url !== "string") return "/placeholders/placeholder.svg";
-            if (url.startsWith("http")) return url;
-            const backendHost = (
-              process.env.NEXT_PUBLIC_BACKEND_URL ||
-              process.env.NEXT_PUBLIC_API_URL ||
-              "http://localhost:5000"
-            ).replace(/\/+$/, "");
-            if (url.startsWith("/")) return `${backendHost}${url}`;
-            return url;
-          };
 
           const detailsArr: { title: string; items: string[] }[] = [];
           if (Array.isArray(e.details)) {
@@ -147,6 +140,8 @@ export default function EventDetailPage() {
               ? e.galleryImages
               : [],
             rsvpLink: e.rsvpLink,
+            rsvpCount: e.rsvpCount ?? 0,
+            contact: e.contact,
           };
 
           setRawEvent(transformed);
@@ -228,13 +223,12 @@ export default function EventDetailPage() {
             {fetchError ||
               "Sorry, the event you are looking for does not exist."}
           </p>
-          <button
-            onClick={() => router.push("/events")}
-            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2 active:scale-95 cursor-pointer"
-          >
-            <ChevronLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
-            <span>Back to Events</span>
-          </button>
+          <Button variant="hero" onClick={() => router.push("/events")}>
+            <span className="inline-flex items-center gap-2">
+              <ChevronLeft className="h-5 w-5" />
+              {"Back to Events"}
+            </span>
+          </Button>
         </main>
         <Footer />
       </div>
@@ -242,7 +236,7 @@ export default function EventDetailPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
@@ -268,25 +262,26 @@ export default function EventDetailPage() {
                   organizer={event.organizer}
                   eventTitle={event.title}
                   eventId={event.id}
+                  contact={event.contact}
                 />
               </div>
 
               <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
-                <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-primary1 to-primary3 p-6 shadow-lg sm:p-8">
-                  <div className="relative">
-                    <EventHeader status={event.status} title={event.title} />
-                    <EventInfo
-                      date={event.date}
-                      mode={event.mode}
-                      location={event.location}
-                    />
-                  </div>
-                </div>
+                <GradientCard className="p-6 sm:p-8">
+                  <EventHeader status={event.status} title={event.title} />
+                  <EventInfo
+                    date={event.date}
+                    mode={event.mode}
+                    location={event.location}
+                  />
+                </GradientCard>
                 <div className="lg:hidden">
                   <EventTags tags={event.tags || []} />
                 </div>
                 {event.status === "Upcoming" && (
                   <RsvpCard
+                    eventId={event.id}
+                    rsvpCount={event.rsvpCount}
                     status={event.status}
                     date={event.date}
                     rsvpLink={event.rsvpLink}

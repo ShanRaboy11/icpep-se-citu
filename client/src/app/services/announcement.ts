@@ -85,6 +85,7 @@ export interface AnnouncementData {
     organizer?: string;
     contact?: string;
     attendees?: string;
+    attendance?: Array<{ name: string; position: string }>;
     agenda?: string[];
     awardees?: Array<{
         name: string;
@@ -150,6 +151,9 @@ class AnnouncementService {
             }
             if (data.agenda) {
                 formData.append('agenda', JSON.stringify(data.agenda));
+            }
+            if (data.attendance) {
+                formData.append('attendance', JSON.stringify(data.attendance));
             }
             if (data.awardees) {
                 formData.append('awardees', JSON.stringify(data.awardees));

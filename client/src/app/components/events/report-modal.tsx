@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from "react";
 import { X, Flag, ChevronDown, Check } from "lucide-react";
-import Button from "../../components/button";
+import Button from "../ui/button";
 import eventService from "../../services/event";
 
 interface ReportEventModalProps {
@@ -71,7 +71,7 @@ export default function ReportEventModal({
         onClick={handleClose}
       />
 
-      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl">
+      <div className="relative w-full max-w-md rounded-2xl bg-white shadow-xl">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-500">
@@ -136,7 +136,7 @@ export default function ReportEventModal({
                       className="fixed inset-0 z-10"
                       onClick={() => setIsReasonOpen(false)}
                     />
-                    <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
+                    <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-lg">
                       <div className="flex max-h-56 flex-col gap-1 overflow-y-auto p-2 themed-scrollbar">
                         {REASONS.map((r) => (
                           <div

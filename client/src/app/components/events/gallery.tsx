@@ -1,5 +1,6 @@
 "use client";
 
+import SectionHeading from "@/app/components/ui/section-heading";
 import { useState } from "react";
 import Image from "next/image";
 import GalleryLightbox from "./gallery-lightbox";
@@ -25,11 +26,8 @@ export default function EventGallery({ imageUrls }: Props) {
   if (validImages.length === 0) return null;
 
   return (
-    <div className="rounded-3xl border border-primary1/15 bg-white p-6 shadow-lg sm:p-8">
-      <h2 className="mb-5 flex items-center gap-3 font-rubik text-xl font-bold text-primary3 sm:text-2xl">
-        <span className="h-6 w-1.5 rounded-full bg-primary1" />
-        Gallery
-      </h2>
+    <div className="rounded-3xl border border-primary1/15 bg-white p-6 shadow-md sm:p-8">
+      <SectionHeading className="mb-5">Gallery</SectionHeading>
       <div className="grid grid-cols-3 gap-3">
         {imageUrls.slice(0, 2).map((photo, index) => (
           <div

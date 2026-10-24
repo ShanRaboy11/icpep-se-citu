@@ -1,58 +1,32 @@
 "use client";
 
-import { EventCardSkeleton } from "../components/skeleton-cards";
-import { readCache, writeCache } from "../utils/cached-fetch";
+import { toImageUrl } from "../utils/image-url";
+import { EventCardSkeleton } from "../components/feedback/skeleton-cards";
+import { readCache, writeCache } from "../hooks/use-cached-fetch";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
-import { Event } from "./utils/event";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import EventCard from "./components/event-card";
-import Grid from "../components/grid";
-import {
-  Home,
-  Search,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Check,
-  RotateCcw,
-  Filter,
-  LayoutGrid,
-  CalendarClock,
-  History,
-} from "lucide-react";
+import { Event } from "../utils/events/event";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import EventCard from "../components/events/event-card";
+import Grid from "../components/layout/grid";
+import { Home, LayoutGrid, CalendarClock, History } from "lucide-react";
 import eventService from "../services/event";
-import clsx from "clsx";
-import BackButton from "../components/back-button";
-import Button from "../components/button";
-import { CHAPTER_FOUNDED_YEAR } from "../utils/site";
-import PageHeader from "../components/page-header";
-import { useDelayedFlag } from "@/app/components/skeleton";
+import BackButton from "../components/ui/back-button";
+import PageHeader from "../components/ui/page-header";
+import {
+  INITIAL_FILTERS,
+  ListFilterBar,
+  Pagination,
+  ResultsBar,
+  matchesDateFilter,
+  type ListFilterState,
+} from "../components/list/list-filters";
+import { useDelayedFlag } from "@/app/components/feedback/skeleton";
 
 type ProcessedEvent = Event & {
   status: "Upcoming" | "Ongoing" | "Ended";
 };
-
-const SHORT_MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-const YEARS = Array.from(
-  { length: Math.max(1, new Date().getFullYear() - CHAPTER_FOUNDED_YEAR + 1) },
-  (_, i) => new Date().getFullYear() - i,
-);
 
 const CATEGORIES = [
   { name: "All", icon: <LayoutGrid size={16} /> },
@@ -62,8 +36,6 @@ const CATEGORIES = [
 
 export default function EventsListPage() {
   const router = useRouter();
-  const dateDropdownRef = useRef<HTMLDivElement>(null);
-  const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const listTopRef = useRef<HTMLDivElement>(null);
 
   const [events, setEvents] = useState<Event[]>([]);
@@ -71,13 +43,7 @@ export default function EventsListPage() {
   const showSkeleton = useDelayedFlag(isLoading);
   const [error, setError] = useState<string | null>(null);
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isDateFilterOpen, setIsDateFilterOpen] = useState(false);
-  const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
-  const [filterStep, setFilterStep] = useState<"year" | "month">("year");
-  const [selectedYears, setSelectedYears] = useState<number[]>([]);
-  const [selectedMonths, setSelectedMonths] = useState<number[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [filters, setFilters] = useState<ListFilterState>(INITIAL_FILTERS);
 
   const ITEMS_PER_PAGE = 15;
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,19 +67,6 @@ export default function EventsListPage() {
           const raw = Array.isArray(response.data)
             ? (response.data as Array<Record<string, unknown>>)
             : [];
-
-          const toImageUrl = (url: unknown): string => {
-            if (!url) return "/placeholders/placeholder.svg";
-            if (typeof url !== "string") return "/placeholders/placeholder.svg";
-            if (url.startsWith("http")) return url;
-            const backendHost = (
-              process.env.NEXT_PUBLIC_BACKEND_URL ||
-              process.env.NEXT_PUBLIC_API_URL ||
-              "http://localhost:5000"
-            ).replace(/\/+$/, "");
-            if (url.startsWith("/")) return `${backendHost}${url}`;
-            return url;
-          };
 
           const transformedEvents = raw.map((evt) => {
             const title = String(evt["title"] ?? "");
@@ -198,68 +151,6 @@ export default function EventsListPage() {
     fetchEvents();
   }, []);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dateDropdownRef.current &&
-        !dateDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDateFilterOpen(false);
-      }
-      if (
-        categoryDropdownRef.current &&
-        !categoryDropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsCategoryFilterOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const toggleYear = (year: number) => {
-    setSelectedYears((prev) =>
-      prev.includes(year) ? prev.filter((y) => y !== year) : [...prev, year],
-    );
-  };
-
-  const toggleMonth = (monthIdx: number) => {
-    setSelectedMonths((prev) =>
-      prev.includes(monthIdx)
-        ? prev.filter((m) => m !== monthIdx)
-        : [...prev, monthIdx],
-    );
-  };
-
-  const getGroupedRanges = (
-    items: number[],
-    getLabel: (val: number) => string,
-  ) => {
-    if (items.length === 0) return [];
-    const sorted = [...items].sort((a, b) => a - b);
-    const ranges = [];
-    let start = sorted[0],
-      end = sorted[0];
-    for (let i = 1; i <= sorted.length; i++) {
-      if (i < sorted.length && sorted[i] === end + 1) {
-        end = sorted[i];
-      } else {
-        ranges.push({
-          label:
-            start === end
-              ? getLabel(start)
-              : `${getLabel(start)} - ${getLabel(end)}`,
-          original: sorted.filter((n) => n >= start && n <= end),
-        });
-        if (i < sorted.length) {
-          start = sorted[i];
-          end = sorted[i];
-        }
-      }
-    }
-    return ranges;
-  };
-
   const now = new Date();
 
   const filteredEvents = events
@@ -273,29 +164,20 @@ export default function EventsListPage() {
       return { ...event, status };
     })
     .filter((event) => {
+      const query = filters.query.trim().toLowerCase();
       if (
-        searchQuery.trim() !== "" &&
-        !event.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !event.description.toLowerCase().includes(searchQuery.toLowerCase())
+        query !== "" &&
+        !event.title.toLowerCase().includes(query) &&
+        !event.description.toLowerCase().includes(query)
       )
         return false;
 
-      const date = new Date(event.date);
-      if (
-        selectedYears.length > 0 &&
-        !selectedYears.includes(date.getFullYear())
-      )
-        return false;
-      if (
-        selectedMonths.length > 0 &&
-        !selectedMonths.includes(date.getMonth())
-      )
-        return false;
+      if (!matchesDateFilter(event.date, filters)) return false;
 
-      if (activeCategory === "Upcoming") {
+      if (filters.category === "Upcoming") {
         if (event.status !== "Upcoming" && event.status !== "Ongoing")
           return false;
-      } else if (activeCategory === "Past") {
+      } else if (filters.category === "Past") {
         if (event.status !== "Ended") return false;
       }
 
@@ -320,7 +202,7 @@ export default function EventsListPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedYears, selectedMonths, activeCategory]);
+  }, [filters]);
 
   useEffect(() => {
     if (currentPage > 1 && listTopRef.current) {
@@ -332,13 +214,12 @@ export default function EventsListPage() {
   }, [currentPage]);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
           <div className="max-w-7xl mx-auto px-6 pt-38 pb-12 w-full grow">
-            {/* back */}
             <div className="mb-8 flex justify-start">
               <BackButton
                 onClick={() => router.push("/")}
@@ -347,7 +228,6 @@ export default function EventsListPage() {
               />
             </div>
 
-            {/* title */}
             <PageHeader
               badge="Chapter Activities"
               title="Our Events"
@@ -359,276 +239,19 @@ export default function EventsListPage() {
               }
             />
 
-            {/* search & filters */}
-            <div className="mb-10 max-w-4xl mx-auto flex gap-4 items-center">
-              <div className="relative grow">
-                <div className="flex items-center w-full bg-white border-2 border-primary1/20 rounded-2xl px-5 py-3 transition-all duration-300 hover:border-primary1 focus-within:border-primary1">
-                  <Search className="h-5 w-5 text-primary1 shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Search events"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-transparent ml-3 outline-none font-rubik font-medium text-primary3 placeholder:text-gray-400 placeholder:font-normal"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="ml-2 text-gray-400 hover:text-primary1 transition-colors cursor-pointer"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
+            <ListFilterBar
+              placeholder="Search events"
+              categories={CATEGORIES}
+              filters={filters}
+              onChange={setFilters}
+            />
 
-              {/* date filter */}
-              <div className="relative" ref={dateDropdownRef}>
-                <button
-                  onClick={() => {
-                    setIsDateFilterOpen(!isDateFilterOpen);
-                    setFilterStep("year");
-                    setIsCategoryFilterOpen(false);
-                  }}
-                  className={clsx(
-                    "flex items-center justify-center h-13 w-13 bg-white border-2 rounded-2xl transition-all hover:border-primary1 cursor-pointer",
-                    isDateFilterOpen ||
-                      selectedYears.length > 0 ||
-                      selectedMonths.length > 0
-                      ? "border-primary1 bg-primary1/5 shadow-sm shadow-primary1/10"
-                      : "border-primary1/20",
-                  )}
-                >
-                  <Calendar className="h-5 w-5 text-primary1" />
-                </button>
-
-                {isDateFilterOpen && (
-                  <div className="absolute top-[125%] right-0 w-64 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 z-50 p-5 animate-in fade-in zoom-in-95 duration-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-1.5">
-                        {filterStep === "month" && (
-                          <button
-                            onClick={() => setFilterStep("year")}
-                            className="p-1 hover:bg-gray-100 rounded-full transition-colors text-primary1 cursor-pointer"
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </button>
-                        )}
-                        <span className="font-rubik font-bold text-primary3 text-sm">
-                          {filterStep === "year"
-                            ? "Select Year"
-                            : "Select Month"}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setSelectedYears([]);
-                          setSelectedMonths([]);
-                        }}
-                        className="flex items-center gap-1 px-2 py-1 bg-red-50 hover:bg-red-100 rounded-full transition-colors group cursor-pointer"
-                      >
-                        <RotateCcw className="h-3 w-3 text-red-500 group-hover:-rotate-45 transition-transform" />
-                        <span className="font-raleway text-[9px] font-bold text-red-500 uppercase tracking-wider">
-                          Clear
-                        </span>
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      {(filterStep === "year" ? YEARS : SHORT_MONTHS).map(
-                        (item, idx) => {
-                          const isSelected =
-                            filterStep === "year"
-                              ? selectedYears.includes(item as number)
-                              : selectedMonths.includes(idx);
-                          return (
-                            <button
-                              key={item}
-                              onClick={() =>
-                                filterStep === "year"
-                                  ? toggleYear(item as number)
-                                  : toggleMonth(idx)
-                              }
-                              className={clsx(
-                                "relative py-2.5 rounded-xl text-xs font-bold font-rubik transition-all duration-200 border-2 overflow-hidden cursor-pointer active:scale-95",
-                                isSelected
-                                  ? "bg-primary1 text-white border-primary1 shadow-md shadow-primary1/30 scale-[0.96]"
-                                  : "bg-white text-gray-500 border-gray-50 hover:border-primary1/30 hover:bg-primary1/5 hover:text-primary1",
-                              )}
-                            >
-                              {item}
-                              {isSelected && (
-                                <span className="absolute top-1 right-1 w-1 h-1 bg-white rounded-full" />
-                              )}
-                            </button>
-                          );
-                        },
-                      )}
-                    </div>
-
-                    <Button
-                      variant="hero"
-                      className="mt-5 w-full py-2.5 text-xs sm:px-5 sm:py-2.5 sm:text-sm"
-                      onClick={() =>
-                        filterStep === "year"
-                          ? setFilterStep("month")
-                          : setIsDateFilterOpen(false)
-                      }
-                    >
-                      {filterStep === "year" ? (
-                        <>
-                          Next <ChevronRight className="ml-1 inline h-3.5 w-3.5" />
-                        </>
-                      ) : (
-                        <>
-                          Apply <Check className="ml-1 inline h-3.5 w-3.5" />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {/* category filter */}
-              <div className="relative" ref={categoryDropdownRef}>
-                <button
-                  onClick={() => {
-                    setIsCategoryFilterOpen(!isCategoryFilterOpen);
-                    setIsDateFilterOpen(false);
-                  }}
-                  className={clsx(
-                    "flex items-center justify-center h-13 w-13 bg-white border-2 rounded-2xl transition-all hover:border-primary1 cursor-pointer",
-                    isCategoryFilterOpen || activeCategory !== "All"
-                      ? "border-primary1 bg-primary1/5 shadow-sm shadow-primary1/10"
-                      : "border-primary1/20",
-                  )}
-                >
-                  <Filter className="h-5 w-5 text-primary1" />
-                </button>
-
-                {isCategoryFilterOpen && (
-                  <div className="absolute top-[125%] right-0 w-64 bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 z-50 p-5 animate-in fade-in zoom-in-95 duration-200">
-                    <div className="flex items-center justify-between mb-4 px-1">
-                      <span className="font-rubik font-bold text-primary3 text-sm">
-                        Category
-                      </span>
-                      <button
-                        onClick={() => setActiveCategory("All")}
-                        className="flex items-center gap-1 px-2 py-1 bg-red-50 hover:bg-red-100 rounded-full transition-colors group cursor-pointer"
-                      >
-                        <RotateCcw className="h-3 w-3 text-red-500 group-hover:-rotate-45 transition-transform" />
-                        <span className="font-raleway text-[9px] font-bold text-red-500 uppercase tracking-wider">
-                          Reset
-                        </span>
-                      </button>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      {CATEGORIES.map((cat) => (
-                        <button
-                          key={cat.name}
-                          onClick={() => {
-                            setActiveCategory(cat.name);
-                            setIsCategoryFilterOpen(false);
-                          }}
-                          className={clsx(
-                            "w-full py-2.5 px-4 rounded-xl text-sm transition-all duration-200 text-left flex items-center gap-3 font-rubik cursor-pointer active:scale-[0.98] transform-gpu backface-hidden",
-                            activeCategory === cat.name
-                              ? "bg-primary1 text-white shadow-md shadow-primary1/25 font-semibold"
-                              : "text-gray-600 hover:bg-primary1/5 hover:text-primary1 hover:translate-x-1",
-                          )}
-                        >
-                          <span
-                            className={clsx(
-                              activeCategory === cat.name
-                                ? "text-white"
-                                : "text-primary1",
-                            )}
-                          >
-                            {cat.icon}
-                          </span>
-                          {cat.name}
-                          {activeCategory === cat.name && (
-                            <Check className="h-3.5 w-3.5 ml-auto" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* filter pills */}
-            <div className="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="font-raleway text-sm text-gray-400">
-                Showing{" "}
-                <span className="font-bold text-primary3">
-                  {Math.min(
-                    currentPage * ITEMS_PER_PAGE,
-                    filteredEvents.length,
-                  )}
-                </span>{" "}
-                out of{" "}
-                <span className="font-bold text-primary3">
-                  {filteredEvents.length}
-                </span>{" "}
-                results
-              </div>
-
-              <div className="flex flex-wrap md:justify-end gap-2">
-                {activeCategory !== "All" && (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary1/10 text-primary1 rounded-full text-[10px] font-bold font-rubik border border-primary1/20">
-                    Category: {activeCategory}
-                    <button
-                      onClick={() => setActiveCategory("All")}
-                      className="hover:text-primary3 transition-colors cursor-pointer"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                )}
-                {getGroupedRanges(selectedYears, (y) => y.toString()).map(
-                  (range, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary1/10 text-primary1 rounded-full text-[10px] font-bold font-rubik border border-primary1/20"
-                    >
-                      {range.label}
-                      <button
-                        onClick={() =>
-                          setSelectedYears((prev) =>
-                            prev.filter((y) => !range.original.includes(y)),
-                          )
-                        }
-                        className="hover:text-primary3 transition-colors cursor-pointer"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ),
-                )}
-                {getGroupedRanges(selectedMonths, (m) => SHORT_MONTHS[m]).map(
-                  (range, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary3/10 text-primary3 rounded-full text-[10px] font-bold font-rubik border border-primary3/20"
-                    >
-                      {range.label}
-                      <button
-                        onClick={() =>
-                          setSelectedMonths((prev) =>
-                            prev.filter((m) => !range.original.includes(m)),
-                          )
-                        }
-                        className="hover:text-primary1 transition-colors cursor-pointer"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ),
-                )}
-              </div>
-            </div>
+            <ResultsBar
+              shown={Math.min(currentPage * ITEMS_PER_PAGE, filteredEvents.length)}
+              total={filteredEvents.length}
+              filters={filters}
+              onChange={setFilters}
+            />
 
             <div ref={listTopRef}>
               {isLoading ? (
@@ -652,49 +275,7 @@ export default function EventsListPage() {
                     ))}
                   </div>
 
-                  {/* pagination */}
-                  {totalPages > 1 && (
-                    <div className="mt-16 flex flex-col items-center gap-6">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            setCurrentPage((prev) => Math.max(prev - 1, 1))
-                          }
-                          disabled={currentPage === 1}
-                          className="w-10 h-10 flex items-center justify-center rounded-xl border-2 border-primary1/20 text-primary1 disabled:opacity-40 disabled:cursor-not-allowed hover:border-primary1 transition-all"
-                        >
-                          <ChevronLeft className="h-5 w-5" />
-                        </button>
-
-                        <div className="flex gap-2">
-                          {Array.from(
-                            { length: totalPages },
-                            (_, i) => i + 1,
-                          ).map((pageNum) => (
-                            <button
-                              key={pageNum}
-                              onClick={() => setCurrentPage(pageNum)}
-                              className={`w-10 h-10 rounded-xl text-sm font-bold font-rubik transition-all border-2 cursor-pointer ${currentPage === pageNum ? "bg-primary1 text-white border-primary1" : "border-primary1/20 text-primary1 hover:border-primary1 hover:bg-primary1/5"}`}
-                            >
-                              {pageNum}
-                            </button>
-                          ))}
-                        </div>
-
-                        <button
-                          onClick={() =>
-                            setCurrentPage((prev) =>
-                              Math.min(prev + 1, totalPages),
-                            )
-                          }
-                          disabled={currentPage === totalPages}
-                          className="w-10 h-10 flex items-center justify-center rounded-xl border-2 border-primary1/20 text-primary1 disabled:opacity-40 disabled:cursor-not-allowed hover:border-primary1 transition-all"
-                        >
-                          <ChevronRight className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
                 </>
               ) : (
                 <div className="text-center py-20">
@@ -708,7 +289,6 @@ export default function EventsListPage() {
         </div>
       </main>
 
-      {/* footer */}
       <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
