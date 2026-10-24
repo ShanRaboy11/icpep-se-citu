@@ -13,6 +13,7 @@ import OfficerCard from "../../components/officers/officer-card";
 import BackButton from "../../components/ui/back-button";
 
 import { departments } from "../../utils/officers/officers";
+import { committeeRank, councilRank } from "../../utils/officers/ranking";
 import { formatOfficerName, toTitleCase } from "../../utils/officers/format-name";
 import officerService from "../../services/officer";
 import officerTermService from "../../services/officer-term";
@@ -44,33 +45,6 @@ const splitCouncilPosition = (
     return { position: "SSG", role: "Representative" };
   }
   return { position };
-};
-
-const COMMITTEE_ORDER = ["committee head", "head", "assistant head", "secretary", "assistant secretary", "member"];
-
-const committeeRank = (position: string) => {
-  const index = COMMITTEE_ORDER.indexOf(position.trim().toLowerCase());
-  return index === -1 ? COMMITTEE_ORDER.length : index;
-};
-
-const councilRank = (position: string) => {
-  const text = position.trim().toLowerCase();
-  if (/^president\b/.test(text)) return 0;
-  if (/\b(vice|vp)\b/.test(text)) {
-    if (text.includes("internal")) return 1;
-    if (text.includes("external")) return 2;
-    return 1.5;
-  }
-  if (text.includes("assistant")) return 3.5;
-  if (text.includes("secretary")) return 3;
-  if (text.includes("treasurer")) return 4;
-  if (text.includes("auditor")) return 5;
-  if (text.includes("public information") || text === "pio") return 6;
-  if (text.includes("public relations") || text === "pro") return 7;
-  if (text.includes("ssg")) return 8;
-  const year = text.match(/^(\d)/);
-  if (year) return 9 + Number(year[1]);
-  return 20;
 };
 
 const sortByRank = (list: DisplayOfficer[], rank: (position: string) => number) =>
@@ -162,7 +136,7 @@ const OfficersPage = () => {
         setOfficers(sorted);
         writeCache(cacheKey, sorted);
       })
-      .catch((error) => {
+      .catch(() => {
         setOfficers([]);
       })
       .finally(() => setLoading(false));

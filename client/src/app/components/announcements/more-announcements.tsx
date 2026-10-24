@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import FallbackImage from "@/app/components/ui/fallback-image";
 import { Skeleton } from "@/app/components/feedback/skeleton";
-import ViewAllButton from "@/app/components/ui/view-all-button";
+import Button from "@/app/components/ui/button";
 import { useCachedFetch } from "@/app/hooks/use-cached-fetch";
 import announcementService from "@/app/services/announcement";
 import { formatDate, getTypePill } from "../../utils/announcements/announcements";
@@ -30,7 +30,7 @@ const fetchLatest = async (): Promise<Item[]> => {
 export default function MoreAnnouncements({ currentId }: { currentId: string }) {
   const router = useRouter();
   const { data, loading } = useCachedFetch("announcements-latest", fetchLatest);
-  const items = (data ?? []).filter((item) => item._id !== currentId).slice(0, 3);
+  const items = (data ?? []).filter((item) => item._id !== currentId).slice(0, 2);
 
   if (!loading && items.length === 0) return null;
 
@@ -40,7 +40,7 @@ export default function MoreAnnouncements({ currentId }: { currentId: string }) 
 
       <div className="space-y-3">
         {loading && items.length === 0
-          ? [1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />)
+          ? [1, 2].map((i) => <Skeleton key={i} className="h-20 w-full rounded-2xl" />)
           : items.map((item) => (
               <Link
                 key={item._id}
@@ -71,9 +71,9 @@ export default function MoreAnnouncements({ currentId }: { currentId: string }) 
             ))}
       </div>
 
-      <div className="mt-5 flex justify-center">
-        <ViewAllButton label="View all announcements" onClick={() => router.push("/announcements")} />
-      </div>
+      <Button variant="heroOutline" rounded="lg" className="mt-5 w-full py-3" onClick={() => router.push("/announcements")}>
+        View all announcements
+      </Button>
     </div>
   );
 }

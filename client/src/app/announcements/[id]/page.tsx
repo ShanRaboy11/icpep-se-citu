@@ -173,8 +173,8 @@ export default function AnnouncementDetailPage() {
       title: announcement.title,
       description: announcement.description,
       date:
-        announcement.publishDate ||
         announcement.date ||
+        announcement.publishDate ||
         new Date().toISOString(),
       type: mappedType,
       imageUrl: imageUrl,
@@ -219,8 +219,11 @@ export default function AnnouncementDetailPage() {
 
                 {isMeeting && (
                   <MeetingAttendanceCard
+                    title={announcement.title}
+                    date={announcement.date || announcement.publishDate || ""}
+                    time={announcement.time}
+                    location={announcement.location}
                     attendance={announcement.attendance}
-                    attendanceLink={announcement.attendees}
                   />
                 )}
 

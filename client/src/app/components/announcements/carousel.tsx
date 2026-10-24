@@ -59,7 +59,7 @@ export default function CarouselGallery({ imageUrls }: CarouselProps) {
         <div className="embla__container">
           {imageUrls.map((url, index) => (
             <div
-              className="embla__slide relative h-64 sm:h-96 w-full"
+              className="embla__slide relative h-72 sm:h-120 w-full"
               key={index}
             >
               <FallbackImage

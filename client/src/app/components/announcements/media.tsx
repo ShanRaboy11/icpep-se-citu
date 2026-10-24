@@ -44,7 +44,7 @@ export default function AnnouncementMedia({
 
   if (allImages.length === 1) {
     return (
-      <div className="bg-white rounded-3xl shadow-md overflow-hidden relative h-64 sm:h-96 w-full">
+      <div className="bg-white rounded-3xl shadow-md overflow-hidden relative h-72 sm:h-120 w-full">
         <FallbackImage
           src={allImages[0]}
           alt={title}

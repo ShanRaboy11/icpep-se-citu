@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Button from "@/app/components/ui/button";
 import eventService from "@/app/services/event";
@@ -21,6 +22,8 @@ const CountdownPill = ({ days, hours }: { days: number; hours: number }) => (
 );
 
 const CARD = "bg-linear-to-br from-buttonbg1 to-white border border-primary1/20 rounded-3xl p-6 sm:p-8 shadow-md";
+
+const AVATARS = ["/placeholders/woman.avif", "/placeholders/man.avif", "/placeholders/woman.avif"];
 
 const countLabel = (count: number) =>
   count === 0
@@ -148,10 +151,24 @@ export default function RsvpCard({ eventId, status, date, rsvpLink, rsvpCount = 
           <Button variant="hero" rounded="lg" onClick={handleRsvp} disabled={busy} className="w-full py-3 text-lg">
             {rsvpLink || loggedIn ? "RSVP Now" : "Log in to RSVP"}
           </Button>
-          {!rsvpLink && (
-            <p className="mt-4 font-raleway text-sm text-gray-600">
+          {(!rsvpLink || count > 0) && (
+            <div className="mt-4 flex items-center justify-center gap-2 font-raleway text-sm text-gray-600">
+              {count > 0 && (
+                <div className="flex -space-x-2">
+                  {AVATARS.slice(0, count).map((src, i) => (
+                    <Image
+                      key={i}
+                      src={src}
+                      alt=""
+                      width={24}
+                      height={24}
+                      className="inline-block h-6 w-6 rounded-full bg-white object-cover ring-2 ring-white"
+                    />
+                  ))}
+                </div>
+              )}
               <span className="font-bold text-primary3">{countLabel(count)}</span>
-            </p>
+            </div>
           )}
         </div>
       )}
