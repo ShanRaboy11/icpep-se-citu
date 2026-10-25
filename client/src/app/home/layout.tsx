@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DEFAULT_FAQS, type DefaultFaq } from "../utils/home/default-faqs";
 import { MAX_FAQS, pageMetadata } from "@/app/utils/site";
+import { jsonLd } from "@/app/utils/json-ld";
 
 export const metadata: Metadata = pageMetadata(
   "Home",
@@ -48,7 +49,7 @@ export default async function HomeLayout({ children }: { children: React.ReactNo
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }}
       />
       {children}
     </>

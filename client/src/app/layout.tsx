@@ -7,6 +7,7 @@ import MaintenanceGate from "./components/layout/maintenance-gate";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, DEFAULT_OG_IMAGE } from "./utils/site";
 import { fetchSiteContact } from "./utils/site-contact";
 import "./globals.css";
+import { jsonLd } from "@/app/utils/json-ld";
 
 const raleway = Raleway({
   variable: "--font-raleway",
@@ -70,7 +71,7 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildOrganizationJsonLd(contact)) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(buildOrganizationJsonLd(contact)) }}
         />
 
 
