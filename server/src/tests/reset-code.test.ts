@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hashResetCode, resetCodeMatches } from "../utils/reset-code";
+import { hashResetCode, resetCodeMatches } from "../utils/auth/reset-code";
 
 describe("reset codes", () => {
   it("never stores the code itself", () => {

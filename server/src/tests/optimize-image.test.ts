@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import sharp from "sharp";
-import { optimizeImage, MAX_UPLOAD_WIDTH, MAX_UPLOAD_HEIGHT } from "../utils/optimize-image";
+import { optimizeImage, MAX_UPLOAD_WIDTH, MAX_UPLOAD_HEIGHT } from "../utils/media/optimize-image";
 
 const photo = (width: number, height: number) =>
   sharp({

@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { preconnect } from "react-dom";
 import { Rubik, Raleway } from "next/font/google";
-import FirstVisitLoader from "./components/first-visit-loader";
-import ApiErrorNotice from "./components/api-error-notice";
-import ResponsiveTableToggle from "./components/responsive-table-toggle";
-import MaintenanceGate from "./components/maintenance-gate";
+import ApiErrorNotice from "./components/feedback/api-error-notice";
+import ResponsiveTableToggle from "./components/layout/responsive-table-toggle";
+import MaintenanceGate from "./components/layout/maintenance-gate";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, DEFAULT_OG_IMAGE } from "./utils/site";
 import { fetchSiteContact } from "./utils/site-contact";
 import "./globals.css";
+import { jsonLd } from "@/app/utils/json-ld";
 
 const raleway = Raleway({
   variable: "--font-raleway",
@@ -59,6 +59,7 @@ export default async function RootLayout({
 }>) {
   const contact = await fetchSiteContact();
 
+  preconnect("https://res.cloudinary.com");
   try {
     preconnect(new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").origin);
   } catch {
@@ -70,13 +71,10 @@ export default async function RootLayout({
         <script
           type="application/ld+json"
           // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(buildOrganizationJsonLd(contact)) }}
+          dangerouslySetInnerHTML={{ __html: jsonLd(buildOrganizationJsonLd(contact)) }}
         />
 
-        {/* First visit loading with entrance animation */}
-        <FirstVisitLoader />
 
-        {/* Regular content - app/loading.jsx handles route changes automatically */}
         <MaintenanceGate>{children}</MaintenanceGate>
         <ApiErrorNotice />
         <ResponsiveTableToggle />

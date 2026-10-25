@@ -1,20 +1,21 @@
 "use client";
 
+import { labelStyle } from "@/app/components/ui/form-styles";
 import Image from "next/image";
 import { Shield, Award, Users, X, Edit3, AlertCircle } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { createPortal } from "react-dom";
-import Button from "../components/button";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import Grid from "../components/grid";
-import PageHeader from "../components/page-header";
+import Button from "../components/ui/button";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import Grid from "../components/layout/grid";
+import PageHeader from "../components/ui/page-header";
 import userService, { CurrentUser } from "../services/user";
 
 // Components
-import { PersonalInformation } from "./components/personal-information";
-import { RolenMembershipInformation } from "./components/role-membership";
-import SecuritySection from "./components/password";
+import { PersonalInformation } from "../components/profile/personal-information";
+import { RolenMembershipInformation, type MembershipKind } from "../components/profile/role-membership";
+import SecuritySection from "../components/profile/password";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -50,16 +51,11 @@ export default function ProfilePage() {
     return "U";
   };
 
-  const normalizeMembership = (
-    u?: CurrentUser | null
-  ): "both" | "local" | "regional" => {
-    const raw =
-      u?.membership ??
-      (u &&
-        (u as unknown as { membershipStatus?: { membershipType?: string } })
-          ?.membershipStatus?.membershipType);
-    if (raw === "local" || raw === "regional" || raw === "both") return raw;
-    return "both";
+  const normalizeMembership = (u?: CurrentUser | null): MembershipKind => {
+    const status = u?.membershipStatus;
+    if (!status?.isMember) return "none";
+    const type = status.membershipType;
+    return type === "local" || type === "regional" || type === "both" ? type : "member";
   };
 
   // --- Data Loading ---
@@ -168,7 +164,7 @@ export default function ProfilePage() {
     "View your details and membership credentials within the ICpEP SE CIT-U Chapter.";
 
   return (
-    <section className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <section className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <style jsx global>{`
         @keyframes shimmer {
           0% {
@@ -184,7 +180,6 @@ export default function ProfilePage() {
       `}</style>
 
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
-        {/* Background Decor */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-100/40 rounded-full blur-[120px]" />
           <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-cyan-100/40 rounded-full blur-[120px]" />
@@ -202,7 +197,6 @@ export default function ProfilePage() {
             aria-busy={loading}
             className="grow w-full max-w-7xl mx-auto px-6 pt-38 pb-24 relative z-0"
           >
-            {/* --- Page Title --- */}
             <PageHeader
               className="mb-16 text-center"
               badge={pillText}
@@ -211,7 +205,6 @@ export default function ProfilePage() {
               subtitle={subtitle}
             />
 
-            {/* --- Complete Your Profile Notice --- */}
             {!loading && user && !user.yearLevel && (
               <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-amber-50 border border-amber-200 rounded-3xl p-5 sm:p-6">
                 <div className="p-2.5 bg-amber-100 rounded-2xl text-amber-600 shrink-0">
@@ -238,32 +231,25 @@ export default function ProfilePage() {
             )}
 
             {/* --- Hero Profile Card (RESIZED & SCALED DOWN) --- */}
-            <div className="relative mb-8 rounded-4xl overflow-hidden shadow-2xl shadow-blue-900/10 group transition-all duration-500 hover:shadow-3xl hover:-translate-y-0.5">
-              {/* Card Background & Noise */}
+            <div className="relative mb-8 rounded-4xl overflow-hidden shadow-xl shadow-blue-900/10 group transition-all duration-500 hover:shadow-3xl hover:-translate-y-0.5">
               <div className="absolute inset-0 bg-linear-to-br from-[#0066CC] via-[#0088EE] to-[#00A8FF]">
                 <div className="absolute inset-0 noise-bg mix-blend-overlay opacity-20"></div>
               </div>
 
-              {/* Internal Decorations */}
               <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
               <div className="absolute bottom-0 left-0 w-56 h-56 bg-white/10 rounded-full blur-3xl pointer-events-none translate-y-1/2 -translate-x-1/3"></div>
 
-              {/* Content Container - REDUCED PADDING */}
               <div className="relative p-6 sm:p-8 lg:pl-16 lg:pr-8 flex flex-col sm:flex-row items-center gap-6 sm:gap-10 lg:gap-12 text-white z-10">
-                {/* Profile Image / Initials Section */}
                 <div className="relative shrink-0">
-                  {/* Glow Layers */}
                   <div className="absolute -inset-6 rounded-full bg-cyan-400/30 blur-2xl animate-pulse"></div>
                   <div className="absolute -inset-1 rounded-full bg-linear-to-tr from-cyan-300 to-white/50 blur-md opacity-70"></div>
 
-                  {/* Avatar Container - REDUCED SIZE */}
-                  <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full p-1.5 bg-linear-to-b from-white/40 to-white/10 backdrop-blur-md shadow-2xl">
+                  <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full p-1.5 bg-linear-to-b from-white/40 to-white/10 backdrop-blur-md shadow-xl">
                     <div className="w-full h-full rounded-full bg-white/95 flex items-center justify-center overflow-hidden border-[3px] border-white/90 relative shadow-inner">
                       {loading ? (
                         <div className="w-full h-full rounded-full bg-gray-100 animate-pulse" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-primary3 via-[#0055AA] to-primary3 text-white text-4xl sm:text-5xl font-rubik font-bold relative group-hover:scale-105 transition-transform duration-500">
-                          {/* Inner shine */}
                           <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/20 to-transparent opacity-40"></div>
                           <span className="relative z-10 drop-shadow-lg">
                             {getInitials(user)}
@@ -274,9 +260,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Text Info */}
                 <div className="text-center sm:text-left grow flex flex-col justify-center">
-                  {/* NAME - REDUCED SIZE */}
                   <h2 className="text-3xl sm:text-5xl font-bold font-rubik mb-2 drop-shadow-sm tracking-tight leading-tight">
                     {loading ? (
                       <div className="h-10 w-56 bg-white/20 rounded-xl animate-pulse mx-auto sm:mx-0" />
@@ -288,7 +272,6 @@ export default function ProfilePage() {
 
                   {/* ROW: Year Level + Role Badge */}
                   <div className="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-4 mt-1">
-                    {/* YEAR LEVEL - ADJUSTED SIZE */}
                     <p className="text-base sm:text-lg font-raleway font-semibold text-cyan-50 tracking-wide drop-shadow-md">
                       {loading ? (
                         <span className="inline-block h-5 w-24 bg-white/20 rounded-lg animate-pulse" />
@@ -297,12 +280,10 @@ export default function ProfilePage() {
                       )}
                     </p>
 
-                    {/* SEPARATOR */}
                     {!loading && (
                       <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-cyan-200"></span>
                     )}
 
-                    {/* ROLE BADGE */}
                     <div>
                       {loading ? (
                         <div className="h-7 w-28 bg-white/20 rounded-full animate-pulse" />
@@ -328,7 +309,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Watermark Logo - REDUCED SIZE */}
                 <div className="absolute -right-7.5 top-1/2 -translate-y-1/2 w-75 h-75 opacity-[0.08] pointer-events-none hidden lg:block mix-blend-overlay">
                   <Image
                     src="/brand/icpep-logo.avif"
@@ -340,9 +320,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* --- Content Sections (Grid Layout) --- */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 items-start">
-              {/* Left Column (Personal & Role) */}
               <div className="lg:col-span-2 flex flex-col gap-6">
                 <div className="transform transition-all duration-300 hover:-translate-y-0.5">
                   <PersonalInformation
@@ -370,15 +348,13 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Right Column (Security & Actions) */}
               <div className="flex flex-col gap-6 h-full">
                 <div className="transform transition-all duration-300 hover:-translate-y-0.5">
                   <SecuritySection loading={loading} />
                 </div>
 
-                {/* Edit Card (COMPACT DESIGN) */}
                 {!loading && (
-                  <div className="bg-white border border-primary1/10 rounded-3xl p-5 shadow-lg flex flex-row items-center justify-between gap-4 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                  <div className="bg-white border border-primary1/10 rounded-3xl p-5 shadow-md flex flex-row items-center justify-between gap-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-primary1/10 rounded-2xl text-primary1 shrink-0">
                         <Edit3 className="w-6 h-6" />
@@ -405,7 +381,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* --- Edit Modal --- */}
             {editOpen &&
               createPortal(
                 <div className="fixed inset-0 z-99999 flex items-center justify-center p-4">
@@ -413,7 +388,7 @@ export default function ProfilePage() {
                     className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
                     onClick={closeEdit}
                   />
-                  <div className="relative z-100000 w-full max-w-2xl bg-white rounded-4xl p-8 shadow-2xl border border-white/50 animate-scale-in flex flex-col max-h-[90vh] overflow-y-auto themed-scrollbar">
+                  <div className="relative z-100000 w-full max-w-2xl bg-white rounded-4xl p-8 shadow-xl border border-white/50 animate-scale-in flex flex-col max-h-[90vh] overflow-y-auto themed-scrollbar">
                     <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10">
                       <div>
                         <h3 className="text-2xl font-rubik font-bold text-primary3">
@@ -505,7 +480,7 @@ export default function ProfilePage() {
 
                       <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 mt-2">
                         <Button
-                          variant="heroOutline"
+                          variant="heroCancel"
                           type="button"
                           onClick={closeEdit}
                           className="px-4 py-2 sm:px-6 sm:py-3"
@@ -549,7 +524,7 @@ interface InputFieldProps {
   value: string;
   onChange: (val: string) => void;
   type?: string;
-  ref?: any;
+  ref?: React.Ref<HTMLInputElement>;
   disabled?: boolean;
   max?: string | number;
   min?: string | number;
@@ -571,7 +546,7 @@ function InputField({
 }: InputFieldProps) {
   return (
     <div>
-      <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+      <label className={labelStyle}>
         {label}
       </label>
       <input

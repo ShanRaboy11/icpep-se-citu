@@ -2,12 +2,28 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Advisor from '../models/advisor';
 import Faculty from '../models/faculty';
+import { respondWithError } from '../utils/http-error';
 
 const FACULTY_FIELDS = 'name image gender';
 
-const present = (advisor: any) => {
-  const plain = typeof advisor.toObject === 'function' ? advisor.toObject() : advisor;
-  const member = plain.faculty && typeof plain.faculty === 'object' ? plain.faculty : null;
+interface LinkedFaculty {
+  _id?: unknown;
+  name?: string;
+  image?: string;
+  gender?: string | null;
+}
+
+interface PlainAdvisor {
+  faculty?: LinkedFaculty | unknown;
+  name?: string;
+  image?: string;
+  gender?: string | null;
+  [key: string]: unknown;
+}
+
+const present = (advisor: PlainAdvisor | { toObject: () => PlainAdvisor }) => {
+  const plain: PlainAdvisor = typeof (advisor as { toObject?: unknown }).toObject === "function" ? (advisor as { toObject: () => PlainAdvisor }).toObject() : (advisor as PlainAdvisor);
+  const member = plain.faculty && typeof plain.faculty === "object" ? (plain.faculty as LinkedFaculty) : null;
   return {
     ...plain,
     faculty: member ? member._id : plain.faculty ?? null,
@@ -51,10 +67,7 @@ export const createAdvisor = async (req: Request, res: Response): Promise<void> 
       data: present(saved),
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create advisor',
-    });
+    respondWithError(res, error, 'Failed to create advisor');
   }
 };
 
@@ -72,10 +85,7 @@ export const getAdvisors = async (req: Request, res: Response): Promise<void> =>
       data: advisors.map(present),
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch advisors',
-    });
+    respondWithError(res, error, 'Failed to fetch advisors');
   }
 };
 
@@ -89,10 +99,7 @@ export const getAllAdvisors = async (req: Request, res: Response): Promise<void>
       data: advisors.map(present),
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch advisors',
-    });
+    respondWithError(res, error, 'Failed to fetch advisors');
   }
 };
 
@@ -137,10 +144,7 @@ export const updateAdvisor = async (req: Request, res: Response): Promise<void> 
       data: present(updated),
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update advisor',
-    });
+    respondWithError(res, error, 'Failed to update advisor');
   }
 };
 
@@ -159,9 +163,6 @@ export const deleteAdvisor = async (req: Request, res: Response): Promise<void> 
       message: 'Advisor deleted successfully',
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete advisor',
-    });
+    respondWithError(res, error, 'Failed to delete advisor');
   }
 };

@@ -21,7 +21,6 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/multer": "^2.0.0",
     "@types/node": "^24.9.2",
     "@types/nodemailer": "^7.0.12",
     "bcryptjs": "^2.4.3",
@@ -42,6 +41,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@types/multer": "^2.3.0",
     "@types/sanitize-html": "^2.16.2",
     "eslint": "^9.39.5",
     "ts-node": "^10.9.2",

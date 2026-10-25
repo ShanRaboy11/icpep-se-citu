@@ -1,27 +1,29 @@
 import { Request, Response, NextFunction } from "express";
 import Announcement from "../models/announcement";
-import { canManagePost } from "../utils/ownership";
+import { canManagePost } from "../utils/auth/ownership";
 import {
   uploadToCloudinary,
   uploadMultipleToCloudinary,
   deleteFromCloudinary,
-} from "../utils/cloudinary";
+} from "../utils/media/cloudinary";
 import mongoose from "mongoose";
 import { notifyTargetAudience } from "../utils/notification";
-import { listVisibility, canViewItem } from "../utils/visibility";
+import { listVisibility, canViewItem } from "../utils/auth/visibility";
 import { pickFields } from "../utils/pick";
-import { sanitizeRichText, isBlankRichText } from "../utils/rich-text";
+import { sanitizeRichText, isBlankRichText } from "../utils/content/rich-text";
+import { parseAttendance } from "../utils/content/attendance";
+import { respondWithError } from "../utils/http-error";
 
 const ANNOUNCEMENT_EDITABLE_FIELDS = [
   "title", "description", "content", "type", "priority", "targetAudience",
   "isPublished", "publishDate", "date", "expiryDate", "time", "location",
-  "organizer", "contact", "attendees", "agenda", "awardees", "attachments",
+  "organizer", "contact", "attendees", "attendance", "agenda", "awardees", "attachments",
   "galleryImages", "imageUrl",
 ] as const;
 
 
 // Local Multer file shape (avoid relying on global Express.Multer augmentation)
-type MulterFile = MulterLocal.MulterFile;
+type MulterFile = Express.Multer.File;
 
 // Multer-aware request type without extending Express.Request to avoid
 // incompatible augmentation issues across different @types packages.
@@ -37,6 +39,7 @@ interface AnnouncementQuery {
   targetAudience?: { $in: string[] };
   priority?: string;
   $or?: Array<Record<string, unknown>>;
+  $and?: Array<Record<string, unknown>>;
 }
 
 interface UserAnnouncementQuery {
@@ -68,6 +71,7 @@ export const createAnnouncement = async (
       organizer,
       contact,
       attendees,
+      attendance,
       agenda,
       awardees,
     } = req.body;
@@ -107,11 +111,8 @@ export const createAnnouncement = async (
           imageUrl = urls[0];
           galleryImages = urls;
         }
-      } catch {
-        res.status(500).json({
-          success: false,
-          message: "Failed to upload image(s)",
-        });
+      } catch (error) {
+        respondWithError(res, error, "Failed to upload image(s)");
         return;
       }
     } else if (req.file) {
@@ -127,13 +128,8 @@ export const createAnnouncement = async (
         const result = await uploadToCloudinary(fileBuf, "announcements");
         imageUrl = result.secure_url;
         galleryImages = imageUrl ? [imageUrl] : undefined;
-      } catch {
-        res
-          .status(500)
-          .json({
-            success: false,
-            message: "Failed to upload image",
-          });
+      } catch (error) {
+        respondWithError(res, error, "Failed to upload image");
         return;
       }
     }
@@ -156,6 +152,12 @@ export const createAnnouncement = async (
     }
 
 
+    const parsedAttendance = attendance === undefined ? { values: [] } : parseAttendance(attendance);
+    if ("error" in parsedAttendance) {
+      res.status(400).json({ success: false, message: parsedAttendance.error });
+      return;
+    }
+
     // Validate required fields
     if (!title || !description || !content || isBlankRichText(String(content))) {
       res.status(400).json({
@@ -170,7 +172,7 @@ export const createAnnouncement = async (
     const parsedPublishDate = publishDate ? new Date(publishDate) : undefined;
     const parsedDate = date ? new Date(date) : undefined;
 
-    const announcementData: any = {
+    const announcementData: Record<string, unknown> = {
       title,
       description,
       content: sanitizeRichText(String(content)),
@@ -189,6 +191,7 @@ export const createAnnouncement = async (
       organizer,
       contact,
       attendees,
+      attendance: parsedAttendance.values,
       agenda: parsedAgenda,
       awardees: parsedAwardees,
       imageUrl,
@@ -216,7 +219,7 @@ export const createAnnouncement = async (
     if (
       willBePublished &&
       !announcementData.imageUrl &&
-      (!announcementData.galleryImages ||
+      (!Array.isArray(announcementData.galleryImages) ||
         announcementData.galleryImages.length === 0)
     ) {
       res
@@ -241,7 +244,7 @@ export const createAnnouncement = async (
         `[ANNOUNCEMENT] ${announcement.title}`,
         `New announcement: ${announcement.title}`,
         "announcement",
-        announcement._id as any,
+        announcement._id,
         "Announcement",
         `/announcements/${announcement._id}`
       );
@@ -290,7 +293,7 @@ export const getAnnouncements = async (
     if (priority) query.priority = priority as string;
 
     // Visibility (drafts) and expiry must both hold
-    (query as any).$and = [
+    query.$and = [
       listVisibility(req.user, isPublished as string | undefined),
       {
         $or: [
@@ -446,11 +449,12 @@ export const updateAnnouncement = async (
     const requestWantsPublish = String(req.body.isPublished) === "true";
 
     // Only whitelisted fields can change. Authorship, views and ids never do.
-    const updateData: any = pickFields(req.body, ANNOUNCEMENT_EDITABLE_FIELDS);
+    const updateData: Record<string, unknown> = pickFields(req.body, ANNOUNCEMENT_EDITABLE_FIELDS);
 
     if (typeof updateData.content === "string") {
-      updateData.content = sanitizeRichText(updateData.content);
-      if (isBlankRichText(updateData.content)) {
+      const content = sanitizeRichText(updateData.content);
+      updateData.content = content;
+      if (isBlankRichText(content)) {
         res.status(400).json({ success: false, message: "Content cannot be empty" });
         return;
       }
@@ -491,6 +495,15 @@ export const updateAnnouncement = async (
           message: "A featured image is required to publish an announcement.",
         });
       return;
+    }
+
+    if (updateData.attendance !== undefined) {
+      const parsedAttendance = parseAttendance(updateData.attendance);
+      if ("error" in parsedAttendance) {
+        res.status(400).json({ success: false, message: parsedAttendance.error });
+        return;
+      }
+      updateData.attendance = parsedAttendance.values;
     }
 
     // Parse arrays if they are strings

@@ -4,7 +4,8 @@ import Meeting from "../models/meeting";
 import { sendBulkNotifications } from "../utils/notification";
 import Availability from "../models/availability";
 import User from "../models/user";
-import { escapeRegExp } from "../utils/regex";
+import { escapeRegExp } from "../utils/content/regex";
+import { respondWithError } from "../utils/http-error";
 
 interface CreateMeetingBody {
   title: string;
@@ -111,11 +112,11 @@ const loadLinkViewer = async (req: Request) => {
 // belong to one of the selected departments — not everyone who can list meetings.
 const canSeeMeetingLink = (
   viewer: Awaited<ReturnType<typeof loadLinkViewer>>,
-  meeting: { createdBy?: any; departments?: string[] },
+  meeting: { createdBy?: unknown; departments?: string[] },
 ) => {
   if (!viewer) return false;
   if (viewer.role === "admin") return true;
-  if (String(meeting.createdBy?._id ?? meeting.createdBy) === String(viewer._id)) {
+  if (String((meeting.createdBy as { _id?: unknown } | null)?._id ?? meeting.createdBy) === String(viewer._id)) {
     return true;
   }
 
@@ -226,10 +227,7 @@ export const createMeeting = async (
       .status(201)
       .json({ success: true, message: "Meeting created", data: meeting });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to create meeting",
-    });
+    respondWithError(res, error, "Failed to create meeting");
   }
 };
 
@@ -237,7 +235,7 @@ export const getMeetings = async (req: Request, res: Response) => {
   try {
     const { upcoming, me, q } = req.query as Record<string, string>;
 
-    const query: any = {};
+    const query: Record<string, unknown> = {};
     if (me === "true" && req.user?.id) {
       query.createdBy = req.user.id;
     }
@@ -279,10 +277,7 @@ export const getMeetings = async (req: Request, res: Response) => {
 
     res.json({ success: true, data: visibleMeetings });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch meetings",
-    });
+    respondWithError(res, error, "Failed to fetch meetings");
   }
 };
 
@@ -305,10 +300,7 @@ export const getMeetingById = async (req: Request, res: Response) => {
 
     res.json({ success: true, data });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch meeting",
-    });
+    respondWithError(res, error, "Failed to fetch meeting");
   }
 };
 
@@ -345,10 +337,7 @@ export const updateMeeting = async (req: Request, res: Response) => {
     await meeting.save();
     res.json({ success: true, message: "Meeting updated", data: meeting });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to update meeting",
-    });
+    respondWithError(res, error, "Failed to update meeting");
   }
 };
 
@@ -367,9 +356,6 @@ export const deleteMeeting = async (req: Request, res: Response) => {
     await meeting.deleteOne();
     res.json({ success: true, message: "Meeting deleted" });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to delete meeting",
-    });
+    respondWithError(res, error, "Failed to delete meeting");
   }
 };

@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import User from "../models/user";
 import OfficerTerm from "../models/officerTerm";
-import { uploadToCloudinary } from "../utils/cloudinary";
+import { uploadToCloudinary } from "../utils/media/cloudinary";
 import { getCurrentAcademicYear } from "../utils/academic-year";
 import { formatOfficerName } from "../utils/format-name";
-import { escapeRegExp } from "../utils/regex";
+import { escapeRegExp } from "../utils/content/regex";
+import { respondWithError } from "../utils/http-error";
 
 // Mirrors the client's splitCouncilPosition (client/src/app/officers/[slug]/page.tsx)
 // so a live assignment archives under the same {position, role} shape the
@@ -46,8 +47,8 @@ export const getOfficers = async (req: Request, res: Response) => {
     );
 
     res.status(200).json({ success: true, data: officers });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+  } catch (error) {
+    respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -87,8 +88,8 @@ export const getPublicOfficers = async (req: Request, res: Response) => {
     );
 
     res.status(200).json({ success: true, data: officers });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+  } catch (error) {
+    respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -145,7 +146,7 @@ export const updateOfficer = async (req: Request, res: Response) => {
     }
 
     const isRemoving = remove === true || remove === "true";
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (profilePicture) updateData.profilePicture = profilePicture;
 
     if (assignmentType === "council") {
@@ -243,8 +244,8 @@ export const updateOfficer = async (req: Request, res: Response) => {
     }
 
     res.status(200).json({ success: true, data: updated });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+  } catch (error) {
+    respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -298,7 +299,7 @@ export const searchNonOfficers = async (req: Request, res: Response) => {
       .limit(10);
 
     res.status(200).json({ success: true, data: users });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: "Internal server error" });
+  } catch (error) {
+    respondWithError(res, error, "Internal server error");
   }
 };

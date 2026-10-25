@@ -2,16 +2,16 @@
 
 import { useRouter } from "next/navigation";
 import { Home, Compass } from "lucide-react";
-import Header from "./components/header";
-import Footer from "./components/footer";
-import Grid from "./components/grid";
-import Button from "./components/button";
+import Header from "./components/layout/header";
+import Footer from "./components/layout/footer";
+import Grid from "./components/layout/grid";
+import Button from "./components/ui/button";
 
 export default function NotFound() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 

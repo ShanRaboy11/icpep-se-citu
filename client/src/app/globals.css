@@ -19,6 +19,10 @@ npm install gsap
   --secondary1: #002231;
   --secondary2: #45c7ff;
   --secondary3: #00a8f3;
+  --pageblue: #004e89;
+  --menublue: #00609c;
+  --ocean: #0073ad;
+  --surface: #f8f9fc;
 }
 
 @theme inline {
@@ -34,6 +38,10 @@ npm install gsap
   --color-secondary1: var(--secondary1);
   --color-secondary2: var(--secondary2);
   --color-secondary3: var(--secondary3);
+  --color-pageblue: var(--pageblue);
+  --color-menublue: var(--menublue);
+  --color-ocean: var(--ocean);
+  --color-surface: var(--surface);
   --font-rubik: var(--font-rubik);
   --font-raleway: var(--font-raleway);
 }
@@ -308,20 +316,6 @@ html {
     transparent 80%
   );
   transition: background 0.1s ease-out;
-}
-
-@keyframes nudge-left {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(-5px);
-  }
-}
-
-.animate-nudge-left {
-  animation: nudge-left 1.5s ease-in-out infinite;
 }
 
 .embla {

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "./utils/site";
-import { departments } from "./officers/utils/officers";
+import { departments } from "./utils/officers/officers";
 
 const API_URL = (() => {
   const base = String(process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/+$/, "");

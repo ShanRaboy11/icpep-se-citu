@@ -1,4 +1,5 @@
 import { api } from './api-client';
+import type { ApiList, FacultyRecord } from './types';
 
 export interface FacultyData {
     _id?: string;
@@ -32,7 +33,7 @@ const facultyService = {
 
     getFaculty: async () => {
         try {
-            const response = await api.get('/faculty');
+            const response = await api.get<ApiList<FacultyRecord>>('/faculty');
             return response.data;
         } catch (error) {
             throw error;

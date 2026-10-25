@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, AlertCircle, X, Check, CheckCircle } from "lucide-react";
-import Checkbox from "@/app/components/checkbox";
+import Checkbox from "@/app/components/ui/checkbox";
 import Image from "next/image";
 import axios from "axios";
-import Button from "@/app/components/button";
+import Button from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
 import { api, errorMessage } from "@/app/services/api-client";
+import { clearSession, saveSession } from "@/app/utils/session";
 const REMEMBERED_STUDENT_NUMBER_KEY = "rememberedStudentNumber";
 
 const validatePassword = (password: string) => {
@@ -152,13 +153,7 @@ export default function Login() {
         }),
       });
 
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("userId", data.user._id);
-      localStorage.setItem("userRole", data.user.role);
-      localStorage.setItem(
-        "userName",
-        data.user.fullName || `${data.user.firstName} ${data.user.lastName}`,
-      );
+      saveSession(data.user);
 
       if (rememberMe) {
         localStorage.setItem(
@@ -263,9 +258,7 @@ export default function Login() {
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
 
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
+    clearSession();
     setRequiresPasswordChange(false);
     setIsForgotPassword(false);
     setForgotPasswordStep(1);
@@ -296,7 +289,7 @@ export default function Login() {
     setError("");
 
     try {
-      const data = await apiCall("/auth/forgot-password", {
+      await apiCall("/auth/forgot-password", {
         method: "POST",
         body: JSON.stringify({ studentNumber }),
       });
@@ -304,8 +297,8 @@ export default function Login() {
       // The server answers the same way whether or not the account exists, so
       // the step always moves on and never reveals an address.
       setForgotPasswordStep(2);
-    } catch (err: any) {
-      setError(err.message || "Failed to send reset code.");
+    } catch (err) {
+      setError((err instanceof Error && err.message) || "Failed to send reset code.");
     } finally {
       setIsLoading(false);
     }
@@ -329,8 +322,8 @@ export default function Login() {
       });
 
       setForgotPasswordStep(3);
-    } catch (err: any) {
-      setError(err.message || "Invalid code.");
+    } catch (err) {
+      setError((err instanceof Error && err.message) || "Invalid code.");
       setFieldErrors((prev) => ({ ...prev, resetCode: true }));
     } finally {
       setIsLoading(false);
@@ -385,8 +378,8 @@ export default function Login() {
           "Your password has been updated. Please log in with your new password to continue.",
       });
       setShowSuccessModal(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to reset password.");
+    } catch (err) {
+      setError((err instanceof Error && err.message) || "Failed to reset password.");
     } finally {
       setIsLoading(false);
     }
@@ -427,9 +420,7 @@ export default function Login() {
           "Are you sure? You need to change your password before accessing the system.",
         )
       ) {
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("userRole");
+        clearSession();
         router.push("/");
       }
     } else {
@@ -512,8 +503,8 @@ export default function Login() {
               )}
 
               <Button
-                variant="primary3"
-                className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+                variant="hero"
+                className="w-full mt-10"
                 type="submit"
                 disabled={isLoading}
               >
@@ -562,8 +553,8 @@ export default function Login() {
               )}
 
               <Button
-                variant="primary3"
-                className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+                variant="hero"
+                className="w-full mt-10"
                 type="submit"
                 disabled={isLoading}
               >
@@ -655,8 +646,8 @@ export default function Login() {
               <PasswordRequirements checks={passwordValidation.checks} />
 
               <Button
-                variant="primary3"
-                className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+                variant="hero"
+                className="w-full mt-10"
                 type="submit"
                 disabled={isLoading || !passwordValidation.isValid}
               >
@@ -750,8 +741,8 @@ export default function Login() {
             </div>
 
             <Button
-              variant="primary3"
-              className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+              variant="hero"
+              className="w-full mt-10"
               type="submit"
               disabled={isLoading}
             >
@@ -826,8 +817,8 @@ export default function Login() {
             <PasswordRequirements checks={passwordValidation.checks} />
 
             <Button
-              variant="primary3"
-              className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+              variant="hero"
+              className="w-full mt-10"
               type="submit"
               disabled={isLoading || !passwordValidation.isValid}
             >
@@ -879,7 +870,7 @@ export default function Login() {
 
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full animate-scaleIn">
+          <div className="bg-white rounded-2xl p-8 shadow-xl max-w-md w-full animate-scaleIn">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
                 <CheckCircle className="h-10 w-10 text-green-600" />
@@ -894,8 +885,8 @@ export default function Login() {
               </p>
 
               <Button
-                variant="primary3"
-                className="w-full rounded-full bg-sky-400 text-white font-raleway font-semibold hover:bg-primary3 transition-colors duration-300"
+                variant="hero"
+                className="w-full"
                 onClick={handleSuccessModalClose}
               >
                 Continue to Login

@@ -29,8 +29,8 @@ export interface ClientAnnouncement {
     imageUrl?: string | null;
     date?: string;
     publishDate?: string;
-    author?: any;
-    [key: string]: any;
+    author?: unknown;
+    [key: string]: unknown;
 }
  
 
@@ -45,12 +45,12 @@ function normalizeType(rawType: string | undefined): "News" | "Meeting" | "Achie
 }
 
  
-function normalizeAnnouncement(raw: any): ClientAnnouncement {
+function normalizeAnnouncement(raw: Record<string, unknown>): ClientAnnouncement {
     const id = raw._id ?? raw.id ?? String((raw.id ?? raw._id) ?? "");
     const title = raw.title ?? raw.name ?? "Untitled";
     const description = raw.description ?? raw.summary ?? raw.excerpt ?? "";
     const content = raw.content ?? raw.body ?? "";
-    const type = normalizeType(raw.type ?? raw.category ?? raw.tag);
+    const type = normalizeType((raw.type ?? raw.category ?? raw.tag) as string | undefined);
     const imageUrl = raw.imageUrl ?? raw.image ?? raw.image_url ?? null;
     // Prefer explicit publishDate for when it was posted; keep user's provided `date` separate.
     const publishDate = raw.publishDate ?? raw.publish_date ?? raw.createdAt ?? raw.created_at ?? undefined;
@@ -85,6 +85,7 @@ export interface AnnouncementData {
     organizer?: string;
     contact?: string;
     attendees?: string;
+    attendance?: Array<{ name: string; position: string }>;
     agenda?: string[];
     awardees?: Array<{
         name: string;
@@ -150,6 +151,9 @@ class AnnouncementService {
             }
             if (data.agenda) {
                 formData.append('agenda', JSON.stringify(data.agenda));
+            }
+            if (data.attendance) {
+                formData.append('attendance', JSON.stringify(data.attendance));
             }
             if (data.awardees) {
                 formData.append('awardees', JSON.stringify(data.awardees));

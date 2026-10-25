@@ -43,6 +43,8 @@ export interface IEvent extends Document {
   coverImage?: string | null;
   galleryImages?: string[];
   views?: number;
+  rsvpCount?: number;
+  rsvps?: mongoose.Types.ObjectId[];
   // Mode: Online or Onsite
   mode?: "Online" | "Onsite";
   // Virtuals
@@ -147,6 +149,16 @@ const eventSchema = new Schema<IEvent>(
     views: {
       type: Number,
       default: 0,
+    },
+    rsvpCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    rsvps: {
+      type: [{ type: Schema.Types.ObjectId, ref: "User" }],
+      default: [],
+      select: false,
     },
     galleryImages: {
       type: [String],

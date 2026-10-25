@@ -8,6 +8,7 @@ export const shortDepartmentName = (name?: string | null): string =>
 
 const SHORT_POSITIONS: Record<string, string> = {
   "assistant head": "Asst. Head",
+  "assistant secretary": "Asst. Secretary",
   "committee head": "Head",
 };
 

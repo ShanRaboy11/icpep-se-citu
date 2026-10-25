@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Availability from "../models/availability";
 import Meeting from "../models/meeting";
+import { respondWithError } from "../utils/http-error";
 
 // Attendee student numbers and roles are for staff planning meetings; anyone
 // else only gets names.
@@ -17,10 +18,7 @@ export const getMeetingAvailability = async (req: Request, res: Response) => {
     );
     res.json({ success: true, data: list });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch availability",
-    });
+    respondWithError(res, error, "Failed to fetch availability");
   }
 };
 
@@ -43,10 +41,7 @@ export const getMyAvailability = async (req: Request, res: Response) => {
       data: doc || { meeting: meetingId, user: userId, slots: [] },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch my availability",
-    });
+    respondWithError(res, error, "Failed to fetch my availability");
   }
 };
 
@@ -123,10 +118,7 @@ export const setMyAvailability = async (req: Request, res: Response) => {
 
     res.json({ success: true, message: "Availability saved", data: doc });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to save availability",
-    });
+    respondWithError(res, error, "Failed to save availability");
   }
 };
 
@@ -153,9 +145,6 @@ export const getAvailabilitySummary = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to summarize availability",
-    });
+    respondWithError(res, error, "Failed to summarize availability");
   }
 };

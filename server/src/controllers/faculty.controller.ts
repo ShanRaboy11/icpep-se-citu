@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import Faculty from '../models/faculty';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary } from '../utils/media/cloudinary';
 import { parseGender } from '../utils/gender';
+import { respondWithError } from '../utils/http-error';
 
 export const createFaculty = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -31,10 +32,7 @@ export const createFaculty = async (req: Request, res: Response): Promise<void> 
       data: savedFaculty,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create faculty member',
-    });
+    respondWithError(res, error, 'Failed to create faculty member');
   }
 };
 
@@ -46,10 +44,7 @@ export const getFaculty = async (req: Request, res: Response): Promise<void> => 
       data: faculty,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch faculty',
-    });
+    respondWithError(res, error, 'Failed to fetch faculty');
   }
 };
 
@@ -61,10 +56,7 @@ export const getAllFaculty = async (req: Request, res: Response): Promise<void> 
       data: faculty,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch faculty',
-    });
+    respondWithError(res, error, 'Failed to fetch faculty');
   }
 };
 
@@ -98,10 +90,7 @@ export const updateFaculty = async (req: Request, res: Response): Promise<void> 
       data: updatedFaculty,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update faculty member',
-    });
+    respondWithError(res, error, 'Failed to update faculty member');
   }
 };
 
@@ -120,9 +109,6 @@ export const deleteFaculty = async (req: Request, res: Response): Promise<void> 
       message: 'Faculty member deleted successfully',
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete faculty member',
-    });
+    respondWithError(res, error, 'Failed to delete faculty member');
   }
 };

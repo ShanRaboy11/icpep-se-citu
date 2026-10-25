@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/app/utils/site";
+import { jsonLd } from "@/app/utils/json-ld";
 
 interface RawAnnouncement {
   title?: string;
@@ -91,7 +92,7 @@ export default async function AnnouncementLayout({
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(newsArticleJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(newsArticleJsonLd) }}
       />
       {children}
     </>

@@ -2,14 +2,16 @@ import { Request, Response } from "express";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
-import { validatePassword } from "../utils/password_validator";
+import { validatePassword } from "../utils/auth/password-validator";
 import { sendNotification } from "../utils/notification";
-import sendEmail from "../utils/email";
+import sendEmail from "../utils/mail/email";
 import { DEVELOPER_STUDENT_NUMBERS } from "../config/developers";
 import { getJwtSecret, getJwtExpiresIn } from "../config/env";
+import { clearSessionCookie, setSessionCookie } from "../utils/auth/session-cookie";
 import { recordAudit } from "../utils/audit";
-import { normalizeFirstLoginCode } from "../utils/first-login-code";
-import { hashResetCode, resetCodeMatches, MAX_RESET_ATTEMPTS } from "../utils/reset-code";
+import { normalizeFirstLoginCode } from "../utils/auth/first-login-code";
+import { hashResetCode, resetCodeMatches, MAX_RESET_ATTEMPTS } from "../utils/auth/reset-code";
+import { respondWithError } from "../utils/http-error";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -130,17 +132,15 @@ export const login = async (req: Request, res: Response) => {
       updatedAt: user.updatedAt,
     };
 
+    setSessionCookie(res, token);
+
     res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
       user: userData,
     });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Server error during login",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Server error during login");
   }
 };
 
@@ -218,11 +218,8 @@ export const firstLoginPasswordChange = async (
       success: true,
       message: "Password changed successfully",
     });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Error changing password",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error changing password");
   }
 };
 
@@ -303,11 +300,8 @@ export const changePassword = async (
       success: true,
       message: "Password changed successfully",
     });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Server error during password change",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Server error during password change");
   }
 };
 
@@ -331,11 +325,8 @@ export const getCurrentUser = async (req: AuthRequest, res: Response) => {
       success: true,
       data: user,
     });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Server error");
   }
 };
 
@@ -350,6 +341,7 @@ export const logout = async (req: Request, res: Response) => {
       // signing out on the client still goes ahead
     }
   }
+  clearSessionCookie(res);
   res.status(200).json({
     success: true,
     message: "Logged out successfully",
@@ -452,11 +444,8 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     // Same answer on success or failed delivery, so a mail outage can't be used as a probe either.
     return res.status(200).json(RESET_REQUEST_RESPONSE);
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -488,11 +477,8 @@ export const verifyResetCode = async (req: Request, res: Response) => {
       message: "Code verified",
     });
 
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -544,11 +530,8 @@ export const resetPassword = async (req: Request, res: Response) => {
       message: "Password updated successfully",
     });
 
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Internal server error");
   }
 };
 

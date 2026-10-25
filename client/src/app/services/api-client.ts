@@ -1,5 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { reportApiError } from "../utils/api-error";
+import { clearSession } from "../utils/session";
 
 const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -10,18 +11,12 @@ export const API_URL = (() => {
 
 export const api = axios.create({
   baseURL: API_URL,
-  headers: { "Content-Type": "application/json" },
+  headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+  withCredentials: true,
   timeout: 30000,
 });
 
 api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-
   // Let the browser set Content-Type (with its multipart boundary) for FormData.
   if (config.data instanceof FormData) {
     config.headers.delete("Content-Type");
@@ -51,9 +46,7 @@ api.interceptors.response.use(
       isTokenError &&
       typeof window !== "undefined"
     ) {
-      ["authToken", "userRole", "userName", "userId"].forEach((key) =>
-        localStorage.removeItem(key),
-      );
+      clearSession();
     }
 
     return Promise.reject(error);

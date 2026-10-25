@@ -1,17 +1,18 @@
 "use client";
 
-import React from "react";
-import Sidebar from "@/app/create/components/sidebar";
-import Header from "@/app/components/header";
-import Footer from "@/app/components/footer";
-import Grid from "@/app/components/grid";
-import PrimerCard from "@/app/create/components/primer-card";
-import ContactCard from "@/app/create/components/contact-card";
+import Sidebar from "@/app/components/create/sidebar";
+import Header from "@/app/components/layout/header";
+import Footer from "@/app/components/layout/footer";
+import Grid from "@/app/components/layout/grid";
+import PrimerCard from "@/app/components/create/primer-card";
+import ContactCard from "@/app/components/create/contact-card";
+import FaqCard from "@/app/components/create/faq-card";
+import PhotosCard from "@/app/components/create/photos-card";
 
 export default function SiteContentPage() {
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
-      <main className="relative z-10 bg-[#f8f9fc] rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
+      <main className="relative z-10 bg-surface rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
         <div className="relative z-10 flex flex-col min-h-screen">
@@ -23,7 +24,7 @@ export default function SiteContentPage() {
                 Site Content
               </h1>
               <p className="font-raleway text-gray-600 text-base sm:text-lg max-w-3xl">
-                Details that change from one administration to the next.
+                Details, FAQs and photos that change from one administration to the next.
               </p>
             </div>
 
@@ -35,6 +36,8 @@ export default function SiteContentPage() {
               <div className="flex-1 min-w-0 space-y-8">
                 <PrimerCard />
                 <ContactCard />
+                <FaqCard />
+                <PhotosCard />
               </div>
             </div>
           </div>

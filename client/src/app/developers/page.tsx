@@ -1,12 +1,13 @@
 "use client";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import DeveloperCard from "./components/developer-card";
-import Grid from "../components/grid";
-import PageHeader from "../components/page-header";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import DeveloperCard from "../components/developers/developer-card";
+import Grid from "../components/layout/grid";
+import PageHeader from "../components/ui/page-header";
 import officerService from "../services/officer";
-import officerTermService from "../services/officerTerm";
-import { useCachedFetch } from "../utils/cached-fetch";
+import officerTermService from "../services/officer-term";
+import { useCachedFetch } from "../hooks/use-cached-fetch";
+import { placeholderPhoto } from "../utils/placeholder-photo";
 
 const matchesName = (candidate: string, developer: string) => {
   const text = candidate.toLowerCase();
@@ -100,10 +101,13 @@ export default function DevelopersPage() {
     },
   ];
 
-  const developers = team.map((dev) => ({ ...dev, imageSrc: officerPhoto(dev.name) }));
+  const developers = team.map((dev) => ({
+    ...dev,
+    imageSrc: officerPhotos ? (officerPhoto(dev.name) ?? placeholderPhoto(dev.name)) : undefined,
+  }));
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 

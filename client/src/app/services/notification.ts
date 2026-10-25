@@ -1,10 +1,21 @@
 import axios, { AxiosError } from "axios";
 import { api } from "./api-client";
 
+export interface NotificationRecord {
+  _id: string;
+  type: string;
+  title: string;
+  message?: string;
+  relatedId?: string;
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 export interface NotificationResponse {
   success: boolean;
-  data: any[];
-  pagination: any;
+  data: NotificationRecord[];
+  pagination: { page: number; limit: number; total: number; pages: number };
   unreadCount: number;
 }
 

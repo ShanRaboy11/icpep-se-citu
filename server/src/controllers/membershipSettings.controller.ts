@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import MembershipSettings from '../models/membershipSettings';
+import { respondWithError } from '../utils/http-error';
 
 // There is only ever one settings document. findOne (rather than a fixed
 // id) so it self-heals if the collection is ever empty — first read
@@ -20,10 +21,7 @@ export const getMembershipSettings = async (req: Request, res: Response): Promis
     const settings = await getOrCreateSettings();
     res.status(200).json({ success: true, data: settings });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch membership settings',
-    });
+    respondWithError(res, error, 'Failed to fetch membership settings');
   }
 };
 
@@ -43,9 +41,6 @@ export const updateMembershipSettings = async (req: Request, res: Response): Pro
       data: updated,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update membership settings',
-    });
+    respondWithError(res, error, 'Failed to update membership settings');
   }
 };

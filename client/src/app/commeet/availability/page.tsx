@@ -1,17 +1,19 @@
 "use client";
 
-import Header from "../../components/header";
-import Footer from "../../components/footer";
-import Grid from "../../components/grid";
-import BackButton from "../../components/back-button";
-import Button from "../../components/button";
+import { labelStyle } from "@/app/components/ui/form-styles";
+import Header from "../../components/layout/header";
+import Footer from "../../components/layout/footer";
+import Grid from "../../components/layout/grid";
+import BackButton from "../../components/ui/back-button";
+import Button from "../../components/ui/button";
 import {
   normalizeMeetingLink,
   isValidMeetingLink,
   MEETING_LINK_ERROR,
-} from "../utils/meeting-link";
+} from "../../utils/commeet/meeting-link";
 import { FunctionComponent, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { getSessionUserId } from "@/app/utils/session";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -94,7 +96,7 @@ const AvailabilityPage: FunctionComponent = () => {
   // --- Configuration ---
   const timeColWidth = "w-14 sm:w-24";
   const sharedCardStyle =
-    "bg-white rounded-4xl border border-gray-200 shadow-lg p-6 sm:p-8 transition-all duration-300 hover:shadow-primary1/40 hover:-translate-y-2";
+    "bg-white rounded-4xl border border-gray-200 shadow-md p-6 sm:p-8 transition-all duration-300 hover:shadow-primary1/40 hover:-translate-y-2";
 
   // --- Helpers ---
   const getLocalDateKey = (date: Date | null) => {
@@ -159,20 +161,9 @@ const AvailabilityPage: FunctionComponent = () => {
     (async () => {
       // 1. Auth & User ID Logic
       try {
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("authToken")
-            : null;
-        setCanEdit(!!token);
-
-        if (token) {
-          try {
-            const payload = JSON.parse(atob(token.split(".")[1]));
-            if (payload.id) setCurrentUserId(payload.id);
-            else if (payload._id) setCurrentUserId(payload._id);
-          } catch {
-          }
-        }
+        const userId = typeof window !== "undefined" ? getSessionUserId() : null;
+        setCanEdit(Boolean(userId));
+        if (userId) setCurrentUserId(userId);
       } catch {}
 
       // 2. Load Services
@@ -207,8 +198,8 @@ const AvailabilityPage: FunctionComponent = () => {
         const mine = await getMyAvailability(id);
         setMySavedSlots(mine.slots || []);
         // Track current user ID for optimistic updates
-        if ((mine as any).user) {
-          setCurrentUserId(String((mine as any).user));
+        if (mine.user) {
+          setCurrentUserId(String(mine.user));
         }
         setCanEdit(true);
       } catch {
@@ -253,8 +244,9 @@ const AvailabilityPage: FunctionComponent = () => {
         });
 
         const slotsByUserId = new Map<string, string[]>();
-        submitted.forEach((item: any) => {
-          const uid = item.user?._id || item.user?.id || item.user;
+        submitted.forEach((item) => {
+          const entryUser = typeof item.user === "object" ? item.user : undefined;
+          const uid = entryUser?._id || entryUser?.id || item.user;
           if (uid) slotsByUserId.set(String(uid), item.slots || []);
         });
 
@@ -284,16 +276,17 @@ const AvailabilityPage: FunctionComponent = () => {
 
         setResponders(mappedResponders);
       } catch {
-        const mappedFallback = submitted.map((item: any, idx: number) => {
-          const firstName = item.user?.firstName ?? "";
-          const lastName = item.user?.lastName ?? "";
+        const mappedFallback = submitted.map((item, idx) => {
+          const entryUser = typeof item.user === "object" ? item.user : undefined;
+          const firstName = entryUser?.firstName ?? "";
+          const lastName = entryUser?.lastName ?? "";
           const name = `${firstName} ${lastName}`.trim() || "Unknown";
 
           return {
-            id: String(item.user?._id || idx + 1),
+            id: String(entryUser?._id || idx + 1),
             name,
             lastName: lastName || name,
-            role: formatRoleDisplay(String(item.user?.role ?? "")),
+            role: formatRoleDisplay(String(entryUser?.role ?? "")),
             initials: `${firstName?.[0] ?? "U"}${lastName?.[0] ?? ""}`,
             deptKey: "department",
             slots: item.slots || [],
@@ -459,7 +452,7 @@ const AvailabilityPage: FunctionComponent = () => {
     "px-3 py-1 rounded-full text-xs font-bold font-raleway flex items-center gap-1.5 transition-all select-none";
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89] select-none">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue select-none">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
@@ -470,13 +463,11 @@ const AvailabilityPage: FunctionComponent = () => {
             className="grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-24"
             onClick={handleBgClick}
           >
-            {/* Back Button */}
             <div className="mb-8 flex justify-start">
               <BackButton onClick={() => router.push("/commeet")} title="Go Back" />
             </div>
 
             <div className="max-w-7xl mx-auto relative">
-              {/* 1. Meeting Details */}
               <div className="text-left mb-10 relative">
                 <div className="flex justify-between items-start">
                   <h1 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 leading-tight mb-4">
@@ -495,7 +486,7 @@ const AvailabilityPage: FunctionComponent = () => {
                           className="fixed inset-0 z-10"
                           onClick={() => setShowMeetingMenu(false)}
                         ></div>
-                        <div className="absolute right-0 top-10 w-48 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden py-1">
+                        <div className="absolute right-0 top-10 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-20 overflow-hidden py-1">
                           <button
                             onClick={() => {
                               setShowMeetingMenu(false);
@@ -555,11 +546,9 @@ const AvailabilityPage: FunctionComponent = () => {
                 </div>
               </div>
 
-              {/* SPLIT LAYOUT */}
               <div className="grid grid-cols-1 lg:grid-cols-7 gap-8 items-start">
                 {/* LEFT: Availability Card (approx 57% width) */}
                 <div className="lg:col-span-4 flex flex-col gap-6">
-                  {/* Header Controls */}
                   <div className="flex flex-row justify-between items-end gap-4">
                     <div className="flex flex-col">
                       <h3 className="text-xl sm:text-2xl font-bold text-gray-800 font-rubik leading-tight">
@@ -583,7 +572,6 @@ const AvailabilityPage: FunctionComponent = () => {
                       </p>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="shrink-0">
                       {!isEditing &&
                         (!viewingId || viewingId === currentUserId) && (
@@ -632,14 +620,12 @@ const AvailabilityPage: FunctionComponent = () => {
                     </div>
                   </div>
 
-                  {/* Timeline Grid */}
                   <div className={`${sharedCardStyle} relative z-20`}>
                     {!canEdit && (
                       <div className="mb-4 p-3 rounded-xl bg-yellow-50 text-yellow-700 text-sm font-raleway border border-yellow-100">
                         You are not logged in. Login to update your availability.
                       </div>
                     )}
-                    {/* Calendar Nav */}
                     <div className="flex justify-between items-center mb-8">
                       <div className="flex items-center gap-2 text-gray-900 font-bold font-rubik text-xl sm:text-2xl">
                         {currentStartDate
@@ -667,7 +653,6 @@ const AvailabilityPage: FunctionComponent = () => {
                       </div>
                     </div>
 
-                    {/* Date Columns */}
                     <div className="flex w-full mb-4">
                       <div
                         className={`${timeColWidth} shrink-0 flex items-end justify-end pr-4 pb-2`}
@@ -699,7 +684,6 @@ const AvailabilityPage: FunctionComponent = () => {
                       </div>
                     </div>
 
-                    {/* The Grid */}
                     <div
                       className="flex w-full select-none"
                       onMouseLeave={() => {
@@ -785,7 +769,6 @@ const AvailabilityPage: FunctionComponent = () => {
                                     key={hour}
                                     className="h-16 border-t border-gray-100 w-full relative bg-white group"
                                   >
-                                    {/* Top Half */}
                                     <div
                                       onMouseDown={(e) =>
                                         handleSlotMouseDown(e, fullKey1)
@@ -825,7 +808,6 @@ const AvailabilityPage: FunctionComponent = () => {
                                       )}
                                     </div>
 
-                                    {/* Bottom Half */}
                                     <div
                                       onMouseDown={(e) =>
                                         handleSlotMouseDown(e, fullKey2)
@@ -878,7 +860,6 @@ const AvailabilityPage: FunctionComponent = () => {
                       </div>
                     </div>
 
-                    {/* Footer Text */}
                     <div className="mt-8 text-center text-gray-400 text-xs font-medium font-raleway">
                       All times shown in local time (PST)
                     </div>
@@ -1020,7 +1001,6 @@ const AvailabilityPage: FunctionComponent = () => {
                 </div>
               </div>
 
-              {/* --- MEETING DETAILS MODAL --- */}
               {meetingDetails && (
                 <MeetingDetailsModal
                   isOpen={isDetailsModalOpen}
@@ -1044,7 +1024,6 @@ const AvailabilityPage: FunctionComponent = () => {
                 />
               )}
 
-              {/* --- DELETE CONFIRMATION MODAL --- */}
               <DeleteConfirmationModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
@@ -1125,7 +1104,7 @@ const MeetingDetailsModal = ({
         onClick={onClose}
       />
 
-      <div className="relative z-100000 w-full max-w-lg bg-white rounded-4xl p-8 shadow-2xl border border-white/50 animate-scale-in">
+      <div className="relative z-100000 w-full max-w-lg bg-white rounded-4xl p-8 shadow-xl border border-white/50 animate-scale-in">
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
           <div>
             <h3 className="text-2xl font-rubik font-bold text-gray-800">
@@ -1145,7 +1124,7 @@ const MeetingDetailsModal = ({
 
         <div className="space-y-6">
           <div>
-            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+            <label className={labelStyle}>
               Title
             </label>
             <input
@@ -1160,7 +1139,7 @@ const MeetingDetailsModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+            <label className={labelStyle}>
               Departments
             </label>
             <input
@@ -1176,7 +1155,7 @@ const MeetingDetailsModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+            <label className={labelStyle}>
               Agenda
             </label>
             <textarea
@@ -1191,7 +1170,7 @@ const MeetingDetailsModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+            <label className={labelStyle}>
               Meeting Link{" "}
               <span className="text-gray-400 font-medium">(optional)</span>
             </label>
@@ -1220,7 +1199,7 @@ const MeetingDetailsModal = ({
         </div>
 
         <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-gray-100">
-          <Button variant="cancel" onClick={onClose} className="px-6 py-2.5">
+          <Button variant="heroCancel" onClick={onClose} className="px-6 py-2.5">
             Cancel
           </Button>
           <Button
@@ -1269,7 +1248,7 @@ const DeleteConfirmationModal = ({
         onClick={onClose}
       />
 
-      <div className="relative z-100000 w-full max-w-md bg-white rounded-4xl p-8 shadow-2xl border border-white/50 animate-scale-in">
+      <div className="relative z-100000 w-full max-w-md bg-white rounded-4xl p-8 shadow-xl border border-white/50 animate-scale-in">
         <div className="flex flex-col items-center text-center">
           <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4 text-red-500">
             <AlertTriangle className="w-8 h-8 stroke-[1.5px]" />
@@ -1286,7 +1265,7 @@ const DeleteConfirmationModal = ({
         </div>
 
         <div className="flex justify-center gap-3 pt-8 mt-2">
-          <Button variant="heroOutline" onClick={onClose} className="w-full px-6 py-3">
+          <Button variant="heroCancel" onClick={onClose} className="w-full px-6 py-3">
             Cancel
           </Button>
           <Button

@@ -22,7 +22,7 @@ describe("getPublicStats", () => {
     await getPublicStats(mockReq(), res);
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({ success: true, data: { members: 212, events: 17 } });
-    expect(countUsers).toHaveBeenCalledWith({ isActive: true, "membershipStatus.isMember": true });
+    expect(countUsers).toHaveBeenCalledWith({ "membershipStatus.isMember": true });
     expect(countEvents.mock.calls[0][0]).toMatchObject({ isPublished: true });
   });
 

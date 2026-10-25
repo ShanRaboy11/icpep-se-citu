@@ -1,25 +1,23 @@
 "use client";
 
+import { emailMeta } from "@/app/utils/social-platforms";
 import { FormEvent, useId, useState } from "react";
 import {
-  Facebook,
-  Mail,
   ChevronRight,
   ChevronDown,
   Check,
   AlertTriangle,
 } from "lucide-react";
-import { TbBrandTiktok } from "react-icons/tb";
 import { platformMeta } from "@/app/utils/social-platforms";
 import { useRouter } from "next/navigation";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import Grid from "../components/grid";
-import BackButton from "../components/back-button";
-import PageHeader from "../components/page-header";
-import Button from "../components/button";
-import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
-import { useSiteContact } from "@/app/utils/use-site-contact";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import Grid from "../components/layout/grid";
+import BackButton from "../components/ui/back-button";
+import PageHeader from "../components/ui/page-header";
+import Button from "../components/ui/button";
+import { useDropdownDismiss } from "@/app/hooks/use-dropdown-dismiss";
+import { useSiteContact } from "@/app/hooks/use-site-contact";
 
 const SUBJECT_OPTIONS = [
   "Membership Inquiry",
@@ -43,7 +41,7 @@ const labelStyle = "block font-raleway text-sm font-bold text-gray-700";
 // pokes past the rounded corners), matching the convention used on the
 // create pages.
 const dropdownOuterStyle =
-  "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden";
+  "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden";
 const dropdownInnerStyle =
   "flex flex-col gap-1 p-2 max-h-64 overflow-y-auto themed-scrollbar";
 const dropdownItemStyle =
@@ -215,7 +213,7 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         {/* Background glow decoration — static, matching the convention used
             on other pages, since the previous animated/orbiting blur blobs
@@ -246,8 +244,7 @@ export default function ContactPage() {
               }
             />
 
-            <div className="mx-auto max-w-3xl overflow-hidden rounded-4xl border border-gray-200 bg-white shadow-lg">
-              {/* Send an Inquiry */}
+            <div className="mx-auto max-w-3xl overflow-hidden rounded-4xl border border-gray-200 bg-white shadow-md">
               <section className="p-8 md:p-10">
                 <h2 className="font-rubik text-2xl font-bold text-primary3">
                   Send an inquiry
@@ -367,7 +364,7 @@ export default function ContactPage() {
                       <>
                         <input
                           name="customSubject"
-                          placeholder="Type your subject here..."
+                          placeholder="Type your subject here"
                           onChange={() => clearError("customSubject")}
                           className={`${inputStyle} ${
                             errors.customSubject
@@ -388,7 +385,7 @@ export default function ContactPage() {
                   <Field
                     label="Message"
                     name="message"
-                    placeholder="Write your message here..."
+                    placeholder="Write your message here"
                     textarea
                     rows={6}
                     error={errors.message}
@@ -414,7 +411,6 @@ export default function ContactPage() {
                 </form>
               </section>
 
-              {/* Stay Connected */}
               <div className="border-t border-gray-100 bg-gray-50/70 px-8 py-8 md:px-10">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                   <div>
@@ -428,22 +424,19 @@ export default function ContactPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <a
-                      href={`mailto:${contact.contactEmail}`}
-                      title="Email us"
-                      className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
-                    >
-                      <Mail className="h-5 w-5" />
-                    </a>
-                    {contact.secondaryEmail && (
-                      <a
-                        href={`mailto:${contact.secondaryEmail}`}
-                        title="Email us (alternate)"
-                        className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
-                      >
-                        <Mail className="h-5 w-5" />
-                      </a>
-                    )}
+                    {[contact.contactEmail, contact.secondaryEmail].filter(Boolean).map((address) => {
+                      const meta = emailMeta(address);
+                      return (
+                        <a
+                          key={address}
+                          href={`mailto:${address}`}
+                          title={`${meta.label}: ${address}`}
+                          className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
+                        >
+                          <meta.Icon className="h-5 w-5" aria-hidden="true" />
+                        </a>
+                      );
+                    })}
                     {contact.socialLinks.map(({ platform, url }) => {
                       const meta = platformMeta(platform);
                       if (!meta) return null;

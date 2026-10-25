@@ -10,6 +10,8 @@ export interface ISiteSettings extends Document {
   contactEmail: string;
   secondaryEmail: string;
   socialLinks?: { platform: string; url: string }[];
+  joinPhotos?: string[];
+  aboutPhotos?: string[];
   updatedBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -30,6 +32,8 @@ const SiteSettingsSchema: Schema = new Schema(
       type: [new Schema({ platform: String, url: String }, { _id: false })],
       default: undefined,
     },
+    joinPhotos: { type: [String], default: [] },
+    aboutPhotos: { type: [String], default: [] },
     updatedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true }

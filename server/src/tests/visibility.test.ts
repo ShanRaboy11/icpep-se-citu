@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { listVisibility, canViewItem } from "../utils/visibility";
+import { listVisibility, canViewItem } from "../utils/auth/visibility";
 
 const COUNCIL = { id: "64b7f0c2a3b4c5d6e7f80001", role: "council-officer" };
 const COMMITTEE = { id: "64b7f0c2a3b4c5d6e7f80002", role: "committee-officer" };

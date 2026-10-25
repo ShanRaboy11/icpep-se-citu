@@ -1,19 +1,22 @@
 "use client";
 
+import Button from "../../components/ui/button";
+import { DetailCardSkeleton } from "../../components/feedback/skeleton-cards";
+import { Skeleton, useDelayedFlag } from "../../components/feedback/skeleton";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import AnnouncementDetails from "../components/details";
-import DetailsSidebar from "../components/info";
-import MeetingAttendanceCard from "../components/attendance-card";
-import AttendanceModal from "../components/attendance-modal";
-import Header from "../../components/header";
-import Footer from "../../components/footer";
-import Grid from "..//../components/grid";
+import AnnouncementDetails from "../../components/announcements/details";
+import DetailsSidebar from "../../components/announcements/info";
+import MeetingAttendanceCard from "../../components/announcements/attendance-card";
+import MoreAnnouncements from "../../components/announcements/more-announcements";
+import Header from "../../components/layout/header";
+import Footer from "../../components/layout/footer";
+import Grid from "../../components/layout/grid";
 import { ChevronLeft } from "lucide-react";
-import AnnouncementMedia from "../components/media";
-import BackButton from "../../components/back-button";
+import AnnouncementMedia from "../../components/announcements/media";
+import BackButton from "../../components/ui/back-button";
 import announcementService from "../../services/announcement";
-import { Announcement as UtilAnnouncement } from "../utils/announcements";
+import { Announcement as UtilAnnouncement } from "../../utils/announcements/announcements";
 
 interface RawAnnouncement {
   _id: string;
@@ -39,6 +42,7 @@ interface RawAnnouncement {
   organizer?: string;
   contact?: string;
   attendees?: string;
+  attendance?: { name: string; position: string }[];
   agenda?: string[];
   awardees?: Array<{
     name: string;
@@ -50,48 +54,14 @@ interface RawAnnouncement {
   expiryDate?: string;
 }
 
-const formatDate = (dateString: string): string => {
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "Date not available";
-
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  } catch {
-    return "Date not available";
-  }
-};
-
-const formatTime = (timeString: string | undefined): string => {
-  if (!timeString) return "Time not specified";
-
-  try {
-    const [hours, minutes] = timeString.split(":");
-    const hour = parseInt(hours, 10);
-    const min = minutes || "00";
-
-    if (isNaN(hour)) return timeString;
-
-    const period = hour >= 12 ? "PM" : "AM";
-    const displayHour = hour % 12 || 12;
-
-    return `${displayHour}:${min} ${period}`;
-  } catch {
-    return timeString;
-  }
-};
-
 export default function AnnouncementDetailPage() {
   const params = useParams();
   const id = params?.id as string;
-  const [showFullAttendance, setShowFullAttendance] = useState(false);
   const [announcement, setAnnouncement] = useState<RawAnnouncement | null>(
     null,
   );
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(loading);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
@@ -128,21 +98,19 @@ export default function AnnouncementDetailPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-38 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="w-full h-64 rounded-lg bg-gray-100 animate-pulse" />
-              <div className="h-6 w-3/4 bg-gray-100 rounded animate-pulse" />
-              <div className="space-y-3 mt-4">
-                <div className="h-4 bg-gray-100 rounded animate-pulse" />
-                <div className="h-4 bg-gray-100 rounded animate-pulse w-5/6" />
-                <div className="h-4 bg-gray-100 rounded animate-pulse w-4/6" />
-              </div>
+        <main
+          data-skeleton-hidden={showSkeleton ? undefined : ""}
+          className="grow w-full max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-12"
+        >
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              <Skeleton className="h-64 w-full rounded-3xl sm:h-96" />
+              <Skeleton className="h-40 w-full rounded-3xl" />
+              <DetailCardSkeleton lines={5} />
             </div>
 
-            <div className="lg:col-span-1 space-y-6">
-              <div className="h-12 w-full bg-gray-100 rounded animate-pulse" />
-              <div className="h-48 bg-gray-100 rounded animate-pulse" />
+            <div className="lg:col-span-1">
+              <DetailCardSkeleton lines={4} />
             </div>
           </div>
         </main>
@@ -164,13 +132,12 @@ export default function AnnouncementDetailPage() {
               ? "There was an error loading this announcement."
               : "Sorry, the announcement you are looking for does not exist."}
           </p>
-          <button
-            onClick={() => router.push("/announcements")}
-            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2 active:scale-95 cursor-pointer"
-          >
-            <ChevronLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
-            <span>Back to Announcements</span>
-          </button>
+          <Button variant="hero" onClick={() => router.push("/announcements")}>
+            <span className="inline-flex items-center gap-2">
+              <ChevronLeft className="h-5 w-5" />
+              {"Back to Announcements"}
+            </span>
+          </Button>
         </main>
         <Footer />
       </div>
@@ -206,8 +173,8 @@ export default function AnnouncementDetailPage() {
       title: announcement.title,
       description: announcement.description,
       date:
-        announcement.publishDate ||
         announcement.date ||
+        announcement.publishDate ||
         new Date().toISOString(),
       type: mappedType,
       imageUrl: imageUrl,
@@ -218,26 +185,25 @@ export default function AnnouncementDetailPage() {
       location: announcement.location,
       organizer: organizerStr,
       attendees: announcement.attendees,
+      attendance: announcement.attendance,
       agenda: announcement.agenda,
       awardees: announcement.awardees,
     };
   }
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
 
-          <div className="w-full max-w-6xl mx-auto px-6 pt-38 pb-16">
-            {/* back */}
+          <div className="w-full max-w-6xl xl:max-w-7xl mx-auto px-6 pt-38 pb-16">
             <div className="mb-8 flex justify-start">
               <BackButton onClick={handleBack} title="Back to Announcements" />
             </div>
 
-            {/* content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
                 <AnnouncementMedia
@@ -248,30 +214,30 @@ export default function AnnouncementDetailPage() {
                 <AnnouncementDetails announcement={announcement} />
               </div>
 
-              <div className="lg:col-span-1 space-y-6">
+              <div className="h-fit space-y-6 lg:sticky lg:top-28 lg:col-span-1">
                 <DetailsSidebar announcement={utilAnnouncement} />
 
-                {isMeeting && announcement.attendees && (
+                {isMeeting && (
                   <MeetingAttendanceCard
-                    onViewFull={() => setShowFullAttendance(true)}
+                    title={announcement.title}
+                    date={announcement.date || announcement.publishDate || ""}
+                    time={announcement.time}
+                    location={announcement.location}
+                    attendance={announcement.attendance}
                   />
                 )}
+
+                <MoreAnnouncements currentId={announcement._id || announcement.id || ""} />
               </div>
             </div>
           </div>
         </div>
       </main>
 
-      {/* footer */}
       <div className="-mt-8.75 md:-mt-20 relative z-0">
         <Footer />
       </div>
 
-      <AttendanceModal
-        isOpen={showFullAttendance}
-        onClose={() => setShowFullAttendance(false)}
-        announcement={utilAnnouncement ?? null}
-      />
     </div>
   );
 }
