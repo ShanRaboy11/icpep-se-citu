@@ -9,7 +9,6 @@ import SuccessModal from "@/app/components/ui/success-modal";
 import AddButton from "@/app/components/ui/add-button";
 import RemovableTag from "@/app/components/ui/removable-tag";
 import EditingBanner from "@/app/components/ui/editing-banner";
-import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
 import { swapToFallback } from "@/app/components/ui/fallback-image";
 import RemoveButton from "@/app/components/ui/remove-button";
 import React, { useState, useEffect, useRef } from "react";
@@ -22,7 +21,6 @@ import Button from "../../components/ui/button";
 import {
   Pencil,
   Trash2,
-  RefreshCw,
   AlertTriangle,
   Upload,
   Plus,
@@ -32,12 +30,13 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight } from "lucide-react";
-import eventService from "../../services/event";
+import eventService, { type EventData } from "../../services/event";
 import { LoadingIndicator } from "@/app/components/feedback/loading";
 import RichTextEditor from "@/app/components/content/rich-text-editor";
 import TimeSegmentInput from "@/app/components/ui/time-segment-input";
 import { timeHours, timeMinutes, timePeriods, parseTimeToPicker } from "@/app/utils/time";
 import { plainLength } from "@/app/components/content/rich-content";
+import ManageListCard from "@/app/components/create/manage-list-card";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -125,6 +124,8 @@ interface EventItem {
 }
 
 const predefinedTags = ["Workshop", "Seminar", "Training", "Webinar"];
+
+type StoredEvent = EventData & { _id: string; isPublished?: boolean; coverImage?: string };
 
 export default function EventsPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
@@ -236,7 +237,7 @@ export default function EventsPage() {
       const fetchEvent = async () => {
         try {
           const response = await eventService.getEventById(editIdParam);
-          const data = response.data as any;
+          const data = response.data as StoredEvent;
           if (data) {
             setEditingId(data._id);
             setIsEditingDraft(!data.isPublished);
@@ -259,18 +260,20 @@ export default function EventsPage() {
               setTimeMinute(parsed.minute);
               setTimePeriod(parsed.period);
             }
-            setMode(data.mode);
+            setMode(data.mode ?? "Onsite");
             if (data.tags) setTags(data.tags);
             if (data.admissions) {
               setAdmissions(
-                data.admissions.map((a: any) => ({
+                data.admissions.map((a) => ({
                   category: a.category,
                   price: String(a.price),
                 })),
               );
               setShowAdmissionInput(true);
             }
-            if (data.details) setDetails(data.details);
+            if (data.details) {
+              setDetails(data.details.map((d) => ({ title: d.title, body: d.items.join("\n") })));
+            }
             if (data.coverImage) setPreviews([data.coverImage]);
             setGalleryImages(
               Array.isArray(data.galleryImages) ? data.galleryImages : [],
@@ -279,7 +282,7 @@ export default function EventsPage() {
               setOrganizer(
                 typeof data.organizer === "string"
                   ? data.organizer
-                  : data.organizer.name,
+                  : (data.organizer as { name?: string }).name ?? "",
               );
             if (data.registrationRequired)
               setRegistrationRequired(data.registrationRequired);
@@ -350,7 +353,7 @@ export default function EventsPage() {
     setAdmissions(item.admissions || []);
     setOrganizer(
       typeof item.organizer === "object"
-        ? (item.organizer as any).name
+        ? (item.organizer as { name?: string }).name ?? ""
         : item.organizer || "",
     );
     setRegistrationRequired(!!item.registrationRequired);
@@ -1724,68 +1727,20 @@ export default function EventsPage() {
                     </div>
                 </div>
 
-                <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
-                  <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                    <div>
-                      <h2 className="text-xl font-bold font-rubik text-primary3">
-                        Published Events
-                      </h2>
-                        <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
-                          {eventList.length} published{" "}
-                          {eventList.length === 1 ? "event" : "events"}
-                        </p>
-                      </div>
-                      <button
-                        onClick={fetchEvents}
-                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200 cursor-pointer"
-                      >
-                        <RefreshCw
-                          size={13}
-                          className={isLoadingList ? "animate-spin" : ""}
-                        />{" "}
-                        Refresh
-                      </button>
-                    </div>
-
-                    {isLoadingList ? (
-                      <ListSkeleton />
-                    ) : eventList.length === 0 ? (
-                      <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
-                        <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
-                          <Calendar size={24} className="text-gray-300" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-bold font-rubik text-gray-400">
-                            No events yet
-                          </p>
-                          <p className="text-xs font-raleway mt-0.5">
-                            Create one using the form above
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto themed-scrollbar">
-                        <table className="responsive-table w-full text-left min-w-160">
-                          <thead>
-                            <tr className="bg-gray-50/80">
-                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Cover
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Title
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Date
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Mode
-                              </th>
-                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
+                <ManageListCard
+                  title="Published Events"
+                  count={eventList.length}
+                  singular="event"
+                  plural="events"
+                  status="published"
+                  loading={isLoadingList}
+                  onRefresh={fetchEvents}
+                  emptyIcon={<Calendar size={24} className="text-gray-300" />}
+                  emptyTitle="No events yet"
+                  emptyHint="Create one using the form above"
+                  columns={["Cover","Title","Date","Mode","Actions"]}
+                  minWidth="min-w-160"
+                >
                             {eventList.map((item) => {
                               const isEditing = editingId === item._id;
                               const online = item.mode === "Online";
@@ -1868,11 +1823,7 @@ export default function EventsPage() {
                                 </tr>
                               );
                             })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
+                </ManageListCard>
               </div>
             </div>
           </div>

@@ -5,7 +5,6 @@ import ImageUploadField from "@/app/components/ui/image-upload-field";
 import ConfirmModal from "@/app/components/ui/confirm-modal";
 import SuccessModal from "@/app/components/ui/success-modal";
 import EditingBanner from "@/app/components/ui/editing-banner";
-import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
 import { swapToFallback } from "@/app/components/ui/fallback-image";
 import React, { useState, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -17,13 +16,13 @@ import Grid from "@/app/components/layout/grid";
 import {
   Pencil,
   Trash2,
-  RefreshCw,
   AlertTriangle,
   Star,
   ChevronRight,
   ImageIcon } from "lucide-react";
 import sponsorService, { SponsorData } from "@/app/services/sponsor";
 import { LoadingIndicator } from "@/app/components/feedback/loading";
+import ManageListCard from "@/app/components/create/manage-list-card";
 
 // --- INTERFACES ---
 interface Sponsor {
@@ -583,87 +582,19 @@ export default function SponsorsPage() {
                 </div>
 
                 {/* ── MANAGE LIST ── */}
-                <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
-                    <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                      <div>
-                        <h2 className="text-xl font-bold font-rubik text-primary3">
-                          Manage Sponsors
-                        </h2>
-                        <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
-                          {publishedItems.length} active{" "}
-                          {publishedItems.length === 1 ? "sponsor" : "sponsors"}
-                        </p>
-                      </div>
-                      <button
-                        onClick={fetchSponsors}
-                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200 cursor-pointer"
-                      >
-                        <RefreshCw
-                          size={13}
-                          className={isLoadingList ? "animate-spin" : ""}
-                        />
-                        Refresh
-                      </button>
-                    </div>
-
-                    <div className="px-6 sm:px-8 py-3 border-b border-gray-50 flex flex-wrap gap-3">
-                      {tabs.map((tab) => {
-                        const cfg = TIER_CONFIG[tab];
-                        const count = publishedItems.filter(
-                          (s) => s.type === tab,
-                        ).length;
-                        return (
-                          <div
-                            key={tab}
-                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold font-rubik ${cfg.bg} ${cfg.color} ${cfg.border}`}
-                          >
-                            <span
-                              className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`}
-                            />
-                            {tab.replace(" Sponsor", "")}
-                            <span className="opacity-50">·</span>
-                            <span className="opacity-70">{count}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {isLoadingList ? (
-                      <ListSkeleton />
-                    ) : publishedItems.length === 0 ? (
-                      <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
-                        <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
-                          <ImageIcon size={24} className="text-gray-300" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-bold font-rubik text-gray-400">
-                            No sponsors yet
-                          </p>
-                          <p className="text-xs font-raleway mt-0.5">
-                            Create one using the form above
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto themed-scrollbar">
-                        <table className="responsive-table w-full text-left min-w-145">
-                          <thead>
-                            <tr className="bg-gray-50/80">
-                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Logo
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Name
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Tier
-                              </th>
-                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
+                <ManageListCard
+                  title="Manage Sponsors"
+                  count={publishedItems.length}
+                  singular="sponsor"
+                  plural="sponsors"
+                  loading={isLoadingList}
+                  onRefresh={fetchSponsors}
+                  emptyIcon={<ImageIcon size={24} className="text-gray-300" />}
+                  emptyTitle="No sponsors yet"
+                  emptyHint="Create one using the form above"
+                  columns={["Logo","Name","Tier","Actions"]}
+                  minWidth="min-w-145"
+                >
                             {publishedItems
                               .sort(
                                 (a, b) =>
@@ -749,11 +680,7 @@ export default function SponsorsPage() {
                                   </tr>
                                 );
                               })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                </div>
+                </ManageListCard>
               </div>
             </div>
           </div>

@@ -4,7 +4,6 @@ import { INPUT_CLASS as inputCls, labelStyle } from "@/app/components/ui/form-st
 import ConfirmModal from "@/app/components/ui/confirm-modal";
 import SuccessModal from "@/app/components/ui/success-modal";
 import EditingBanner from "@/app/components/ui/editing-banner";
-import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
 import { swapToFallback } from "@/app/components/ui/fallback-image";
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -16,7 +15,6 @@ import Grid from "@/app/components/layout/grid";
 import {
   Pencil,
   Trash2,
-  RefreshCw,
   AlertTriangle,
   GraduationCap,
   ImageIcon,
@@ -26,6 +24,7 @@ import { LoadingIndicator } from "@/app/components/feedback/loading";
 import facultyService from "@/app/services/faculty";
 import Dropdown from "@/app/components/ui/dropdown";
 import { placeholderPhoto } from "@/app/utils/placeholder-photo";
+import ManageListCard from "@/app/components/create/manage-list-card";
 
 // --- INTERFACES ---
 interface Advisor {
@@ -487,71 +486,19 @@ export default function AdvisorsPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
-                  <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                    <div>
-                      <h2 className="text-xl font-bold font-rubik text-primary3">
-                        Published Advisors
-                      </h2>
-                      <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
-                        {publishedItems.length} active{" "}
-                        {publishedItems.length === 1 ? "advisor" : "advisors"}
-                      </p>
-                    </div>
-                    <button
-                      onClick={fetchAdvisors}
-                      className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200 cursor-pointer"
-                    >
-                      <RefreshCw
-                        size={13}
-                        className={isLoadingList ? "animate-spin" : ""}
-                      />
-                      Refresh
-                    </button>
-                  </div>
-
-                  {isLoadingList ? (
-                    <ListSkeleton />
-                  ) : publishedItems.length === 0 ? (
-                    <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
-                      <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
-                        <ImageIcon size={24} className="text-gray-300" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm font-bold font-rubik text-gray-400">
-                          No advisors yet
-                        </p>
-                        <p className="text-xs font-raleway mt-0.5">
-                          Create one using the form above
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto themed-scrollbar">
-                      <table className="responsive-table w-full text-left min-w-160">
-                        <thead>
-                          <tr className="bg-gray-50/80">
-                            <th className="px-6 sm:px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                              Photo
-                            </th>
-                            <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                              Name
-                            </th>
-                            <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                              Position
-                            </th>
-                            <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                              Years
-                            </th>
-                            <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                              Status
-                            </th>
-                            <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                <ManageListCard
+                  title="Published Advisors"
+                  count={publishedItems.length}
+                  singular="advisor"
+                  plural="advisors"
+                  loading={isLoadingList}
+                  onRefresh={fetchAdvisors}
+                  emptyIcon={<ImageIcon size={24} className="text-gray-300" />}
+                  emptyTitle="No advisors yet"
+                  emptyHint="Create one using the form above"
+                  columns={["Photo","Name","Position","Years","Status","Actions"]}
+                  minWidth="min-w-160"
+                >
                           {publishedItems.map((item) => {
                             const isEditing = editingId === item._id;
                             return (
@@ -622,11 +569,7 @@ export default function AdvisorsPage() {
                               </tr>
                             );
                           })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
+                </ManageListCard>
               </div>
             </div>
           </div>

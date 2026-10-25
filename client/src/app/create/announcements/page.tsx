@@ -9,7 +9,6 @@ import SuccessModal from "@/app/components/ui/success-modal";
 import AddButton from "@/app/components/ui/add-button";
 import AttendancePicker, { type Attendee } from "../../components/create/attendance-picker";
 import EditingBanner from "@/app/components/ui/editing-banner";
-import { ListSkeleton } from "@/app/components/feedback/skeleton-cards";
 import { swapToFallback } from "@/app/components/ui/fallback-image";
 import RemoveButton from "@/app/components/ui/remove-button";
 import React, { useState, useEffect, useRef } from "react";
@@ -22,7 +21,6 @@ import Button from "@/app/components/ui/button";
 import {
   Pencil,
   Trash2,
-  RefreshCw,
   AlertTriangle,
   Upload,
   Plus,
@@ -54,6 +52,7 @@ import RichTextEditor from "@/app/components/content/rich-text-editor";
 import TimeSegmentInput from "@/app/components/ui/time-segment-input";
 import { timeHours, timeMinutes, timePeriods, parseTimeToPicker } from "@/app/utils/time";
 import { plainLength } from "@/app/components/content/rich-content";
+import ManageListCard from "@/app/components/create/manage-list-card";
 
 type FormErrors = {
   date: boolean;
@@ -118,6 +117,8 @@ const TYPE_META: Record<
     dot: "bg-gray-400",
   },
 };
+
+type StoredAnnouncement = AnnouncementData & { _id: string; isPublished?: boolean; imageUrl?: string; galleryImages?: string[] };
 
 export default function AnnouncementsPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("General");
@@ -199,7 +200,7 @@ export default function AnnouncementsPage() {
         try {
           const response =
             await announcementService.getAnnouncementById(editIdParam);
-          const data = response.data as any;
+          const data = response.data as StoredAnnouncement;
           if (data) {
             setEditingId(data._id);
             setIsEditingDraft(!data.isPublished);
@@ -220,7 +221,7 @@ export default function AnnouncementsPage() {
             }
             setActiveTab(data.type as ActiveTab);
             if (data.agenda) setAgenda(data.agenda);
-            if (data.awardees) setAwardees(data.awardees);
+            if (data.awardees) setAwardees(data.awardees.map((a) => ({ ...a, program: a.program ?? "" })));
             if (data.organizer) {
               setOrganizer(data.organizer);
               setShowOrganizerInput(true);
@@ -446,8 +447,7 @@ export default function AnnouncementsPage() {
     setLoadingAction("publishing");
     setShowGlobalError(false);
     try {
-      const announcementData = buildAnnouncementData(true) as any;
-      announcementData.isPublished = true;
+      const announcementData = { ...buildAnnouncementData(true), isPublished: true };
       if (editingId)
         await announcementService.updateAnnouncement(
           editingId,
@@ -1430,70 +1430,20 @@ export default function AnnouncementsPage() {
                     </div>
                 </div>
 
-                  <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
-                    <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                      <div>
-                        <h2 className="text-xl font-bold font-rubik text-primary3">
-                          Published Announcements
-                        </h2>
-                        <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
-                          {publishedItems.length} {" "}
-                          {publishedItems.length === 1
-                            ? "announcement"
-                            : "announcements"}
-                        </p>
-                      </div>
-                      <button
-                        onClick={fetchAnnouncements}
-                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200 cursor-pointer"
-                      >
-                        <RefreshCw
-                          size={13}
-                          className={isLoadingList ? "animate-spin" : ""}
-                        />{" "}
-                        Refresh
-                      </button>
-                    </div>
-
-                    {isLoadingList ? (
-                      <ListSkeleton />
-                    ) : publishedItems.length === 0 ? (
-                      <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
-                        <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
-                          <Megaphone size={24} className="text-gray-300" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-bold font-rubik text-gray-400">
-                            No announcements yet
-                          </p>
-                          <p className="text-xs font-raleway mt-0.5">
-                            Create one using the form above
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto themed-scrollbar">
-                        <table className="responsive-table w-full text-left min-w-170">
-                          <thead>
-                            <tr className="bg-gray-50/80">
-                              <th className="px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Title
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Type
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Date
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Status
-                              </th>
-                              <th className="px-8 py-3.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
+                  <ManageListCard
+                  title="Published Announcements"
+                  count={publishedItems.length}
+                  singular="announcement"
+                  plural="announcements"
+                  status="published"
+                  loading={isLoadingList}
+                  onRefresh={fetchAnnouncements}
+                  emptyIcon={<Megaphone size={24} className="text-gray-300" />}
+                  emptyTitle="No announcements yet"
+                  emptyHint="Create one using the form above"
+                  columns={["Title","Type","Date","Status","Actions"]}
+                  minWidth="min-w-170"
+                >
                             {publishedItems.map((item) => {
                               const isEditing = editingId === item._id;
                               const meta =
@@ -1572,11 +1522,7 @@ export default function AnnouncementsPage() {
                                 </tr>
                               );
                             })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
+                </ManageListCard>
               </div>
             </div>
           </div>
