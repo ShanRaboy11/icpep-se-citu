@@ -69,6 +69,12 @@ interface ApiResponse<T> {
   message?: string;
 }
 
+interface SyncBatchResult {
+  successful?: number;
+  failed?: number;
+  failedUsers?: FailedUser[];
+}
+
 interface FailedUser {
   studentNumber: string;
   reason: string;
@@ -152,18 +158,10 @@ const validateMembershipType = (
   return null;
 };
 
-const getAuthToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("authToken");
-  }
-  return null;
-};
-
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  const token = getAuthToken();
-
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
   };
 
   if (options.headers) {
@@ -174,13 +172,10 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
     });
   }
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -576,7 +571,7 @@ export default function UsersListPage() {
           membershipStatus: userData.membershipStatus,
         }));
 
-        const response: ApiResponse<any> = await fetchWithAuth(
+        const response: ApiResponse<SyncBatchResult> = await fetchWithAuth(
           `${API_BASE_URL}/users/sync-upsert-batch`,
           {
             method: "POST",
@@ -590,7 +585,7 @@ export default function UsersListPage() {
 
           if (response.data.failedUsers) {
             allFailedUsers.push(
-              ...response.data.failedUsers.map((fail: any) => ({
+              ...response.data.failedUsers.map((fail) => ({
                 studentNumber: fail.studentNumber,
                 reason: fail.reason,
                 data: fail.data,

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Button from "@/app/components/ui/button";
 import eventService from "@/app/services/event";
 import { errorMessage } from "@/app/services/api-client";
+import { hasSession } from "@/app/utils/session";
 
 interface Props {
   eventId: string;
@@ -42,9 +43,9 @@ export default function RsvpCard({ eventId, status, date, rsvpLink, rsvpCount = 
   useEffect(() => setCount(rsvpCount), [rsvpCount]);
 
   useEffect(() => {
-    const hasToken = Boolean(localStorage.getItem("authToken"));
-    setLoggedIn(hasToken);
-    if (rsvpLink || !hasToken) return;
+    const signedIn = hasSession();
+    setLoggedIn(signedIn);
+    if (rsvpLink || !signedIn) return;
     eventService
       .getMyRsvp(eventId)
       .then((mine) => {

@@ -8,6 +8,7 @@ import axios from "axios";
 import Button from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
 import { api, errorMessage } from "@/app/services/api-client";
+import { clearSession, saveSession } from "@/app/utils/session";
 const REMEMBERED_STUDENT_NUMBER_KEY = "rememberedStudentNumber";
 
 const validatePassword = (password: string) => {
@@ -152,13 +153,7 @@ export default function Login() {
         }),
       });
 
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("userId", data.user._id);
-      localStorage.setItem("userRole", data.user.role);
-      localStorage.setItem(
-        "userName",
-        data.user.fullName || `${data.user.firstName} ${data.user.lastName}`,
-      );
+      saveSession(data.user);
 
       if (rememberMe) {
         localStorage.setItem(
@@ -263,9 +258,7 @@ export default function Login() {
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
 
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
+    clearSession();
     setRequiresPasswordChange(false);
     setIsForgotPassword(false);
     setForgotPasswordStep(1);
@@ -304,8 +297,8 @@ export default function Login() {
       // The server answers the same way whether or not the account exists, so
       // the step always moves on and never reveals an address.
       setForgotPasswordStep(2);
-    } catch (err: any) {
-      setError(err.message || "Failed to send reset code.");
+    } catch (err) {
+      setError((err instanceof Error && err.message) || "Failed to send reset code.");
     } finally {
       setIsLoading(false);
     }
@@ -329,8 +322,8 @@ export default function Login() {
       });
 
       setForgotPasswordStep(3);
-    } catch (err: any) {
-      setError(err.message || "Invalid code.");
+    } catch (err) {
+      setError((err instanceof Error && err.message) || "Invalid code.");
       setFieldErrors((prev) => ({ ...prev, resetCode: true }));
     } finally {
       setIsLoading(false);
@@ -385,8 +378,8 @@ export default function Login() {
           "Your password has been updated. Please log in with your new password to continue.",
       });
       setShowSuccessModal(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to reset password.");
+    } catch (err) {
+      setError((err instanceof Error && err.message) || "Failed to reset password.");
     } finally {
       setIsLoading(false);
     }
@@ -427,9 +420,7 @@ export default function Login() {
           "Are you sure? You need to change your password before accessing the system.",
         )
       ) {
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("userRole");
+        clearSession();
         router.push("/");
       }
     } else {

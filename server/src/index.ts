@@ -7,6 +7,8 @@ import mongoose from "mongoose";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import { mapError } from "./utils/http-error";
+import { requireCsrfHeader } from "./middleware/csrf.middleware";
 import authRoutes from "./routes/auth.routes";
 import userRoutes from "./routes/user.routes";
 import announcementRoutes from "./routes/announcements.route";
@@ -55,6 +57,7 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
 // 2. Cookie Parser
 app.use(cookieParser());
+app.use(requireCsrfHeader);
 
 // 3. CORS - Allow multiple origins. Support comma-separated FRONTEND_URL(s).
 // *.vercel.app previews are off by default (anyone can host one); turn them on
@@ -135,7 +138,7 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 
@@ -219,11 +222,14 @@ app.use((req: Request, res: Response) => {
 });
 
 // Global error handler - must be last
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  res.status(500).json({
+app.use((err: Error & { status?: number; statusCode?: number }, req: Request, res: Response, next: NextFunction) => {
+  const status = err.status ?? err.statusCode;
+  const mapped = mapError(err, "Internal server error");
+  const code = status && status >= 400 && status < 500 ? status : mapped.status;
+  res.status(code).json({
     success: false,
-    message: "Internal server error",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    message: code === 500 ? "Internal server error" : code === status ? err.message : mapped.message,
+    error: code === 500 && process.env.NODE_ENV === "development" ? err.message : undefined,
   });
 });
 

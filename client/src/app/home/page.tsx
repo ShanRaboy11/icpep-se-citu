@@ -13,6 +13,7 @@ import { TestimonialsSection } from "../components/home/sections/testimonials";
 import { FacultyOfficersSection } from "../components/home/sections/faculty";
 import { PartnersSection } from "../components/home/sections/partner";
 import { FAQSection } from "../components/home/sections/faq";
+import { getSessionRole } from "@/app/utils/session";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -22,10 +23,9 @@ export default function LandingPage() {
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    const role = localStorage.getItem("userRole");
+    const role = getSessionRole();
 
-    if (token && role) {
+    if (role) {
       router.replace("/dashboard");
       return;
     }

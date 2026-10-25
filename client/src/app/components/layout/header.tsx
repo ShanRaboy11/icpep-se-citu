@@ -18,6 +18,7 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { LoadingIndicator } from "@/app/components/feedback/loading";
+import { clearSession, getSessionRole } from "@/app/utils/session";
 
 type UserRole =
   | "guest"
@@ -26,6 +27,23 @@ type UserRole =
   | "committee-officer"
   | "faculty"
   | "admin";
+
+interface DisplayNotification {
+  id: string;
+  title: string;
+  date: string;
+  type: string;
+  read: boolean;
+  link: string;
+}
+
+interface DropdownItemProps {
+  icon: React.ReactNode;
+  text: string;
+  onClick: () => void;
+  isDestructive?: boolean;
+  badge?: number;
+}
 
 const Header = () => {
   const [open, setOpen] = useState(false);
@@ -37,7 +55,7 @@ const Header = () => {
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<DisplayNotification[]>([]);
   const [notifPage, setNotifPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isNotifLoading, setIsNotifLoading] = useState(false);
@@ -82,9 +100,8 @@ const Header = () => {
   // check auth status on mount
   useEffect(() => {
     const checkAuthStatus = () => {
-      const token = localStorage.getItem("authToken");
-      const userRole = localStorage.getItem("userRole");
-      if (token && userRole) {
+      const userRole = getSessionRole();
+      if (userRole) {
         setIsLoggedIn(true);
         setRole(userRole as UserRole);
         const storedUserName = localStorage.getItem("userName");
@@ -101,10 +118,7 @@ const Header = () => {
   const handleLogout = useCallback(() => {
     // Revoke the session server-side too; the sign-out itself never waits on it.
     api.post("/auth/logout").catch(() => undefined);
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userName");
+    clearSession();
     setIsLoggedIn(false);
     setRole("guest");
     setUserName("");
@@ -122,8 +136,8 @@ const Header = () => {
           if (response?.success) {
             setUnreadCount(response.unreadCount);
           }
-        } catch (error: any) {
-          if (error.message === "expired_session") {
+        } catch (error) {
+          if (error instanceof Error && error.message === "expired_session") {
             handleLogout();
           }
         }
@@ -166,7 +180,7 @@ const Header = () => {
     try {
       const response = await notificationService.getAll(page, 5);
       if (response?.success) {
-        const mapped = response.data.map((n: any) => {
+        const mapped = response.data.map((n): DisplayNotification => {
           let link = n.link || "/home";
           if (!n.link) {
             if (n.type === "announcement" && n.relatedId)
@@ -199,8 +213,8 @@ const Header = () => {
         setHasMore(mapped.length === 5);
         setUnreadCount(response.unreadCount);
       }
-    } catch (error: any) {
-      if (error.message === "expired_session") {
+    } catch (error) {
+      if (error instanceof Error && error.message === "expired_session") {
         handleLogout();
       }
     } finally {
@@ -241,7 +255,7 @@ const Header = () => {
     }
   };
 
-  const handleDeleteNotif = async (e: React.MouseEvent, n: any) => {
+  const handleDeleteNotif = async (e: React.MouseEvent, n: DisplayNotification) => {
     e.stopPropagation();
     try {
       await notificationService.delete(n.id);
@@ -251,7 +265,7 @@ const Header = () => {
     }
   };
 
-  const handleNotifClick = async (n: any) => {
+  const handleNotifClick = async (n: DisplayNotification) => {
     if (!n.read) {
       try {
         await notificationService.markAsRead(n.id);
@@ -282,7 +296,7 @@ const Header = () => {
     onClick,
     isDestructive = false,
     badge,
-  }: any) => (
+  }: DropdownItemProps) => (
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-4 px-3 py-2.5 rounded-xl text-left transition-all duration-200 group cursor-pointer

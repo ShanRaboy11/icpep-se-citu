@@ -6,6 +6,7 @@ import { LoadingScreen } from "@/app/components/feedback/loading";
 import { OFFICER_DASHBOARD_ROLES } from "./roles";
 import OfficerDashboard from "../components/dashboard/officer-dashboard";
 import StudentDashboard from "../components/dashboard/student-dashboard";
+import { getSessionRole } from "@/app/utils/session";
 
 /**
  * Dashboard — renders the officer or student dashboard based on the user's
@@ -17,10 +18,9 @@ export default function DashboardPage() {
   const [role, setRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    const userRole = localStorage.getItem("userRole");
+    const userRole = getSessionRole();
 
-    if (!token || !userRole) {
+    if (!userRole) {
       router.replace("/login");
       return;
     }

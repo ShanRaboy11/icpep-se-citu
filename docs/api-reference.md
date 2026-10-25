@@ -10,8 +10,8 @@ While maintenance mode is on, every route below except `/api/auth/*` and `/api/s
 
 | Method & path | Auth | Notes |
 | --- | --- | --- |
-| `POST /login` | public | rate-limited by IP and by account |
-| `POST /logout` | public | revokes the token if one is sent |
+| `POST /login` | public | rate-limited by IP and by account; sets the httpOnly `authToken` cookie (the token is not in the response body) |
+| `POST /logout` | public | revokes the session if one is sent and clears the cookie |
 | `POST /forgot-password` | public | rate-limited; emails a reset code |
 | `POST /verify-code` | public | rate-limited |
 | `POST /reset-password` | public | rate-limited; revokes all other sessions for the account |

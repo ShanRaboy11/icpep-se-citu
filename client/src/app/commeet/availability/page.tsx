@@ -13,6 +13,7 @@ import {
 } from "../../utils/commeet/meeting-link";
 import { FunctionComponent, useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { getSessionUserId } from "@/app/utils/session";
 import { useRouter } from "next/navigation";
 import {
   Check,
@@ -160,20 +161,9 @@ const AvailabilityPage: FunctionComponent = () => {
     (async () => {
       // 1. Auth & User ID Logic
       try {
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("authToken")
-            : null;
-        setCanEdit(!!token);
-
-        if (token) {
-          try {
-            const payload = JSON.parse(atob(token.split(".")[1]));
-            if (payload.id) setCurrentUserId(payload.id);
-            else if (payload._id) setCurrentUserId(payload._id);
-          } catch {
-          }
-        }
+        const userId = typeof window !== "undefined" ? getSessionUserId() : null;
+        setCanEdit(Boolean(userId));
+        if (userId) setCurrentUserId(userId);
       } catch {}
 
       // 2. Load Services
@@ -208,8 +198,8 @@ const AvailabilityPage: FunctionComponent = () => {
         const mine = await getMyAvailability(id);
         setMySavedSlots(mine.slots || []);
         // Track current user ID for optimistic updates
-        if ((mine as any).user) {
-          setCurrentUserId(String((mine as any).user));
+        if (mine.user) {
+          setCurrentUserId(String(mine.user));
         }
         setCanEdit(true);
       } catch {
@@ -254,8 +244,9 @@ const AvailabilityPage: FunctionComponent = () => {
         });
 
         const slotsByUserId = new Map<string, string[]>();
-        submitted.forEach((item: any) => {
-          const uid = item.user?._id || item.user?.id || item.user;
+        submitted.forEach((item) => {
+          const entryUser = typeof item.user === "object" ? item.user : undefined;
+          const uid = entryUser?._id || entryUser?.id || item.user;
           if (uid) slotsByUserId.set(String(uid), item.slots || []);
         });
 
@@ -285,16 +276,17 @@ const AvailabilityPage: FunctionComponent = () => {
 
         setResponders(mappedResponders);
       } catch {
-        const mappedFallback = submitted.map((item: any, idx: number) => {
-          const firstName = item.user?.firstName ?? "";
-          const lastName = item.user?.lastName ?? "";
+        const mappedFallback = submitted.map((item, idx) => {
+          const entryUser = typeof item.user === "object" ? item.user : undefined;
+          const firstName = entryUser?.firstName ?? "";
+          const lastName = entryUser?.lastName ?? "";
           const name = `${firstName} ${lastName}`.trim() || "Unknown";
 
           return {
-            id: String(item.user?._id || idx + 1),
+            id: String(entryUser?._id || idx + 1),
             name,
             lastName: lastName || name,
-            role: formatRoleDisplay(String(item.user?.role ?? "")),
+            role: formatRoleDisplay(String(entryUser?.role ?? "")),
             initials: `${firstName?.[0] ?? "U"}${lastName?.[0] ?? ""}`,
             deptKey: "department",
             slots: item.slots || [],
