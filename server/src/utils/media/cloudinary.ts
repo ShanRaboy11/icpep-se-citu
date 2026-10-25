@@ -89,7 +89,7 @@ export const uploadToCloudinary = async (
 
     // If Cloudinary isn't configured, return a placeholder response to avoid 500s during local dev
     if (!CLOUDINARY_ENABLED) {
-        return { secure_url: 'https://via.placeholder.com/1200x630.png?text=No+Image' } as any;
+        return { secure_url: 'https://via.placeholder.com/1200x630.png?text=No+Image' } as UploadApiResponse;
     }
 
     const optimized = await optimizeImage(buffer);
@@ -123,7 +123,7 @@ export const uploadToCloudinary = async (
             stream.pipe(uploadStream);
         } catch {
             // Fall back to placeholder instead of crashing the process
-            return resolve({ secure_url: 'https://via.placeholder.com/1200x630.png?text=No+Image' } as any);
+            return resolve({ secure_url: 'https://via.placeholder.com/1200x630.png?text=No+Image' } as UploadApiResponse);
         }
     });
 };

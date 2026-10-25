@@ -80,7 +80,7 @@ const OfficersPage = () => {
       const raw = await officerService.getPublicOfficers(
         isCouncil ? "executive" : meta.title,
       );
-      return (raw || []).map((o: any) => {
+      return (raw || []).map((o) => {
         if (isCouncil) {
           const { position, role } = splitCouncilPosition(
             o.councilPosition || o.position || "",
@@ -112,7 +112,7 @@ const OfficersPage = () => {
         committeeName: isCouncil ? undefined : meta.title,
       });
       const data = Array.isArray(response.data) ? response.data : [];
-      return data.map((t: any) => ({
+      return data.map((t) => ({
         position: t.position,
         role: t.role || undefined,
         // Manually-entered archive rows are already typed as "Last, First" —

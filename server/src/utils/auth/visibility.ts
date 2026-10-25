@@ -28,5 +28,5 @@ export const canViewItem = (
   item: { isPublished?: boolean; author?: unknown }
 ): boolean => {
   if (item.isPublished) return true;
-  return canManagePost(user, (item.author as any)?._id ?? item.author);
+  return canManagePost(user, (item.author as { _id?: unknown } | null)?._id ?? item.author);
 };

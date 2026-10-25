@@ -12,7 +12,7 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif
 // relying on external Multer typings during production builds.
 const fileFilter = (
     req: Express.Request,
-    file: any,
+    file: Express.Multer.File,
     cb: multer.FileFilterCallback
 ) => {
     // Accept images only
@@ -36,7 +36,7 @@ export const MAX_PDF_SIZE_MB = 10;
 
 export const uploadPdf = multer({
     storage: storage,
-    fileFilter: (req: Express.Request, file: any, cb: multer.FileFilterCallback) => {
+    fileFilter: (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
         if (file && file.mimetype === 'application/pdf') {
             cb(null, true);
         } else {

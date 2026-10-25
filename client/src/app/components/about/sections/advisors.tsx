@@ -117,7 +117,7 @@ const AdvisorsSection: FC = () => {
         const response = await advisorService.getAdvisors();
         const data = Array.isArray(response.data) ? response.data : [];
         setAdvisorHistory(
-          data.map((a: any) => ({
+          data.map((a) => ({
             name: toTitleCase(a.name),
             position: a.position,
             year: a.yearRange,

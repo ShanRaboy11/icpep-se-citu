@@ -25,6 +25,7 @@ import {
   Clock,
   FileText,
   Plus } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 interface DraftItem {
   _id: string;
@@ -236,7 +237,7 @@ export default function DraftsPage() {
     icon: Icon,
     label,
   }: {
-    icon: any;
+    icon: LucideIcon;
     label: string;
   }) => (
     <div className="py-20 flex flex-col items-center gap-5 text-gray-300">

@@ -9,6 +9,7 @@ import { Announcement } from "../../../utils/announcements/announcements";
 import Button from "../../ui/button";
 import { Skeleton, SkeletonGate } from "@/app/components/feedback/skeleton";
 import { useCachedFetch } from "@/app/hooks/use-cached-fetch";
+import type { AnnouncementRecord } from "@/app/services/types";
 
 const fetchLatestAnnouncements = async (): Promise<Announcement[]> => {
   const response = await announcementService.getAnnouncements({
@@ -17,13 +18,13 @@ const fetchLatestAnnouncements = async (): Promise<Announcement[]> => {
     sort: "-publishDate",
   });
   if (!response.success || !Array.isArray(response.data)) return [];
-  return response.data.map((item: any) => ({
+  return response.data.map((item: AnnouncementRecord) => ({
     id: item.id || item._id,
     title: item.title,
     description: item.description || "",
     date: item.date || item.publishDate || new Date().toISOString(),
     type: item.type,
-    imageUrl: item.imageUrl,
+    imageUrl: item.imageUrl ?? "",
     time: item.time,
     location: item.location,
   }));

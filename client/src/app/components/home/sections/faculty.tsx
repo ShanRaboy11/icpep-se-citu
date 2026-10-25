@@ -83,11 +83,11 @@ export function FacultyOfficersSection() {
           advisorService.getAdvisors(true).catch(() => ({ data: [] })),
           officerService
             .getPublicOfficers("executive")
-            .catch(() => [] as any[]),
+            .catch(() => []),
         ]);
 
         const advisorEntries: RosterEntry[] = (advisors.data || []).map(
-          (a: any) => ({
+          (a) => ({
             name: toTitleCase(a.name),
             title: a.position,
             image: a.image || placeholderPhoto(a.name, a.gender),
@@ -95,7 +95,7 @@ export function FacultyOfficersSection() {
         );
 
         const officerEntries: RosterEntry[] = (officers || []).map(
-          (o: any) => ({
+          (o) => ({
             name: toTitleCase(
               [o.firstName, o.middleName, o.lastName].filter(Boolean).join(" "),
             ),

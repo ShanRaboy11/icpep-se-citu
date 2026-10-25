@@ -35,7 +35,7 @@ import Footer from "@/app/components/layout/footer";
 import Grid from "@/app/components/layout/grid";
 import Button from "@/app/components/ui/button";
 import Sidebar from "@/app/components/create/sidebar";
-import officerService, { Officer as IOfficer, StudentResult } from "@/app/services/officer";
+import officerService, { Officer as IOfficer, StudentResult, UpdateOfficerData } from "@/app/services/officer";
 import { formatOfficerName } from "@/app/utils/officers/format-name";
 import SearchSelect from "@/app/components/ui/search-select";
 import Dropdown from "@/app/components/ui/dropdown";
@@ -465,7 +465,7 @@ export default function OfficersPage() {
       await officerService.updateOfficer(itemToDelete.userId, {
         assignmentType: itemToDelete.assignmentType,
         remove: true,
-      } as any);
+      });
       fetchOfficers();
       setShowDeleteModal(false);
       const wasEditing = editingId === itemToDelete.userId;
@@ -561,7 +561,7 @@ export default function OfficersPage() {
     }
     setIsSubmitting(true);
     try {
-      const updateData: any = {
+      const updateData: UpdateOfficerData = {
         assignmentType: activeTab === "executive" ? "council" : "committee",
         position: formData.position,
         department: activeTab === "committee" ? formData.role : undefined,
@@ -575,7 +575,7 @@ export default function OfficersPage() {
       if (formData.image && formData.image.startsWith("data:image")) {
         updateData.profilePicture = formData.image;
       }
-      await officerService.updateOfficer(targetId, updateData as any);
+      await officerService.updateOfficer(targetId, updateData);
       await fetchOfficers();
       setSuccessMessage({
         title: editingId ? "Updated Successfully!" : "Officer Added!",

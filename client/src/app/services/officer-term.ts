@@ -1,4 +1,5 @@
 import { api } from './api-client';
+import type { ApiList, OfficerTermRecord } from './types';
 
 export interface OfficerTermData {
     _id?: string;
@@ -35,7 +36,7 @@ const officerTermService = {
     },
 
     getOfficerTerms: async (params?: { year?: string; departmentType?: string; committeeName?: string }) => {
-        const response = await api.get('/officer-terms', { params });
+        const response = await api.get<ApiList<OfficerTermRecord>>('/officer-terms', { params });
         return response.data;
     },
 

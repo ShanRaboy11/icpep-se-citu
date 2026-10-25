@@ -42,7 +42,7 @@ const AboutPage: FC = () => {
         const response = await facultyService.getFaculty();
         const data = Array.isArray(response.data) ? response.data : [];
         setDepartmentFaculty(
-          data.map((f: any) => ({
+          data.map((f) => ({
             name: toTitleCase(f.name),
             position: f.position,
             imageUrl: f.image || placeholderPhoto(f.name, f.gender),

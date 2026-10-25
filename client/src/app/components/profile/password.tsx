@@ -270,6 +270,17 @@ export default function SecuritySection({
   );
 }
 
+interface PasswordFieldProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  show: boolean;
+  onToggle: () => void;
+  hint?: string;
+  ref?: React.Ref<HTMLInputElement>;
+  error?: boolean;
+}
+
 // Reusable Password Input Field with Modern Styling
 function PasswordField({
   label,
@@ -280,7 +291,7 @@ function PasswordField({
   hint,
   ref,
   error = false,
-}: any) {
+}: PasswordFieldProps) {
   return (
     <div>
       <label className={labelStyle}>

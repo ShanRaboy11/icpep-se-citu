@@ -15,6 +15,7 @@ import { FunctionComponent, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Check, X, ChevronDown } from "lucide-react";
 import { useDropdownDismiss } from "@/app/hooks/use-dropdown-dismiss";
+import type { Meeting } from "@/app/services/meeting";
 
 const departmentsList = [
   "All Officers",
@@ -103,7 +104,7 @@ const MeetInfoPage: FunctionComponent = () => {
       : "No Limit";
 
     try {
-      const payload = {
+      const payload: Omit<Meeting, "_id"> = {
         title,
         agenda,
         startTime: formattedStartTime,
@@ -111,15 +112,10 @@ const MeetInfoPage: FunctionComponent = () => {
         timeLimit: formattedLimit,
         departments: selectedDepts,
         meetingLink: cleanedLink,
-        // selectedDates should come from the previous step (commeet/page)
-        // For now, read from query if present, else default to today's date
-      } as any;
-      const params = new URLSearchParams(window.location.search);
-      const datesParam = params.get("dates");
-      const selectedDates = datesParam
-        ? datesParam.split(",")
-        : [new Date().toISOString().split("T")[0]];
-      payload.selectedDates = selectedDates;
+        selectedDates: new URLSearchParams(window.location.search).get("dates")?.split(",") ?? [
+          new Date().toISOString().split("T")[0],
+        ],
+      };
 
       const { createMeeting } = await import("../../services/meeting");
       const created = await createMeeting(payload);

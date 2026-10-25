@@ -23,6 +23,8 @@ import announcementService from "../../services/announcement";
 import merchService from "../../services/merch";
 import { notificationService } from "../../services/notification";
 import siteService from "../../services/site";
+import type { AnnouncementRecord, EventRecord } from "@/app/services/types";
+import type { NotificationRecord } from "@/app/services/notification";
 
 import {
   Users,
@@ -202,7 +204,7 @@ export default function OfficerDashboard({
           merch: (merchList || []).filter((m) => m.isActive).length,
         });
 
-        const rawEvents = (eventsRes?.data as any[]) || [];
+        const rawEvents = (eventsRes?.data as EventRecord[]) || [];
         setEvents(
           rawEvents.map((e) => ({
             id: e._id,
@@ -214,7 +216,7 @@ export default function OfficerDashboard({
           })),
         );
 
-        const rawAnnouncements = (recentAnnouncementsRes?.data as any[]) || [];
+        const rawAnnouncements = (recentAnnouncementsRes?.data as AnnouncementRecord[]) || [];
         setAnnouncements(
           rawAnnouncements.map((a) => ({
             id: a.id,
@@ -230,12 +232,12 @@ export default function OfficerDashboard({
           })),
         );
 
-        const rawNotifications = (notificationsRes?.data as any[]) || [];
+        const rawNotifications = (notificationsRes?.data as NotificationRecord[]) || [];
         setActivities(
           rawNotifications.map((n) => ({
             id: n._id,
             title: n.title,
-            description: n.message,
+            description: n.message ?? "",
             timestamp: timeAgo(n.createdAt),
             type: notificationToActivityType(n.type),
             isRead: !!n.isRead,

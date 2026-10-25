@@ -8,6 +8,7 @@ import eventService from "@/app/services/event";
 import Button from "@/app/components/ui/button";
 import { SkeletonGate } from "@/app/components/feedback/skeleton";
 import { useCachedFetch } from "@/app/hooks/use-cached-fetch";
+import type { EventRecord } from "@/app/services/types";
 
 const fetchFeaturedEvents = async (): Promise<Event[]> => {
   const response = await eventService.getEvents({
@@ -16,7 +17,7 @@ const fetchFeaturedEvents = async (): Promise<Event[]> => {
     sort: "-eventDate",
   });
   if (!response.success || !Array.isArray(response.data)) return [];
-  return response.data.map((item: any) => ({
+  return response.data.map((item: EventRecord) => ({
     id: item.id || item._id,
     title: item.title,
     status: new Date(item.eventDate) > new Date() ? "Upcoming" : "Ended",

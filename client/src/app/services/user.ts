@@ -23,6 +23,20 @@ export interface CurrentUser {
   };
 }
 
+interface ListedUser {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  email?: string;
+  yearLevel?: number;
+  studentNumber: string;
+  councilPosition?: string;
+  committeeTitle?: string;
+  committeeDepartment?: string;
+  department?: string;
+}
+
 class UserService {
   async getCurrentUser(): Promise<{ success: boolean; data?: CurrentUser; message?: string }> {
     try {
@@ -50,7 +64,7 @@ class UserService {
       if (params?.page) search.set('page', String(params.page));
       if (params?.limit) search.set('limit', String(params.limit));
       const res = await api.get(`/users${search.toString() ? `?${search.toString()}` : ''}`);
-      const payload = res.data as { success: boolean; data: any[] };
+      const payload = res.data as { success: boolean; data: ListedUser[] };
       return (payload.data || []).map((u) => ({
         id: u._id,
         firstName: u.firstName,

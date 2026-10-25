@@ -1,4 +1,5 @@
 import { api } from './api-client';
+import type { ApiList, AdvisorRecord } from './types';
 
 export interface AdvisorData {
     _id?: string;
@@ -19,7 +20,7 @@ const advisorService = {
 
     getAdvisors: async (current?: boolean) => {
         try {
-            const response = await api.get('/advisors', {
+            const response = await api.get<ApiList<AdvisorRecord>>('/advisors', {
                 params: current ? { current: true } : undefined,
             });
             return response.data;

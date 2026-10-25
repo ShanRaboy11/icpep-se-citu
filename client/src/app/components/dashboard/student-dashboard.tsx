@@ -21,6 +21,7 @@ import announcementService from "../../services/announcement";
 import merchService, { MerchItem } from "../../services/merch";
 
 import { ChevronRight } from "lucide-react";
+import type { AnnouncementRecord, EventRecord } from "@/app/services/types";
 
 // ─── Animation variants ───────────────────────────────────────────────────────
 const fadeUp: Variants = {
@@ -113,7 +114,7 @@ export default function StudentDashboard() {
 
         if (userRes?.success && userRes.data) setUser(userRes.data);
 
-        const rawEvents = (eventsRes?.data as any[]) || [];
+        const rawEvents = (eventsRes?.data as EventRecord[]) || [];
         setEvents(
           rawEvents.map((e) => ({
             id: e._id,
@@ -125,7 +126,7 @@ export default function StudentDashboard() {
           })),
         );
 
-        const rawAnnouncements = (announcementsRes?.data as any[]) || [];
+        const rawAnnouncements = (announcementsRes?.data as AnnouncementRecord[]) || [];
         setAnnouncements(
           rawAnnouncements.map((a) => ({
             id: a.id,

@@ -11,7 +11,7 @@ const tierOrder: Tier[] = ["platinum", "gold", "silver", "bronze"];
 
 const fetchPartners = async (): Promise<Partner[]> => {
   const response = await sponsorService.getSponsors();
-  return (response.data || []).map((sponsor: any) => {
+  return (response.data || []).map((sponsor) => {
     const typeLower = sponsor.type ? sponsor.type.toLowerCase() : "";
     const tier: Tier =
       tierOrder.find((candidate) => typeLower.includes(candidate)) ?? "bronze";

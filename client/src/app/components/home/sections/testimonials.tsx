@@ -10,7 +10,7 @@ import { Skeleton, SkeletonGate } from "@/app/components/feedback/skeleton";
 
 export function TestimonialsSection() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [testimonials, setTestimonials] = useState<{ name: string; title: string; imageSrc: string; testimonial: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -19,10 +19,10 @@ export function TestimonialsSection() {
       try {
         const response = await testimonialService.getTestimonials();
         if (response.success && Array.isArray(response.data)) {
-          const mapped = response.data.map((item: any) => ({
+          const mapped = response.data.map((item) => ({
             name: toTitleCase(item.name),
             title: item.role,
-            imageSrc: item.image,
+            imageSrc: item.image ?? "",
             testimonial: item.quote,
           }));
           setTestimonials(mapped);
