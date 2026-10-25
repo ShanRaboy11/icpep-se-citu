@@ -41,11 +41,11 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
         {visionPoints.map((point, index) => (
           <div
             key={index}
-            className="flex flex-row md:flex-col items-center gap-3 md:gap-0 group p-3 md:p-5 rounded-xl md:rounded-2xl
-                       bg-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+            className="flex flex-row md:flex-col items-center gap-3 md:gap-0 group p-3 md:p-5 rounded-2xl md:rounded-3xl
+                       border border-white/20 transition-colors duration-300 hover:border-secondary2/70"
           >
             <div
-              className="w-12 h-12 md:w-full md:h-40 shrink-0 rounded-xl md:rounded-2xl overflow-hidden md:bg-primary1/5 md:mb-4
+              className="w-12 h-12 md:w-full md:h-40 shrink-0 md:mb-4
                          flex items-center justify-center"
             >
               <div className={`relative ${point.sizeClass}`}>
@@ -60,10 +60,10 @@ const VisionLayout: FC<{ section: SectionType }> = ({ section }) => {
             </div>
 
             <div className="flex flex-col text-left md:text-center">
-              <h4 className="font-rubik text-sm md:text-xl font-bold text-primary3 leading-snug md:mb-1">
+              <h4 className="font-rubik text-sm md:text-xl font-bold text-white leading-snug md:mb-1">
                 {point.title}
               </h4>
-              <p className="font-raleway text-[10px] md:text-base text-gray-600 leading-relaxed">
+              <p className="font-raleway text-[10px] md:text-base text-gray-300 leading-relaxed">
                 {point.description}
               </p>
             </div>

@@ -210,11 +210,11 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
           <div
             key={value.name}
             className={`absolute ${value.position} ${value.animationClass} z-20
-              w-18.5 h-18.5 sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl bg-white shadow-md
+              w-18.5 h-18.5 sm:w-32 sm:h-32 rounded-xl sm:rounded-2xl border border-white/20 transition-colors duration-300 hover:border-secondary2/70
               flex flex-col items-center justify-center gap-0.5 sm:gap-2 p-1 sm:p-4
-              transition-shadow duration-300 hover:shadow-lg`}
+              `}
           >
-            <div className="relative w-9 h-9 sm:w-14 sm:h-14">
+            <div className="relative w-9 h-9 sm:w-14 sm:h-14 ">
               <Image
                 src={value.iconUrl}
                 alt={value.name}
@@ -223,7 +223,7 @@ const ValuesLayout: FC<{ section: SectionType }> = ({ section }) => {
                 className="object-contain"
               />
             </div>
-            <span className="font-rubik font-semibold text-primary3 text-center text-[10px] sm:text-base leading-tight">
+            <span className="font-rubik font-semibold text-white text-center text-[10px] sm:text-base leading-tight">
               {value.name}
             </span>
           </div>

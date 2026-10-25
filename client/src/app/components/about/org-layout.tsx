@@ -51,14 +51,9 @@ const OrgLayout: FC<{ section: SectionType }> = ({ section }) => {
           {iconSquares.map((iconUrl, index) => (
             <div
               key={index}
-              className="w-12 h-12 sm:w-24 sm:h-24 rounded-xl sm:rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center transition-colors duration-300 hover:bg-white/10"
-              style={{
-                backgroundImage:
-                  "radial-gradient(circle, transparent 1px, rgba(255,255,255,0.05) 1px)",
-                backgroundSize: "1rem 1rem",
-              }}
+              className="w-12 h-12 sm:w-24 sm:h-24 rounded-xl sm:rounded-2xl border border-white/20 transition-colors duration-300 hover:border-secondary2/70 flex items-center justify-center "
             >
-              <div className="relative w-7 h-7 sm:w-14 sm:h-14">
+              <div className="relative w-8 h-8 sm:w-16 sm:h-16">
                 <Image
                   src={iconUrl}
                   alt={`Feature icon ${index + 1}`}
