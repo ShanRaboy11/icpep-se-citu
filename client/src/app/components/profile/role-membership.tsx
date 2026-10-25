@@ -2,10 +2,12 @@
 
 import { Handshake } from "lucide-react";
 
+export type MembershipKind = "both" | "local" | "regional" | "member" | "none";
+
 interface RolenMembershipInformationProps {
   role?: string | null;
   position?: string | null;
-  membership: "both" | "local" | "regional";
+  membership: MembershipKind;
   loading?: boolean;
 }
 
@@ -102,17 +104,21 @@ export function RolenMembershipInformation({
   );
 }
 
-function MembershipBadge({ type }: { type: "both" | "local" | "regional" }) {
+function MembershipBadge({ type }: { type: MembershipKind }) {
   const styles = {
     both: "bg-purple-50 text-purple-700 border-purple-200",
     local: "bg-blue-50 text-blue-700 border-blue-200",
     regional: "bg-cyan-50 text-cyan-700 border-cyan-200",
+    member: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    none: "bg-gray-100 text-gray-500 border-gray-200",
   };
 
   const label = {
     both: "Local & Regional Member",
     local: "Local Member",
     regional: "Regional Member",
+    member: "Member",
+    none: "Not a member",
   };
 
   return (

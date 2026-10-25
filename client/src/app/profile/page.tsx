@@ -14,7 +14,7 @@ import userService, { CurrentUser } from "../services/user";
 
 // Components
 import { PersonalInformation } from "../components/profile/personal-information";
-import { RolenMembershipInformation } from "../components/profile/role-membership";
+import { RolenMembershipInformation, type MembershipKind } from "../components/profile/role-membership";
 import SecuritySection from "../components/profile/password";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,16 +51,11 @@ export default function ProfilePage() {
     return "U";
   };
 
-  const normalizeMembership = (
-    u?: CurrentUser | null
-  ): "both" | "local" | "regional" => {
-    const raw =
-      u?.membership ??
-      (u &&
-        (u as unknown as { membershipStatus?: { membershipType?: string } })
-          ?.membershipStatus?.membershipType);
-    if (raw === "local" || raw === "regional" || raw === "both") return raw;
-    return "both";
+  const normalizeMembership = (u?: CurrentUser | null): MembershipKind => {
+    const status = u?.membershipStatus;
+    if (!status?.isMember) return "none";
+    const type = status.membershipType;
+    return type === "local" || type === "regional" || type === "both" ? type : "member";
   };
 
   // --- Data Loading ---
@@ -529,7 +524,7 @@ interface InputFieldProps {
   value: string;
   onChange: (val: string) => void;
   type?: string;
-  ref?: any;
+  ref?: React.Ref<HTMLInputElement>;
   disabled?: boolean;
   max?: string | number;
   min?: string | number;
