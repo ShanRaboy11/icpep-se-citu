@@ -20,7 +20,7 @@ export const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
 export const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
 
 const PANEL_STYLE =
-  "fixed z-100 w-max max-w-[90vw] bg-white border border-gray-100 rounded-2xl shadow-lg overflow-hidden";
+  "fixed z-100001 w-max max-w-[90vw] bg-white border border-gray-100 rounded-2xl shadow-lg overflow-hidden";
 
 interface DropdownProps {
   value: string;

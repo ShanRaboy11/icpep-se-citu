@@ -4,8 +4,6 @@ import { emailMeta } from "@/app/utils/social-platforms";
 import { FormEvent, useId, useState } from "react";
 import {
   ChevronRight,
-  ChevronDown,
-  Check,
   AlertTriangle,
 } from "lucide-react";
 import { platformMeta } from "@/app/utils/social-platforms";
@@ -16,8 +14,8 @@ import Grid from "../components/layout/grid";
 import BackButton from "../components/ui/back-button";
 import PageHeader from "../components/ui/page-header";
 import Button from "../components/ui/button";
-import { useDropdownDismiss } from "@/app/hooks/use-dropdown-dismiss";
 import { useSiteContact } from "@/app/hooks/use-site-contact";
+import Dropdown from "@/app/components/ui/dropdown";
 
 const SUBJECT_OPTIONS = [
   "Membership Inquiry",
@@ -37,17 +35,6 @@ const inputStyle =
 
 const labelStyle = "block font-raleway text-sm font-bold text-gray-700";
 
-// Shared custom-dropdown look (split outer/inner so the scrollbar never
-// pokes past the rounded corners), matching the convention used on the
-// create pages.
-const dropdownOuterStyle =
-  "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden";
-const dropdownInnerStyle =
-  "flex flex-col gap-1 p-2 max-h-64 overflow-y-auto themed-scrollbar";
-const dropdownItemStyle =
-  "flex items-center justify-between px-4 py-2.5 rounded-lg cursor-pointer transition-colors font-rubik text-sm font-medium";
-const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
-const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
 
 function Field({
   label,
@@ -118,11 +105,8 @@ type FormErrors = {
 export default function ContactPage() {
   const contact = useSiteContact();
   const router = useRouter();
-  const subjectId = useId();
   const phoneId = useId();
   const [subject, setSubject] = useState("");
-  const [isSubjectOpen, setIsSubjectOpen] = useState(false);
-  useDropdownDismiss(isSubjectOpen, () => setIsSubjectOpen(false));
   const [phone, setPhone] = useState("");
 
   const [errors, setErrors] = useState<FormErrors>({
@@ -181,7 +165,7 @@ export default function ContactPage() {
         el?.focus();
         el?.scrollIntoView({ behavior: "smooth", block: "center" });
       } else if (newErrors.subject) {
-        setIsSubjectOpen(true);
+        form.querySelector("[data-dropdown] button")?.scrollIntoView({ behavior: "smooth", block: "center" });
       } else if (newErrors.customSubject) {
         const el = form.querySelector<HTMLInputElement>(
           '[name="customSubject"]',
@@ -289,63 +273,22 @@ export default function ContactPage() {
                     />
                   </div>
 
-                  {/* Subject — custom dropdown */}
                   <div>
-                    <label htmlFor={subjectId} className={labelStyle}>
+                    <label className={labelStyle}>
                       Subject <span className="text-red-500">*</span>
                     </label>
-                    <div data-dropdown className="relative mt-2">
-                      <div
-                        id={subjectId}
-                        onClick={() => setIsSubjectOpen((prev) => !prev)}
-                        className={`flex w-full cursor-pointer items-center justify-between rounded-xl border bg-gray-50 px-4 py-3 font-rubik text-gray-800 transition-all hover:bg-gray-100 ${
-                          isSubjectOpen
-                            ? "bg-white border-primary1 ring-4 ring-primary1/10"
-                            : errors.subject
-                              ? "border-red-300 ring-2 ring-red-100"
-                              : "border-gray-200"
-                        }`}
-                      >
-                        <span
-                          className={subject ? "" : "text-gray-400 font-normal"}
-                        >
-                          {subject || "What's this all about?"}
-                        </span>
-                        <ChevronDown
-                          className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-300 ${
-                            isSubjectOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-                      {isSubjectOpen && (
-                        <>
-                          <div className={dropdownOuterStyle}>
-                            <div className={dropdownInnerStyle}>
-                              {SUBJECT_OPTIONS.map((opt) => (
-                                <div
-                                  key={opt}
-                                  onClick={() => {
-                                    setSubject(opt);
-                                    setIsSubjectOpen(false);
-                                    clearError("subject");
-                                  }}
-                                  className={`${dropdownItemStyle} ${
-                                    subject === opt
-                                      ? dropdownItemSelectedStyle
-                                      : dropdownItemHoverStyle
-                                  }`}
-                                >
-                                  <span>{opt}</span>
-                                  {subject === opt && (
-                                    <Check className="h-4 w-4 text-primary1" />
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    <Dropdown
+                      variant="field"
+                      className="mt-2"
+                      value={subject}
+                      placeholder="What's this all about?"
+                      invalid={errors.subject}
+                      options={SUBJECT_OPTIONS.map((opt) => ({ value: opt, label: opt }))}
+                      onChange={(value) => {
+                        setSubject(value);
+                        clearError("subject");
+                      }}
+                    />
                     {errors.subject && (
                       <p className="mt-1.5 font-raleway text-xs text-red-400">
                         Subject is required
