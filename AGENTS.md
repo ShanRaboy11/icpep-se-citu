@@ -6,6 +6,7 @@ For deeper detail, see the `docs/` suite:
 - [docs/architecture.md](docs/architecture.md) — how the client, server and database fit together, auth, roles, maintenance mode
 - [docs/conventions.md](docs/conventions.md) — code style, testing, commit conventions, patterns to follow
 - [docs/api-reference.md](docs/api-reference.md) — every server route, its method, auth requirement and what it does
+- [docs/handoff.md](docs/handoff.md) — what is still open (SMTP, masterlist, held-back seats, deploy and smoke-test checklist)
 
 ## What this is
 
