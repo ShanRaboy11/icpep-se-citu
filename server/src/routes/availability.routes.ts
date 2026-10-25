@@ -1,4 +1,5 @@
 import express from "express";
+import { validateObjectId } from "../middleware/validate-id";
 import { authenticate, optionalAuth } from "../middleware/auth.middleware";
 import {
   getMeetingAvailability,
@@ -8,6 +9,7 @@ import {
 } from "../controllers/availability.controller";
 
 const router = express.Router();
+router.param("meetingId", validateObjectId);
 
 // Meeting-level availability list (public read)
 router.get("/:meetingId", optionalAuth, getMeetingAvailability);

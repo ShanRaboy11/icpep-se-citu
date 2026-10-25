@@ -3,6 +3,8 @@ import OfficerTerm from '../models/officerTerm';
 import { uploadToCloudinary } from '../utils/media/cloudinary';
 import mongoose from 'mongoose';
 import { parseGender } from '../utils/gender';
+import { respondWithError } from '../utils/http-error';
+import { toObjectId } from '../utils/pick';
 
 const asUserId = (value: unknown) =>
   typeof value === 'string' && mongoose.isValidObjectId(value) ? value : null;
@@ -46,10 +48,7 @@ export const createOfficerTerm = async (req: Request, res: Response): Promise<vo
       data: created,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create officer term',
-    });
+    respondWithError(res, error, 'Failed to create officer term');
   }
 };
 
@@ -65,10 +64,7 @@ export const getOfficerTerms = async (req: Request, res: Response): Promise<void
     const terms = await OfficerTerm.find(query).sort({ displayOrder: 1, createdAt: -1 });
     res.status(200).json({ success: true, data: terms });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch officer terms',
-    });
+    respondWithError(res, error, 'Failed to fetch officer terms');
   }
 };
 
@@ -79,10 +75,7 @@ export const getOfficerTermYears = async (req: Request, res: Response): Promise<
     years.sort((a: string, b: string) => b.localeCompare(a));
     res.status(200).json({ success: true, data: years });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch officer term years',
-    });
+    respondWithError(res, error, 'Failed to fetch officer term years');
   }
 };
 
@@ -91,10 +84,7 @@ export const getAllOfficerTerms = async (req: Request, res: Response): Promise<v
     const terms = await OfficerTerm.find({}).sort({ termYear: -1, displayOrder: 1, createdAt: -1 });
     res.status(200).json({ success: true, data: terms });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch officer terms',
-    });
+    respondWithError(res, error, 'Failed to fetch officer terms');
   }
 };
 
@@ -132,7 +122,7 @@ export const updateOfficerTerm = async (req: Request, res: Response): Promise<vo
     if (displayOrder !== undefined) term.displayOrder = displayOrder;
     if (req.body.gender !== undefined) term.gender = parseGender(req.body.gender);
     if (req.body.sourceUserId !== undefined) {
-      term.sourceUserId = asUserId(req.body.sourceUserId) as any;
+      term.sourceUserId = toObjectId(asUserId(req.body.sourceUserId) ?? undefined);
     }
 
     if (req.file) {
@@ -147,10 +137,7 @@ export const updateOfficerTerm = async (req: Request, res: Response): Promise<vo
       data: updated,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update officer term',
-    });
+    respondWithError(res, error, 'Failed to update officer term');
   }
 };
 
@@ -164,9 +151,6 @@ export const deleteOfficerTerm = async (req: Request, res: Response): Promise<vo
     }
     res.status(200).json({ success: true, message: 'Officer term deleted successfully' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete officer term',
-    });
+    respondWithError(res, error, 'Failed to delete officer term');
   }
 };

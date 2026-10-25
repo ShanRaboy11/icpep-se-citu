@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Testimonial from '../models/testimonial';
 import { uploadToCloudinary } from '../utils/media/cloudinary';
+import { respondWithError } from '../utils/http-error';
 
 export const createTestimonial = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -31,10 +32,7 @@ export const createTestimonial = async (req: Request, res: Response): Promise<vo
       data: savedTestimonial,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create testimonial',
-    });
+    respondWithError(res, error, 'Failed to create testimonial');
   }
 };
 
@@ -46,10 +44,7 @@ export const getTestimonials = async (req: Request, res: Response): Promise<void
       data: testimonials,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch testimonials',
-    });
+    respondWithError(res, error, 'Failed to fetch testimonials');
   }
 };
 
@@ -61,10 +56,7 @@ export const getAllTestimonials = async (req: Request, res: Response): Promise<v
       data: testimonials,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch testimonials',
-    });
+    respondWithError(res, error, 'Failed to fetch testimonials');
   }
 };
 
@@ -99,10 +91,7 @@ export const updateTestimonial = async (req: Request, res: Response): Promise<vo
       data: updatedTestimonial,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update testimonial',
-    });
+    respondWithError(res, error, 'Failed to update testimonial');
   }
 };
 
@@ -121,9 +110,6 @@ export const deleteTestimonial = async (req: Request, res: Response): Promise<vo
       message: 'Testimonial deleted successfully',
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete testimonial',
-    });
+    respondWithError(res, error, 'Failed to delete testimonial');
   }
 };

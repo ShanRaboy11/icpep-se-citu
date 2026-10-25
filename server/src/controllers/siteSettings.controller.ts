@@ -4,6 +4,8 @@ import { CLOUDINARY_ENABLED, deleteFromCloudinary, isPdf, uploadDocumentToCloudi
 import { recordAudit } from '../utils/audit';
 import { parseContactUpdate, resolveContact } from '../utils/content/contact-settings';
 import { SITE_PHOTO_FIELDS, isSitePhotoSection, normalizePhotos, parsePhotoSlot } from '../utils/content/site-content';
+import { respondWithError } from '../utils/http-error';
+import { toObjectId } from '../utils/pick';
 
 export interface AuthRequest extends Request {
   user?: { id: string; role: string };
@@ -35,10 +37,7 @@ export const getSiteSettings = async (req: Request, res: Response): Promise<void
       },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch site settings',
-    });
+    respondWithError(res, error, 'Failed to fetch site settings');
   }
 };
 
@@ -53,7 +52,7 @@ export const updateSiteSettings = async (req: AuthRequest, res: Response): Promi
     if (maintenanceMessage !== undefined) {
       settings.maintenanceMessage = maintenanceMessage;
     }
-    settings.updatedBy = req.user?.id as any;
+    settings.updatedBy = toObjectId(req.user?.id);
 
     const updated = await settings.save();
 
@@ -68,10 +67,7 @@ export const updateSiteSettings = async (req: AuthRequest, res: Response): Promi
       },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update site settings',
-    });
+    respondWithError(res, error, 'Failed to update site settings');
   }
 };
 
@@ -106,7 +102,7 @@ export const updatePrimer = async (req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    settings.updatedBy = req.user?.id as any;
+    settings.updatedBy = toObjectId(req.user?.id);
     await settings.save();
     await recordAudit({ action: 'site.primer', actorId: req.user?.id });
 
@@ -116,7 +112,7 @@ export const updatePrimer = async (req: AuthRequest, res: Response): Promise<voi
       data: { primerUrl: settings.primerUrl },
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update the primer' });
+    respondWithError(res, error, 'Failed to update the primer');
   }
 };
 
@@ -130,7 +126,7 @@ export const updateContact = async (req: AuthRequest, res: Response): Promise<vo
 
     const settings = await getOrCreateSettings();
     Object.assign(settings, parsed.values);
-    settings.updatedBy = req.user?.id as any;
+    settings.updatedBy = toObjectId(req.user?.id);
     await settings.save();
     await recordAudit({ action: 'site.contact', actorId: req.user?.id });
 
@@ -140,7 +136,7 @@ export const updateContact = async (req: AuthRequest, res: Response): Promise<vo
       data: resolveContact(settings),
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update contact details' });
+    respondWithError(res, error, 'Failed to update contact details');
   }
 };
 
@@ -180,14 +176,14 @@ export const setSitePhoto = async (req: AuthRequest, res: Response): Promise<voi
     const previous = photos[target.index];
     photos[target.index] = url;
     settings[target.field] = photos;
-    settings.updatedBy = req.user?.id as any;
+    settings.updatedBy = toObjectId(req.user?.id);
     await settings.save();
     await recordAudit({ action: 'site.photos', actorId: req.user?.id, details: { section: target.section, slot: target.index, change: 'set' } });
     if (previous) await deleteFromCloudinary(previous).catch(() => undefined);
 
     res.status(200).json({ success: true, message: 'Photo updated', data: { photos } });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to update the photo' });
+    respondWithError(res, error, 'Failed to update the photo');
   }
 };
 
@@ -204,13 +200,13 @@ export const clearSitePhoto = async (req: AuthRequest, res: Response): Promise<v
     const previous = photos[target.index];
     photos[target.index] = '';
     settings[target.field] = photos;
-    settings.updatedBy = req.user?.id as any;
+    settings.updatedBy = toObjectId(req.user?.id);
     await settings.save();
     await recordAudit({ action: 'site.photos', actorId: req.user?.id, details: { section: target.section, slot: target.index, change: 'clear' } });
     if (previous) await deleteFromCloudinary(previous).catch(() => undefined);
 
     res.status(200).json({ success: true, message: 'Photo reset to the default', data: { photos } });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Failed to reset the photo' });
+    respondWithError(res, error, 'Failed to reset the photo');
   }
 };

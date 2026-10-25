@@ -9,6 +9,7 @@ import { buildSchoolEmail } from "../utils/mail/school-email";
 import { parseGender } from "../utils/gender";
 import { queueFirstLoginEmail } from "../utils/mail/first-login-mail";
 import { recordAudit } from "../utils/audit";
+import { respondWithError } from "../utils/http-error";
 
 // Interface for request with authenticated user
 export interface AuthRequest extends Request {
@@ -56,7 +57,7 @@ export const getAllUsers = async (
     const canSeeEveryone =
       req.user?.role === "council-officer" || req.user?.role === "admin";
 
-    const filter: any = {};
+    const filter: Record<string, unknown> = {};
 
     if (canSeeEveryone) {
       if (role && role !== "all") {
@@ -90,7 +91,7 @@ export const getAllUsers = async (
     // Only fields that are safe to order by. Sorting on a hidden field (e.g. a
     // password hash or reset code) would leak its order even without the value.
     const SORTABLE = ["createdAt", "updatedAt", "studentNumber", "lastName", "firstName", "role", "yearLevel", "isActive"];
-    const sort: any = {};
+    const sort: Record<string, 1 | -1> = {};
     sort[SORTABLE.includes(String(sortBy)) ? String(sortBy) : "createdAt"] = sortOrder === "asc" ? 1 : -1;
 
     // Pagination
@@ -121,11 +122,8 @@ export const getAllUsers = async (
         pages: Math.ceil(total / limitNum),
       },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching users",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error fetching users");
   }
 };
 
@@ -162,11 +160,8 @@ export const getUserById = async (
       success: true,
       data: user,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching user",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error fetching user");
   }
 };
 
@@ -349,11 +344,8 @@ export const createUser = async (
         : "User created, but no school email could be worked out, so no first-login code was sent.",
       data: newUser,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error creating user",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error creating user");
   }
 };
 
@@ -373,7 +365,7 @@ interface UploadSuccess {
 interface UploadFailure {
   studentNumber: string;
   reason: string;
-  data?: any;
+  data?: unknown;
 }
 
 const UPLOAD_BATCH_SIZE = 25;
@@ -446,9 +438,9 @@ const parseMembershipStatus = (value: unknown): MembershipStatus => {
 
 // Splits an upload into the rows to process (the last row wins when a
 // student number repeats) and the rows missing required fields.
-const splitUploadRows = (rows: any[]) => {
-  const valid = new Map<string, any>();
-  const invalid: any[] = [];
+const splitUploadRows = <Row extends { studentNumber?: unknown; firstName?: unknown; lastName?: unknown }>(rows: Row[]) => {
+  const valid = new Map<string, Row>();
+  const invalid: Row[] = [];
   for (const row of rows) {
     if (row.studentNumber && row.firstName && row.lastName) {
       valid.set(String(row.studentNumber).toUpperCase(), row);
@@ -568,10 +560,10 @@ export const bulkUploadUsers = async (
           fullName: newUser.fullName,
           id: newUser._id.toString(),
         };
-      } catch (error: any) {
+      } catch (error) {
         failed.push({
           studentNumber: userData.studentNumber || "UNKNOWN",
-          reason: error.message || "Unknown error occurred",
+          reason: (error instanceof Error && error.message) || "Unknown error occurred",
           data: userData,
         });
       }
@@ -586,11 +578,8 @@ export const bulkUploadUsers = async (
       message: `Bulk upload completed. ${success.length} succeeded, ${failed.length} failed`,
       data: { success, failed },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error during bulk upload",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error during bulk upload");
   }
 };
 
@@ -677,11 +666,8 @@ export const syncDeleteUsers = async (
       message: `Delete phase complete. ${deactivated.length} deactivated, ${skippedAdmins.length + skippedStaff.length} admins, officers and faculty left alone.`,
       data: { deactivated, skippedAdmins, skippedStaff },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error during sync delete",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error during sync delete");
   }
 };
 
@@ -797,10 +783,10 @@ export const syncUpsertBatch = async (
           hashPassword,
         );
         successful++;
-      } catch (error: any) {
+      } catch (error) {
         failedUsers.push({
           studentNumber: userData.studentNumber || "UNKNOWN",
-          reason: error.message || "Unknown error occurred",
+          reason: (error instanceof Error && error.message) || "Unknown error occurred",
           data: userData,
         });
       }
@@ -816,11 +802,8 @@ export const syncUpsertBatch = async (
       success: true,
       data: { successful, failed: failedUsers.length, failedUsers },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error during sync upsert batch",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error during sync upsert batch");
   }
 };
 
@@ -936,7 +919,7 @@ export const updateUser = async (
           : `Your membership details have been updated. Type: ${updatedUser.membershipStatus.membershipType}`,
         "membership",
         updatedUser._id,
-        "Membership" as any,
+        "Membership",
       );
     }
 
@@ -951,7 +934,7 @@ export const updateUser = async (
     const changedFields = profileFields.filter(
       (field) =>
         updates[field] !== undefined &&
-        updates[field] !== (originalUser as any)[field],
+        updates[field] !== (originalUser as unknown as Record<string, unknown>)[field],
     );
 
     if (changedFields.length > 0) {
@@ -970,11 +953,8 @@ export const updateUser = async (
       message: "User updated successfully",
       data: updatedUser,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error updating user",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error updating user");
   }
 };
 
@@ -1045,11 +1025,8 @@ export const toggleUserStatus = async (
       } successfully`,
       data: user,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error toggling user status",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error toggling user status");
   }
 };
 
@@ -1116,11 +1093,8 @@ export const deleteUser = async (
       message: "User deleted successfully",
       data: { id },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error deleting user",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error deleting user");
   }
 };
 
@@ -1203,11 +1177,8 @@ export const sendFirstLoginCode = async (
         firstLoginCodeExpires: user.firstLoginCodeExpires,
       },
     });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Error sending first-login code",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error sending first-login code");
   }
 };
 
@@ -1343,11 +1314,8 @@ export const getUserStats = async (
         yearLevelStats,
       },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching user statistics",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error fetching user statistics");
   }
 };
 
@@ -1384,10 +1352,7 @@ export const searchUsers = async (
       success: true,
       data: users,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error searching users",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error searching users");
   }
 };

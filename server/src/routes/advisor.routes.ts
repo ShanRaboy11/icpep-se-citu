@@ -1,8 +1,10 @@
 import express from 'express';
+import { validateObjectId } from '../middleware/validate-id';
 import { createAdvisor, getAdvisors, getAllAdvisors, updateAdvisor, deleteAdvisor } from '../controllers/advisor.controller';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.middleware';
 
 const router = express.Router();
+router.param('id', validateObjectId);
 
 // Public routes
 router.get('/', getAdvisors);

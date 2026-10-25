@@ -25,9 +25,10 @@ import {
 import mongoose from "mongoose";
 import { notifyTargetAudience } from "../utils/notification";
 import sendEmail from "../utils/mail/email";
+import { respondWithError } from "../utils/http-error";
 
 // Local Multer file shape (avoid relying on global Express.Multer augmentation)
-type MulterFile = MulterLocal.MulterFile;
+type MulterFile = Express.Multer.File;
 
 // Multer-aware request type without extending Express.Request (avoids
 // incompatible declaration issues when other libs augment Request)
@@ -44,6 +45,7 @@ interface EventQuery {
   priority?: string;
   eventDate?: { $gte?: Date; $lte?: Date };
   $or?: Array<Record<string, unknown>>;
+  $and?: Array<Record<string, unknown>>;
 }
 
 interface UserEventQuery {
@@ -96,8 +98,8 @@ export const createEvent = async (
     let coverImage: string | null = null;
     let galleryImages: string[] = [];
 
-    const multerFiles = (req as any).files as MulterFile[] | undefined;
-    const singleFile = (req as any).file as MulterFile | undefined;
+    const multerFiles = req.files as MulterFile[] | undefined;
+    const singleFile = req.file as MulterFile | undefined;
 
     if (Array.isArray(multerFiles) && multerFiles.length > 0) {
       try {
@@ -109,7 +111,7 @@ export const createEvent = async (
         }
         const results = await uploadMultipleToCloudinary(buffers, "events");
         galleryImages = results
-          .map((r) => (r as any).secure_url)
+          .map((r) => r.secure_url)
           .filter(Boolean);
         // Ensure coverImage is set to first uploaded image if not already
         if (!coverImage && galleryImages.length > 0) {
@@ -127,7 +129,7 @@ export const createEvent = async (
                 f.buffer as Buffer,
                 "events"
               );
-              const url = (singleResult as any).secure_url;
+              const url = singleResult.secure_url;
               if (url) galleryImages.push(url);
               if (!coverImage && url) coverImage = url;
             } catch {
@@ -144,10 +146,7 @@ export const createEvent = async (
             return;
           }
         } catch (fallbackErr) {
-          res.status(500).json({
-            success: false,
-            message: "Failed to upload images",
-          });
+          respondWithError(res, fallbackErr, "Failed to upload images");
           return;
         }
       }
@@ -162,14 +161,11 @@ export const createEvent = async (
           return;
         }
         const result = await uploadToCloudinary(buf, "events");
-        const url = (result as any).secure_url;
+        const url = result.secure_url;
         galleryImages = url ? [url] : [];
         coverImage = url || coverImage;
-      } catch {
-        res.status(500).json({
-          success: false,
-          message: "Failed to upload cover image",
-        });
+      } catch (error) {
+        respondWithError(res, error, "Failed to upload cover image");
         return;
       }
     }
@@ -205,7 +201,7 @@ export const createEvent = async (
       return;
     }
 
-    const eventData: any = {
+    const eventData: Record<string, unknown> = {
       title,
       description,
       content: sanitizeRichText(String(content)),
@@ -317,7 +313,7 @@ export const getEvents = async (
     }
 
     // Visibility (drafts) and expiry must both hold
-    (query as any).$and = [
+    query.$and = [
       listVisibility(req.user, isPublished as string | undefined),
       {
         $or: [
@@ -422,8 +418,8 @@ export const updateEvent = async (
 
     // Handle new cover image upload
     // Handle uploaded files (multiple) during update
-    const reqFiles = (req as any).files as MulterFile[] | undefined;
-    const reqSingle = (req as any).file as MulterFile | undefined;
+    const reqFiles = req.files as MulterFile[] | undefined;
+    const reqSingle = req.file as MulterFile | undefined;
     if (Array.isArray(reqFiles) && reqFiles.length > 0) {
       try {
         const buffers = reqFiles
@@ -434,7 +430,7 @@ export const updateEvent = async (
         }
         const results = await uploadMultipleToCloudinary(buffers, "events");
         const newUrls = results
-          .map((r) => (r as any).secure_url)
+          .map((r) => r.secure_url)
           .filter(Boolean);
         // Preserve existing galleryImages and append new ones
         const existing = Array.isArray(event.galleryImages)
@@ -444,12 +440,7 @@ export const updateEvent = async (
         if (!event.coverImage && newUrls.length > 0)
           req.body.coverImage = newUrls[0];
       } catch (err) {
-        res
-          .status(500)
-          .json({
-            success: false,
-            message: "Failed to upload images",
-          });
+        respondWithError(res, err, "Failed to upload images");
         return;
       }
     } else if (reqSingle) {
@@ -503,11 +494,12 @@ export const updateEvent = async (
     const requestWantsPublish = String(req.body.isPublished) === "true";
 
     // Only whitelisted fields can change. Authorship, views and ids never do.
-    const updateData: any = pickFields(req.body, EVENT_EDITABLE_FIELDS);
+    const updateData: Record<string, unknown> = pickFields(req.body, EVENT_EDITABLE_FIELDS);
 
     if (typeof updateData.content === "string") {
-      updateData.content = sanitizeRichText(updateData.content);
-      if (isBlankRichText(updateData.content)) {
+      const content = sanitizeRichText(updateData.content);
+      updateData.content = content;
+      if (isBlankRichText(content)) {
         res.status(400).json({ success: false, message: "Content cannot be empty" });
         return;
       }

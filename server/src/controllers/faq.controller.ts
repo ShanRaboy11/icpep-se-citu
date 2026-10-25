@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import FAQ from '../models/faq';
 import { MAX_FAQS, parseFaqInput } from '../utils/content/site-content';
+import { respondWithError } from '../utils/http-error';
 
 export const createFAQ = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -33,10 +34,7 @@ export const createFAQ = async (req: Request, res: Response): Promise<void> => {
       data: savedFAQ,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create FAQ',
-    });
+    respondWithError(res, error, 'Failed to create FAQ');
   }
 };
 
@@ -48,10 +46,7 @@ export const getFAQs = async (req: Request, res: Response): Promise<void> => {
       data: faqs,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch FAQs',
-    });
+    respondWithError(res, error, 'Failed to fetch FAQs');
   }
 };
 
@@ -63,10 +58,7 @@ export const getAllFAQs = async (req: Request, res: Response): Promise<void> => 
       data: faqs,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch all FAQs',
-    });
+    respondWithError(res, error, 'Failed to fetch all FAQs');
   }
 };
 
@@ -102,10 +94,7 @@ export const updateFAQ = async (req: Request, res: Response): Promise<void> => {
       data: updatedFAQ,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update FAQ',
-    });
+    respondWithError(res, error, 'Failed to update FAQ');
   }
 };
 
@@ -128,9 +117,6 @@ export const deleteFAQ = async (req: Request, res: Response): Promise<void> => {
       message: 'FAQ deleted successfully',
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete FAQ',
-    });
+    respondWithError(res, error, 'Failed to delete FAQ');
   }
 };

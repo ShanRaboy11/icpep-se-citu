@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import AuditLog from "../models/auditLog";
+import { respondWithError } from "../utils/http-error";
 
 // @desc    List audit records, newest first
 // @route   GET /api/audit
@@ -27,7 +28,7 @@ export const getAuditLog = async (req: Request, res: Response): Promise<void> =>
       data: entries,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
-  } catch {
-    res.status(500).json({ success: false, message: "Error fetching audit log" });
+  } catch (error) {
+    respondWithError(res, error, "Error fetching audit log");
   }
 };

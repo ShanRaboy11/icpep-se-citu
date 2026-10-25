@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import User from "../models/user";
 import Event from "../models/event";
+import { respondWithError } from "../utils/http-error";
 
 const CACHE_MS = 5 * 60 * 1000;
 let cached: { at: number; data: { members: number; events: number } } | null = null;
@@ -16,8 +17,8 @@ export const getPublicStats = async (req: Request, res: Response): Promise<void>
     }
 
     res.status(200).json({ success: true, data: cached.data });
-  } catch {
-    res.status(500).json({ success: false, message: "Error fetching stats" });
+  } catch (error) {
+    respondWithError(res, error, "Error fetching stats");
   }
 };
 
