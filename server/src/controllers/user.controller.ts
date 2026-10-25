@@ -10,6 +10,7 @@ import { parseGender } from "../utils/gender";
 import { queueFirstLoginEmail } from "../utils/mail/first-login-mail";
 import { recordAudit } from "../utils/audit";
 import { respondWithError } from "../utils/http-error";
+import { NON_MEMBER, usesMembership } from "../utils/membership";
 
 // Interface for request with authenticated user
 export interface AuthRequest extends Request {
@@ -879,6 +880,10 @@ export const updateUser = async (
     );
 
     if ("gender" in updates) updates.gender = parseGender(updates.gender);
+
+    if (!usesMembership((updates.role as string | undefined) ?? originalUser.role)) {
+      updates.membershipStatus = { ...NON_MEMBER };
+    }
 
     const updatedUser = await User.findByIdAndUpdate(
       id,

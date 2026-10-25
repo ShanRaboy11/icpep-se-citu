@@ -103,9 +103,9 @@ export default function EditUserModal({
       role: role,
       yearLevel: formData.yearLevel ? parseInt(formData.yearLevel) : undefined,
       membershipStatus: {
-        isMember: formData.membershipStatus !== "non-member",
+        isMember: role !== "faculty" && formData.membershipStatus !== "non-member",
         membershipType:
-          formData.membershipStatus === "non-member"
+          role === "faculty" || formData.membershipStatus === "non-member"
             ? null
             : (formData.membershipStatus as "local" | "regional" | "both"),
       },
@@ -265,17 +265,19 @@ export default function EditUserModal({
             </div>
           </div>
 
-          <div className="mb-4">
-            <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
-              Membership Status
-            </label>
-            <Dropdown
-              variant="field"
-              value={formData.membershipStatus}
-              options={MEMBERSHIP_OPTIONS}
-              onChange={(value) => setFormData((prev) => ({ ...prev, membershipStatus: value }))}
-            />
-          </div>
+          {formData.role !== "faculty" && (
+            <div className="mb-4">
+              <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
+                Membership Status
+              </label>
+              <Dropdown
+                variant="field"
+                value={formData.membershipStatus}
+                options={MEMBERSHIP_OPTIONS}
+                onChange={(value) => setFormData((prev) => ({ ...prev, membershipStatus: value }))}
+              />
+            </div>
+          )}
 
           <div className="mb-6">
             <label className="block font-raleway text-sm font-semibold text-gray-700 mb-3">

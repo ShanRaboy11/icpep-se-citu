@@ -134,7 +134,10 @@ export default function UserTableRow({
         </td>
         
         <td data-label="Membership" className="px-4 py-4 whitespace-nowrap text-center">
-          <span
+          {user.role === "faculty" ? (
+            <span className="text-gray-300">—</span>
+          ) : (
+            <span
             className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold font-raleway border ${getMembershipBadgeColor(
               user.membershipStatus.isMember,
               user.membershipStatus.membershipType
@@ -148,6 +151,7 @@ export default function UserTableRow({
               ? "Both"
               : "Local"}
           </span>
+          )}
         </td>
         
         <td data-label="Registered By" className="px-4 py-4 whitespace-nowrap text-center">

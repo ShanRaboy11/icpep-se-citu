@@ -90,14 +90,16 @@ export function RolenMembershipInformation({
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-colors">
-          <span className="text-gray-600 font-raleway font-semibold text-sm mb-2 sm:mb-0 self-start sm:self-center">
-            Membership
-          </span>
-          <div className="flex sm:justify-end">
-            <MembershipBadge type={membership} />
+        {role !== "faculty" && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-colors">
+            <span className="text-gray-600 font-raleway font-semibold text-sm mb-2 sm:mb-0 self-start sm:self-center">
+              Membership
+            </span>
+            <div className="flex sm:justify-end">
+              <MembershipBadge type={membership} />
+            </div>
           </div>
-        </div>
+          )}
 
       </div>
     </div>

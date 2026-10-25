@@ -105,4 +105,10 @@ describe("updateUser", () => {
     const res = await update({ id: OTHER, role: "admin" }, "nope", {});
     expect(res.statusCode).toBe(400);
   });
+
+  it("never keeps faculty as members, whatever the form sends", async () => {
+    findById.mockResolvedValue(target("faculty"));
+    await update({ id: OTHER, role: "admin" }, ME, { membershipStatus: { isMember: true, membershipType: "local" } });
+    expect(appliedUpdates().membershipStatus).toEqual({ isMember: false, membershipType: null });
+  });
 });

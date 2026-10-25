@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
+import { NON_MEMBER, usesMembership } from "../utils/membership";
 
 // Interface for User document
 export interface IUser extends Document {
@@ -208,6 +209,10 @@ userSchema.virtual("registeredByName").get(function (this: IUser) {
 
 // Pre-save middleware to hash password
 userSchema.pre("save", async function (this: IUser, next) {
+  if (!usesMembership(this.role)) {
+    this.membershipStatus = { ...NON_MEMBER };
+  }
+
   // A changed password revokes every token issued before it, unless the
   // caller is the signed-in owner changing it themselves ($locals.keepSessions).
   if (this.isModified("password") && !this.isNew && !this.$locals.keepSessions) {

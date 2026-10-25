@@ -185,57 +185,59 @@ export default function ViewUserModal({
             </div>
           </div>
 
-          <div className="mb-4">
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="p-1.5 bg-primary1/10 rounded-lg text-primary1 shrink-0">
-                <Award className="w-4 h-4" />
+          {user.role !== "faculty" && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2.5 mb-2">
+                <div className="p-1.5 bg-primary1/10 rounded-lg text-primary1 shrink-0">
+                  <Award className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-rubik text-base font-bold text-primary3 leading-tight">
+                    Membership Information
+                  </h4>
+                </div>
               </div>
-              <div>
-                <h4 className="font-rubik text-base font-bold text-primary3 leading-tight">
-                  Membership Information
-                </h4>
-              </div>
-            </div>
-            <div className="bg-gray-50 px-3 py-2.5 rounded-xl space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="font-raleway text-sm text-gray-500">
-                  Membership Status
-                </p>
-                <span
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold font-raleway border ${
-                    user.membershipStatus.isMember
-                      ? "bg-green-100 text-green-700 border-green-200"
-                      : "bg-gray-100 text-gray-600 border-gray-200"
-                  }`}
-                >
-                  {user.membershipStatus.isMember ? "Member" : "Non-Member"}
-                </span>
-              </div>
-              {user.membershipStatus.isMember &&
-                user.membershipStatus.membershipType && (
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                    <p className="font-raleway text-sm text-gray-500">
-                      Membership Type
-                    </p>
-                    <span
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold font-raleway border ${
-                        user.membershipStatus.membershipType === "regional"
-                          ? "bg-primary1/10 text-primary1 border-primary1/30"
+              <div className="bg-gray-50 px-3 py-2.5 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="font-raleway text-sm text-gray-500">
+                    Membership Status
+                  </p>
+                  <span
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold font-raleway border ${
+                      user.membershipStatus.isMember
+                        ? "bg-green-100 text-green-700 border-green-200"
+                        : "bg-gray-100 text-gray-600 border-gray-200"
+                    }`}
+                  >
+                    {user.membershipStatus.isMember ? "Member" : "Non-Member"}
+                  </span>
+                </div>
+                {user.membershipStatus.isMember &&
+                  user.membershipStatus.membershipType && (
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                      <p className="font-raleway text-sm text-gray-500">
+                        Membership Type
+                      </p>
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold font-raleway border ${
+                          user.membershipStatus.membershipType === "regional"
+                            ? "bg-primary1/10 text-primary1 border-primary1/30"
+                            : user.membershipStatus.membershipType === "both"
+                            ? "bg-purple-100 text-purple-700 border-purple-200"
+                            : "bg-secondary2/10 text-secondary2 border-secondary2/30"
+                        }`}
+                      >
+                        {user.membershipStatus.membershipType === "regional"
+                          ? "Regional"
                           : user.membershipStatus.membershipType === "both"
-                          ? "bg-purple-100 text-purple-700 border-purple-200"
-                          : "bg-secondary2/10 text-secondary2 border-secondary2/30"
-                      }`}
-                    >
-                      {user.membershipStatus.membershipType === "regional"
-                        ? "Regional"
-                        : user.membershipStatus.membershipType === "both"
-                        ? "Both (Local & Regional)"
-                        : "Local"}
-                    </span>
-                  </div>
-                )}
+                          ? "Both (Local & Regional)"
+                          : "Local"}
+                      </span>
+                    </div>
+                  )}
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <div className="flex items-center gap-2.5 mb-2">

@@ -364,17 +364,19 @@ export default function AddUserModal({
                 />
               </div>
 
-              <div>
-                <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
-                  Membership Status
-                </label>
-                <Dropdown
-                  variant="field"
-                  value={formData.membershipStatus}
-                  options={MEMBERSHIP_OPTIONS}
-                  onChange={(value) => setFormData((prev) => ({ ...prev, membershipStatus: value }))}
-                />
-              </div>
+              {!isFaculty && (
+                <div>
+                  <label className="block font-raleway text-sm font-semibold text-gray-700 mb-2">
+                    Membership Status
+                  </label>
+                  <Dropdown
+                    variant="field"
+                    value={formData.membershipStatus}
+                    options={MEMBERSHIP_OPTIONS}
+                    onChange={(value) => setFormData((prev) => ({ ...prev, membershipStatus: value }))}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
