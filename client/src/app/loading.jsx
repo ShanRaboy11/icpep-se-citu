@@ -1,5 +1,9 @@
-import { LoadingScreen } from "./components/loading";
+"use client";
+
+import { LoadingScreen } from "./components/feedback/loading";
+import { useDelayedFlag } from "./components/feedback/skeleton";
 
 export default function Loading() {
-  return <LoadingScreen showEntrance={false} />;
+  const slow = useDelayedFlag(true, 350);
+  return slow ? <LoadingScreen /> : null;
 }

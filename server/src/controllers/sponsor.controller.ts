@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Sponsor from '../models/sponsor';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary } from '../utils/media/cloudinary';
+import { respondWithError } from '../utils/http-error';
 
 export const createSponsor = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -29,11 +30,7 @@ export const createSponsor = async (req: Request, res: Response): Promise<void> 
       data: savedSponsor,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create sponsor',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to create sponsor');
   }
 };
 
@@ -45,11 +42,7 @@ export const getSponsors = async (req: Request, res: Response): Promise<void> =>
       data: sponsors,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch sponsors',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to fetch sponsors');
   }
 };
 
@@ -61,11 +54,7 @@ export const getAllSponsors = async (req: Request, res: Response): Promise<void>
       data: sponsors,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch sponsors',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to fetch sponsors');
   }
 };
 
@@ -98,11 +87,7 @@ export const updateSponsor = async (req: Request, res: Response): Promise<void> 
       data: updatedSponsor,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update sponsor',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to update sponsor');
   }
 };
 
@@ -121,10 +106,6 @@ export const deleteSponsor = async (req: Request, res: Response): Promise<void> 
       message: 'Sponsor deleted successfully',
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete sponsor',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to delete sponsor');
   }
 };

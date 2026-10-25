@@ -2,11 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, AlertCircle, X, Check, CheckCircle } from "lucide-react";
+import Checkbox from "@/app/components/ui/checkbox";
 import Image from "next/image";
-import Button from "@/app/components/button";
+import axios from "axios";
+import Button from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import { api, errorMessage } from "@/app/services/api-client";
+import { clearSession, saveSession } from "@/app/utils/session";
 const REMEMBERED_STUDENT_NUMBER_KEY = "rememberedStudentNumber";
 
 const validatePassword = (password: string) => {
@@ -23,21 +25,19 @@ const validatePassword = (password: string) => {
   return { isValid, checks };
 };
 
-const apiCall = async (endpoint: string, options: RequestInit = {}) => {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    headers: {
-      "Content-Type": "application/json",
-    },
-    ...options,
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "An error occurred");
+// Goes through the shared axios client so the /api prefix is normalized the
+// same way as everywhere else (see services/api-client.ts).
+const apiCall = async (endpoint: string, options: { method?: string; body?: string } = {}) => {
+  try {
+    const response = await api.request({
+      url: endpoint,
+      method: options.method ?? "GET",
+      data: options.body ? JSON.parse(options.body) : undefined,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(errorMessage(error, "An error occurred"));
   }
-
-  return data;
 };
 
 type PasswordChecks = ReturnType<typeof validatePassword>["checks"];
@@ -153,13 +153,7 @@ export default function Login() {
         }),
       });
 
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("userId", data.user._id);
-      localStorage.setItem("userRole", data.user.role);
-      localStorage.setItem(
-        "userName",
-        data.user.fullName || `${data.user.firstName} ${data.user.lastName}`,
-      );
+      saveSession(data.user);
 
       if (rememberMe) {
         localStorage.setItem(
@@ -236,30 +230,8 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("authToken");
-
-      const response = await fetch(
-        `${API_BASE_URL}/auth/first-login-password`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            newPassword,
-          }),
-        },
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (data.errors && Array.isArray(data.errors)) {
-          throw new Error(data.errors.join(". "));
-        }
-        throw new Error(data.message || "Password change failed");
-      }
+      // The shared client attaches the stored token itself.
+      await api.post("/auth/first-login-password", { newPassword });
 
       setError("");
       setSuccessMessage({
@@ -269,9 +241,15 @@ export default function Login() {
       });
       setShowSuccessModal(true);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Password change failed";
-      setError(errorMessage);
+      // Password rule failures come back as a list; show each one.
+      const rules = axios.isAxiosError<{ errors?: string[] }>(error)
+        ? error.response?.data?.errors
+        : undefined;
+      const message =
+        Array.isArray(rules) && rules.length > 0
+          ? rules.join(". ")
+          : errorMessage(error, "Password change failed");
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -280,9 +258,7 @@ export default function Login() {
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
 
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userRole");
+    clearSession();
     setRequiresPasswordChange(false);
     setIsForgotPassword(false);
     setForgotPasswordStep(1);
@@ -313,20 +289,16 @@ export default function Login() {
     setError("");
 
     try {
-      const data = await apiCall("/auth/forgot-password", {
+      await apiCall("/auth/forgot-password", {
         method: "POST",
         body: JSON.stringify({ studentNumber }),
       });
 
-      if (data.email) {
-        const [user, domain] = data.email.split("@");
-        const masked = `${user.slice(0, 1)}***${user.slice(-1)}@${domain}`;
-        setMaskedEmail(masked);
-      }
-
+      // The server answers the same way whether or not the account exists, so
+      // the step always moves on and never reveals an address.
       setForgotPasswordStep(2);
-    } catch (err: any) {
-      setError(err.message || "Failed to send reset code.");
+    } catch (err) {
+      setError((err instanceof Error && err.message) || "Failed to send reset code.");
     } finally {
       setIsLoading(false);
     }
@@ -350,8 +322,8 @@ export default function Login() {
       });
 
       setForgotPasswordStep(3);
-    } catch (err: any) {
-      setError(err.message || "Invalid code.");
+    } catch (err) {
+      setError((err instanceof Error && err.message) || "Invalid code.");
       setFieldErrors((prev) => ({ ...prev, resetCode: true }));
     } finally {
       setIsLoading(false);
@@ -406,8 +378,8 @@ export default function Login() {
           "Your password has been updated. Please log in with your new password to continue.",
       });
       setShowSuccessModal(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to reset password.");
+    } catch (err) {
+      setError((err instanceof Error && err.message) || "Failed to reset password.");
     } finally {
       setIsLoading(false);
     }
@@ -448,9 +420,7 @@ export default function Login() {
           "Are you sure? You need to change your password before accessing the system.",
         )
       ) {
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("userRole");
+        clearSession();
         router.push("/");
       }
     } else {
@@ -479,7 +449,7 @@ export default function Login() {
       <div className="relative z-10 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.04),0_20px_40px_rgba(0,0,0,0.08)] rounded-2xl px-8 py-10 sm:px-10 w-[90%] max-w-md text-gray-800 border border-gray-50/50">
         <div className="flex flex-col items-center mb-6">
           <Image
-            src="/brand/icpep-logo.png"
+            src="/brand/icpep-logo.avif"
             alt="ICpEP Logo"
             width={64}
             height={64}
@@ -498,7 +468,7 @@ export default function Login() {
               ? "Follow the steps to recover your account."
               : requiresPasswordChange
                 ? "For security reasons, you must change your password before accessing the system."
-                : "Please log in to access your account."}
+                : "Please log in to access your account. First time here? Use the one-time code emailed to your school email as your password."}
           </p>
         </div>
 
@@ -533,8 +503,8 @@ export default function Login() {
               )}
 
               <Button
-                variant="primary3"
-                className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+                variant="hero"
+                className="w-full mt-10"
                 type="submit"
                 disabled={isLoading}
               >
@@ -583,8 +553,8 @@ export default function Login() {
               )}
 
               <Button
-                variant="primary3"
-                className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+                variant="hero"
+                className="w-full mt-10"
                 type="submit"
                 disabled={isLoading}
               >
@@ -676,8 +646,8 @@ export default function Login() {
               <PasswordRequirements checks={passwordValidation.checks} />
 
               <Button
-                variant="primary3"
-                className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+                variant="hero"
+                className="w-full mt-10"
                 type="submit"
                 disabled={isLoading || !passwordValidation.isValid}
               >
@@ -753,12 +723,7 @@ export default function Login() {
 
             <div className="flex items-center justify-between text-sm font-[Raleway]">
               <label className="flex items-center gap-2 cursor-pointer group">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-sky-500 focus:ring-sky-500 focus:ring-offset-0 transition-all cursor-pointer"
-                />
+                <Checkbox checked={rememberMe} onChange={setRememberMe} />
                 <span className="text-gray-600 group-hover:text-gray-900 transition-colors">
                   Remember me
                 </span>
@@ -776,8 +741,8 @@ export default function Login() {
             </div>
 
             <Button
-              variant="primary3"
-              className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+              variant="hero"
+              className="w-full mt-10"
               type="submit"
               disabled={isLoading}
             >
@@ -852,8 +817,8 @@ export default function Login() {
             <PasswordRequirements checks={passwordValidation.checks} />
 
             <Button
-              variant="primary3"
-              className="sm:block border-2 w-full rounded-full bg-sky-400 text-white font-medium mt-10 hover:bg-primary3"
+              variant="hero"
+              className="w-full mt-10"
               type="submit"
               disabled={isLoading || !passwordValidation.isValid}
             >
@@ -905,7 +870,7 @@ export default function Login() {
 
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full animate-scaleIn">
+          <div className="bg-white rounded-2xl p-8 shadow-xl max-w-md w-full animate-scaleIn">
             <div className="text-center">
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
                 <CheckCircle className="h-10 w-10 text-green-600" />
@@ -920,8 +885,8 @@ export default function Login() {
               </p>
 
               <Button
-                variant="primary3"
-                className="w-full rounded-full bg-sky-400 text-white font-raleway font-semibold hover:bg-primary3 transition-colors duration-300"
+                variant="hero"
+                className="w-full"
                 onClick={handleSuccessModalClose}
               >
                 Continue to Login

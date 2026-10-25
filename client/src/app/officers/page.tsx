@@ -3,13 +3,13 @@
 import { FC } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import Header from "../components/header";
-import Footer from "../components/footer";
-import Grid from "../components/grid";
-import SelectionCard from "./components/selection-card";
-import BackButton from "../components/back-button";
-import PageHeader from "../components/page-header";
-import { departments } from "./utils/officers";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import Grid from "../components/layout/grid";
+import SelectionCard from "../components/officers/selection-card";
+import BackButton from "../components/ui/back-button";
+import PageHeader from "../components/ui/page-header";
+import { departments } from "../utils/officers/officers";
 
 const committeeData = Object.entries(departments)
   .filter(([slug]) => slug !== "council")
@@ -28,7 +28,7 @@ const OfficerSelectionPage: FC = () => {
     : "Select a department to view the officers and members dedicated to serving our chapter.";
 
   return (
-    <div className="min-h-screen bg-[#004e89] flex flex-col relative overflow-x-hidden">
+    <div className="min-h-screen bg-pageblue flex flex-col relative overflow-x-hidden">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden grow">
         <Grid />
 
@@ -40,7 +40,6 @@ const OfficerSelectionPage: FC = () => {
               <BackButton onClick={() => router.back()} title="Back to About" />
             </div>
 
-            {/* header */}
             <PageHeader
               className="mb-16 text-center"
               badge={pillText}
@@ -50,7 +49,6 @@ const OfficerSelectionPage: FC = () => {
             />
 
             <section className="w-full max-w-6xl mx-auto flex flex-col gap-8 mb-24">
-              {/* council */}
               <div className="w-full">
                 <SelectionCard
                   title="Executive Council"
@@ -62,7 +60,6 @@ const OfficerSelectionPage: FC = () => {
                 />
               </div>
 
-              {/* divider */}
               <div className="flex items-center gap-4 py-8">
                 <div className="h-12 w-1.5 rounded-full bg-linear-to-b from-primary3 to-secondary1 shadow-sm"></div>
                 <div className="flex flex-col">
@@ -75,7 +72,6 @@ const OfficerSelectionPage: FC = () => {
                 </div>
               </div>
 
-              {/* committees */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {committeeData.map((committee) => (
                   <SelectionCard

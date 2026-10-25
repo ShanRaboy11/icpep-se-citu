@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import User from '../models/user';
 import { getJwtSecret } from '../config/env';
+import { readToken } from '../utils/auth/session-cookie';
 
 export interface JwtPayload {
   id: string;
@@ -20,6 +21,15 @@ declare global {
   }
 }
 
+// Until a new account has set its own password, the only things its token can
+// do are set that password, look itself up and sign out.
+const FIRST_LOGIN_ALLOWED_PATHS = new Set([
+  '/api/auth/first-login-password',
+  '/api/auth/change-password',
+  '/api/auth/me',
+  '/api/auth/logout',
+]);
+
 // Verifies the JWT, then checks the account behind it: a deactivated or
 // deleted user is rejected, and the role is the current one from the database
 // rather than whatever the token was issued with.
@@ -28,8 +38,7 @@ export const authenticateToken = async (
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = readToken(req);
 
   if (!token) {
     return res.status(401).json({
@@ -56,7 +65,9 @@ export const authenticateToken = async (
   }
 
   try {
-    const account = await User.findById(decoded.id).select('role isActive tokenVersion').lean();
+    const account = await User.findById(decoded.id)
+      .select('role isActive tokenVersion +firstLogin')
+      .lean();
 
     if (
       !account ||
@@ -69,6 +80,14 @@ export const authenticateToken = async (
       });
     }
 
+    const path = req.originalUrl.split('?')[0].replace(/\/+$/, '');
+    if (account.firstLogin && !FIRST_LOGIN_ALLOWED_PATHS.has(path)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Please set a new password before continuing.',
+      });
+    }
+
     req.user = { ...decoded, role: account.role };
     next();
   } catch {
@@ -77,6 +96,34 @@ export const authenticateToken = async (
       message: 'Could not verify your session.',
     });
   }
+};
+
+// Like authenticateToken, but never rejects: public routes use it to tell
+// staff apart from anonymous visitors (drafts, private fields). An invalid,
+// expired or revoked token just leaves req.user unset.
+export const optionalAuth = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction
+) => {
+  const token = readToken(req);
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, getJwtSecret()) as JwtPayload;
+    if (!mongoose.isValidObjectId(decoded.id)) return next();
+    const account = await User.findById(decoded.id).select('role isActive tokenVersion').lean();
+    if (
+      account &&
+      account.isActive &&
+      (decoded.tv ?? 0) === (account.tokenVersion ?? 0)
+    ) {
+      req.user = { ...decoded, role: account.role };
+    }
+  } catch {
+    // anonymous — fine for a public route
+  }
+  next();
 };
 
 // Alias for authenticateToken

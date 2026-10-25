@@ -1,13 +1,26 @@
 import { Request, Response } from 'express';
 import FAQ from '../models/faq';
+import { MAX_FAQS, parseFaqInput } from '../utils/content/site-content';
+import { respondWithError } from '../utils/http-error';
 
 export const createFAQ = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { question, answer, category, isActive, displayOrder } = req.body;
+    const { category, isActive, displayOrder } = req.body;
+
+    const parsed = parseFaqInput(req.body ?? {}, { partial: false });
+    if ('error' in parsed) {
+      res.status(400).json({ success: false, message: parsed.error });
+      return;
+    }
+
+    if ((await FAQ.countDocuments()) >= MAX_FAQS) {
+      res.status(400).json({ success: false, message: `You can have up to ${MAX_FAQS} FAQs. Remove one to add another.` });
+      return;
+    }
 
     const newFAQ = new FAQ({
-      question,
-      answer,
+      question: parsed.values.question,
+      answer: parsed.values.answer,
       category,
       isActive: isActive !== undefined ? isActive : true,
       displayOrder: displayOrder || 0,
@@ -21,11 +34,7 @@ export const createFAQ = async (req: Request, res: Response): Promise<void> => {
       data: savedFAQ,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create FAQ',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to create FAQ');
   }
 };
 
@@ -37,11 +46,7 @@ export const getFAQs = async (req: Request, res: Response): Promise<void> => {
       data: faqs,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch FAQs',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to fetch FAQs');
   }
 };
 
@@ -53,18 +58,25 @@ export const getAllFAQs = async (req: Request, res: Response): Promise<void> => 
       data: faqs,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch all FAQs',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to fetch all FAQs');
   }
 };
 
 export const updateFAQ = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const { category, isActive, displayOrder } = req.body ?? {};
+
+    const parsed = parseFaqInput(req.body ?? {}, { partial: true });
+    if ('error' in parsed) {
+      res.status(400).json({ success: false, message: parsed.error });
+      return;
+    }
+
+    const updateData: Record<string, unknown> = { ...parsed.values };
+    if (category !== undefined) updateData.category = category;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (displayOrder !== undefined) updateData.displayOrder = displayOrder;
 
     const updatedFAQ = await FAQ.findByIdAndUpdate(id, updateData, { new: true });
 
@@ -82,11 +94,7 @@ export const updateFAQ = async (req: Request, res: Response): Promise<void> => {
       data: updatedFAQ,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update FAQ',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to update FAQ');
   }
 };
 
@@ -109,10 +117,6 @@ export const deleteFAQ = async (req: Request, res: Response): Promise<void> => {
       message: 'FAQ deleted successfully',
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete FAQ',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to delete FAQ');
   }
 };

@@ -1,10 +1,10 @@
 "use client";
 
-import Header from "../../components/header";
-import Footer from "../../components/footer";
-import Grid from "../../components/grid";
-import BackButton from "../../components/back-button";
-import Button from "../../components/button";
+import Header from "../../components/layout/header";
+import Footer from "../../components/layout/footer";
+import Grid from "../../components/layout/grid";
+import BackButton from "../../components/ui/back-button";
+import Button from "../../components/ui/button";
 import { FunctionComponent, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -240,23 +240,19 @@ const CommeetPage: FunctionComponent = () => {
   const hasConfirmedSlots = confirmedSlots.length > 0;
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89] select-none">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue select-none">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
-        {/* Background Grid Pattern */}
         <Grid />
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
 
           <div className="grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-24">
-            {/* Back Button */}
             <div className="mb-8 flex justify-start">
               <BackButton onClick={() => router.back()} title="Go Back" />
             </div>
 
-            {/* Centered Content Container */}
             <div className="max-w-4xl mx-auto relative">
-              {/* 1. Meeting Details Section */}
               <div className="text-left mb-12">
                 <h1 className="font-rubik text-3xl sm:text-4xl font-bold text-primary3 leading-tight mb-6">
                   {meeting?.title || "Loading..."}
@@ -295,7 +291,6 @@ const CommeetPage: FunctionComponent = () => {
                 </div>
               </div>
 
-              {/* 2. Availability Action Header */}
               <div className="flex flex-row justify-between items-center mb-6 gap-4">
                 <div className="flex flex-col">
                   <h3 className="text-xl sm:text-2xl font-bold text-gray-800 font-rubik leading-tight">
@@ -310,7 +305,6 @@ const CommeetPage: FunctionComponent = () => {
                   </p>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="shrink-0">
                   {!isEditing ? (
                     <Button
@@ -354,8 +348,7 @@ const CommeetPage: FunctionComponent = () => {
                 </div>
               </div>
 
-              {/* 3. Timeline Grid Container */}
-              <div className="w-full bg-white rounded-4xl border border-gray-200 shadow-lg p-4 sm:p-8 transition-all duration-300 hover:shadow-primary1/40 hover:-translate-y-2 relative z-20">
+              <div className="w-full bg-white rounded-4xl border border-gray-200 shadow-md p-4 sm:p-8 transition-all duration-300 hover:shadow-primary1/40 hover:-translate-y-2 relative z-20">
                 {/* Header Row 1: [Month Year] ... [ < > ] */}
                 <div className="flex justify-between items-center mb-6">
                   <div className="text-xl sm:text-2xl text-gray-900 font-bold font-rubik">
@@ -383,7 +376,6 @@ const CommeetPage: FunctionComponent = () => {
 
                 {/* Header Row 2: PST + Date Columns */}
                 <div className="flex w-full mb-2">
-                  {/* PST Label */}
                   <div
                     className={`${timeColWidth} shrink-0 flex items-end justify-end pr-3 pb-2`}
                   >
@@ -392,7 +384,6 @@ const CommeetPage: FunctionComponent = () => {
                     </div>
                   </div>
 
-                  {/* Date Columns Headers */}
                   <div className="flex-1 flex">
                     {visibleDates.map((dateObj, index) => (
                       <div
@@ -416,7 +407,6 @@ const CommeetPage: FunctionComponent = () => {
                   </div>
                 </div>
 
-                {/* The Grid Body */}
                 <div
                   className="flex w-full select-none"
                   onMouseLeave={() => setIsDragging(false)}
@@ -432,7 +422,6 @@ const CommeetPage: FunctionComponent = () => {
                         </span>
                       </div>
                     ))}
-                    {/* Final Time Label (Bottom Line) */}
                     <div className="h-0 relative">
                       <span className="text-xs sm:text-sm text-gray-400 font-bold font-raleway absolute top-0 right-0 transform -translate-y-1/2">
                         {formatTime(times[times.length - 1] + 1)}
@@ -527,12 +516,10 @@ const CommeetPage: FunctionComponent = () => {
                   </div>
                 </div>
 
-                {/* Footer Text (Inside Card) */}
                 <div className="mt-8 text-center text-gray-400 text-xs font-medium font-raleway">
                   All times shown in local time (PST)
                 </div>
 
-                {/* Continue Button (Inside Card, Below PST Note) */}
                 <div
                   className={`overflow-hidden transition-all duration-500 ease-in-out ${
                     confirmedSlots.length > 0 && !isEditing

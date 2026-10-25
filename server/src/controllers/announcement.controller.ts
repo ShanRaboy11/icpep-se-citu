@@ -1,16 +1,29 @@
 import { Request, Response, NextFunction } from "express";
 import Announcement from "../models/announcement";
-import { canManagePost } from "../utils/ownership";
+import { canManagePost } from "../utils/auth/ownership";
 import {
   uploadToCloudinary,
   uploadMultipleToCloudinary,
   deleteFromCloudinary,
-} from "../utils/cloudinary";
+} from "../utils/media/cloudinary";
 import mongoose from "mongoose";
 import { notifyTargetAudience } from "../utils/notification";
+import { listVisibility, canViewItem } from "../utils/auth/visibility";
+import { pickFields } from "../utils/pick";
+import { sanitizeRichText, isBlankRichText } from "../utils/content/rich-text";
+import { parseAttendance } from "../utils/content/attendance";
+import { respondWithError } from "../utils/http-error";
+
+const ANNOUNCEMENT_EDITABLE_FIELDS = [
+  "title", "description", "content", "type", "priority", "targetAudience",
+  "isPublished", "publishDate", "date", "expiryDate", "time", "location",
+  "organizer", "contact", "attendees", "attendance", "agenda", "awardees", "attachments",
+  "galleryImages", "imageUrl",
+] as const;
+
 
 // Local Multer file shape (avoid relying on global Express.Multer augmentation)
-type MulterFile = MulterLocal.MulterFile;
+type MulterFile = Express.Multer.File;
 
 // Multer-aware request type without extending Express.Request to avoid
 // incompatible augmentation issues across different @types packages.
@@ -26,6 +39,7 @@ interface AnnouncementQuery {
   targetAudience?: { $in: string[] };
   priority?: string;
   $or?: Array<Record<string, unknown>>;
+  $and?: Array<Record<string, unknown>>;
 }
 
 interface UserAnnouncementQuery {
@@ -57,6 +71,7 @@ export const createAnnouncement = async (
       organizer,
       contact,
       attendees,
+      attendance,
       agenda,
       awardees,
     } = req.body;
@@ -96,15 +111,8 @@ export const createAnnouncement = async (
           imageUrl = urls[0];
           galleryImages = urls;
         }
-      } catch (uploadError) {
-        res.status(500).json({
-          success: false,
-          message: "Failed to upload image(s)",
-          error:
-            uploadError instanceof Error
-              ? uploadError.message
-              : "Unknown error",
-        });
+      } catch (error) {
+        respondWithError(res, error, "Failed to upload image(s)");
         return;
       }
     } else if (req.file) {
@@ -120,17 +128,8 @@ export const createAnnouncement = async (
         const result = await uploadToCloudinary(fileBuf, "announcements");
         imageUrl = result.secure_url;
         galleryImages = imageUrl ? [imageUrl] : undefined;
-      } catch (uploadError) {
-        res
-          .status(500)
-          .json({
-            success: false,
-            message: "Failed to upload image",
-            error:
-              uploadError instanceof Error
-                ? uploadError.message
-                : "Unknown error",
-          });
+      } catch (error) {
+        respondWithError(res, error, "Failed to upload image");
         return;
       }
     }
@@ -144,19 +143,23 @@ export const createAnnouncement = async (
       parsedTargetAudience = targetAudience
         ? JSON.parse(targetAudience)
         : ["all"];
-    } catch (parseError) {
+    } catch {
       res.status(400).json({
         success: false,
         message: "Invalid JSON data in request",
-        error:
-          parseError instanceof Error ? parseError.message : "Unknown error",
       });
       return;
     }
 
 
+    const parsedAttendance = attendance === undefined ? { values: [] } : parseAttendance(attendance);
+    if ("error" in parsedAttendance) {
+      res.status(400).json({ success: false, message: parsedAttendance.error });
+      return;
+    }
+
     // Validate required fields
-    if (!title || !description || !content) {
+    if (!title || !description || !content || isBlankRichText(String(content))) {
       res.status(400).json({
         success: false,
         message: "Missing required fields: title, description, or content",
@@ -169,10 +172,10 @@ export const createAnnouncement = async (
     const parsedPublishDate = publishDate ? new Date(publishDate) : undefined;
     const parsedDate = date ? new Date(date) : undefined;
 
-    const announcementData: any = {
+    const announcementData: Record<string, unknown> = {
       title,
       description,
-      content,
+      content: sanitizeRichText(String(content)),
       author,
       type,
       priority,
@@ -188,6 +191,7 @@ export const createAnnouncement = async (
       organizer,
       contact,
       attendees,
+      attendance: parsedAttendance.values,
       agenda: parsedAgenda,
       awardees: parsedAwardees,
       imageUrl,
@@ -215,7 +219,7 @@ export const createAnnouncement = async (
     if (
       willBePublished &&
       !announcementData.imageUrl &&
-      (!announcementData.galleryImages ||
+      (!Array.isArray(announcementData.galleryImages) ||
         announcementData.galleryImages.length === 0)
     ) {
       res
@@ -240,7 +244,7 @@ export const createAnnouncement = async (
         `[ANNOUNCEMENT] ${announcement.title}`,
         `New announcement: ${announcement.title}`,
         "announcement",
-        announcement._id as any,
+        announcement._id,
         "Announcement",
         `/announcements/${announcement._id}`
       );
@@ -257,7 +261,6 @@ export const createAnnouncement = async (
     res.status(500).json({
       success: false,
       message: "Failed to create announcement",
-      error: error instanceof Error ? error.message : "Unknown error",
       ...(process.env.NODE_ENV === "development" && {
         stack: error instanceof Error ? error.stack : undefined,
       }),
@@ -285,16 +288,20 @@ export const getAnnouncements = async (
     const query: AnnouncementQuery = {};
 
     if (type) query.type = type as string;
-    if (isPublished !== undefined) query.isPublished = isPublished === "true";
     if (targetAudience)
       query.targetAudience = { $in: [targetAudience as string] };
     if (priority) query.priority = priority as string;
 
-    // Don't show expired announcements by default
-    query.$or = [
-      { expiryDate: { $exists: false } },
-      { expiryDate: null },
-      { expiryDate: { $gt: new Date() } },
+    // Visibility (drafts) and expiry must both hold
+    query.$and = [
+      listVisibility(req.user, isPublished as string | undefined),
+      {
+        $or: [
+          { expiryDate: { $exists: false } },
+          { expiryDate: null },
+          { expiryDate: { $gt: new Date() } },
+        ],
+      },
     ];
 
     const pageNum = parseInt(page as string);
@@ -343,13 +350,12 @@ export const getAnnouncementById = async (
       "firstName lastName studentNumber"
     );
 
-    if (!announcement) {
+    if (!announcement || !canViewItem(req.user, announcement)) {
       res.status(404).json({ message: "Announcement not found" });
       return;
     }
 
-    // Increment views
-    await announcement.incrementViews();
+    if (req.query.countView !== "false") await announcement.incrementViews();
 
     res.status(200).json({
       success: true,
@@ -442,8 +448,17 @@ export const updateAnnouncement = async (
       : null;
     const requestWantsPublish = String(req.body.isPublished) === "true";
 
-    // Create a clean update object
-    const updateData: any = { ...req.body };
+    // Only whitelisted fields can change. Authorship, views and ids never do.
+    const updateData: Record<string, unknown> = pickFields(req.body, ANNOUNCEMENT_EDITABLE_FIELDS);
+
+    if (typeof updateData.content === "string") {
+      const content = sanitizeRichText(updateData.content);
+      updateData.content = content;
+      if (isBlankRichText(content)) {
+        res.status(400).json({ success: false, message: "Content cannot be empty" });
+        return;
+      }
+    }
 
     if (
       requestWantsPublish &&
@@ -480,6 +495,15 @@ export const updateAnnouncement = async (
           message: "A featured image is required to publish an announcement.",
         });
       return;
+    }
+
+    if (updateData.attendance !== undefined) {
+      const parsedAttendance = parseAttendance(updateData.attendance);
+      if ("error" in parsedAttendance) {
+        res.status(400).json({ success: false, message: parsedAttendance.error });
+        return;
+      }
+      updateData.attendance = parsedAttendance.values;
     }
 
     // Parse arrays if they are strings

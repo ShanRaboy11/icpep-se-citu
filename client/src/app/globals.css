@@ -19,6 +19,10 @@ npm install gsap
   --secondary1: #002231;
   --secondary2: #45c7ff;
   --secondary3: #00a8f3;
+  --pageblue: #004e89;
+  --menublue: #00609c;
+  --ocean: #0073ad;
+  --surface: #f8f9fc;
 }
 
 @theme inline {
@@ -34,6 +38,10 @@ npm install gsap
   --color-secondary1: var(--secondary1);
   --color-secondary2: var(--secondary2);
   --color-secondary3: var(--secondary3);
+  --color-pageblue: var(--pageblue);
+  --color-menublue: var(--menublue);
+  --color-ocean: var(--ocean);
+  --color-surface: var(--surface);
   --font-rubik: var(--font-rubik);
   --font-raleway: var(--font-raleway);
 }
@@ -308,20 +316,6 @@ html {
     transparent 80%
   );
   transition: background 0.1s ease-out;
-}
-
-@keyframes nudge-left {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  50% {
-    transform: translateX(-5px);
-  }
-}
-
-.animate-nudge-left {
-  animation: nudge-left 1.5s ease-in-out infinite;
 }
 
 .embla {
@@ -1105,4 +1099,60 @@ html {
   .responsive-table tr[data-open="true"] td:last-child::before {
     display: none;
   }
+}
+
+.rich-content > * + * {
+  margin-top: 0.75rem;
+}
+.rich-content ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+.rich-content ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+.rich-content li + li {
+  margin-top: 0.25rem;
+}
+.rich-content h2,
+.rich-content h3 {
+  font-family: var(--font-rubik), sans-serif;
+  font-weight: 600;
+}
+.rich-content blockquote {
+  border-left: 3px solid var(--primary1);
+  padding-left: 1rem;
+  color: #6b7280;
+}
+.rich-content a {
+  color: var(--primary1);
+  text-decoration: underline;
+}
+.rich-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -800px 0;
+  }
+  100% {
+    background-position: 800px 0;
+  }
+}
+
+.skeleton-block {
+  background: linear-gradient(90deg, #e5e7eb 0px, #f3f4f6 120px, #e5e7eb 240px);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.4s infinite linear;
+}
+
+[data-skeleton-hidden] .skeleton-block,
+[data-skeleton-hidden] .animate-pulse {
+  visibility: hidden;
 }

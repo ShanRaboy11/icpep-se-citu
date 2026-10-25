@@ -97,8 +97,8 @@ export const notifyTargetAudience = async (
       return;
     }
 
-    const queryConditions: any[] = [{ isActive: true }];
-    const audienceConditions: any[] = [];
+    const queryConditions: Record<string, unknown>[] = [{ isActive: true }];
+    const audienceConditions: Record<string, unknown>[] = [];
 
     if (targetAudience.includes("members")) {
       audienceConditions.push({ "membershipStatus.isMember": true });
@@ -167,4 +167,27 @@ export const isInTargetAudience = (
         viewer.role === "committee-officer")) ||
     (audience.includes("faculty") && viewer.role === "faculty")
   );
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const NOTIFICATION_RETENTION = {
+  readDays: 30,
+  deletedDays: 7,
+  anyDays: 90,
+};
+
+// Read notifications go after 30 days, dismissed ones after 7, and anything left
+// unread is dropped after 90 so the collection doesn't grow without bound.
+export const pruneNotifications = async (now = new Date()) => {
+  const before = (days: number) => new Date(now.getTime() - days * DAY_MS);
+  const { readDays, deletedDays, anyDays } = NOTIFICATION_RETENTION;
+  const result = await Notification.deleteMany({
+    $or: [
+      { isRead: true, createdAt: { $lt: before(readDays) } },
+      { isDeleted: true, updatedAt: { $lt: before(deletedDays) } },
+      { createdAt: { $lt: before(anyDays) } },
+    ],
+  });
+  return result.deletedCount ?? 0;
 };

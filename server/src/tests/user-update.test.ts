@@ -9,6 +9,7 @@ vi.mock("../models/user", () => ({
   },
 }));
 vi.mock("../utils/notification", () => ({ sendNotification: vi.fn() }));
+vi.mock("../utils/audit", () => ({ recordAudit: vi.fn() }));
 
 import { updateUser } from "../controllers/user.controller";
 import { mockReq, mockRes } from "./helpers";
@@ -72,6 +73,19 @@ describe("updateUser", () => {
     expect(res.statusCode).toBe(403);
   });
 
+  it("blocks a council officer from editing a peer council officer", async () => {
+    findById.mockResolvedValue(target("council-officer"));
+    const res = await update({ id: OTHER, role: "council-officer" }, ME, { role: "student" });
+    expect(res.statusCode).toBe(403);
+    expect(findByIdAndUpdate).not.toHaveBeenCalled();
+  });
+
+  it("lets an admin edit a council officer", async () => {
+    findById.mockResolvedValue(target("council-officer"));
+    const res = await update({ id: OTHER, role: "admin" }, ME, { role: "student" });
+    expect(res.statusCode).toBe(200);
+  });
+
   it("lets officers manage roles and status, but never passwords", async () => {
     findById.mockResolvedValue(target());
     await update({ id: OTHER, role: "council-officer" }, ME, {
@@ -90,5 +104,11 @@ describe("updateUser", () => {
   it("rejects an invalid id", async () => {
     const res = await update({ id: OTHER, role: "admin" }, "nope", {});
     expect(res.statusCode).toBe(400);
+  });
+
+  it("never keeps faculty as members, whatever the form sends", async () => {
+    findById.mockResolvedValue(target("faculty"));
+    await update({ id: OTHER, role: "admin" }, ME, { membershipStatus: { isMember: true, membershipType: "local" } });
+    expect(appliedUpdates().membershipStatus).toEqual({ isMember: false, membershipType: null });
   });
 });

@@ -5,13 +5,33 @@ export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://icpep-se-citu.vercel.app"
 ).replace(/\/+$/, "");
 
+export const CHAPTER_FOUNDED_YEAR = 2023;
+
+export const MAX_FAQS = 8;
+export const MAX_FAQ_QUESTION = 120;
+export const MAX_FAQ_ANSWER = 500;
+export const SITE_PHOTO_SLOTS = 3;
+
 export const SITE_NAME = "ICpEP.SE CIT-U Chapter";
 export const SITE_DESCRIPTION = "Unlocking Potential, One Bit at a Time";
 
-export const SOCIAL_LINKS = [
-  "https://www.facebook.com/cituicpep",
-  "https://tiktok.com/@icpep.se.citu",
-];
+export interface SocialLink {
+  platform: string;
+  url: string;
+}
+
+export const DEFAULT_CONTACT: {
+  contactEmail: string;
+  secondaryEmail: string;
+  socialLinks: SocialLink[];
+} = {
+  contactEmail: "icpepse@cit.edu",
+  secondaryEmail: "",
+  socialLinks: [
+    { platform: "facebook", url: "https://www.facebook.com/cituicpep" },
+    { platform: "tiktok", url: "https://tiktok.com/@icpep.se.citu" },
+  ],
+};
 
 // The chapter cover photo, letterboxed to the 1200x630 size link previews
 // expect (Messenger, Discord, Slack, X/Twitter, Facebook, ...).

@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import Faculty from '../models/faculty';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary } from '../utils/media/cloudinary';
+import { parseGender } from '../utils/gender';
+import { respondWithError } from '../utils/http-error';
 
 export const createFaculty = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -17,6 +19,7 @@ export const createFaculty = async (req: Request, res: Response): Promise<void> 
       name,
       position,
       image: imageUrl,
+      gender: parseGender(req.body.gender),
       isActive: isActive !== undefined ? isActive : true,
       displayOrder: displayOrder || 0,
     });
@@ -29,11 +32,7 @@ export const createFaculty = async (req: Request, res: Response): Promise<void> 
       data: savedFaculty,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create faculty member',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to create faculty member');
   }
 };
 
@@ -45,11 +44,7 @@ export const getFaculty = async (req: Request, res: Response): Promise<void> => 
       data: faculty,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch faculty',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to fetch faculty');
   }
 };
 
@@ -61,11 +56,7 @@ export const getAllFaculty = async (req: Request, res: Response): Promise<void> 
       data: faculty,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch faculty',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to fetch faculty');
   }
 };
 
@@ -84,6 +75,7 @@ export const updateFaculty = async (req: Request, res: Response): Promise<void> 
     if (position) faculty.position = position;
     if (isActive !== undefined) faculty.isActive = isActive === true || isActive === 'true';
     if (displayOrder !== undefined) faculty.displayOrder = displayOrder;
+    if (req.body.gender !== undefined) faculty.gender = parseGender(req.body.gender);
 
     if (req.file) {
       const uploadResult = await uploadToCloudinary(req.file.buffer, 'faculty');
@@ -98,11 +90,7 @@ export const updateFaculty = async (req: Request, res: Response): Promise<void> 
       data: updatedFaculty,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update faculty member',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to update faculty member');
   }
 };
 
@@ -121,10 +109,6 @@ export const deleteFaculty = async (req: Request, res: Response): Promise<void> 
       message: 'Faculty member deleted successfully',
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete faculty member',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to delete faculty member');
   }
 };

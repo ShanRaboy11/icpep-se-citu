@@ -18,6 +18,19 @@ const awardeeSchema = new Schema<IAwardee>(
   { _id: false }
 );
 
+interface IAttendee {
+  name: string;
+  position?: string;
+}
+
+const attendeeSchema = new Schema<IAttendee>(
+  {
+    name: { type: String, required: true, trim: true },
+    position: { type: String, trim: true, default: "" },
+  },
+  { _id: false }
+);
+
 // Interface for Announcement Document
 export interface IAnnouncement extends Document {
   title: string;
@@ -46,6 +59,7 @@ export interface IAnnouncement extends Document {
   organizer?: string;
   contact?: string;
   attendees?: string;
+  attendance?: IAttendee[];
   createdAt: Date;
   updatedAt: Date;
 
@@ -149,6 +163,7 @@ const announcementSchema = new Schema<IAnnouncement>(
       type: String,
       trim: true,
     },
+    attendance: { type: [attendeeSchema], default: [] },
     agenda: [String],
     // Award specific fields
     awardees: [awardeeSchema],

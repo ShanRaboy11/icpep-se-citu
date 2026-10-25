@@ -1,11 +1,14 @@
 "use client";
 
+import { MerchCardSkeleton } from "../components/feedback/skeleton-cards";
+import { readCache, writeCache } from "../hooks/use-cached-fetch";
 import { useEffect, useState, type FC } from "react";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import Grid from "../components/grid";
-import MerchCard from "./components/merch-card";
-import PageHeader from "../components/page-header";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import Grid from "../components/layout/grid";
+import MerchCard from "../components/merch/merch-card";
+import PageHeader from "../components/ui/page-header";
+import { useDelayedFlag } from "@/app/components/feedback/skeleton";
 import merchService, { MerchItem as ApiMerchItem } from "../services/merch";
 
 interface MerchItem {
@@ -28,7 +31,7 @@ const formatPrice = (prices: ApiMerchItem["prices"]): string => {
 const mapMerchItem = (item: ApiMerchItem): MerchItem => ({
   name: item.name,
   description: item.description,
-  imageSrc: item.image || "/content/gle.png",
+  imageSrc: item.image || "",
   price: formatPrice(item.prices),
   status: "Available",
   buyLink: item.orderLink,
@@ -37,14 +40,20 @@ const mapMerchItem = (item: ApiMerchItem): MerchItem => ({
 const MerchPage: FC = () => {
   const [merchandise, setMerchandise] = useState<MerchItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(loading);
 
   useEffect(() => {
     const fetchMerch = async () => {
+      const cached = readCache<MerchItem[]>("merch-list");
+      if (cached) {
+        setMerchandise(cached);
+        setLoading(false);
+      }
       try {
         const items = await merchService.getAll();
-        setMerchandise(
-          items.filter((item) => item.isActive).map(mapMerchItem),
-        );
+        const mapped = items.filter((item) => item.isActive).map(mapMerchItem);
+        setMerchandise(mapped);
+        writeCache("merch-list", mapped);
       } catch {
       } finally {
         setLoading(false);
@@ -54,7 +63,7 @@ const MerchPage: FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
         <div className="relative z-10 flex flex-col min-h-screen">
@@ -74,20 +83,12 @@ const MerchPage: FC = () => {
             />
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div
+                data-skeleton-hidden={showSkeleton ? undefined : ""}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+              >
                 {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="rounded-2xl overflow-hidden border border-gray-100 shadow-md animate-pulse"
-                  >
-                    <div className="aspect-square bg-gray-100" />
-                    <div className="p-6 space-y-3">
-                      <div className="h-5 w-2/3 bg-gray-100 rounded-md" />
-                      <div className="h-4 w-full bg-gray-100 rounded-md" />
-                      <div className="h-4 w-1/2 bg-gray-100 rounded-md" />
-                      <div className="h-12 w-full bg-gray-100 rounded-lg mt-4" />
-                    </div>
-                  </div>
+                  <MerchCardSkeleton key={i} />
                 ))}
               </div>
             ) : merchandise.length === 0 ? (

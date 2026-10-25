@@ -2,11 +2,16 @@ import { Request, Response } from "express";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
-import { validatePassword } from "../utils/password_validator";
+import { validatePassword } from "../utils/auth/password-validator";
 import { sendNotification } from "../utils/notification";
-import sendEmail from "../utils/email";
+import sendEmail from "../utils/mail/email";
 import { DEVELOPER_STUDENT_NUMBERS } from "../config/developers";
 import { getJwtSecret, getJwtExpiresIn } from "../config/env";
+import { clearSessionCookie, setSessionCookie } from "../utils/auth/session-cookie";
+import { recordAudit } from "../utils/audit";
+import { normalizeFirstLoginCode } from "../utils/auth/first-login-code";
+import { hashResetCode, resetCodeMatches, MAX_RESET_ATTEMPTS } from "../utils/auth/reset-code";
+import { respondWithError } from "../utils/http-error";
 
 export interface AuthRequest extends Request {
   user?: {
@@ -50,7 +55,11 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check password
-    const isPasswordCorrect = await user.comparePassword(password);
+    let isPasswordCorrect = await user.comparePassword(password);
+    if (!isPasswordCorrect && user.firstLogin) {
+      const code = normalizeFirstLoginCode(password);
+      isPasswordCorrect = code !== null && (await user.comparePassword(code));
+    }
 
     if (!isPasswordCorrect) {
       return res.status(401).json({
@@ -66,17 +75,17 @@ export const login = async (req: Request, res: Response) => {
     // page). Runs after the password check so this can't be triggered by
     // anyone who doesn't already know the account's real password.
     if (DEVELOPER_STUDENT_NUMBERS.includes(user.studentNumber)) {
-      let healed = false;
-      if (user.role !== "admin") {
-        user.role = "admin";
-        healed = true;
-      }
-      if (!user.isActive) {
-        user.isActive = true;
-        healed = true;
-      }
-      if (healed) {
+      const restoredRole = user.role !== "admin";
+      const reactivated = !user.isActive;
+      if (restoredRole) user.role = "admin";
+      if (reactivated) user.isActive = true;
+      if (restoredRole || reactivated) {
         await user.save({ validateBeforeSave: false });
+        await recordAudit({
+          action: "developer.self-heal",
+          targetId: user._id,
+          details: { restoredRole, reactivated },
+        });
       }
     }
 
@@ -86,6 +95,18 @@ export const login = async (req: Request, res: Response) => {
         success: false,
         message:
           "Your account has been deactivated. Please contact an administrator.",
+      });
+    }
+
+    if (
+      user.firstLogin &&
+      user.firstLoginCodeExpires &&
+      user.firstLoginCodeExpires.getTime() < Date.now()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Your first-login code has expired. Ask an officer to send you a new one.",
       });
     }
 
@@ -111,17 +132,15 @@ export const login = async (req: Request, res: Response) => {
       updatedAt: user.updatedAt,
     };
 
+    setSessionCookie(res, token);
+
     res.status(200).json({
       success: true,
       message: "Login successful",
-      token,
       user: userData,
     });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Server error during login",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Server error during login");
   }
 };
 
@@ -180,6 +199,8 @@ export const firstLoginPasswordChange = async (
     // Update password
     user.password = newPassword;
     user.firstLogin = false;
+    user.firstLoginCodeStatus = null;
+    user.firstLoginCodeExpires = null;
     user.$locals.keepSessions = true;
     await user.save();
 
@@ -197,12 +218,8 @@ export const firstLoginPasswordChange = async (
       success: true,
       message: "Password changed successfully",
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error changing password",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error changing password");
   }
 };
 
@@ -264,6 +281,8 @@ export const changePassword = async (
     // Update password
     user.password = newPassword;
     user.firstLogin = false;
+    user.firstLoginCodeStatus = null;
+    user.firstLoginCodeExpires = null;
     user.$locals.keepSessions = true;
     await user.save();
 
@@ -281,12 +300,8 @@ export const changePassword = async (
       success: true,
       message: "Password changed successfully",
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Server error during password change",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Server error during password change");
   }
 };
 
@@ -310,18 +325,23 @@ export const getCurrentUser = async (req: AuthRequest, res: Response) => {
       success: true,
       data: user,
     });
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Server error");
   }
 };
 
 // @desc    Logout user
 // @route   POST /api/auth/logout
-// @access  Public
+// @access  Public (a valid token also gets revoked server-side)
 export const logout = async (req: Request, res: Response) => {
+  if (req.user?.id) {
+    try {
+      await User.findByIdAndUpdate(req.user.id, { $inc: { tokenVersion: 1 } });
+    } catch {
+      // signing out on the client still goes ahead
+    }
+  }
+  clearSessionCookie(res);
   res.status(200).json({
     success: true,
     message: "Logged out successfully",
@@ -333,14 +353,50 @@ const generateResetCode = () => {
   return crypto.randomInt(100000, 1000000).toString();
 };
 
+// Finds the account a reset code belongs to. Wrong guesses are counted, and
+// after MAX_RESET_ATTEMPTS the code is thrown away so it can't be brute-forced.
+const findUserByResetCode = async (studentNumber: string, code: string) => {
+  const user = await User.findOne({
+    studentNumber: studentNumber.toUpperCase(),
+  }).select("+resetPasswordCode +resetPasswordExpire +resetPasswordAttempts");
+
+  if (
+    !user ||
+    !user.resetPasswordCode ||
+    !user.resetPasswordExpire ||
+    user.resetPasswordExpire.getTime() <= Date.now()
+  ) {
+    return null;
+  }
+
+  if (resetCodeMatches(user.resetPasswordCode, code)) return user;
+
+  user.resetPasswordAttempts = (user.resetPasswordAttempts ?? 0) + 1;
+  if (user.resetPasswordAttempts >= MAX_RESET_ATTEMPTS) {
+    user.resetPasswordCode = undefined;
+    user.resetPasswordExpire = undefined;
+    user.resetPasswordAttempts = 0;
+  }
+  await user.save({ validateBeforeSave: false });
+  return null;
+};
+
 // @desc    Forgot Password
 // @route   POST /api/auth/forgot-password
 // @access  Public
+// Every outcome answers the same way, so this endpoint can't be used to find
+// out which student numbers exist, or which of them have an email on file.
+const RESET_REQUEST_RESPONSE = {
+  success: true,
+  message:
+    "If an account with that student number exists, a reset code has been sent to its email.",
+};
+
 export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { studentNumber } = req.body;
 
-    if (!studentNumber) {
+    if (!studentNumber || typeof studentNumber !== "string") {
       return res.status(400).json({
         success: false,
         message: "Please provide your student number",
@@ -349,24 +405,15 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     const user = await User.findOne({ studentNumber: studentNumber.toUpperCase() });
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    if (!user.email) {
-      return res.status(400).json({
-        success: false,
-        message: "No email address associated with your account. Please contact an administrator.",
-      });
+    if (!user || !user.email) {
+      return res.status(200).json(RESET_REQUEST_RESPONSE);
     }
 
     // Generate reset code
     const resetCode = generateResetCode();
 
-    user.resetPasswordCode = resetCode;
+    user.resetPasswordCode = hashResetCode(resetCode);
+    user.resetPasswordAttempts = 0;
     user.resetPasswordExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     await user.save({ validateBeforeSave: false });
@@ -384,32 +431,21 @@ export const forgotPassword = async (req: Request, res: Response) => {
     try {
       await sendEmail({
         email: user.email,
-        subject: 'Password Reset Code - ICpEP SE',
+        subject: "Password Reset Code - ICpEP SE",
         message: message,
-        html: html
-      });
-
-      res.status(200).json({
-        success: true,
-        message: "Email sent",
-        email: user.email // sending back partially masked email could be good for UX if needed
+        html: html,
       });
     } catch {
+      // Don't leave a code behind that the person never received.
       user.resetPasswordCode = undefined;
       user.resetPasswordExpire = undefined;
       await user.save({ validateBeforeSave: false });
-
-      return res.status(500).json({
-        success: false,
-        message: "Email could not be sent",
-      });
     }
 
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    // Same answer on success or failed delivery, so a mail outage can't be used as a probe either.
+    return res.status(200).json(RESET_REQUEST_RESPONSE);
+  } catch (error) {
+    respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -427,11 +463,7 @@ export const verifyResetCode = async (req: Request, res: Response) => {
       });
     }
 
-    const user = await User.findOne({
-      studentNumber: studentNumber.toUpperCase(),
-      resetPasswordCode: code,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
+    const user = await findUserByResetCode(String(studentNumber), String(code));
 
     if (!user) {
       return res.status(400).json({
@@ -445,11 +477,8 @@ export const verifyResetCode = async (req: Request, res: Response) => {
       message: "Code verified",
     });
 
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Internal server error");
   }
 };
 
@@ -467,11 +496,7 @@ export const resetPassword = async (req: Request, res: Response) => {
       });
     }
 
-    const user = await User.findOne({
-      studentNumber: studentNumber.toUpperCase(),
-      resetPasswordCode: code,
-      resetPasswordExpire: { $gt: Date.now() },
-    });
+    const user = await findUserByResetCode(String(studentNumber), String(code));
 
     if (!user) {
       return res.status(400).json({
@@ -480,26 +505,33 @@ export const resetPassword = async (req: Request, res: Response) => {
       });
     }
 
-    // Set new password
-    user.password = password;
+    const validation = validatePassword(String(password));
+    if (!validation.isValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Password does not meet security requirements",
+        errors: validation.errors,
+      });
+    }
+
+    user.password = String(password);
+    user.firstLogin = false;
+    user.firstLoginCodeStatus = null;
+    user.firstLoginCodeExpires = null;
     user.resetPasswordCode = undefined;
     user.resetPasswordExpire = undefined;
-    
-    // If they were locked out due to first login, this effectively handles it if we don't check firstLogin.
-    // user.firstLogin = false; 
+    user.resetPasswordAttempts = 0;
 
     await user.save();
+    await recordAudit({ action: "password.reset", actorId: user._id, targetId: user._id });
 
     res.status(200).json({
       success: true,
       message: "Password updated successfully",
     });
 
-  } catch {
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+  } catch (error) {
+    respondWithError(res, error, "Internal server error");
   }
 };
 

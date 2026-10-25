@@ -1,0 +1,187 @@
+"use client";
+import Image from "next/image";
+import Link from "next/link";
+import { MessageCircle } from "lucide-react";
+import { emailMeta, platformMeta } from "@/app/utils/social-platforms";
+import { useSiteContact } from "@/app/hooks/use-site-contact";
+
+const Footer = () => {
+  const contact = useSiteContact();
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  return (
+    <div
+      className="relative w-full h-130 md:h-103.75"
+      style={{ clipPath: "inset(0 0 0 0)" }}
+    >
+      <div className="fixed bottom-0 left-0 right-0 h-130 md:h-95 w-full -z-10 bg-menublue text-white overflow-hidden flex flex-col justify-between font-raleway">
+        <div className="max-w-7xl mx-auto w-full px-6 grow flex flex-col justify-start pt-16 md:pt-20 gap-8">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-0">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <Image
+                src="/brand/icpep-logo.avif"
+                alt="ICPEP Logo"
+                width={100}
+                height={100}
+                className="cursor-pointer hover:scale-105 transition-transform duration-300"
+                onClick={scrollToTop}
+              />
+
+              <div className="flex flex-col items-center sm:items-start text-center sm:text-left gap-3">
+                <div className="flex flex-col sm:flex-row items-center sm:items-end justify-center sm:justify-start">
+                  <div
+                    className="flex items-end gap-0.5 cursor-pointer h-12.5"
+                    onClick={scrollToTop}
+                  >
+                    <Image
+                      src="/icons/decorative/Vector-ifooter.svg"
+                      alt="I"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                    <Image
+                      src="/icons/decorative/Vector-cfooter.svg"
+                      alt="C"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                    <Image
+                      src="/icons/decorative/Vector-p1footer.svg"
+                      alt="P"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                    <Image
+                      src="/icons/decorative/Vector-e1footer.svg"
+                      alt="E"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                    <Image
+                      src="/icons/decorative/Vector-p2footer.svg"
+                      alt="P"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+
+                    <Image
+                      src="/icons/decorative/Vector-dotfooter.svg"
+                      alt="."
+                      width={0}
+                      height={16}
+                      className="h-[30%] w-auto -ml-1.25 mr-px"
+                    />
+
+                    <Image
+                      src="/icons/decorative/Vector-sfooter.svg"
+                      alt="S"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                    <Image
+                      src="/icons/decorative/Vector-e2footer.svg"
+                      alt="E"
+                      width={0}
+                      height={50}
+                      className="h-full w-auto"
+                    />
+                  </div>
+
+                  <div
+                    className="flex flex-row sm:flex-col gap-2 sm:gap-0 items-baseline sm:justify-between h-auto sm:h-12.5 sm:ml-3 font-rubik text-secondary1 cursor-pointer mt-2 sm:mt-0"
+                    onClick={scrollToTop}
+                  >
+                    <span className="text-[20px] sm:text-[23px] font-bold leading-none tracking-wide">
+                      Region 7
+                    </span>
+                    <span className="text-[20px] sm:text-[23px] font-bold leading-none tracking-wide">
+                      CIT-U Chapter
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-sky-100 whitespace-normal sm:whitespace-nowrap leading-relaxed max-w-xl">
+                    To empower future computer engineers through innovation,
+                    collaboration, and leadership.
+                  </p>
+                  <p className="text-xs text-sky-200 mt-2">
+                    © {new Date().getFullYear()} ICpEP Student Edition R7
+                    CIT-U Chapter. All rights reserved.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-3 mb-6 sm:mb-0">
+              <span className="text-xs font-bold uppercase tracking-widest text-sky-200">
+                Contact Us
+              </span>
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/30 px-4 py-2 text-sm font-semibold text-sky-100 transition-all hover:border-white hover:bg-white hover:text-menublue active:scale-95"
+                >
+                  <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                  <span>Get in Touch</span>
+                </Link>
+                {[contact.contactEmail, contact.secondaryEmail].filter(Boolean).map((address) => {
+                  const meta = emailMeta(address);
+                  return (
+                    <a
+                      key={address}
+                      href={`mailto:${address}`}
+                      title={`${meta.label}: ${address}`}
+                      className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white/80 transition-all hover:border-white hover:bg-white hover:text-menublue active:scale-95"
+                    >
+                      <meta.Icon className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  );
+                })}
+                {contact.socialLinks.map(({ platform, url }) => {
+                  const meta = platformMeta(platform);
+                  if (!meta) return null;
+                  return (
+                    <a
+                      key={`${platform}-${url}`}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={meta.label}
+                      className="group flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white/80 transition-all hover:border-white hover:bg-white hover:text-menublue active:scale-95"
+                    >
+                      <meta.Icon className="h-4 w-4" aria-hidden="true" />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full border-t border-white/10 bg-black/5 mt-auto">
+          <div
+            className="w-full text-center font-medium uppercase text-white/10
+                       text-[5vw] md:text-[6vw] leading-none tracking-wider
+                       whitespace-nowrap py-4 select-none"
+          >
+            ICPEP SE CIT-UNIVERSITY
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Footer;

@@ -2,22 +2,23 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { User } from "./utils/user";
-import Button from "../components/button";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import UsersTable from "./components/users_table";
-import UserStats from "./components/stats";
-import ExcelUploadModal from "./components/excel_upload_modal";
-import AddUserModal, { NewUser } from "./components/add_user_modal";
-import ConfirmDialog from "./components/confirm_dialog";
-import ViewUserModal from "./components/view_user_modal";
-import EditUserModal from "./components/edit_user_modal";
-import Grid from "../components/grid";
-import BackButton from "../components/back-button";
-import PageHeader from "../components/page-header";
+import { User } from "../utils/users/user";
+import Button from "../components/ui/button";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import UsersTable from "../components/users/users-table";
+import UserStats from "../components/users/stats";
+import ExcelUploadModal from "../components/users/excel-upload-modal";
+import AddUserModal, { NewUser } from "../components/users/add-user-modal";
+import ConfirmDialog from "../components/users/confirm-dialog";
+import ViewUserModal from "../components/users/view-user-modal";
+import EditUserModal from "../components/users/edit-user-modal";
+import Grid from "../components/layout/grid";
+import BackButton from "../components/ui/back-button";
+import PageHeader from "../components/ui/page-header";
 import {
   UserPlus,
+  Mail,
   Download,
   Upload,
   CheckCircle,
@@ -28,9 +29,9 @@ import {
   Search,
   X,
 } from "lucide-react";
-import { LoadingScreen } from "../components/loading";
-import { toTitleCase } from "../officers/utils/format-name";
-import { LoadingIndicator } from "@/app/components/loading";
+import { LoadingScreen } from "../components/feedback/loading";
+import { toTitleCase } from "../utils/officers/format-name";
+import { LoadingIndicator } from "@/app/components/feedback/loading";
 
 // Type definitions for API responses
 interface ApiUser {
@@ -47,11 +48,16 @@ interface ApiUser {
     membershipType: string | null;
   };
   profilePicture?: string;
+  gender?: "male" | "female" | null;
   isActive: boolean;
+  firstLogin?: boolean;
+  firstLoginCodeStatus?: "pending" | "sent" | "failed" | "no-email" | null;
+  firstLoginCodeExpires?: string | null;
   registeredBy?: {
     _id: string;
     firstName: string;
     lastName: string;
+    role?: string;
   };
   createdAt: string;
   updatedAt: string;
@@ -61,6 +67,12 @@ interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
+}
+
+interface SyncBatchResult {
+  successful?: number;
+  failed?: number;
+  failedUsers?: FailedUser[];
 }
 
 interface FailedUser {
@@ -146,42 +158,10 @@ const validateMembershipType = (
   return null;
 };
 
-const parseMembershipStatus = (
-  membershipStatus?: string,
-): { isMember: boolean; membershipType: string | null } => {
-  if (!membershipStatus) {
-    return { isMember: false, membershipType: null };
-  }
-
-  const statusLower = membershipStatus.toLowerCase().trim();
-
-  if (
-    statusLower === "local" ||
-    statusLower === "regional" ||
-    statusLower === "both"
-  ) {
-    return { isMember: true, membershipType: statusLower };
-  }
-
-  if (statusLower === "member") {
-    return { isMember: true, membershipType: null };
-  }
-
-  return { isMember: false, membershipType: null };
-};
-
-const getAuthToken = (): string | null => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("authToken");
-  }
-  return null;
-};
-
 const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
-  const token = getAuthToken();
-
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
   };
 
   if (options.headers) {
@@ -192,13 +172,10 @@ const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
     });
   }
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -225,6 +202,11 @@ export default function UsersListPage() {
   // Filter and Sort state - MOVED FROM UsersTable
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterMembership, setFilterMembership] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userToReset, setUserToReset] = useState<User | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sendCodesTargets, setSendCodesTargets] = useState<User[] | null>(null);
   const [sortField, setSortField] = useState<SortField>("yearLevel");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -299,7 +281,13 @@ export default function UsersListPage() {
         user.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (user.yearLevel && user.yearLevel.toString().includes(searchQuery));
 
-      return roleMatch && membershipMatch && searchMatch;
+      const statusMatch =
+        filterStatus === "all" ||
+        (filterStatus === "active" && user.isActive) ||
+        (filterStatus === "inactive" && !user.isActive) ||
+        (filterStatus === "first-login" && user.firstLogin === true && user.isActive);
+
+      return roleMatch && membershipMatch && statusMatch && searchMatch;
     });
   };
 
@@ -375,6 +363,10 @@ export default function UsersListPage() {
     fetchAllUsers();
   }, []);
 
+  useEffect(() => {
+    setIsAdmin(localStorage.getItem("userRole") === "admin");
+  }, []);
+
   // Update displayed users when page, filters, OR SORT changes
   useEffect(() => {
     updateDisplayedUsers();
@@ -383,6 +375,7 @@ export default function UsersListPage() {
     allUsers,
     filterRole,
     filterMembership,
+    filterStatus,
     sortField,
     sortDirection,
     searchQuery,
@@ -424,13 +417,18 @@ export default function UsersListPage() {
             ),
           },
           profilePicture: user.profilePicture,
+          gender: user.gender ?? null,
           isActive: user.isActive,
+          firstLogin: user.firstLogin !== false,
+          firstLoginCodeStatus: user.firstLoginCodeStatus ?? null,
+          firstLoginCodeExpires: user.firstLoginCodeExpires ?? null,
           registeredBy: user.registeredBy
             ? {
                 id: user.registeredBy._id,
                 fullName: toTitleCase(
                   `${user.registeredBy.firstName} ${user.registeredBy.lastName}`,
                 ),
+                role: user.registeredBy.role,
               }
             : null,
           createdAt: user.createdAt,
@@ -467,9 +465,14 @@ export default function UsersListPage() {
   };
 
   // Reset to page 1 when filters or sort changes
-  const handleFilterChange = (type: "role" | "membership", value: string) => {
+  const handleFilterChange = (
+    type: "role" | "membership" | "status",
+    value: string,
+  ) => {
     if (type === "role") {
       setFilterRole(value);
+    } else if (type === "status") {
+      setFilterStatus(value);
     } else {
       setFilterMembership(value);
     }
@@ -489,10 +492,6 @@ export default function UsersListPage() {
     setSortField(field);
     setSortDirection(direction);
     setCurrentPage(1); // Reset to first page when sorting changes
-  };
-
-  const handleBackToHome = () => {
-    router.push("/");
   };
 
   const handleAddUser = () => {
@@ -572,7 +571,7 @@ export default function UsersListPage() {
           membershipStatus: userData.membershipStatus,
         }));
 
-        const response: ApiResponse<any> = await fetchWithAuth(
+        const response: ApiResponse<SyncBatchResult> = await fetchWithAuth(
           `${API_BASE_URL}/users/sync-upsert-batch`,
           {
             method: "POST",
@@ -586,7 +585,7 @@ export default function UsersListPage() {
 
           if (response.data.failedUsers) {
             allFailedUsers.push(
-              ...response.data.failedUsers.map((fail: any) => ({
+              ...response.data.failedUsers.map((fail) => ({
                 studentNumber: fail.studentNumber,
                 reason: fail.reason,
                 data: fail.data,
@@ -719,6 +718,7 @@ export default function UsersListPage() {
             role: updatedUser.role,
             yearLevel: updatedUser.yearLevel,
             membershipStatus: updatedUser.membershipStatus,
+            gender: updatedUser.gender ?? null,
           }),
         },
       );
@@ -818,6 +818,110 @@ export default function UsersListPage() {
     }
   };
 
+  const sendCode = async (user: User, force: boolean) => {
+    try {
+      const response: ApiResponse<unknown> = await fetchWithAuth(
+        `${API_BASE_URL}/users/${user.id}/send-first-login-code`,
+        { method: "POST", body: JSON.stringify({ force }) },
+      );
+      if (response.success) {
+        await fetchAllUsers();
+        setSuccessModal({
+          show: true,
+          title: "Code On Its Way",
+          message: response.message || `A new first-login code is being sent to ${user.fullName}.`,
+        });
+      }
+    } catch (error) {
+      setErrorModal({
+        show: true,
+        title: "Could Not Send Code",
+        message: error instanceof Error ? error.message : "Failed to send the first-login code.",
+      });
+    }
+  };
+
+  const handleSendCode = (user: User) => {
+    if (user.firstLogin) {
+      void sendCode(user, false);
+    } else {
+      setUserToReset(user);
+    }
+  };
+
+  const handleToggleSelect = (user: User) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(user.id)) next.delete(user.id);
+      else next.add(user.id);
+      return next;
+    });
+  };
+
+  const handleSelectAllShown = () => {
+    const awaiting = getFilteredUsers().filter(
+      (user) => user.firstLogin && user.isActive,
+    );
+    if (awaiting.length === 0) {
+      setErrorModal({
+        show: true,
+        title: "Nobody Awaiting First Login",
+        message:
+          "No active account in the current list is waiting on a first login.",
+      });
+      return;
+    }
+    setSelectedIds(new Set(awaiting.map((user) => user.id)));
+  };
+
+  const handleSendPendingCodes = () => {
+    const pool =
+      selectedIds.size > 0
+        ? allUsers.filter((user) => selectedIds.has(user.id))
+        : getFilteredUsers();
+    const targets = pool.filter((user) => user.isActive && user.firstLogin);
+    if (targets.length === 0) {
+      setErrorModal({
+        show: true,
+        title: "Nobody To Send To",
+        message:
+          "None of the chosen accounts are waiting on a first login. Tick accounts in the table, or filter by 'Awaiting First Login'.",
+      });
+      return;
+    }
+    setSendCodesTargets(targets);
+  };
+
+  const confirmSendCodes = async () => {
+    const targets = sendCodesTargets;
+    setSendCodesTargets(null);
+    if (!targets) return;
+    try {
+      const response: ApiResponse<{ queued: number; skipped: number }> =
+        await fetchWithAuth(`${API_BASE_URL}/users/send-first-login-codes`, {
+          method: "POST",
+          body: JSON.stringify({
+            studentNumbers: targets.map((user) => user.studentNumber),
+          }),
+        });
+      if (response.success) {
+        setSuccessModal({
+          show: true,
+          title: "Sending Codes",
+          message: response.message || "First-login codes are being sent.",
+        });
+        setSelectedIds(new Set());
+        setTimeout(() => void fetchAllUsers(), 5000);
+      }
+    } catch (error) {
+      setErrorModal({
+        show: true,
+        title: "Could Not Send Codes",
+        message: error instanceof Error ? error.message : "Failed to send first-login codes.",
+      });
+    }
+  };
+
   const handleViewUser = (user: User) => {
     setSelectedUser(user);
     setIsViewModalOpen(true);
@@ -856,11 +960,11 @@ export default function UsersListPage() {
       : 0;
 
   if (isLoading) {
-    return <LoadingScreen showEntrance={false} />;
+    return <LoadingScreen />;
   }
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
         <div className="relative z-10 flex flex-col min-h-screen">
@@ -883,7 +987,6 @@ export default function UsersListPage() {
 
             <UserStats users={allUsers} />
 
-            {/* Search Bar */}
             <div className="mb-6 max-w-3xl mx-auto">
               <div className="flex items-center w-full bg-white border-2 border-primary1/20 rounded-2xl px-4 py-2 sm:px-5 sm:py-3 transition-all duration-300 hover:border-primary1 focus-within:border-primary1">
                 <Search className="h-5 w-5 text-primary1 shrink-0" />
@@ -891,7 +994,7 @@ export default function UsersListPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  placeholder="Search users by name, student number, role, or year level..."
+                  placeholder="Search users by name, student number, role, or year level"
                   className="w-full bg-transparent ml-3 outline-none font-rubik text-sm sm:text-base font-medium text-primary3 placeholder:text-gray-400 placeholder:font-normal"
                 />
                 {searchQuery && (
@@ -906,7 +1009,16 @@ export default function UsersListPage() {
               </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
+            <div className="mb-6 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3">
+              <Button
+                variant="heroOutline"
+                rounded="lg"
+                onClick={handleSendPendingCodes}
+                className="flex items-center justify-center gap-1.5 px-2 py-2 text-xs sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm"
+              >
+                <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                {selectedIds.size > 0 ? `Send Codes (${selectedIds.size})` : "Send Codes"}
+              </Button>
               <Button
                 variant="heroOutline"
                 rounded="lg"
@@ -937,7 +1049,6 @@ export default function UsersListPage() {
               </Button>
             </div>
 
-            {/* Pass props to UsersTable */}
             <UsersTable
               users={displayedUsers}
               totalUsers={getFilteredUsers().length}
@@ -946,9 +1057,16 @@ export default function UsersListPage() {
               onEdit={handleEditUser}
               onDelete={handleDeleteUser}
               onToggleActive={handleToggleActive}
+              onSendCode={handleSendCode}
+              canResetLogin={isAdmin}
+              selectedIds={selectedIds}
+              onToggleSelect={handleToggleSelect}
+              onSelectAllShown={handleSelectAllShown}
+              onClearSelection={() => setSelectedIds(new Set())}
               onView={handleViewUser}
               filterRole={filterRole}
               filterMembership={filterMembership}
+              filterStatus={filterStatus}
               onFilterChange={handleFilterChange}
               sortField={sortField}
               sortDirection={sortDirection}
@@ -1012,7 +1130,7 @@ export default function UsersListPage() {
 
       {isUploading && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full">
+          <div className="bg-white rounded-2xl p-8 shadow-xl max-w-md w-full">
             <div className="text-center">
               <LoadingIndicator className="mb-6" />
 
@@ -1079,7 +1197,7 @@ export default function UsersListPage() {
               })
             }
           />
-          <div className="relative bg-white rounded-2xl p-8 shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto themed-scrollbar animate-scale-in">
+          <div className="relative bg-white rounded-2xl p-8 shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto themed-scrollbar animate-scale-in">
             <div className="text-center mb-5">
               {uploadResult.failed === 0 ? (
                 <CheckCircle className="w-14 h-14 text-green-500 mx-auto mb-3" />
@@ -1160,11 +1278,11 @@ export default function UsersListPage() {
               setSuccessModal({ show: false, title: "", message: "" })
             }
           />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl animate-scale-in">
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl animate-scale-in">
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
+                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg relative">
                   <svg
                     className="w-10 h-10 text-white"
                     fill="none"
@@ -1210,7 +1328,7 @@ export default function UsersListPage() {
               setErrorModal({ show: false, title: "", message: "" })
             }
           />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center animate-scale-in">
+          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl text-center animate-scale-in">
             <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
               <XCircle className="w-6 h-6 text-red-500" />
             </div>
@@ -1281,6 +1399,36 @@ export default function UsersListPage() {
           confirmText="Delete"
           cancelText="Cancel"
           type="danger"
+        />
+      )}
+
+      {userToReset && (
+        <ConfirmDialog
+          isOpen
+          onClose={() => setUserToReset(null)}
+          onConfirm={() => {
+            const target = userToReset;
+            setUserToReset(null);
+            void sendCode(target, true);
+          }}
+          title="Reset To First Login"
+          message={`${userToReset.fullName} already chose a password. This replaces it with a new one-time code emailed to them and signs them out. Continue?`}
+          confirmText="Reset"
+          cancelText="Cancel"
+          type="warning"
+        />
+      )}
+
+      {sendCodesTargets && (
+        <ConfirmDialog
+          isOpen
+          onClose={() => setSendCodesTargets(null)}
+          onConfirm={confirmSendCodes}
+          title="Send First-Login Codes"
+          message={`Email a new one-time code to ${sendCodesTargets.length} account(s)?`}
+          confirmText="Send Codes"
+          cancelText="Cancel"
+          type="warning"
         />
       )}
 
