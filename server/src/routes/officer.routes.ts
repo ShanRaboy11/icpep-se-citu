@@ -1,4 +1,5 @@
 import express from "express";
+import { validateObjectId } from "../middleware/validate-id";
 import {
   getOfficers,
   getPublicOfficers,
@@ -8,6 +9,7 @@ import {
 import { protect, authorizeRoles } from "../middleware/auth.middleware";
 
 const router = express.Router();
+router.param("id", validateObjectId);
 
 router.get("/public", getPublicOfficers);
 // Protected routes (council officers and admins/developers only) — this

@@ -1,4 +1,5 @@
 import { api } from './api-client';
+import type { ApiList, SponsorRecord } from './types';
 
 export interface SponsorData {
     _id?: string;
@@ -30,7 +31,7 @@ const sponsorService = {
     
     getSponsors: async () => {
         try {
-            const response = await api.get('/sponsors');
+            const response = await api.get<ApiList<SponsorRecord>>('/sponsors');
             return response.data;
         } catch (error) {
             throw error;

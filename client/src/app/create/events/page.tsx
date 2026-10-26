@@ -1,43 +1,42 @@
 "use client";
 
+import VisibilityPicker from "@/app/components/create/visibility-picker";
+import FormDivider from "@/app/components/ui/form-divider";
+import TextButton from "@/app/components/ui/text-button";
+import { ERROR_CLASS as errorInputStyle, labelStyle, titleLabelStyle as titlelabelStyle, inputClass as inputCls } from "@/app/components/ui/form-styles";
+import ConfirmModal from "@/app/components/ui/confirm-modal";
+import SuccessModal from "@/app/components/ui/success-modal";
+import AddButton from "@/app/components/ui/add-button";
+import RemovableTag from "@/app/components/ui/removable-tag";
+import EditingBanner from "@/app/components/ui/editing-banner";
+import { swapToFallback } from "@/app/components/ui/fallback-image";
+import RemoveButton from "@/app/components/ui/remove-button";
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Sidebar from "../components/sidebar";
-import Header from "@/app/components/header";
-import Footer from "@/app/components/footer";
-import Grid from "../../components/grid";
-import Button from "../../components/button";
-import { GlassCard } from "../../components/glass-card";
+import Sidebar from "../../components/create/sidebar";
+import Header from "@/app/components/layout/header";
+import Footer from "@/app/components/layout/footer";
+import Grid from "../../components/layout/grid";
+import Button from "../../components/ui/button";
 import {
   Pencil,
   Trash2,
-  RefreshCw,
   AlertTriangle,
-  Globe,
-  Users,
-  Shield,
-  Check,
   Upload,
   Plus,
   X,
   Calendar,
-  Tag,
   MapPin,
   ChevronDown,
   ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import eventService from "../../services/event";
-import { LoadingIndicator } from "@/app/components/loading";
-
-// Custom time picker constants
-const timeHours = Array.from({ length: 12 }, (_, i) =>
-  (i + 1).toString().padStart(2, "0")
-);
-const timeMinutes = Array.from({ length: 60 }, (_, i) =>
-  i.toString().padStart(2, "0")
-);
-const timePeriods = ["AM", "PM"];
+  ChevronRight } from "lucide-react";
+import eventService, { type EventData } from "../../services/event";
+import { LoadingIndicator } from "@/app/components/feedback/loading";
+import RichTextEditor from "@/app/components/content/rich-text-editor";
+import TimeSegmentInput from "@/app/components/ui/time-segment-input";
+import { timeHours, timeMinutes, timePeriods, parseTimeToPicker } from "@/app/utils/time";
+import { plainLength } from "@/app/components/content/rich-content";
+import ManageListCard from "@/app/components/create/manage-list-card";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -89,28 +88,6 @@ function combineDateTime(
   return isNaN(d.getTime()) ? "" : d.toISOString();
 }
 
-function parseTimeToPicker(timeStr: string): { hour: string; minute: string; period: string } {
-  if (!timeStr) return { hour: "08", minute: "00", period: "AM" };
-  const ampm = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (ampm) {
-    return {
-      hour: ampm[1].padStart(2, "0"),
-      minute: ampm[2],
-      period: ampm[3].toUpperCase(),
-    };
-  }
-  const h24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-  if (h24) {
-    let h = parseInt(h24[1]);
-    const m = h24[2];
-    const p = h >= 12 ? "PM" : "AM";
-    if (h === 0) h = 12;
-    else if (h > 12) h -= 12;
-    return { hour: h.toString().padStart(2, "0"), minute: m, period: p };
-  }
-  return { hour: "08", minute: "00", period: "AM" };
-}
-
 type FormErrors = {
   date: boolean;
   time: boolean;
@@ -146,40 +123,9 @@ interface EventItem {
   galleryImages?: string[];
 }
 
-const VISIBILITY_OPTIONS = [
-  {
-    value: "public",
-    label: "Public",
-    sublabel: "Everyone can see this",
-    icon: Globe,
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
-    dot: "bg-emerald-500",
-  },
-  {
-    value: "members",
-    label: "Members Only",
-    sublabel: "Registered members",
-    icon: Users,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-    dot: "bg-blue-500",
-  },
-  {
-    value: "officers",
-    label: "Officers Only",
-    sublabel: "Organization officers",
-    icon: Shield,
-    color: "text-violet-600",
-    bg: "bg-violet-50",
-    border: "border-violet-200",
-    dot: "bg-violet-500",
-  },
-] as const;
-
 const predefinedTags = ["Workshop", "Seminar", "Training", "Webinar"];
+
+type StoredEvent = EventData & { _id: string; isPublished?: boolean; coverImage?: string };
 
 export default function EventsPage() {
   const [showGlobalError, setShowGlobalError] = useState(false);
@@ -199,7 +145,6 @@ export default function EventsPage() {
   const [regEndMinute, setRegEndMinute] = useState("00");
   const [regEndPeriod, setRegEndPeriod] = useState("AM");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loadingAction, setLoadingAction] = useState<
     "saving" | "publishing" | null
@@ -256,10 +201,7 @@ export default function EventsPage() {
   const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
   const [organizer, setOrganizer] = useState("");
-  const [details, setDetails] = useState<{ title: string; body: string }[]>([
-    { title: "", body: "" },
-  ]);
-  const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+  const [details, setDetails] = useState<{ title: string; body: string }[]>([]);
 
   // Custom date picker state
   const [activeDatePicker, setActiveDatePicker] = useState<string | null>(null);
@@ -295,7 +237,7 @@ export default function EventsPage() {
       const fetchEvent = async () => {
         try {
           const response = await eventService.getEventById(editIdParam);
-          const data = response.data as any;
+          const data = response.data as StoredEvent;
           if (data) {
             setEditingId(data._id);
             setIsEditingDraft(!data.isPublished);
@@ -318,18 +260,20 @@ export default function EventsPage() {
               setTimeMinute(parsed.minute);
               setTimePeriod(parsed.period);
             }
-            setMode(data.mode);
+            setMode(data.mode ?? "Onsite");
             if (data.tags) setTags(data.tags);
             if (data.admissions) {
               setAdmissions(
-                data.admissions.map((a: any) => ({
+                data.admissions.map((a) => ({
                   category: a.category,
                   price: String(a.price),
                 })),
               );
               setShowAdmissionInput(true);
             }
-            if (data.details) setDetails(data.details);
+            if (data.details) {
+              setDetails(data.details.map((d) => ({ title: d.title, body: d.items.join("\n") })));
+            }
             if (data.coverImage) setPreviews([data.coverImage]);
             setGalleryImages(
               Array.isArray(data.galleryImages) ? data.galleryImages : [],
@@ -338,7 +282,7 @@ export default function EventsPage() {
               setOrganizer(
                 typeof data.organizer === "string"
                   ? data.organizer
-                  : data.organizer.name,
+                  : (data.organizer as { name?: string }).name ?? "",
               );
             if (data.registrationRequired)
               setRegistrationRequired(data.registrationRequired);
@@ -409,7 +353,7 @@ export default function EventsPage() {
     setAdmissions(item.admissions || []);
     setOrganizer(
       typeof item.organizer === "object"
-        ? (item.organizer as any).name
+        ? (item.organizer as { name?: string }).name ?? ""
         : item.organizer || "",
     );
     setRegistrationRequired(!!item.registrationRequired);
@@ -427,10 +371,8 @@ export default function EventsPage() {
       setDetails(
         item.details.map((d) => ({ title: d.title, body: d.items.join("\n") })),
       );
-      setShowAdditionalInfo(true);
     } else {
-      setDetails([{ title: "", body: "" }]);
-      setShowAdditionalInfo(false);
+      setDetails([]);
     }
     setPreviews(item.coverImage ? [item.coverImage] : []);
     setImages([]);
@@ -471,8 +413,7 @@ export default function EventsPage() {
     setRegEndHour("08");
     setRegEndMinute("00");
     setRegEndPeriod("AM");
-    setDetails([{ title: "", body: "" }]);
-    setShowAdditionalInfo(false);
+    setDetails([]);
     setMode("Onsite");
     setDateConflictError(false);
     setGalleryImages([]);
@@ -590,7 +531,6 @@ export default function EventsPage() {
           eventData,
           images.length > 0 ? images : undefined,
         );
-      setSubmitSuccess(true);
       setSuccessMessage({
         title:
           editingId && !isEditingDraft
@@ -628,7 +568,6 @@ export default function EventsPage() {
           eventData,
           images.length > 0 ? images : undefined,
         );
-      setSubmitSuccess(true);
       setSuccessMessage({
         title: editingId ? "Draft Updated!" : "Draft Saved!",
         description: editingId
@@ -768,149 +707,33 @@ export default function EventsPage() {
     }
   };
 
-  const labelStyle =
-    "block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1";
-  const titlelabelStyle =
-    "block text-sm font-bold font-raleway text-primary3 mb-2 ml-1";
-  const inputBaseStyle =
-    "w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400";
-  const inputFocusStyle =
-    "focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10";
-  const errorInputStyle = "border-red-300 ring-2 ring-red-100";
-
-  const inputCls = (hasError: boolean) =>
-    `${inputBaseStyle} ${inputFocusStyle} ${hasError ? errorInputStyle : ""}`;
-
   // Split into a non-scrolling outer wrapper (owns the rounding/border/shadow)
   // and a scrolling inner container, so the scrollbar never pokes past the
   // rounded corners.
-  const dropdownOuterStyle =
-    "absolute z-30 w-full min-w-20 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
-  const dropdownInnerStyle =
-    "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto overflow-x-hidden themed-scrollbar";
-  const dropdownItemStyle =
-    "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
-  const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
-  const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
-
   const renderTimeInput = (
     id: string,
     value: string,
     setValue: (v: string) => void,
     options: string[],
-    type: "hour" | "minute" | "period"
-  ) => {
-    const isOpen = activeTimeDropdown === id;
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
-      if (type === "period") {
-        if (val.toLowerCase().includes("p")) {
-          setValue("PM");
-          setTimeout(() => e.target.select(), 0);
-        } else if (val.toLowerCase().includes("a")) {
-          setValue("AM");
-          setTimeout(() => e.target.select(), 0);
-        }
-      } else {
-        if (val !== "" && !/^\d*$/.test(val)) return;
-        if (val.length > 2) return;
-        const num = parseInt(val);
-        if (val !== "") {
-          if (type === "minute" && num > 59) return;
-          if (type === "hour" && num > 12) return;
-        }
-        setValue(val);
-      }
-    };
-
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      if (activeTimeDropdown !== id) setActiveTimeDropdown(id);
-      e.target.select();
-    };
-
-    const handleMouseDown = (e: React.MouseEvent<HTMLInputElement>) => {
-      if (document.activeElement === e.currentTarget) {
-        if (activeTimeDropdown === id) {
-          setActiveTimeDropdown(null);
-        } else {
-          setActiveTimeDropdown(id);
-        }
-        e.preventDefault();
-        e.currentTarget.select();
-      }
-    };
-
-    const handleBlur = () => {
-      setTimeout(() => {
-        if (activeTimeDropdown === id) setActiveTimeDropdown(null);
-      }, 200);
-      if (type === "hour") {
-        let num = parseInt(value || "0");
-        if (num < 1) num = 1;
-        if (num > 12) num = 12;
-        setValue(num.toString().padStart(2, "0"));
-      } else if (type === "minute") {
-        let num = parseInt(value || "0");
-        if (num < 0) num = 0;
-        if (num > 59) num = 59;
-        setValue(num.toString().padStart(2, "0"));
-      } else if (type === "period") {
-        if (value !== "AM" && value !== "PM") setValue("AM");
-      }
-    };
-
-    return (
-      <div className="relative flex-1 h-full group">
-        <input
-          type="text"
-          className="w-full h-full text-center bg-transparent outline-none font-rubik text-base text-gray-700 font-medium placeholder-gray-300 transition-colors cursor-pointer caret-transparent focus:text-primary1 selection:bg-transparent selection:text-primary1"
-          value={value}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          onMouseDown={handleMouseDown}
-          onBlur={handleBlur}
-          maxLength={2}
-          autoComplete="off"
-        />
-        {isOpen && (
-          <>
-            <div
-              className={`${dropdownOuterStyle} left-1/2 -translate-x-1/2 text-center`}
-              onMouseDown={(e) => e.preventDefault()}
-            >
-              <div className={dropdownInnerStyle}>
-                {options.map((opt) => (
-                  <div
-                    key={opt}
-                    className={`justify-center ${dropdownItemStyle} ${
-                      value === opt
-                        ? dropdownItemSelectedStyle
-                        : dropdownItemHoverStyle
-                    }`}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setValue(opt);
-                      setActiveTimeDropdown(null);
-                    }}
-                  >
-                    <span>{opt}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  };
+    type: "hour" | "minute" | "period",
+  ) => (
+    <TimeSegmentInput
+      id={id}
+      value={value}
+      onChange={setValue}
+      options={options}
+      type={type}
+      activeId={activeTimeDropdown}
+      setActiveId={setActiveTimeDropdown}
+    />
+  );
 
   const renderDatePicker = (
     id: string,
     value: string,
     onChange: (val: string) => void,
     hasError = false,
-    placeholder = "Select date..."
+    placeholder = "Select date"
   ) => {
     const isOpen = activeDatePicker === id;
     const todayStr = new Date().toISOString().split("T")[0];
@@ -955,7 +778,7 @@ export default function EventsPage() {
               className="fixed inset-0 z-30"
               onClick={() => setActiveDatePicker(null)}
             />
-            <div className="absolute z-40 top-full left-0 mt-2 w-72 bg-white border border-gray-100 rounded-2xl shadow-xl p-4 font-rubik">
+            <div className="absolute z-40 top-full left-0 mt-2 w-72 bg-white border border-gray-100 rounded-2xl shadow-lg p-4 font-rubik">
               <div className="flex items-center justify-between mb-3 px-1">
                 <button
                   type="button"
@@ -1034,29 +857,21 @@ export default function EventsPage() {
               </div>
 
               <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center text-xs font-semibold">
-                <button
-                  type="button"
-                  className="text-primary1 hover:underline font-raleway cursor-pointer"
-                  onClick={(e) => {
+                <TextButton tone="link" className="text-xs" onClick={(e) => {
                     e.stopPropagation();
                     onChange(todayStr);
                     setActiveDatePicker(null);
-                  }}
-                >
-                  Today
-                </button>
+                  }}>
+                    Today
+                  </TextButton>
                 {value && (
-                  <button
-                    type="button"
-                    className="text-gray-400 hover:text-red-500 font-raleway cursor-pointer"
-                    onClick={(e) => {
+                  <TextButton className="text-xs" onClick={(e) => {
                       e.stopPropagation();
                       onChange("");
                       setActiveDatePicker(null);
-                    }}
-                  >
+                    }}>
                     Clear
-                  </button>
+                  </TextButton>
                 )}
               </div>
             </div>
@@ -1066,11 +881,8 @@ export default function EventsPage() {
     );
   };
 
-  const Divider = () => <div className="w-full border-t border-gray-100 my-2" />;
-
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
-      {/* LOADING OVERLAY */}
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       {isSubmitting && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/90 backdrop-blur-md">
           <div className="flex flex-col items-center gap-5">
@@ -1091,14 +903,13 @@ export default function EventsPage() {
         </div>
       )}
 
-      <main className="relative z-10 bg-[#f8f9fc] rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+      <main className="relative z-10 bg-surface rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
 
           <div className="grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
-            {/* PAGE HEADER */}
             <div className="mb-16 text-left">
               <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
                 Manage Events
@@ -1114,30 +925,14 @@ export default function EventsPage() {
               </aside>
 
               <div className="flex-1 min-w-0 space-y-8">
-                {/* FORM CARD */}
-                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-md p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
                   editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
                 }`}>
-                    {/* Edit Banner */}
                     {editingId && (
-                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-linear-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-4xl">
-                        <div className="flex items-center gap-2 text-white">
-                          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                          <span className="text-sm font-bold font-rubik tracking-wide">
-                            EDITING MODE
-                          </span>
-                        </div>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                      <EditingBanner onCancel={handleCancelEdit} />
                     )}
 
                     <div className="flex flex-col gap-6">
-                      {/* Section Header */}
                       <div className="flex items-center justify-between">
                         <p className="font-raleway text-gray-500 text-sm">
                           Fill in the fields below
@@ -1150,7 +945,6 @@ export default function EventsPage() {
                         </div>
                       </div>
 
-                      {/* COVER IMAGE */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <label className={labelStyle}>
@@ -1171,6 +965,7 @@ export default function EventsPage() {
                           <div className="relative group rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50 h-56">
                             <img
                               src={previews[0]}
+                              onError={swapToFallback}
                               alt="preview"
                               className="w-full h-full object-cover"
                             />
@@ -1178,23 +973,18 @@ export default function EventsPage() {
                               <button
                                 type="button"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
+                                className="bg-white text-primary3 text-xs font-bold px-4 py-2 rounded-full shadow-md hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
                               >
                                 Replace
                               </button>
-                              <button
-                                type="button"
+                              <RemoveButton variant="overlay"
                                 onClick={() => {
                                   try {
                                     URL.revokeObjectURL(previews[0]);
                                   } catch {}
                                   setImages([]);
                                   setPreviews([]);
-                                }}
-                                className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
-                              >
-                                Remove
-                              </button>
+                                }} />
                             </div>
                           </div>
                         ) : (
@@ -1231,12 +1021,11 @@ export default function EventsPage() {
                         )}
                       </div>
 
-                      {/* GALLERY (available once the event has ended) */}
                       {editingId &&
                         formData.date &&
                         new Date(formData.date) < new Date() && (
                           <>
-                            <Divider />
+                            <FormDivider className="my-2" />
                             <div className="space-y-3">
                               <div className="flex items-center justify-between">
                                 <label className={labelStyle}>
@@ -1262,6 +1051,7 @@ export default function EventsPage() {
                                   >
                                     <img
                                       src={url}
+                                      onError={swapToFallback}
                                       alt="Gallery photo"
                                       className="w-full h-full object-cover"
                                     />
@@ -1296,14 +1086,13 @@ export default function EventsPage() {
                           </>
                         )}
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* TAGS */}
                       <div className="space-y-3">
                         <label className={labelStyle}>
                           Tags
                         </label>
-                        <div className="flex flex-wrap gap-2 items-center p-4 bg-gray-50/80 rounded-xl border-2 border-gray-100">
+                        <div className="flex flex-wrap gap-2.5 items-center p-4 bg-gray-50/80 rounded-2xl border border-gray-200">
                           {predefinedTags.map((tag) => (
                             <button
                               key={tag}
@@ -1315,19 +1104,13 @@ export default function EventsPage() {
                                     : [...prev, tag],
                                 )
                               }
-                              className={`px-4 py-2 text-xs font-bold rounded-xl border-2 transition-all duration-200 font-rubik cursor-pointer active:scale-95 ${tags.includes(tag) ? "bg-primary2 text-white border-primary2 shadow-md" : "border-gray-200 text-gray-500 bg-white hover:border-primary2/50 hover:text-primary2"}`}
+                              className={`px-5 py-2 text-xs font-semibold rounded-full border-2 transition-all duration-300 font-raleway cursor-pointer ${tags.includes(tag) ? "bg-primary1 text-white border-primary1 shadow-md" : "border-gray-300 text-gray-700 bg-white hover:border-primary1 hover:bg-buttonbg1 hover:text-primary1"}`}
                             >
                               {tag}
                             </button>
                           ))}
                           {!showTagInput ? (
-                            <button
-                              type="button"
-                              onClick={() => setShowTagInput(true)}
-                              className="flex items-center gap-1 px-4 py-2 border-2 border-dashed border-primary2/40 text-primary2 rounded-xl hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik text-xs font-bold cursor-pointer"
-                            >
-                              <Plus size={12} /> Custom
-                            </button>
+                            <AddButton dashed onClick={() => setShowTagInput(true)}>Custom</AddButton>
                           ) : (
                             <div className="flex items-center gap-2">
                               <input
@@ -1343,11 +1126,11 @@ export default function EventsPage() {
                                     setShowTagInput(false);
                                   }
                                 }}
-                                className="border-2 border-primary2 rounded-xl px-3 py-2 font-rubik text-xs focus:outline-none w-32"
-                                placeholder="Tag name..."
+                                className="border-2 border-primary1 rounded-full px-4 py-2 font-rubik text-xs focus:outline-none focus:ring-4 focus:ring-primary1/10 w-32"
+                                placeholder="Tag name"
                                 autoFocus
                               />
-                              <button
+                              <Button variant="hero"
                                 type="button"
                                 onClick={() => {
                                   if (newTag.trim())
@@ -1355,50 +1138,34 @@ export default function EventsPage() {
                                   setNewTag("");
                                   setShowTagInput(false);
                                 }}
-                                className="px-3 py-2 bg-linear-to-r from-primary1 to-primary2 text-white rounded-xl text-xs font-bold font-rubik shadow-sm transition-all cursor-pointer active:scale-95"
+                                className="px-4 py-2 text-xs sm:px-4 sm:py-2 sm:text-xs"
                               >
-                                Add
-                              </button>
-                              <button
+                                <Plus size={12} /> Add
+                              </Button>
+                              <Button variant="cancelPill"
                                 type="button"
                                 onClick={() => {
                                   setNewTag("");
                                   setShowTagInput(false);
                                 }}
-                                className="px-3 py-2 border-2 border-gray-200 text-gray-500 rounded-xl text-xs font-bold font-rubik transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-500 cursor-pointer active:scale-95"
+                                
                               >
-                                <X size={12} />
-                              </button>
+                                Cancel
+                              </Button>
                             </div>
                           )}
                         </div>
                         {tags.length > 0 && (
                           <div className="flex flex-wrap gap-2">
                             {tags.map((tag, i) => (
-                              <span
-                                key={i}
-                                className="flex items-center gap-2 bg-white border-2 border-primary2/20 text-primary3 font-bold font-rubik px-3 py-1.5 rounded-xl text-xs shadow-sm"
-                              >
-                                <Tag size={10} className="text-primary2" />
-                                {tag}
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setTags(tags.filter((_, idx) => idx !== i))
-                                  }
-                                  className="hover:text-red-500 transition-colors cursor-pointer"
-                                >
-                                  <X size={10} />
-                                </button>
-                              </span>
+                              <RemovableTag key={i} label={tag} onRemove={() => setTags(tags.filter((_, idx) => idx !== i))} />
                             ))}
                           </div>
                         )}
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* EVENT SCHEDULE */}
                       <div className="space-y-6">
                         <div>
                           <h3 className={`${titlelabelStyle}`}>
@@ -1410,7 +1177,6 @@ export default function EventsPage() {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-  {/* 1. Date Field (1 column) */}
   <div>
     <label className={labelStyle}>
       Date <span className="text-red-500">*</span>
@@ -1439,7 +1205,6 @@ export default function EventsPage() {
     )}
   </div>
 
-  {/* 2. Time Field (1 column) */}
   <div>
     <label className={labelStyle}>
       Time <span className="text-red-500">*</span>
@@ -1464,7 +1229,6 @@ export default function EventsPage() {
     )}
   </div>
 
-  {/* 3. Location Field (Spans remaining space) */}
   <div className="space-y-2 sm:col-span-2 lg:col-span-2">
     <label className={labelStyle}>
       Location
@@ -1486,7 +1250,6 @@ export default function EventsPage() {
   </div>
 </div>
 
-                        {/* Mode */}
                         <div className="space-y-2">
                           <label className={labelStyle}>
                             Event Mode
@@ -1509,24 +1272,17 @@ export default function EventsPage() {
 </div>
                         </div>
 
-                        {/* Admission */}
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <label className={labelStyle}>
                               Admission Prices
                             </label>
                             {!showAdmissionInput && (
-                              <button
-                                type="button"
-                                onClick={() => setShowAdmissionInput(true)}
-                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
-                              >
-                                <Plus size={11} /> Add
-                              </button>
+                              <AddButton onClick={() => setShowAdmissionInput(true)}>Add</AddButton>
                             )}
                           </div>
                           {showAdmissionInput && (
-                            <div className="flex flex-col sm:flex-row gap-3 p-4 border-2 border-gray-100 rounded-xl bg-gray-50/60">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 border-2 border-gray-100 rounded-xl bg-gray-50/60">
                               <input
                                 type="text"
                                 placeholder="Category (e.g., General)"
@@ -1547,7 +1303,7 @@ export default function EventsPage() {
                                 className="w-full sm:w-28 border-2 border-gray-200 bg-white rounded-xl px-4 py-2.5 font-rubik text-sm focus:outline-none focus:border-primary2 transition-all"
                               />
                               <div className="flex gap-2">
-                                <button
+                                <Button variant="hero"
                                   type="button"
                                   onClick={() => {
                                     if (!category.trim()) return;
@@ -1562,21 +1318,21 @@ export default function EventsPage() {
                                     setPrice("");
                                     setShowAdmissionInput(false);
                                   }}
-                                  className="px-5 py-2.5 bg-linear-to-r from-primary1 to-primary2 text-white rounded-xl font-bold text-xs font-rubik shadow-sm transition-all cursor-pointer active:scale-95"
+                                  className="px-4 py-2 text-xs sm:px-4 sm:py-2 sm:text-xs"
                                 >
-                                  Add
-                                </button>
-                                <button
+                                  <Plus size={12} /> Add
+                                </Button>
+                                <Button variant="cancelPill"
                                   type="button"
                                   onClick={() => {
                                     setCategory("");
                                     setPrice("");
                                     setShowAdmissionInput(false);
                                   }}
-                                  className="px-4 py-2.5 border-2 border-gray-200 bg-white text-gray-500 rounded-xl font-bold text-xs font-rubik transition-all hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 cursor-pointer active:scale-95"
+                                  
                                 >
                                   Cancel
-                                </button>
+                                </Button>
                               </div>
                             </div>
                           )}
@@ -1611,9 +1367,8 @@ export default function EventsPage() {
                         </div>
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* REGISTRATION */}
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <label className={titlelabelStyle}>
@@ -1733,9 +1488,8 @@ export default function EventsPage() {
                         )}
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* ORGANIZER & CONTACT */}
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <label className={labelStyle}>
@@ -1770,9 +1524,8 @@ export default function EventsPage() {
                         </div>
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* EVENT CONTENT */}
                       <div className="space-y-5">
                         <h3 className={titlelabelStyle}>
                           Event Content
@@ -1823,17 +1576,16 @@ export default function EventsPage() {
                               Contents <span className="text-red-400">*</span>
                             </label>
                             <span className="text-[11px] text-gray-300 font-raleway">
-                              {formData.body.length} chars
+                              {plainLength(formData.body)} chars
                             </span>
                           </div>
-                          <textarea
-                            id="body"
-                            name="body"
+                          <RichTextEditor
                             value={formData.body}
-                            onChange={handleInputChange}
-                            rows={7}
-                            placeholder="Agenda / program highlights..."
-                            className={`${inputCls(errors.body)} resize-y min-h-45`}
+                            onChange={(html) =>
+                              setFormData((prev) => ({ ...prev, body: html }))
+                            }
+                            placeholder="Agenda / program highlights"
+                            invalid={errors.body}
                           />
                           {errors.body && (
                             <p className="text-xs text-red-400 font-raleway flex items-center gap-1">
@@ -1844,32 +1596,25 @@ export default function EventsPage() {
                         </div>
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* ADDITIONAL SECTIONS */}
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <label className={labelStyle}>
                             Additional Sections
                           </label>
-                          {!showAdditionalInfo && (
-                            <button
-                              type="button"
-                              onClick={() => setShowAdditionalInfo(true)}
-                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
-                            >
-                              <Plus size={11} /> Add Section
-                            </button>
+                          {details.length === 0 && (
+                            <AddButton onClick={() => setDetails([{ title: "", body: "" }])}>Add Section</AddButton>
                           )}
                         </div>
-                        {showAdditionalInfo && (
+                        {details.length > 0 && (
                           <div className="space-y-4">
                             {details.map((section, idx) => (
                               <div
                                 key={idx}
                                 className="p-5 border-2 border-gray-100 rounded-xl bg-gray-50/50 space-y-3"
                               >
-                                <div className="flex gap-3">
+                                <div className="flex items-center gap-3">
                                   <input
                                     type="text"
                                     placeholder="Section header"
@@ -1885,17 +1630,12 @@ export default function EventsPage() {
                                     }
                                     className="flex-1 rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
                                   />
-                                  <button
-                                    type="button"
+                                  <RemoveButton
                                     onClick={() =>
                                       setDetails((p) =>
                                         p.filter((_, i) => i !== idx),
                                       )
-                                    }
-                                    className="px-3 py-2.5 rounded-xl bg-white border-2 border-red-100 text-red-400 hover:bg-red-50 text-xs font-bold font-rubik transition-all cursor-pointer"
-                                  >
-                                    Remove
-                                  </button>
+                                    } />
                                 </div>
                                 <textarea
                                   placeholder="Section body (new lines = separate items)"
@@ -1913,25 +1653,13 @@ export default function EventsPage() {
                                 />
                               </div>
                             ))}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setDetails((d) => [
-                                  ...d,
-                                  { title: "", body: "" },
-                                ])
-                              }
-                              className="w-full px-6 py-3.5 border-2 border-dashed border-primary2/30 text-primary2 rounded-xl hover:border-primary2 hover:bg-primary2/5 transition-all font-bold font-rubik text-sm flex items-center justify-center gap-2 cursor-pointer"
-                            >
-                              <Plus size={14} /> Add Another Section
-                            </button>
+                            <AddButton className="w-full" onClick={() => setDetails((d) => [...d, { title: "", body: "" }])}>Add Another Section</AddButton>
                           </div>
                         )}
                       </div>
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* RSVP */}
                       <div className="space-y-2">
                         <label className={labelStyle}>
                           RSVP Link
@@ -1946,55 +1674,13 @@ export default function EventsPage() {
                         />
                       </div>
 
-                      {/* VISIBILITY */}
-                      <div className="space-y-3">
-                        <label className={labelStyle}>
-                          Visibility
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {VISIBILITY_OPTIONS.map((opt) => {
-                            const Icon = opt.icon;
-                            const isActive = formData.visibility === opt.value;
-                            return (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() =>
-                                  setFormData((p) => ({
-                                    ...p,
-                                    visibility: opt.value,
-                                  }))
-                                }
-                                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-left border-2 transition-all duration-200 cursor-pointer ${isActive ? `${opt.bg} ${opt.color} ${opt.border} shadow-sm scale-[1.02]` : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"}`}
-                              >
-                                <span
-                                  className={`w-2 h-2 rounded-full shrink-0 ${isActive ? opt.dot : "bg-gray-200"}`}
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-bold font-rubik leading-tight">
-                                    {opt.label}
-                                  </p>
-                                  <p
-                                    className={`text-[14px] font-raleway font-semibold mt-0.5 truncate ${isActive ? "opacity-90" : "text-gray-300"}`}
-                                  >
-                                    {opt.sublabel}
-                                  </p>
-                                </div>
-                                {isActive && (
-                                  <Check
-                                    size={12}
-                                    className="shrink-0 opacity-70"
-                                  />
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
+                      <VisibilityPicker
+                        value={formData.visibility}
+                        onChange={(visibility) => setFormData((p) => ({ ...p, visibility }))}
+                      />
 
-                      <Divider />
+                      <FormDivider className="my-2" />
 
-                      {/* ACTIONS */}
                       <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
                         {showGlobalError && (
                           <p className="text-red-500 text-sm font-raleway flex items-center gap-1.5">
@@ -2005,7 +1691,7 @@ export default function EventsPage() {
                           {editingId && (
                             <Button
                               type="button"
-                              variant="heroOutline"
+                              variant="heroCancel"
                               onClick={handleCancelEdit}
                               className="px-4 py-2 sm:px-6 sm:py-3"
                             >
@@ -2041,69 +1727,20 @@ export default function EventsPage() {
                     </div>
                 </div>
 
-                {/* MANAGE LIST */}
-                <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
-                  <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                    <div>
-                      <h2 className="text-xl font-bold font-rubik text-primary3">
-                        Published Events
-                      </h2>
-                        <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
-                          {eventList.length} published{" "}
-                          {eventList.length === 1 ? "event" : "events"}
-                        </p>
-                      </div>
-                      <button
-                        onClick={fetchEvents}
-                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200 cursor-pointer"
-                      >
-                        <RefreshCw
-                          size={13}
-                          className={isLoadingList ? "animate-spin" : ""}
-                        />{" "}
-                        Refresh
-                      </button>
-                    </div>
-
-                    {isLoadingList ? (
-                      <LoadingIndicator label="Loading events..." className="py-16" />
-                    ) : eventList.length === 0 ? (
-                      <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
-                        <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
-                          <Calendar size={24} className="text-gray-300" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-bold font-rubik text-gray-400">
-                            No events yet
-                          </p>
-                          <p className="text-xs font-raleway mt-0.5">
-                            Create one using the form above
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto themed-scrollbar">
-                        <table className="responsive-table w-full text-left min-w-160">
-                          <thead>
-                            <tr className="bg-gray-50/80">
-                              <th className="px-6 sm:px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Cover
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Title
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Date
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Mode
-                              </th>
-                              <th className="px-6 sm:px-8 py-3.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
+                <ManageListCard
+                  title="Published Events"
+                  count={eventList.length}
+                  singular="event"
+                  plural="events"
+                  status="published"
+                  loading={isLoadingList}
+                  onRefresh={fetchEvents}
+                  emptyIcon={<Calendar size={24} className="text-gray-300" />}
+                  emptyTitle="No events yet"
+                  emptyHint="Create one using the form above"
+                  columns={["Cover","Title","Date","Mode","Actions"]}
+                  minWidth="min-w-160"
+                >
                             {eventList.map((item) => {
                               const isEditing = editingId === item._id;
                               const online = item.mode === "Online";
@@ -2117,6 +1754,7 @@ export default function EventsPage() {
                                       {item.coverImage ? (
                                         <img
                                           src={item.coverImage}
+                                          onError={swapToFallback}
                                           alt={item.title}
                                           className="w-full h-full object-cover"
                                         />
@@ -2185,11 +1823,7 @@ export default function EventsPage() {
                                 </tr>
                               );
                             })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
+                </ManageListCard>
               </div>
             </div>
           </div>
@@ -2200,109 +1834,22 @@ export default function EventsPage() {
         <Footer />
       </div>
 
-      {/* DELETE MODAL */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowDeleteModal(false)}
-          />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center">
-            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <AlertTriangle className="w-6 h-6 text-red-500" />
-            </div>
-            <h3 className="text-xl font-bold text-primary3 font-rubik mb-2">
-              Delete Event?
-            </h3>
-            <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
-              This will permanently remove the event. This action cannot be
-              undone.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="heroOutline"
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-2 sm:py-3"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="heroDanger"
-                onClick={handleDelete}
-                className="flex-1 py-2 sm:py-3"
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Delete Event?"
+        message="This will permanently remove the event. This action cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+      />
 
-      {/* SUCCESS MODAL */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => {
-              setShowSuccessModal(false);
-              setSubmitSuccess(false);
-            }}
-          />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
-                  <svg
-                    className="w-10 h-10 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-primary3 font-rubik">
-                {successMessage.title}
-              </h3>
-              <p className="text-gray-400 text-sm font-raleway mt-2">
-                {successMessage.description}
-              </p>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="hero"
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  setSubmitSuccess(false);
-                  router.push("/events");
-                }}
-                className="w-full py-2 text-sm sm:py-3"
-              >
-                View Events
-              </Button>
-              <Button
-                variant="heroOutline"
-                onClick={() => {
-                  setShowSuccessModal(false);
-                  setSubmitSuccess(false);
-                }}
-                className="w-full py-2 text-sm sm:py-3"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        open={showSuccessModal}
+        title={successMessage.title}
+        description={successMessage.description}
+        buttonLabel="View Events"
+        onClose={() => { setShowSuccessModal(false); router.push("/events"); }}
+      />
     </div>
   );
 }

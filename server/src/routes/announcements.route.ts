@@ -9,15 +9,15 @@ import {
     getAnnouncementsByType,
     getMyAnnouncements,
 } from '../controllers/announcement.controller';
-import { authenticate, authorizeRoles } from '../middleware/auth.middleware';
+import { authenticate, authorizeRoles, optionalAuth } from '../middleware/auth.middleware';
 import { upload } from '../middleware/upload.middleware';
 
 const router = express.Router();
 
 // Public routes
-router.get('/', getAnnouncements);
+router.get('/', optionalAuth, getAnnouncements);
 router.get('/type/:type', getAnnouncementsByType);
-router.get('/:id', getAnnouncementById);
+router.get('/:id', optionalAuth, getAnnouncementById);
 
 // Protected routes (require authentication)
 // Get user's own announcements - MUST be before /:id to avoid conflicts

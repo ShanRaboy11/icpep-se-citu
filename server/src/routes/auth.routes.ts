@@ -9,7 +9,7 @@ import {
   verifyResetCode,
   resetPassword
 } from '../controllers/auth.controller';
-import { authenticateToken } from '../middleware/auth.middleware';
+import { authenticateToken, optionalAuth } from '../middleware/auth.middleware';
 import {
   loginLimiterByIp,
   loginLimiterByAccount,
@@ -27,9 +27,9 @@ const router = express.Router();
 router.post('/login', loginLimiterByIp, loginLimiterByAccount, login);
 
 // @route   POST /api/auth/logout
-// @desc    Logout user (client-side token removal)
+// @desc    Logout user (revokes the token when one is sent)
 // @access  Public
-router.post('/logout', logout);
+router.post('/logout', optionalAuth, logout);
 
 // @route   POST /api/auth/forgot-password
 // @desc    Request password reset code

@@ -1,18 +1,34 @@
 import { Request, Response, NextFunction } from "express";
 import Event from "../models/event";
-import { canManagePost } from "../utils/ownership";
-import { escapeHtml } from "../utils/html";
+import { canManagePost } from "../utils/auth/ownership";
+import { escapeHtml } from "../utils/content/html";
+import { listVisibility, canViewItem } from "../utils/auth/visibility";
+import { pickFields } from "../utils/pick";
+import { getOrCreateSettings } from "./siteSettings.controller";
+import { resolveContact } from "../utils/content/contact-settings";
+import { sanitizeRichText, isBlankRichText } from "../utils/content/rich-text";
+import { isRsvpOpen } from "../utils/rsvp";
+
+const EVENT_EDITABLE_FIELDS = [
+  "title", "description", "content", "tags", "priority", "targetAudience",
+  "isPublished", "publishDate", "expiryDate", "eventDate", "time", "location",
+  "organizer", "contact", "rsvpLink", "admissions", "registrationRequired",
+  "registrationStart", "registrationEnd", "mode", "details", "galleryImages",
+  "coverImage",
+] as const;
+
 import {
   uploadToCloudinary,
   deleteFromCloudinary,
   uploadMultipleToCloudinary,
-} from "../utils/cloudinary";
+} from "../utils/media/cloudinary";
 import mongoose from "mongoose";
 import { notifyTargetAudience } from "../utils/notification";
-import sendEmail from "../utils/email";
+import sendEmail from "../utils/mail/email";
+import { respondWithError } from "../utils/http-error";
 
 // Local Multer file shape (avoid relying on global Express.Multer augmentation)
-type MulterFile = MulterLocal.MulterFile;
+type MulterFile = Express.Multer.File;
 
 // Multer-aware request type without extending Express.Request (avoids
 // incompatible declaration issues when other libs augment Request)
@@ -29,6 +45,7 @@ interface EventQuery {
   priority?: string;
   eventDate?: { $gte?: Date; $lte?: Date };
   $or?: Array<Record<string, unknown>>;
+  $and?: Array<Record<string, unknown>>;
 }
 
 interface UserEventQuery {
@@ -81,8 +98,8 @@ export const createEvent = async (
     let coverImage: string | null = null;
     let galleryImages: string[] = [];
 
-    const multerFiles = (req as any).files as MulterFile[] | undefined;
-    const singleFile = (req as any).file as MulterFile | undefined;
+    const multerFiles = req.files as MulterFile[] | undefined;
+    const singleFile = req.file as MulterFile | undefined;
 
     if (Array.isArray(multerFiles) && multerFiles.length > 0) {
       try {
@@ -94,13 +111,13 @@ export const createEvent = async (
         }
         const results = await uploadMultipleToCloudinary(buffers, "events");
         galleryImages = results
-          .map((r) => (r as any).secure_url)
+          .map((r) => r.secure_url)
           .filter(Boolean);
         // Ensure coverImage is set to first uploaded image if not already
         if (!coverImage && galleryImages.length > 0) {
           coverImage = galleryImages[0];
         }
-      } catch (uploadError) {
+      } catch {
         // Try uploading individually to get partial results
         try {
           for (const f of multerFiles) {
@@ -112,7 +129,7 @@ export const createEvent = async (
                 f.buffer as Buffer,
                 "events"
               );
-              const url = (singleResult as any).secure_url;
+              const url = singleResult.secure_url;
               if (url) galleryImages.push(url);
               if (!coverImage && url) coverImage = url;
             } catch {
@@ -125,22 +142,11 @@ export const createEvent = async (
             res.status(500).json({
               success: false,
               message: "Failed to upload images",
-              error:
-                uploadError instanceof Error
-                  ? uploadError.message
-                  : "Unknown error",
             });
             return;
           }
         } catch (fallbackErr) {
-          res.status(500).json({
-            success: false,
-            message: "Failed to upload images",
-            error:
-              fallbackErr instanceof Error
-                ? fallbackErr.message
-                : "Unknown error",
-          });
+          respondWithError(res, fallbackErr, "Failed to upload images");
           return;
         }
       }
@@ -155,18 +161,11 @@ export const createEvent = async (
           return;
         }
         const result = await uploadToCloudinary(buf, "events");
-        const url = (result as any).secure_url;
+        const url = result.secure_url;
         galleryImages = url ? [url] : [];
         coverImage = url || coverImage;
-      } catch (uploadError) {
-        res.status(500).json({
-          success: false,
-          message: "Failed to upload cover image",
-          error:
-            uploadError instanceof Error
-              ? uploadError.message
-              : "Unknown error",
-        });
+      } catch (error) {
+        respondWithError(res, error, "Failed to upload cover image");
         return;
       }
     }
@@ -184,18 +183,16 @@ export const createEvent = async (
         req.body.details && typeof req.body.details === "string"
           ? JSON.parse(req.body.details)
           : req.body.details;
-    } catch (parseError) {
+    } catch {
       res.status(400).json({
         success: false,
         message: "Invalid JSON data in request",
-        error:
-          parseError instanceof Error ? parseError.message : "Unknown error",
       });
       return;
     }
 
     // Validate required fields
-    if (!title || !description || !content || !eventDate) {
+    if (!title || !description || !content || !eventDate || isBlankRichText(String(content))) {
       res.status(400).json({
         success: false,
         message:
@@ -204,10 +201,10 @@ export const createEvent = async (
       return;
     }
 
-    const eventData: any = {
+    const eventData: Record<string, unknown> = {
       title,
       description,
-      content,
+      content: sanitizeRichText(String(content)),
       author,
       tags: parsedTags,
       priority,
@@ -275,7 +272,6 @@ export const createEvent = async (
     res.status(500).json({
       success: false,
       message: "Failed to create event",
-      error: error instanceof Error ? error.message : "Unknown error",
       ...(process.env.NODE_ENV === "development" && {
         stack: error instanceof Error ? error.stack : undefined,
       }),
@@ -305,7 +301,6 @@ export const getEvents = async (
     const query: EventQuery = {};
 
     if (tags) query.tags = { $in: (tags as string).split(",") };
-    if (isPublished !== undefined) query.isPublished = isPublished === "true";
     if (targetAudience)
       query.targetAudience = { $in: [targetAudience as string] };
     if (priority) query.priority = priority as string;
@@ -317,11 +312,16 @@ export const getEvents = async (
       if (endDate) query.eventDate.$lte = new Date(endDate as string);
     }
 
-    // Don't show expired events by default
-    query.$or = [
-      { expiryDate: { $exists: false } },
-      { expiryDate: null },
-      { expiryDate: { $gt: new Date() } },
+    // Visibility (drafts) and expiry must both hold
+    query.$and = [
+      listVisibility(req.user, isPublished as string | undefined),
+      {
+        $or: [
+          { expiryDate: { $exists: false } },
+          { expiryDate: null },
+          { expiryDate: { $gt: new Date() } },
+        ],
+      },
     ];
 
     const pageNum = parseInt(page as string);
@@ -370,13 +370,13 @@ export const getEventById = async (
       "firstName lastName studentNumber"
     );
 
-    if (!event) {
+    // A draft is reported as missing to anyone who can't manage it.
+    if (!event || !canViewItem(req.user, event)) {
       res.status(404).json({ message: "Event not found" });
       return;
     }
 
-    // Increment views
-    await event.incrementViews();
+    if (req.query.countView !== "false") await event.incrementViews();
 
     res.status(200).json({
       success: true,
@@ -418,8 +418,8 @@ export const updateEvent = async (
 
     // Handle new cover image upload
     // Handle uploaded files (multiple) during update
-    const reqFiles = (req as any).files as MulterFile[] | undefined;
-    const reqSingle = (req as any).file as MulterFile | undefined;
+    const reqFiles = req.files as MulterFile[] | undefined;
+    const reqSingle = req.file as MulterFile | undefined;
     if (Array.isArray(reqFiles) && reqFiles.length > 0) {
       try {
         const buffers = reqFiles
@@ -430,7 +430,7 @@ export const updateEvent = async (
         }
         const results = await uploadMultipleToCloudinary(buffers, "events");
         const newUrls = results
-          .map((r) => (r as any).secure_url)
+          .map((r) => r.secure_url)
           .filter(Boolean);
         // Preserve existing galleryImages and append new ones
         const existing = Array.isArray(event.galleryImages)
@@ -440,13 +440,7 @@ export const updateEvent = async (
         if (!event.coverImage && newUrls.length > 0)
           req.body.coverImage = newUrls[0];
       } catch (err) {
-        res
-          .status(500)
-          .json({
-            success: false,
-            message: "Failed to upload images",
-            error: err instanceof Error ? err.message : undefined,
-          });
+        respondWithError(res, err, "Failed to upload images");
         return;
       }
     } else if (reqSingle) {
@@ -499,8 +493,17 @@ export const updateEvent = async (
       : null;
     const requestWantsPublish = String(req.body.isPublished) === "true";
 
-    // Create a clean update object
-    const updateData: any = { ...req.body };
+    // Only whitelisted fields can change. Authorship, views and ids never do.
+    const updateData: Record<string, unknown> = pickFields(req.body, EVENT_EDITABLE_FIELDS);
+
+    if (typeof updateData.content === "string") {
+      const content = sanitizeRichText(updateData.content);
+      updateData.content = content;
+      if (isBlankRichText(content)) {
+        res.status(400).json({ success: false, message: "Content cannot be empty" });
+        return;
+      }
+    }
 
     if (
       requestWantsPublish &&
@@ -779,18 +782,11 @@ export const reportEvent = async (
       return;
     }
 
-    const reportRecipient =
-      process.env.REPORT_EMAIL ||
-      process.env.FROM_EMAIL ||
-      process.env.SMTP_EMAIL;
-
-    if (!reportRecipient) {
-      res.status(500).json({
-        success: false,
-        message: "Reporting is not configured on the server yet",
-      });
-      return;
-    }
+    const official = resolveContact(await getOrCreateSettings()).contactEmail.toLowerCase();
+    const organizer = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(event.contact?.trim() ?? "")
+      ? event.contact!.trim().toLowerCase()
+      : null;
+    const recipients = [...new Set([organizer, official].filter((email): email is string => !!email))];
 
     const message = `Event reported: ${event.title}\n\nReason: ${reason}\n\nDetails:\n${details}`;
     const html = `
@@ -801,14 +797,101 @@ export const reportEvent = async (
       <p>${escapeHtml(details).replace(/\n/g, "<br/>")}</p>
     `;
 
-    await sendEmail({
-      email: reportRecipient,
-      subject: `Event Report: ${event.title}`,
-      message,
-      html,
-    });
+    let delivered = 0;
+    for (const email of recipients) {
+      try {
+        await sendEmail({ email, subject: `Event Report: ${event.title}`, message, html });
+        delivered += 1;
+      } catch {
+        continue;
+      }
+    }
+
+    if (delivered === 0) {
+      res.status(502).json({
+        success: false,
+        message: "The report could not be sent right now. Please try again later.",
+      });
+      return;
+    }
 
     res.status(200).json({ success: true, message: "Report sent" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const loadRsvpEvent = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    res.status(400).json({ success: false, message: "Invalid event ID" });
+    return null;
+  }
+
+  const event = await Event.findById(id);
+  if (!event || !canViewItem(req.user, event)) {
+    res.status(404).json({ success: false, message: "Event not found" });
+    return null;
+  }
+  return event;
+};
+
+export const getMyRsvp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const event = await loadRsvpEvent(req, res);
+    if (!event) return;
+
+    const rsvped = Boolean(await Event.exists({ _id: event._id, rsvps: req.user?.id }));
+    res.status(200).json({ success: true, data: { rsvped, count: event.rsvpCount ?? 0 } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const rsvpToEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const event = await loadRsvpEvent(req, res);
+    if (!event) return;
+
+    if (event.rsvpLink) {
+      res.status(400).json({ success: false, message: "Register for this event through its link" });
+      return;
+    }
+    if (!isRsvpOpen(event)) {
+      res.status(400).json({ success: false, message: "This event has already ended" });
+      return;
+    }
+
+    const updated = await Event.findOneAndUpdate(
+      { _id: event._id, rsvps: { $ne: req.user?.id } },
+      { $addToSet: { rsvps: req.user?.id }, $inc: { rsvpCount: 1 } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: { rsvped: true, count: (updated ?? event).rsvpCount ?? 0 },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelRsvp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const event = await loadRsvpEvent(req, res);
+    if (!event) return;
+
+    const updated = await Event.findOneAndUpdate(
+      { _id: event._id, rsvps: req.user?.id },
+      { $pull: { rsvps: req.user?.id }, $inc: { rsvpCount: -1 } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: { rsvped: false, count: Math.max(0, (updated ?? event).rsvpCount ?? 0) },
+    });
   } catch (error) {
     next(error);
   }

@@ -2,21 +2,23 @@ import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Availability from "../models/availability";
 import Meeting from "../models/meeting";
+import { respondWithError } from "../utils/http-error";
+
+// Attendee student numbers and roles are for staff planning meetings; anyone
+// else only gets names.
+const STAFF_ROLES = ["council-officer", "committee-officer", "faculty", "admin"];
 
 export const getMeetingAvailability = async (req: Request, res: Response) => {
   try {
     const { meetingId } = req.params;
+    const isStaff = STAFF_ROLES.includes(req.user?.role ?? "");
     const list = await Availability.find({ meeting: meetingId }).populate(
       "user",
-      "firstName lastName studentNumber role"
+      isStaff ? "firstName lastName studentNumber role" : "firstName lastName"
     );
     res.json({ success: true, data: list });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch availability",
-      error: (error as Error).message,
-    });
+    respondWithError(res, error, "Failed to fetch availability");
   }
 };
 
@@ -39,11 +41,7 @@ export const getMyAvailability = async (req: Request, res: Response) => {
       data: doc || { meeting: meetingId, user: userId, slots: [] },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch my availability",
-      error: (error as Error).message,
-    });
+    respondWithError(res, error, "Failed to fetch my availability");
   }
 };
 
@@ -120,11 +118,7 @@ export const setMyAvailability = async (req: Request, res: Response) => {
 
     res.json({ success: true, message: "Availability saved", data: doc });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to save availability",
-      error: (error as Error).message,
-    });
+    respondWithError(res, error, "Failed to save availability");
   }
 };
 
@@ -151,10 +145,6 @@ export const getAvailabilitySummary = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to summarize availability",
-      error: (error as Error).message,
-    });
+    respondWithError(res, error, "Failed to summarize availability");
   }
 };

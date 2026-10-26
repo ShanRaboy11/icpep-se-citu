@@ -1,4 +1,5 @@
 import { api } from './api-client';
+import type { ApiList, TestimonialRecord } from './types';
 
 export interface TestimonialData {
     name: string;
@@ -28,7 +29,7 @@ const testimonialService = {
     },
     
     getTestimonials: async () => {
-        const response = await api.get('/testimonials');
+        const response = await api.get<ApiList<TestimonialRecord>>('/testimonials');
         return response.data;
     },
 

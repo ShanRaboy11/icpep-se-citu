@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { pageMetadata } from "@/app/utils/site";
-import { departments } from "../utils/officers";
+import { departments } from "../../utils/officers/officers";
 
 export async function generateMetadata({
   params,

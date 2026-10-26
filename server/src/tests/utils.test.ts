@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { canManagePost } from "../utils/ownership";
-import { escapeHtml } from "../utils/html";
-import { escapeRegExp } from "../utils/regex";
+import { canManagePost } from "../utils/auth/ownership";
+import { escapeHtml } from "../utils/content/html";
+import { escapeRegExp } from "../utils/content/regex";
 
 describe("canManagePost", () => {
   it("lets admins and council officers manage any post", () => {

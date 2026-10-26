@@ -1,4 +1,5 @@
 import { api } from './api-client';
+import type { ApiList, FacultyRecord } from './types';
 
 export interface FacultyData {
     _id?: string;
@@ -7,6 +8,7 @@ export interface FacultyData {
     image?: File | string;
     isActive?: boolean;
     displayOrder?: number;
+    gender?: "male" | "female" | "" | null;
 }
 
 const facultyService = {
@@ -20,6 +22,7 @@ const facultyService = {
             }
             if (data.isActive !== undefined) formData.append('isActive', String(data.isActive));
             if (data.displayOrder !== undefined) formData.append('displayOrder', String(data.displayOrder));
+            if (data.gender !== undefined) formData.append('gender', data.gender ?? '');
 
             const response = await api.post('/faculty', formData);
             return response.data;
@@ -30,7 +33,7 @@ const facultyService = {
 
     getFaculty: async () => {
         try {
-            const response = await api.get('/faculty');
+            const response = await api.get<ApiList<FacultyRecord>>('/faculty');
             return response.data;
         } catch (error) {
             throw error;
@@ -56,6 +59,7 @@ const facultyService = {
             }
             if (data.isActive !== undefined) formData.append('isActive', String(data.isActive));
             if (data.displayOrder !== undefined) formData.append('displayOrder', String(data.displayOrder));
+            if (data.gender !== undefined) formData.append('gender', data.gender ?? '');
 
             const response = await api.put(`/faculty/${id}`, formData);
             return response.data;

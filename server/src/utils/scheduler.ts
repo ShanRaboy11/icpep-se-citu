@@ -1,6 +1,6 @@
 import Announcement from '../models/announcement';
 import Event from '../models/event';
-import { notifyTargetAudience } from './notification';
+import { notifyTargetAudience, pruneNotifications } from './notification';
 
 /**
  * Publishes scheduled announcements and events whose publishDate has arrived.
@@ -84,10 +84,19 @@ export function startAnnouncementScheduler(intervalMs = 30_000) {
         }
     };
 
-    void publishDue();
-    const handle = setInterval(publishDue, intervalMs);
+    const prune = () => {
+        pruneNotifications().catch(() => undefined);
+    };
 
-    return () => clearInterval(handle);
+    void publishDue();
+    prune();
+    const handle = setInterval(publishDue, intervalMs);
+    const pruneHandle = setInterval(prune, 6 * 60 * 60 * 1000);
+
+    return () => {
+        clearInterval(handle);
+        clearInterval(pruneHandle);
+    };
 }
 
 export default startAnnouncementScheduler;

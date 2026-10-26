@@ -1,4 +1,4 @@
-// Mirrors client/src/app/officers/utils/format-name.ts — used when
+// Mirrors client/src/app/utils/officers/format-name.ts — used when
 // auto-archiving a live officer assignment so the OfficerTerm record is
 // already stored in the correct "Last Name, First Name M.I." display
 // convention, in proper sentence case, regardless of how the name was

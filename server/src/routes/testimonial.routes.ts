@@ -1,9 +1,11 @@
 import express from 'express';
+import { validateObjectId } from '../middleware/validate-id';
 import { createTestimonial, getTestimonials, getAllTestimonials, updateTestimonial, deleteTestimonial } from '../controllers/testimonial.controller';
 import { upload } from '../middleware/upload.middleware';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.middleware';
 
 const router = express.Router();
+router.param('id', validateObjectId);
 
 // Public routes
 router.get('/', getTestimonials);

@@ -1,22 +1,23 @@
 "use client";
 
-import Header from "../components/header";
-import Footer from "../components/footer";
-import Grid from "../components/grid";
-import InfoSection from "./sections/info";
-import AdvisorsSection from "./sections/advisors";
-import StudentLeadersSection from "./sections/student-leaders";
-import FacultySection from "./sections/faculty";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import Grid from "../components/layout/grid";
+import InfoSection from "../components/about/sections/info";
+import AdvisorsSection from "../components/about/sections/advisors";
+import StudentLeadersSection from "../components/about/sections/student-leaders";
+import FacultySection from "../components/about/sections/faculty";
 
 import { Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FC, useEffect, useState } from "react";
-import BackButton from "../components/back-button";
-import PageHeader from "../components/page-header";
+import BackButton from "../components/ui/back-button";
+import PageHeader from "../components/ui/page-header";
 import facultyService from "../services/faculty";
-import officerTermService from "../services/officerTerm";
+import officerTermService from "../services/officer-term";
 import { getCurrentAcademicYear } from "../utils/academic-year";
-import { toTitleCase } from "../officers/utils/format-name";
+import { toTitleCase } from "../utils/officers/format-name";
+import { placeholderPhoto } from "@/app/utils/placeholder-photo";
 
 interface OfficerTerm {
   term: string;
@@ -41,10 +42,10 @@ const AboutPage: FC = () => {
         const response = await facultyService.getFaculty();
         const data = Array.isArray(response.data) ? response.data : [];
         setDepartmentFaculty(
-          data.map((f: any) => ({
+          data.map((f) => ({
             name: toTitleCase(f.name),
             position: f.position,
-            imageUrl: f.image || "/content/gle.png",
+            imageUrl: f.image || placeholderPhoto(f.name, f.gender),
           })),
         );
       } catch {
@@ -82,7 +83,7 @@ const AboutPage: FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 

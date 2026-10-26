@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toTitleCase, formatOfficerName } from "../app/officers/utils/format-name";
+import { toTitleCase, formatOfficerName } from "../app/utils/officers/format-name";
 
 describe("toTitleCase", () => {
   it("fixes all-caps and all-lowercase names", () => {

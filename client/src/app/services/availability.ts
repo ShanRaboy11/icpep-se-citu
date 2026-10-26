@@ -6,6 +6,11 @@ export type AvailabilityDoc = {
   slots: string[];
 };
 
+export type AvailabilityEntry = {
+  user?: { _id?: string; id?: string; firstName?: string; lastName?: string; role?: string } | string;
+  slots: string[];
+};
+
 export async function getMyAvailability(meetingId: string) {
   try {
     const res = await api.get(`/availability/${meetingId}/me`);
@@ -27,7 +32,7 @@ export async function saveMyAvailability(meetingId: string, slots: string[]) {
 export async function getAvailability(meetingId: string) {
   try {
     const res = await api.get(`/availability/${meetingId}`);
-    return res.data.data as Array<{ user: any; slots: string[] }>;
+    return res.data.data as AvailabilityEntry[];
   } catch (error) {
     throw new Error(errorMessage(error, "Failed to fetch availability"));
   }

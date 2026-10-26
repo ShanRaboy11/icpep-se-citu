@@ -10,6 +10,7 @@ export interface Officer {
   department?: string;
   yearLevel?: number;
   profilePicture?: string;
+  gender?: string | null;
   email?: string;
   studentNumber: string;
   // A student can hold both a council and a committee assignment at once —
@@ -18,6 +19,15 @@ export interface Officer {
   councilYearLevel?: number;
   committeeDepartment?: string;
   committeeTitle?: string;
+}
+
+export interface StudentResult {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  studentNumber: string;
+  gender?: string | null;
 }
 
 export interface UpdateOfficerData {
@@ -51,6 +61,14 @@ const officerService = {
     const response = await api.get<{ success: boolean; data: Officer[] }>(
       "/officers/search",
       { params: { query, type } }
+    );
+    return response.data.data;
+  },
+
+  searchStudents: async (query: string) => {
+    const response = await api.get<{ success: boolean; data: StudentResult[] }>(
+      "/users/search",
+      { params: { query } }
     );
     return response.data.data;
   },

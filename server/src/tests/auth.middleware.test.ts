@@ -14,7 +14,8 @@ import { mockReq, mockRes } from "./helpers";
 const ID = "64b7f0c2a3b4c5d6e7f80912";
 const sign = (payload: object, secret = process.env.JWT_SECRET!) =>
   jwt.sign(payload, secret, { expiresIn: "1h" });
-const bearer = (token: string) => mockReq({ headers: { authorization: `Bearer ${token}` } });
+const bearer = (token: string, originalUrl = "/api/test") =>
+  mockReq({ headers: { authorization: `Bearer ${token}` }, originalUrl });
 const account = (value: unknown) =>
   findById.mockReturnValue({ select: () => ({ lean: async () => value }) });
 
@@ -137,5 +138,36 @@ describe("authorizeSelfOrRoles", () => {
       vi.fn(),
     );
     expect(res.statusCode).toBe(403);
+  });
+});
+
+describe("first-login enforcement", () => {
+  const forPath = async (originalUrl: string) => {
+    account({ role: "student", isActive: true, tokenVersion: 0, firstLogin: true });
+    const res = mockRes();
+    const next = vi.fn();
+    await authenticateToken(bearer(sign({ id: ID, role: "student", tv: 0 }), originalUrl), res, next);
+    return { res, next };
+  };
+
+  it("blocks ordinary routes until the password is changed", async () => {
+    const { res, next } = await forPath("/api/users?page=1");
+    expect(res.statusCode).toBe(403);
+    expect((res.body as { message: string }).message.toLowerCase()).not.toContain("token");
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("still allows setting the password, reading itself and signing out", async () => {
+    for (const path of ["/api/auth/first-login-password", "/api/auth/me", "/api/auth/logout/"]) {
+      const { next } = await forPath(path);
+      expect(next).toHaveBeenCalled();
+    }
+  });
+
+  it("does not interfere once the first login is done", async () => {
+    account({ role: "student", isActive: true, tokenVersion: 0, firstLogin: false });
+    const next = vi.fn();
+    await authenticateToken(bearer(sign({ id: ID, role: "student", tv: 0 })), mockRes(), next);
+    expect(next).toHaveBeenCalled();
   });
 });

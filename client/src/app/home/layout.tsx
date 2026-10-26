@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { DEFAULT_FAQS, type DefaultFaq } from "./utils/default-faqs";
-import { pageMetadata } from "@/app/utils/site";
+import { DEFAULT_FAQS, type DefaultFaq } from "../utils/home/default-faqs";
+import { MAX_FAQS, pageMetadata } from "@/app/utils/site";
+import { jsonLd } from "@/app/utils/json-ld";
 
 export const metadata: Metadata = pageMetadata(
   "Home",
@@ -25,7 +26,7 @@ async function fetchFaqs(): Promise<DefaultFaq[]> {
     const faqs = items.filter(
       (f: DefaultFaq) => typeof f?.question === "string" && typeof f?.answer === "string",
     );
-    return faqs.length > 0 ? faqs : DEFAULT_FAQS;
+    return faqs.length > 0 ? faqs.slice(0, MAX_FAQS) : DEFAULT_FAQS;
   } catch {
     return DEFAULT_FAQS;
   }
@@ -48,7 +49,7 @@ export default async function HomeLayout({ children }: { children: React.ReactNo
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(faqJsonLd) }}
       />
       {children}
     </>
