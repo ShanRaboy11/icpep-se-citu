@@ -1,12 +1,13 @@
 "use client";
 
+import { Skeleton, useDelayedFlag } from "../components/feedback/skeleton";
 import { useEffect, useState, type FC } from "react";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import Grid from "../components/grid";
-import MembershipCard from "./components/membership-card";
-import InteractiveCta from "./components/cta";
-import PageHeader from "../components/page-header";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import Grid from "../components/layout/grid";
+import MembershipCard from "../components/membership/membership-card";
+import InteractiveCta from "../components/membership/cta";
+import PageHeader from "../components/ui/page-header";
 import membershipService, {
   MembershipTierData,
 } from "../services/membership";
@@ -16,6 +17,7 @@ const MembershipPage: FC = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [registrationUrl, setRegistrationUrl] = useState("");
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(loading);
 
   useEffect(() => {
     const load = async () => {
@@ -37,14 +39,13 @@ const MembershipPage: FC = () => {
     load();
   }, []);
 
-  // The overlapping 3-column "spotlight" layout only makes sense for
-  // exactly 3 tiers with the highlighted one in the middle slot (the
-  // convention admins are expected to follow via display order). Any
-  // other count falls back to a plain centered wrap.
   const useSpotlightLayout = tiers.length === 3;
+  const spotlightTier = tiers.find((tier) => tier.isHighlighted);
+  const others = tiers.filter((tier) => tier !== spotlightTier);
+  const columns = spotlightTier ? [others[0], spotlightTier, others[1]] : tiers;
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
         <div className="relative z-10 flex flex-col min-h-screen">
@@ -64,27 +65,38 @@ const MembershipPage: FC = () => {
               }
             />
 
+            {loading && (
+              <div
+                data-skeleton-hidden={showSkeleton ? undefined : ""}
+                className="flex flex-col items-center justify-center gap-8 lg:flex-row"
+              >
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-120 w-full max-w-md rounded-3xl lg:w-1/3" />
+                ))}
+              </div>
+            )}
+
             {!loading && tiers.length > 0 && (
               <div className="w-full">
                 {useSpotlightLayout ? (
                   <div className="group flex flex-col lg:flex-row justify-center items-center gap-16 lg:gap-8 lg:pt-12">
                     <div className="order-2 lg:order-1 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-mr-8 group-hover:lg:-translate-x-8">
                       <MembershipCard
-                        {...tiers[0]}
+                        {...columns[0]}
                         isOpen={isOpen}
                         registrationUrl={registrationUrl}
                       />
                     </div>
                     <div className="order-1 lg:order-2 w-full max-w-md lg:w-1/3 z-10 transition-all duration-500 ease-out lg:scale-110 group-hover:lg:scale-105">
                       <MembershipCard
-                        {...tiers[1]}
+                        {...columns[1]}
                         isOpen={isOpen}
                         registrationUrl={registrationUrl}
                       />
                     </div>
                     <div className="order-3 lg:order-3 w-full max-w-md lg:w-1/3 transition-all duration-500 ease-out lg:-ml-8 group-hover:lg:translate-x-8">
                       <MembershipCard
-                        {...tiers[2]}
+                        {...columns[2]}
                         isOpen={isOpen}
                         registrationUrl={registrationUrl}
                       />

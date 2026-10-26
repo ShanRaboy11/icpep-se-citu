@@ -12,6 +12,7 @@ export interface IOfficerTerm extends Document {
   committeeName?: string; // required when departmentType === 'committee'
   termYear: string; // e.g. "2024-2025"
   image?: string;
+  gender?: 'male' | 'female' | null;
   isActive: boolean;
   displayOrder: number;
   // Set only when this entry was auto-generated from a live officer
@@ -37,6 +38,7 @@ const OfficerTermSchema: Schema = new Schema(
     committeeName: { type: String, default: null, trim: true },
     termYear: { type: String, required: true, trim: true },
     image: { type: String, default: null },
+    gender: { type: String, enum: ['male', 'female', null], default: null },
     isActive: { type: Boolean, default: true },
     displayOrder: { type: Number, default: 0 },
     sourceUserId: { type: Schema.Types.ObjectId, ref: 'User', default: null },

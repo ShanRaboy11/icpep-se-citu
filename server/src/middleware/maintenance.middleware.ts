@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import SiteSettings from '../models/siteSettings';
 import User from '../models/user';
 import { getJwtSecret } from '../config/env';
+import { readToken } from '../utils/auth/session-cookie';
 
 // Routes that stay reachable even while the site is suspended: auth (so an
 // admin can still log in) and the settings endpoint itself (so the toggle
@@ -25,8 +26,7 @@ export const enforceMaintenanceMode = async (
     const settings = await SiteSettings.findOne().lean();
     if (!settings?.maintenanceMode) return next();
 
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = readToken(req);
 
     if (token) {
       try {

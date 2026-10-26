@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_URL, SITE_NAME, DEFAULT_OG_IMAGE } from "@/app/utils/site";
+import { jsonLd } from "@/app/utils/json-ld";
 
 interface RawAnnouncement {
   title?: string;
@@ -17,7 +18,7 @@ const API_URL = (() => {
 
 async function fetchAnnouncement(id: string): Promise<RawAnnouncement | null> {
   try {
-    const res = await fetch(`${API_URL}/announcements/${id}`, { next: { revalidate: 300 } });
+    const res = await fetch(`${API_URL}/announcements/${id}?countView=false`, { next: { revalidate: 300 } });
     if (!res.ok) return null;
     const json = await res.json();
     return json?.data ?? null;
@@ -91,7 +92,7 @@ export default async function AnnouncementLayout({
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(newsArticleJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(newsArticleJsonLd) }}
       />
       {children}
     </>

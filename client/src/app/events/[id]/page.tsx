@@ -1,22 +1,27 @@
 "use client";
 
+import Button from "../../components/ui/button";
+import { toImageUrl } from "../../utils/image-url";
+import GradientCard from "../../components/ui/gradient-card";
+import { DetailCardSkeleton } from "../../components/feedback/skeleton-cards";
+import { Skeleton, useDelayedFlag } from "../../components/feedback/skeleton";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Event } from "../utils/event";
+import { Event } from "../../utils/events/event";
 import eventService from "../../services/event";
-import Header from "../../components/header";
-import Footer from "../../components/footer";
-import Grid from "../../components/grid";
-import EventHeader from "../components/header";
-import EventInfo from "../components/info";
-import OrganizerCard from "../components/organizer";
-import EventBanner from "../components/banner";
-import EventTags from "../components/tags";
-import RsvpCard from "../components/rsvp";
-import EventDetails from "../components/details";
-import EventGallery from "../components/gallery";
+import Header from "../../components/layout/header";
+import Footer from "../../components/layout/footer";
+import Grid from "../../components/layout/grid";
+import EventHeader from "../../components/events/header";
+import EventInfo from "../../components/events/info";
+import OrganizerCard from "../../components/events/organizer";
+import EventBanner from "../../components/events/banner";
+import EventTags from "../../components/events/tags";
+import RsvpCard from "../../components/events/rsvp";
+import EventDetails from "../../components/events/details";
+import EventGallery from "../../components/events/gallery";
 import { ChevronLeft } from "lucide-react";
-import BackButton from "../../components/back-button";
+import BackButton from "../../components/ui/back-button";
 
 type ProcessedEvent = Event & {
   status: "Upcoming" | "Ongoing" | "Ended";
@@ -41,6 +46,8 @@ interface RawEvent {
   details?: unknown[];
   galleryImages?: string[];
   rsvpLink?: string;
+  rsvpCount?: number;
+  contact?: string;
 }
 
 export default function EventDetailPage() {
@@ -50,6 +57,7 @@ export default function EventDetailPage() {
 
   const [rawEvent, setRawEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedFlag(loading);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -59,18 +67,6 @@ export default function EventDetailPage() {
         const res = await eventService.getEventById(id);
         if (res && res.success && res.data) {
           const e = res.data as RawEvent;
-
-          const toImageUrl = (url: unknown) => {
-            if (!url || typeof url !== "string") return "/placeholders/placeholder.svg";
-            if (url.startsWith("http")) return url;
-            const backendHost = (
-              process.env.NEXT_PUBLIC_BACKEND_URL ||
-              process.env.NEXT_PUBLIC_API_URL ||
-              "http://localhost:5000"
-            ).replace(/\/+$/, "");
-            if (url.startsWith("/")) return `${backendHost}${url}`;
-            return url;
-          };
 
           const detailsArr: { title: string; items: string[] }[] = [];
           if (Array.isArray(e.details)) {
@@ -98,7 +94,7 @@ export default function EventDetailPage() {
 
           const organizer =
             typeof e.organizer === "string"
-              ? { name: e.organizer, avatarImageUrl: "/brand/icpep-logo.png" }
+              ? { name: e.organizer, avatarImageUrl: "/brand/icpep-logo.avif" }
               : e.organizer && typeof e.organizer === "object"
                 ? {
                     name: (e.organizer as Record<string, unknown>).name
@@ -110,9 +106,9 @@ export default function EventDetailPage() {
                           (e.organizer as Record<string, unknown>)
                             .avatarImageUrl,
                         )
-                      : "/brand/icpep-logo.png",
+                      : "/brand/icpep-logo.avif",
                   }
-                : { name: "", avatarImageUrl: "/brand/icpep-logo.png" };
+                : { name: "", avatarImageUrl: "/brand/icpep-logo.avif" };
 
           const mode =
             typeof e.mode === "string" && e.mode.toLowerCase() === "online"
@@ -128,7 +124,7 @@ export default function EventDetailPage() {
             location: e.location || "TBA",
             organizer: {
               name: organizer.name || "",
-              avatarImageUrl: organizer.avatarImageUrl || "/brand/icpep-logo.png",
+              avatarImageUrl: organizer.avatarImageUrl || "/brand/icpep-logo.avif",
             },
             tags: Array.isArray(e.tags) ? e.tags : [],
             bannerImageUrl: toImageUrl(
@@ -144,6 +140,8 @@ export default function EventDetailPage() {
               ? e.galleryImages
               : [],
             rsvpLink: e.rsvpLink,
+            rsvpCount: e.rsvpCount ?? 0,
+            contact: e.contact,
           };
 
           setRawEvent(transformed);
@@ -191,32 +189,20 @@ export default function EventDetailPage() {
     return (
       <div className="min-h-screen bg-white flex flex-col">
         <Header />
-        <main className="flex grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-38 pb-12">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start w-full">
-            <div className="lg:col-span-2 lg:sticky lg:top-28 h-fit space-y-6 order-2 lg:order-1">
-              <div className="rounded-xl bg-gray-100 w-full h-64 animate-pulse" />
-              <div className="h-8 w-3/4 bg-gray-100 rounded animate-pulse" />
-              <div className="h-12 w-full bg-gray-100 rounded animate-pulse" />
+        <main
+          data-skeleton-hidden={showSkeleton ? undefined : ""}
+          className="flex grow w-full max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-12"
+        >
+          <div className="grid w-full grid-cols-1 items-start gap-8 lg:grid-cols-5 lg:gap-12">
+            <div className="order-2 hidden space-y-6 lg:order-1 lg:col-span-2 lg:block">
+              <Skeleton className="aspect-square w-full rounded-3xl" />
+              <Skeleton className="h-8 w-40 rounded-full" />
+              <Skeleton className="h-56 w-full rounded-3xl" />
             </div>
 
-            <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
-              <div className="h-8 w-1/3 bg-gray-100 rounded animate-pulse" />
-              <div className="h-12 w-full bg-gray-100 rounded animate-pulse" />
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
-                <div className="h-10 bg-gray-100 rounded animate-pulse" />
-              </div>
-
-              <div className="space-y-4">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-6 bg-gray-100 rounded animate-pulse"
-                  />
-                ))}
-              </div>
+            <div className="order-1 space-y-8 lg:order-2 lg:col-span-3">
+              <Skeleton className="h-64 w-full rounded-3xl" />
+              <DetailCardSkeleton lines={5} />
             </div>
           </div>
         </main>
@@ -237,13 +223,12 @@ export default function EventDetailPage() {
             {fetchError ||
               "Sorry, the event you are looking for does not exist."}
           </p>
-          <button
-            onClick={() => router.push("/events")}
-            className="group inline-flex items-center justify-center gap-2 rounded-full bg-primary1 px-6 py-3 font-rubik font-semibold text-white shadow-lg transition-all duration-300 ease-in-out hover:bg-primary2 active:scale-95 cursor-pointer"
-          >
-            <ChevronLeft className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-1" />
-            <span>Back to Events</span>
-          </button>
+          <Button variant="hero" onClick={() => router.push("/events")}>
+            <span className="inline-flex items-center gap-2">
+              <ChevronLeft className="h-5 w-5" />
+              {"Back to Events"}
+            </span>
+          </Button>
         </main>
         <Footer />
       </div>
@@ -251,40 +236,52 @@ export default function EventDetailPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
-          <div className="grow w-full max-w-6xl mx-auto px-4 sm:px-6 pt-38 pb-16">
+          <div className="grow w-full max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 pt-38 pb-16">
             <div className="mb-8 flex justify-start">
               <BackButton onClick={handleBackToEvents} title="Back to Events" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-start">
               <div className="lg:col-span-2 lg:sticky lg:top-28 h-fit space-y-6 order-2 lg:order-1">
-                <EventBanner
-                  imageUrl={event.bannerImageUrl}
-                  title={event.title}
-                />
-                <EventTags tags={event.tags || []} />
+                <div className="hidden lg:block">
+                  <EventBanner
+                    imageUrl={event.bannerImageUrl}
+                    title={event.title}
+                  />
+                </div>
+                <div className="hidden lg:block">
+                  <EventTags tags={event.tags || []} />
+                </div>
                 <OrganizerCard
                   organizer={event.organizer}
                   eventTitle={event.title}
                   eventId={event.id}
+                  contact={event.contact}
                 />
               </div>
 
               <div className="lg:col-span-3 space-y-8 order-1 lg:order-2">
-                <EventHeader status={event.status} title={event.title} />
-                <EventInfo
-                  date={event.date}
-                  mode={event.mode}
-                  location={event.location}
-                />
+                <GradientCard className="p-6 sm:p-8">
+                  <EventHeader status={event.status} title={event.title} />
+                  <EventInfo
+                    date={event.date}
+                    mode={event.mode}
+                    location={event.location}
+                  />
+                </GradientCard>
+                <div className="lg:hidden">
+                  <EventTags tags={event.tags || []} />
+                </div>
                 {event.status === "Upcoming" && (
                   <RsvpCard
+                    eventId={event.id}
+                    rsvpCount={event.rsvpCount}
                     status={event.status}
                     date={event.date}
                     rsvpLink={event.rsvpLink}

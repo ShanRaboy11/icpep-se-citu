@@ -15,7 +15,10 @@ services:
       - mongo
     environment:
       NODE_ENV: development
-    command: npm run dev # Starts nodemon for hot-reloading
+      # Inside Compose the database is the "mongo" service, not localhost (that
+      # would point at this container). Overrides MONGO_URI from ./.env.
+      MONGO_URI: mongodb://mongo:27017/icpep_db
+    command: npm run dev # Starts tsx watch for hot-reloading
 
   client:
     build:

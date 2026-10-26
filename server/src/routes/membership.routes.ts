@@ -1,4 +1,5 @@
 import express from 'express';
+import { validateObjectId } from '../middleware/validate-id';
 import {
   createMembershipTier,
   getMembershipTiers,
@@ -13,6 +14,7 @@ import {
 import { authenticateToken, authorizeRoles } from '../middleware/auth.middleware';
 
 const router = express.Router();
+router.param('id', validateObjectId);
 
 // Tiers — public list, admin-protected list, plain-JSON CRUD (no images)
 router.get('/tiers', getMembershipTiers);

@@ -1,15 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Sidebar from "@/app/create/components/sidebar";
-import Button from "@/app/components/button";
-import Header from "@/app/components/header";
-import Footer from "@/app/components/footer";
-import Grid from "@/app/components/grid";
-import RequireRole from "@/app/components/require-role";
+import { labelStyle } from "@/app/components/ui/form-styles";
+import { FormCardSkeleton } from "@/app/components/feedback/skeleton-cards";
+import { useState, useEffect } from "react";
+import Sidebar from "@/app/components/create/sidebar";
+import Button from "@/app/components/ui/button";
+import Header from "@/app/components/layout/header";
+import Footer from "@/app/components/layout/footer";
+import Grid from "@/app/components/layout/grid";
+import RequireRole from "@/app/components/layout/require-role";
 import { Sparkles, Check, ShieldAlert, Wrench } from "lucide-react";
 import siteService from "@/app/services/site";
-import { LoadingIndicator } from "@/app/components/loading";
+import { LoadingIndicator } from "@/app/components/feedback/loading";
 
 function MaintenancePageInner() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -51,7 +53,7 @@ function MaintenancePageInner() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       {saving && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/90 backdrop-blur-md">
           <div className="flex flex-col items-center gap-5">
@@ -68,7 +70,7 @@ function MaintenancePageInner() {
         </div>
       )}
 
-      <main className="relative z-10 bg-[#f8f9fc] rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+      <main className="relative z-10 bg-surface rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
         <div className="relative z-10 flex flex-col min-h-screen">
@@ -92,7 +94,7 @@ function MaintenancePageInner() {
               </aside>
 
               <div className="flex-1 min-w-0 space-y-8">
-                <div className="bg-white rounded-4xl border border-gray-200 transition-all duration-300 shadow-lg p-6 sm:p-10 hover:shadow-primary1/40 hover:-translate-y-2">
+                <div className="bg-white rounded-4xl border border-gray-200 transition-all duration-300 shadow-md p-6 sm:p-10 hover:shadow-primary1/40 hover:-translate-y-2">
                   <div className="flex items-center justify-between mb-8">
                     <p className="text-gray-400 text-sm font-raleway">
                       Applies sitewide, instantly
@@ -106,9 +108,7 @@ function MaintenancePageInner() {
                   </div>
 
                   {loading ? (
-                    <div className="py-16">
-                      <LoadingIndicator label="Loading settings..." />
-                    </div>
+                    <FormCardSkeleton fields={2} />
                   ) : (
                     <>
                       {maintenanceMode && (
@@ -128,7 +128,7 @@ function MaintenancePageInner() {
                       )}
 
                       <div className="space-y-2 mb-8">
-                        <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                        <label className={labelStyle}>
                           Site Status
                         </label>
                         <button
@@ -161,7 +161,7 @@ function MaintenancePageInner() {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1">
+                        <label className={labelStyle}>
                           Message shown to visitors
                         </label>
                         <textarea

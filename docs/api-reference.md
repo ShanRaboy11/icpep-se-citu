@@ -10,8 +10,8 @@ While maintenance mode is on, every route below except `/api/auth/*` and `/api/s
 
 | Method & path | Auth | Notes |
 | --- | --- | --- |
-| `POST /login` | public | rate-limited by IP and by account |
-| `POST /logout` | public | |
+| `POST /login` | public | rate-limited by IP and by account; sets the httpOnly `authToken` cookie (the token is not in the response body) |
+| `POST /logout` | public | revokes the session if one is sent and clears the cookie |
 | `POST /forgot-password` | public | rate-limited; emails a reset code |
 | `POST /verify-code` | public | rate-limited |
 | `POST /reset-password` | public | rate-limited; revokes all other sessions for the account |
@@ -26,7 +26,9 @@ While maintenance mode is on, every route below except `/api/auth/*` and `/api/s
 | `GET /search` | `council-officer` | |
 | `GET /stats` | `council-officer` | member counts for dashboards |
 | `POST /bulk-upload` | `council-officer` | Excel roster import |
-| `POST /sync-delete` | `council-officer` | roster sync: removes users not in the uploaded file (admins protected) |
+| `POST /send-first-login-codes` | `council-officer` | body `{ "studentNumbers": [...] }`: re-issues and emails first-login codes to those accounts that are active and still on first login (the rest are skipped); answers 202 and works in the background |
+| `POST /:id/send-first-login-code` | `council-officer` | issues a fresh code for one account still on first login and emails it |
+| `POST /sync-delete` | `council-officer` | roster sync: deactivates *students* missing from the uploaded file (officers, faculty and admins are left alone; non-admins can't deactivate more than half of active students in one run) |
 | `POST /sync-upsert-batch` | `council-officer` | roster sync: batched upsert |
 | `GET /` | any authenticated user | filtering/sorting/pagination |
 | `POST /` | `council-officer` | only `admin` can assign the `admin` role |
@@ -60,14 +62,17 @@ While maintenance mode is on, every route below except `/api/auth/*` and `/api/s
 | `GET /` | public | |
 | `GET /tag/:tag` | public | |
 | `POST /:id/report` | public | rate-limited |
-| `GET /:id` | public | |
+| `GET /:id` | public | counts a view; add `?countView=false` for server-side fetches (metadata) that shouldn't |
 | `GET /my/events` | any authenticated user | |
+| `GET /:id/rsvp` | any authenticated user | `{ rsvped, count }` for the caller; events with an external `rsvpLink` don't use this |
+| `POST /:id/rsvp` | any authenticated user | registers the caller (once) and returns `{ rsvped, count }`; `400` for events that have ended or use an `rsvpLink`. Event responses carry a public `rsvpCount`; who registered is never exposed |
+| `DELETE /:id/rsvp` | any authenticated user | cancels the caller's registration |
 | `POST /`, `PATCH /:id`, `DELETE /:id` | `council-officer` or own post (`canManagePost`) | |
-| `PATCH /:id` (publish toggle) | `council-officer` or own post | |
+| `PATCH /:id/publish` | `council-officer` or own post | publish toggle |
 
 ## Announcements — `/api/announcements`
 
-Same shape as Events: public `GET /`, `GET /type/:type`, `GET /:id`; `GET /my/announcements` for any authenticated user; create/update/delete/publish-toggle behind `council-officer` or ownership.
+Same shape as Events: public `GET /`, `GET /type/:type`, `GET /:id`; `GET /my/announcements` for any authenticated user; create/update/delete/publish-toggle behind `council-officer` or ownership. A meeting announcement can carry `attendance` (a list of `{ name, position }`, up to 300 entries, shown publicly on the announcement), alongside the `attendees` field that holds the attendance form link.
 
 ## Advisors, Faculty, Sponsors, Testimonials — `/api/{advisors,faculty,sponsors,testimonials}`
 
@@ -102,19 +107,29 @@ All routes expect an authenticated user and operate on that user's own notificat
 
 ## FAQs — `/api/faqs`
 
-`GET /` public (feeds both the home page display and its FAQPage structured data); `GET /admin` and all mutations behind `admin` or `council-officer`.
+`GET /` public (feeds both the home page display and its FAQPage structured data); `GET /admin` and all mutations behind `admin` or `council-officer`. At most 8 FAQs can exist (create answers 400 beyond that); a question is up to 120 characters and an answer up to 500.
+
+## Audit log — `/api/audit`
+
+| Route | Auth | Notes |
+| --- | --- | --- |
+| `GET /` | `admin` | newest first; `?page=`, `?limit=` (max 200), `?action=` |
 
 ## Site settings — `/api/site`
 
 | Method & path | Auth | Notes |
 | --- | --- | --- |
 | `GET /settings` | public | `{ maintenanceMode, maintenanceMessage }` — always reachable, even during maintenance |
+| `GET /stats` | public | `{ members, events }` for the home page hero: active members and published events that already happened; cached for 5 minutes |
+| `PUT /contact` | `council-officer` | `{ contactEmail, secondaryEmail, socialLinks: [{ platform, url }] }`: the official email (required), an optional second email and any number of social links (facebook, instagram, tiktok, youtube, x, threads, linkedin, discord, github, telegram; https only). `GET /settings` returns the resolved values, with the chapter's Facebook and TikTok as the defaults until links are saved. Event reports go to the organizer's email, then to the official email |
+| `PUT /primer` | `council-officer` | multipart: a `file` (PDF, up to 10MB, stored on Cloudinary) or `url` (https link), or `clear=true` to go back to the bundled default; `GET /settings` returns the current `primerUrl` |
+| `PUT /photos/:section/:slot` | `council-officer` | multipart `image` (JPEG, PNG, WebP or GIF, up to 5MB): replaces photo `slot` (0 to 2) of `join` (home page "Why Join ICpEP SE?") or `about` (the About page's "Engineered for Impact"). `GET /settings` returns `joinPhotos` and `aboutPhotos` as three entries each, where an empty entry means the bundled photo for that slot is shown |
+| `DELETE /photos/:section/:slot` | `council-officer` | puts the bundled photo back in that slot and deletes the uploaded one |
 | `PUT /settings` | `admin` | the only route besides `/api/auth/*` reachable during maintenance |
 
 ## Health / info
 
 | Method & path | Auth |
 | --- | --- |
-| `GET /health` | public — `{ status, database }`, outside `/api` |
-| `GET /` | public — API index |
-| `GET /api` | public — lists available route prefixes |
+| `GET /health` | public — `{ success, status }`, outside `/api` |
+| `GET /`, `GET /api` | public — just `{ success, message }`; no route list or environment details |

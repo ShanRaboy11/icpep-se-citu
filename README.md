@@ -9,6 +9,7 @@ This project is the **official website of the ICPEP.SE CIT-U Chapter**, develope
 ## 📑 Table of Contents
 - [Prerequisites](#-prerequisites)  
 - [Setup Instructions](#-setup-instructions)  
+- [First-Time Setup](#-first-time-setup-creating-the-first-admin)  
 - [Environment Variables](#-environment-variables)  
 - [Tests & Checks](#-tests--checks)  
 - [Updating After Pulling New Code](#-updating-after-pulling-new-code)  
@@ -60,6 +61,36 @@ This project is the **official website of the ICPEP.SE CIT-U Chapter**, develope
 
 ---
 
+## 🚀 First-Time Setup (creating the first admin)
+
+Registration is closed and user creation needs an admin token, so a brand-new database has no way to log in yet. Create the first admin once, by hand:
+
+1. Pick a student number from `DEVELOPER_STUDENT_NUMBERS` in `server/src/config/developers.ts` (for example `23-3403-881`). That list makes the server keep this account as `admin` and active on every login.
+2. Hash a password with the server's own bcrypt (run from the repo root):
+
+   ```bash
+   node -e "console.log(require('./server/node_modules/bcryptjs').hashSync('YourPassword!1', 10))"
+   ```
+
+3. Insert one document into the `users` collection with MongoDB Compass or `mongosh`. Inserting directly skips the model's hashing hook, so the password must already be hashed:
+
+   ```json
+   {
+     "studentNumber": "23-3403-881",
+     "firstName": "Your",
+     "lastName": "Name",
+     "password": "<the hash from step 2>",
+     "role": "admin",
+     "isActive": true,
+     "firstLogin": false,
+     "membershipStatus": { "isMember": false, "membershipType": null }
+   }
+   ```
+
+4. Log in with that student number and password. Add more users from the Users page once you're in.
+
+---
+
 ## 🔐 Environment Variables
 
 Copy `.env.example` and fill in real values. The ones that change behavior:
@@ -67,12 +98,14 @@ Copy `.env.example` and fill in real values. The ones that change behavior:
 | Variable | Purpose |
 | -------- | ------- |
 | `JWT_SECRET` | **Required.** The server refuses to start without it (at least 16 characters, use a long random string). |
-| `DEFAULT_PASSWORD` | Password given to new accounts when none is supplied; users must change it at first login. **Required in production** (the server won't start without it); falls back to `123456` in development. |
-| `JWT_EXPIRES_IN` | How long a login stays valid, e.g. `12h` or `3d`. Defaults to `7d`. Resetting a password signs out all of that account's sessions. |
+| `SCHOOL_EMAIL_DOMAIN` | Domain of the school emails (`firstname.lastname@cit.edu`) that first-login codes are sent to. Defaults to `cit.edu`. |
+| `FIRST_LOGIN_CODE_DAYS` | How long a new account's first-login code stays usable. Defaults to `7`. |
+| `FIRST_LOGIN_MAIL_INTERVAL_MS` | Pause between first-login emails, so a roster upload doesn't trip the mail server's limits. Defaults to `2000`. |
+| `JWT_EXPIRES_IN` | How long a login stays valid, e.g. `12h` or `3d`. Defaults to `1d`. Resetting a password signs out all of that account's sessions. |
 | `NEXT_PUBLIC_SITE_URL` | The deployed site's public URL, used for the sitemap, canonical links and structured data. Defaults to the production domain. |
 | `TRUST_PROXY` | Number of reverse proxies in front of the server (e.g. `1` on Render) so rate limits see the real client IP. Leave unset when the server is exposed directly. |
 | `SMTP_TLS_REJECT_UNAUTHORIZED` | Certificates are verified by default. Set to `false` only for a local mail catcher with a self-signed certificate. |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_EMAIL`, `SMTP_PASSWORD`, `FROM_EMAIL`, `FROM_NAME`, `REPORT_EMAIL` | Outgoing email (reset codes, event reports). |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_EMAIL`, `SMTP_PASSWORD`, `FROM_EMAIL`, `FROM_NAME` | Outgoing email (first-login codes, resets, event reports). |
 
 Login, forgot-password, verify-code and reset-password are rate limited per IP and per account (in memory, reset on restart).
 
@@ -121,7 +154,7 @@ docker compose up --build
 
 ## 🛠 Development Notes
 
-* **Backend (server/)** → Express + MongoDB, auto-restarts with `nodemon`.
+* **Backend (server/)** → Express + MongoDB, auto-restarts with `tsx watch`.
 * **Frontend (client/)** → Next.js + TailwindCSS, supports hot reload.
 * **Database** → MongoDB 6.0 with Docker volume (`mongo-data`) for persistence.
 * **Public assets** (`client/public/`) → organized into subfolders: `brand/`, `icons/{social,ui,illustrations,decorative}/`, `team/`, `content/`, `placeholders/`, `documents/`. Add new files to the matching folder rather than the root.
@@ -132,7 +165,7 @@ docker compose up --build
 
 ## 📝 Common Issues
 
-* **`nodemon: not found`** → rebuild without cache:
+* **`tsx: not found`** → rebuild without cache:
 
   ```bash
   docker compose build --no-cache

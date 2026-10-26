@@ -3,8 +3,14 @@ import User, { IUser } from "../models/user";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { sendNotification } from "../utils/notification";
-import { escapeRegExp } from "../utils/regex";
-import { getDefaultPassword } from "../config/env";
+import { escapeRegExp } from "../utils/content/regex";
+import { issueFirstLoginCode } from "../utils/auth/first-login-code";
+import { buildSchoolEmail } from "../utils/mail/school-email";
+import { parseGender } from "../utils/gender";
+import { queueFirstLoginEmail } from "../utils/mail/first-login-mail";
+import { recordAudit } from "../utils/audit";
+import { respondWithError } from "../utils/http-error";
+import { NON_MEMBER, usesMembership } from "../utils/membership";
 
 // Interface for request with authenticated user
 export interface AuthRequest extends Request {
@@ -15,9 +21,17 @@ export interface AuthRequest extends Request {
   };
 }
 
+const VALID_ROLES = ["student", "council-officer", "committee-officer", "faculty", "admin"];
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // Only admins may hand out the admin role (e.g. via an Excel upload).
 const assignableRole = (role: string | undefined, requesterRole?: string) =>
   role === "admin" && requesterRole !== "admin" ? "student" : role;
+
+// Council officers are peers: only an admin can delete, deactivate, demote or
+// otherwise manage another council officer's account (their own is theirs to edit).
+const isProtectedPeer = (target: { role: string }, actor?: { id?: string; role?: string }, targetId?: string) =>
+  target.role === "council-officer" && actor?.role !== "admin" && actor?.id !== targetId;
 
 const PUBLIC_DIRECTORY_ROLES = ["council-officer", "committee-officer"];
 const PUBLIC_DIRECTORY_FIELDS =
@@ -44,7 +58,7 @@ export const getAllUsers = async (
     const canSeeEveryone =
       req.user?.role === "council-officer" || req.user?.role === "admin";
 
-    const filter: any = {};
+    const filter: Record<string, unknown> = {};
 
     if (canSeeEveryone) {
       if (role && role !== "all") {
@@ -75,18 +89,24 @@ export const getAllUsers = async (
     }
 
     // Build sort object
-    const sort: any = {};
-    sort[sortBy as string] = sortOrder === "asc" ? 1 : -1;
+    // Only fields that are safe to order by. Sorting on a hidden field (e.g. a
+    // password hash or reset code) would leak its order even without the value.
+    const SORTABLE = ["createdAt", "updatedAt", "studentNumber", "lastName", "firstName", "role", "yearLevel", "isActive"];
+    const sort: Record<string, 1 | -1> = {};
+    sort[SORTABLE.includes(String(sortBy)) ? String(sortBy) : "createdAt"] = sortOrder === "asc" ? 1 : -1;
 
     // Pagination
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    // Cap page size: staff get up to 10000 (the users page loads everyone at once),
+    // everyone else 500. Pages are never below 1.
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const maxLimit = canSeeEveryone ? 10000 : 500;
+    const limitNum = Math.min(maxLimit, Math.max(1, parseInt(limit as string) || 50));
     const skip = (pageNum - 1) * limitNum;
 
     // Execute query
     let query = User.find(filter);
     query = canSeeEveryone
-      ? query.populate("registeredBy", "firstName lastName middleName")
+      ? query.select("+firstLogin").populate("registeredBy", "firstName lastName middleName role")
       : query.select(PUBLIC_DIRECTORY_FIELDS);
     const users = await query.sort(sort).skip(skip).limit(limitNum).lean();
 
@@ -103,12 +123,8 @@ export const getAllUsers = async (
         pages: Math.ceil(total / limitNum),
       },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching users",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error fetching users");
   }
 };
 
@@ -130,7 +146,7 @@ export const getUserById = async (
 
     const user = await User.findById(id).populate(
       "registeredBy",
-      "firstName lastName middleName",
+      "firstName lastName middleName role",
     );
 
     if (!user) {
@@ -145,12 +161,8 @@ export const getUserById = async (
       success: true,
       data: user,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching user",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error fetching user");
   }
 };
 
@@ -165,18 +177,28 @@ export const createUser = async (
       lastName,
       firstName,
       middleName,
-      password: submittedPassword,
       role = "student",
       yearLevel,
       membershipStatus,
+      email,
+      position,
+      department,
+      gender,
     } = req.body;
-    const password = submittedPassword || getDefaultPassword();
 
     // Validation
     if (!studentNumber || !lastName || !firstName) {
       res.status(400).json({
         success: false,
-        message: "Student number, first name, and last name are required",
+        message: "ID number, first name, and last name are required",
+      });
+      return;
+    }
+
+    if (!VALID_ROLES.includes(role)) {
+      res.status(400).json({
+        success: false,
+        message: "Invalid role",
       });
       return;
     }
@@ -187,6 +209,37 @@ export const createUser = async (
         message: "Only admins can create admin accounts",
       });
       return;
+    }
+
+    const cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    if (cleanEmail && !EMAIL_PATTERN.test(cleanEmail)) {
+      res.status(400).json({
+        success: false,
+        message: "Enter a valid email address",
+      });
+      return;
+    }
+    const accountEmail = cleanEmail || buildSchoolEmail(firstName, lastName);
+    const { code, expires } = issueFirstLoginCode();
+
+    // Officer and faculty titles live in different fields depending on role.
+    const positionFields = {
+      position: null as string | null,
+      department: null as string | null,
+      councilPosition: null as string | null,
+      committeeTitle: null as string | null,
+      committeeDepartment: null as string | null,
+    };
+    const cleanPosition = typeof position === "string" && position.trim() ? position.trim() : null;
+    const cleanDepartment = typeof department === "string" && department.trim() ? department.trim() : null;
+    if (role === "council-officer") {
+      positionFields.councilPosition = cleanPosition;
+    } else if (role === "committee-officer") {
+      positionFields.committeeTitle = cleanPosition;
+      positionFields.committeeDepartment = cleanDepartment;
+    } else if (role === "faculty") {
+      positionFields.position = cleanPosition;
+      positionFields.department = cleanDepartment;
     }
 
     // Check if user already exists
@@ -251,27 +304,49 @@ export const createUser = async (
       lastName,
       firstName,
       middleName: middleName || null,
-      password,
+      email: accountEmail,
+      gender: parseGender(gender),
+      password: code,
+      firstLoginCodeStatus: accountEmail ? "pending" : "no-email",
+      firstLoginCodeExpires: expires,
       role,
-      yearLevel,
+      // Year level only means something for students and officers, who are
+      // students too; faculty don't get one.
+      yearLevel: role === "faculty" ? undefined : yearLevel,
+      ...positionFields,
       membershipStatus: membershipStatusObj,
       registeredBy: req.user?.id || null,
     });
 
     // Populate registeredBy before sending response
-    await newUser.populate("registeredBy", "firstName lastName middleName");
+    await newUser.populate("registeredBy", "firstName lastName middleName role");
+
+    await recordAudit({
+      action: "user.create",
+      actorId: req.user?.id,
+      targetId: newUser._id,
+      details: { role: newUser.role },
+    });
+
+    if (accountEmail) {
+      queueFirstLoginEmail({
+        userId: newUser._id.toString(),
+        email: accountEmail,
+        firstName: newUser.firstName,
+        code,
+        expires,
+      });
+    }
 
     res.status(201).json({
       success: true,
-      message: "User created successfully",
+      message: accountEmail
+        ? `User created. A first-login code is being sent to ${accountEmail}.`
+        : "User created, but no school email could be worked out, so no first-login code was sent.",
       data: newUser,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error creating user",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error creating user");
   }
 };
 
@@ -291,11 +366,10 @@ interface UploadSuccess {
 interface UploadFailure {
   studentNumber: string;
   reason: string;
-  data?: any;
+  data?: unknown;
 }
 
 const UPLOAD_BATCH_SIZE = 25;
-const MIN_PASSWORD_LENGTH = 6;
 
 // bcryptjs is pure JavaScript, so hashing one password per new account made big
 // uploads crawl (and block the server). Most rows share the default password,
@@ -312,18 +386,31 @@ const createPasswordHasher = () => {
   };
 };
 
-const createUserWithHashedPassword = async (
-  data: Record<string, unknown> & { password: string },
+const createUserWithFirstLoginCode = async (
+  data: Record<string, unknown> & { firstName: string; lastName: string },
   hashPassword: (plain: string) => Promise<string>,
 ) => {
-  if (data.password.length < MIN_PASSWORD_LENGTH) {
-    throw new Error(
-      `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
-    );
-  }
-  const user = new User({ ...data, password: await hashPassword(data.password) });
+  const { code, expires } = issueFirstLoginCode();
+  const email = buildSchoolEmail(data.firstName, data.lastName);
+  const user = new User({
+    ...data,
+    email,
+    password: await hashPassword(code),
+    firstLoginCodeStatus: email ? "pending" : "no-email",
+    firstLoginCodeExpires: expires,
+  });
   user.$locals.passwordAlreadyHashed = true;
-  return user.save();
+  const saved = await user.save();
+  if (email) {
+    queueFirstLoginEmail({
+      userId: saved._id.toString(),
+      email,
+      firstName: saved.firstName,
+      code,
+      expires,
+    });
+  }
+  return saved;
 };
 const MISSING_FIELDS_REASON =
   "Missing required fields (studentNumber, firstName, lastName)";
@@ -352,9 +439,9 @@ const parseMembershipStatus = (value: unknown): MembershipStatus => {
 
 // Splits an upload into the rows to process (the last row wins when a
 // student number repeats) and the rows missing required fields.
-const splitUploadRows = (rows: any[]) => {
-  const valid = new Map<string, any>();
-  const invalid: any[] = [];
+const splitUploadRows = <Row extends { studentNumber?: unknown; firstName?: unknown; lastName?: unknown }>(rows: Row[]) => {
+  const valid = new Map<string, Row>();
+  const invalid: Row[] = [];
   for (const row of rows) {
     if (row.studentNumber && row.firstName && row.lastName) {
       valid.set(String(row.studentNumber).toUpperCase(), row);
@@ -430,7 +517,11 @@ export const bulkUploadUsers = async (
           if (userData.middleName !== undefined)
             existingUser.middleName = userData.middleName || null;
 
-          if (userData.role && existingUser.role !== "admin") {
+          if (
+            userData.role &&
+            existingUser.role !== "admin" &&
+            !isProtectedPeer(existingUser, req.user, existingUser._id.toString())
+          ) {
             existingUser.role = assignableRole(
               userData.role,
               req.user?.role,
@@ -451,13 +542,12 @@ export const bulkUploadUsers = async (
           return;
         }
 
-        const newUser = await createUserWithHashedPassword(
+        const newUser = await createUserWithFirstLoginCode(
           {
             studentNumber: userData.studentNumber,
             lastName: userData.lastName,
             firstName: userData.firstName,
             middleName: userData.middleName || null,
-            password: userData.password || getDefaultPassword(),
             role: assignableRole(userData.role, req.user?.role) || "student",
             yearLevel: userData.yearLevel || null,
             membershipStatus,
@@ -471,10 +561,10 @@ export const bulkUploadUsers = async (
           fullName: newUser.fullName,
           id: newUser._id.toString(),
         };
-      } catch (error: any) {
+      } catch (error) {
         failed.push({
           studentNumber: userData.studentNumber || "UNKNOWN",
-          reason: error.message || "Unknown error occurred",
+          reason: (error instanceof Error && error.message) || "Unknown error occurred",
           data: userData,
         });
       }
@@ -489,12 +579,8 @@ export const bulkUploadUsers = async (
       message: `Bulk upload completed. ${success.length} succeeded, ${failed.length} failed`,
       data: { success, failed },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error during bulk upload",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error during bulk upload");
   }
 };
 
@@ -534,12 +620,33 @@ export const syncDeleteUsers = async (
       id: user._id.toString(),
     });
 
+    // The roster is a list of students: officers, faculty and admins who aren't
+    // on it are left alone rather than locked out.
     const skippedAdmins = missingUsers
       .filter((user) => user.role === "admin")
       .map(summarize);
+    const skippedStaff = missingUsers
+      .filter((user) => user.role !== "admin" && user.role !== "student")
+      .map(summarize);
     const toDeactivate = missingUsers.filter(
-      (user) => user.role !== "admin" && user.isActive,
+      (user) => user.role === "student" && user.isActive,
     );
+
+    // A wrong or partial file would lock out most of the chapter, so anything
+    // that large needs an admin.
+    if (req.user?.role !== "admin") {
+      const activeStudents = await User.countDocuments({
+        role: "student",
+        isActive: true,
+      });
+      if (toDeactivate.length > Math.max(10, activeStudents * 0.5)) {
+        res.status(400).json({
+          success: false,
+          message: `This file would deactivate ${toDeactivate.length} of ${activeStudents} active students, which looks like a wrong or partial roster. Please check the file, or ask an admin to run it.`,
+        });
+        return;
+      }
+    }
 
     if (toDeactivate.length > 0) {
       await User.updateMany(
@@ -549,17 +656,19 @@ export const syncDeleteUsers = async (
     }
     const deactivated = toDeactivate.map(summarize);
 
+    await recordAudit({
+      action: "roster.deactivate",
+      actorId: req.user?.id,
+      details: { deactivated: deactivated.length, rosterSize: uploadedStudentNumbers.length },
+    });
+
     res.status(200).json({
       success: true,
-      message: `Delete phase complete. ${deactivated.length} deactivated, ${skippedAdmins.length} admins protected.`,
-      data: { deactivated, skippedAdmins },
+      message: `Delete phase complete. ${deactivated.length} deactivated, ${skippedAdmins.length + skippedStaff.length} admins, officers and faculty left alone.`,
+      data: { deactivated, skippedAdmins, skippedStaff },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error during sync delete",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error during sync delete");
   }
 };
 
@@ -619,7 +728,10 @@ export const syncUpsertBatch = async (
 
           existingUser.membershipStatus = membershipStatus;
 
-          if (userData.role) {
+          if (
+            userData.role &&
+            !isProtectedPeer(existingUser, req.user, existingUser._id.toString())
+          ) {
             const newRole = userData.role.toLowerCase();
             if (
               ["student", "council-officer", "committee-officer", "faculty"].includes(
@@ -657,13 +769,12 @@ export const syncUpsertBatch = async (
             ? userData.position || null
             : null;
 
-        await createUserWithHashedPassword(
+        await createUserWithFirstLoginCode(
           {
             studentNumber: userData.studentNumber,
             lastName: userData.lastName,
             firstName: userData.firstName,
             middleName: userData.middleName || null,
-            password: userData.password || getDefaultPassword(),
             role,
             yearLevel: userData.yearLevel || null,
             position,
@@ -673,25 +784,27 @@ export const syncUpsertBatch = async (
           hashPassword,
         );
         successful++;
-      } catch (error: any) {
+      } catch (error) {
         failedUsers.push({
           studentNumber: userData.studentNumber || "UNKNOWN",
-          reason: error.message || "Unknown error occurred",
+          reason: (error instanceof Error && error.message) || "Unknown error occurred",
           data: userData,
         });
       }
+    });
+
+    await recordAudit({
+      action: "roster.upsert",
+      actorId: req.user?.id,
+      details: { successful, failed: failedUsers.length },
     });
 
     res.status(200).json({
       success: true,
       data: { successful, failed: failedUsers.length, failedUsers },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error during sync upsert batch",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error during sync upsert batch");
   }
 };
 
@@ -707,6 +820,7 @@ const MANAGED_EDITABLE_FIELDS = [
   "yearLevel",
   "membershipStatus",
   "isActive",
+  "gender",
 ];
 
 const pickFields = (source: Record<string, unknown>, fields: string[]) =>
@@ -749,6 +863,14 @@ export const updateUser = async (
       return;
     }
 
+    if (isProtectedPeer(originalUser, req.user, id)) {
+      res.status(403).json({
+        success: false,
+        message: "Only admins can edit another council officer's account",
+      });
+      return;
+    }
+
     // People editing their own record can only change profile details;
     // role, membership and status are managed by officers and admins.
     const isSelfService = req.user?.id === id && !isAdmin;
@@ -757,11 +879,17 @@ export const updateUser = async (
       isSelfService ? SELF_EDITABLE_FIELDS : MANAGED_EDITABLE_FIELDS,
     );
 
+    if ("gender" in updates) updates.gender = parseGender(updates.gender);
+
+    if (!usesMembership((updates.role as string | undefined) ?? originalUser.role)) {
+      updates.membershipStatus = { ...NON_MEMBER };
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       id,
       { ...updates, updatedAt: new Date() },
       { new: true, runValidators: true },
-    ).populate("registeredBy", "firstName lastName middleName");
+    ).populate("registeredBy", "firstName lastName middleName role");
 
     if (!updatedUser) {
       res.status(404).json({
@@ -769,6 +897,15 @@ export const updateUser = async (
         message: "User not found",
       });
       return;
+    }
+
+    if (updates.role && updates.role !== originalUser.role) {
+      await recordAudit({
+        action: "user.role-change",
+        actorId: req.user?.id,
+        targetId: id,
+        details: { from: originalUser.role, to: updates.role },
+      });
     }
 
     // Notification Logic
@@ -787,7 +924,7 @@ export const updateUser = async (
           : `Your membership details have been updated. Type: ${updatedUser.membershipStatus.membershipType}`,
         "membership",
         updatedUser._id,
-        "Membership" as any,
+        "Membership",
       );
     }
 
@@ -802,7 +939,7 @@ export const updateUser = async (
     const changedFields = profileFields.filter(
       (field) =>
         updates[field] !== undefined &&
-        updates[field] !== (originalUser as any)[field],
+        updates[field] !== (originalUser as unknown as Record<string, unknown>)[field],
     );
 
     if (changedFields.length > 0) {
@@ -821,12 +958,8 @@ export const updateUser = async (
       message: "User updated successfully",
       data: updatedUser,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error updating user",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error updating user");
   }
 };
 
@@ -864,10 +997,31 @@ export const toggleUserStatus = async (
       return;
     }
 
+    if (req.user?.id === id) {
+      res.status(400).json({
+        success: false,
+        message: "You can't deactivate your own account",
+      });
+      return;
+    }
+
+    if (isProtectedPeer(user, req.user, id)) {
+      res.status(403).json({
+        success: false,
+        message: "Only admins can change another council officer's status",
+      });
+      return;
+    }
+
     user.isActive = !user.isActive;
     await user.save();
+    await recordAudit({
+      action: user.isActive ? "user.activate" : "user.deactivate",
+      actorId: req.user?.id,
+      targetId: id,
+    });
 
-    await user.populate("registeredBy", "firstName lastName middleName");
+    await user.populate("registeredBy", "firstName lastName middleName role");
 
     res.status(200).json({
       success: true,
@@ -876,12 +1030,8 @@ export const toggleUserStatus = async (
       } successfully`,
       data: user,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error toggling user status",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error toggling user status");
   }
 };
 
@@ -919,19 +1069,191 @@ export const deleteUser = async (
       return;
     }
 
+    if (req.user?.id === id) {
+      res.status(400).json({
+        success: false,
+        message: "You can't delete your own account",
+      });
+      return;
+    }
+
+    if (isProtectedPeer(userToDelete, req.user, id)) {
+      res.status(403).json({
+        success: false,
+        message: "Only admins can delete a council officer's account",
+      });
+      return;
+    }
+
     await userToDelete.deleteOne();
+    await recordAudit({
+      action: "user.delete",
+      actorId: req.user?.id,
+      targetId: id,
+      details: { studentNumber: userToDelete.studentNumber, role: userToDelete.role },
+    });
 
     res.status(200).json({
       success: true,
       message: "User deleted successfully",
       data: { id },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error deleting user",
-      error: error.message,
+  } catch (error) {
+    respondWithError(res, error, "Error deleting user");
+  }
+};
+
+const reissueFirstLoginCode = async (
+  user: UserDoc,
+  restartFirstLogin = false,
+): Promise<string | null> => {
+  const email = user.email || buildSchoolEmail(user.firstName, user.lastName);
+  const { code, expires } = issueFirstLoginCode();
+  if (email) user.email = email;
+  user.password = code;
+  if (restartFirstLogin) user.firstLogin = true;
+  user.firstLoginCodeStatus = email ? "pending" : "no-email";
+  user.firstLoginCodeExpires = expires;
+  await user.save();
+  if (!email) return null;
+  queueFirstLoginEmail({
+    userId: user._id.toString(),
+    email,
+    firstName: user.firstName,
+    code,
+    expires,
+  });
+  return email;
+};
+
+export const sendFirstLoginCode = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ success: false, message: "Invalid user ID" });
+      return;
+    }
+
+    const user = await User.findById(id).select("+firstLogin");
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+    const restart = req.user?.role === "admin" && req.body?.force === true;
+    if (!user.firstLogin && !restart) {
+      res.status(400).json({
+        success: false,
+        message: "This account has already set its own password",
+      });
+      return;
+    }
+    if (user.role === "admin" && req.user?.role !== "admin") {
+      res.status(403).json({
+        success: false,
+        message: "Only admins can send a code to an admin account",
+      });
+      return;
+    }
+
+    const email = await reissueFirstLoginCode(user, restart);
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        message: "No school email could be worked out for this account",
+      });
+      return;
+    }
+
+    await recordAudit({
+      action: "user.first-login-code",
+      actorId: req.user?.id,
+      targetId: id,
+      details: { restart },
     });
+
+    res.status(200).json({
+      success: true,
+      message: `A new first-login code is being sent to ${email}`,
+      data: {
+        firstLoginCodeStatus: user.firstLoginCodeStatus,
+        firstLoginCodeExpires: user.firstLoginCodeExpires,
+      },
+    });
+  } catch (error) {
+    respondWithError(res, error, "Error sending first-login code");
+  }
+};
+
+export const sendFirstLoginCodes = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  try {
+    const studentNumbers: string[] = Array.isArray(req.body?.studentNumbers)
+      ? req.body.studentNumbers
+          .filter((value: unknown): value is string => typeof value === "string")
+          .map((value: string) => value.trim().toUpperCase())
+          .filter(Boolean)
+      : [];
+
+    if (studentNumbers.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: "Choose which accounts to send codes to",
+      });
+      return;
+    }
+    if (studentNumbers.length > 2000) {
+      res.status(400).json({
+        success: false,
+        message: "Send codes to at most 2000 accounts at a time",
+      });
+      return;
+    }
+
+    const found = await User.find({ studentNumber: { $in: studentNumbers } })
+      .select("+firstLogin")
+      .lean();
+    const eligible = found.filter(
+      (user) =>
+        user.firstLogin !== false &&
+        user.isActive &&
+        (user.role !== "admin" || req.user?.role === "admin"),
+    );
+
+    await recordAudit({
+      action: "user.first-login-codes-bulk",
+      actorId: req.user?.id,
+      details: { requested: studentNumbers.length, accounts: eligible.length },
+    });
+
+    res.status(202).json({
+      success: true,
+      message: `First-login codes are being sent to ${eligible.length} account(s).`,
+      data: {
+        queued: eligible.length,
+        skipped: studentNumbers.length - eligible.length,
+      },
+    });
+
+    for (let i = 0; i < eligible.length; i += UPLOAD_BATCH_SIZE) {
+      const users = await User.find({
+        _id: { $in: eligible.slice(i, i + UPLOAD_BATCH_SIZE).map((user) => user._id) },
+      });
+      for (const user of users) {
+        await reissueFirstLoginCode(user).catch(() => undefined);
+      }
+    }
+  } catch {
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: "Error sending first-login codes",
+      });
+    }
   }
 };
 
@@ -997,12 +1319,8 @@ export const getUserStats = async (
         yearLevelStats,
       },
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching user statistics",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error fetching user statistics");
   }
 };
 
@@ -1032,18 +1350,14 @@ export const searchUsers = async (
         { middleName: searchRegex },
       ],
     })
-      .populate("registeredBy", "firstName lastName middleName")
+      .populate("registeredBy", "firstName lastName middleName role")
       .limit(20);
 
     res.status(200).json({
       success: true,
       data: users,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error searching users",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error searching users");
   }
 };

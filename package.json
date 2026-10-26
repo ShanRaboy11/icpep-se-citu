@@ -1,6 +1,9 @@
 {
   "scripts": {
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
     "dev": "concurrently \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "build": "npm --prefix server run build && npm --prefix client run build",
+    "test": "npm --prefix server test && npm --prefix client test",
     "check:mirrors": "node scripts/check-mirrored-utils.js"
   },
   "dependencies": {

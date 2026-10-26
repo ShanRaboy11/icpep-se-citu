@@ -7,6 +7,8 @@ import Event from "../models/event";
 import Meeting from "../models/meeting";
 import User from "../models/user";
 import { isInTargetAudience } from "../utils/notification";
+import { canViewItem } from "../utils/auth/visibility";
+import { respondWithError } from "../utils/http-error";
 
 // Get all notifications for the current user
 export const getNotifications = async (
@@ -34,7 +36,7 @@ export const getNotifications = async (
       .lean();
 
     // 1. Fetch existing notifications
-    const query: any = { recipient: userId };
+    const query: Record<string, unknown> = { recipient: userId };
     if (filter !== "all") {
       if (filter === "event") {
         query.type = "event";
@@ -64,7 +66,7 @@ export const getNotifications = async (
     );
 
     // 2. Fetch Pending Availability (Commeet)
-    let pendingAvailability: any[] = [];
+    let pendingAvailability: Record<string, unknown>[] = [];
     if (filter === "all" || filter === "others") {
       const availabilities = await Availability.find({
         user: userId,
@@ -77,12 +79,12 @@ export const getNotifications = async (
         .filter(
           (a) => a.meeting && !existingRelatedIds.has(a.meeting._id.toString())
         )
-        .map((a: any) => ({
+        .map((a) => ({
           _id: a.meeting._id, // Use meeting ID as notification ID for virtual ones
           recipient: userId,
           type: "rsvp",
           title: "[COMMEET] Availability Request",
-          message: `Please add your availability schedule for the meeting: ${a.meeting.title}. Status: Pending`,
+          message: `Please add your availability schedule for the meeting: ${(a.meeting as unknown as { title: string }).title}. Status: Pending`,
           relatedId: a.meeting._id,
           relatedModel: "Meeting",
           isRead: false,
@@ -93,7 +95,7 @@ export const getNotifications = async (
     }
 
     // 3. Fetch Recent Announcements (last 30 days)
-    let recentAnnouncements: any[] = [];
+    let recentAnnouncements: Record<string, unknown>[] = [];
     if (filter === "all" || filter === "announcement") {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -127,7 +129,7 @@ export const getNotifications = async (
     }
 
     // 4. Fetch Upcoming Events
-    let upcomingEvents: any[] = [];
+    let upcomingEvents: Record<string, unknown>[] = [];
     if (filter === "all" || filter === "event") {
       const events = await Event.find({
         isPublished: true,
@@ -159,7 +161,7 @@ export const getNotifications = async (
 
     // 5. Virtual Membership Status Notification
     // Check if we should show a membership status reminder
-    let membershipNotification: any = null;
+    let membershipNotification: Record<string, unknown> | null = null;
     if (filter === "all" || filter === "others") {
       // Check if there's already a recent membership notification in the list
       const hasMembershipNotif = existingNotifications.some(
@@ -221,7 +223,7 @@ export const getNotifications = async (
       ...(membershipNotification ? [membershipNotification] : []),
     ].sort(
       (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        new Date(b.createdAt as Date | string).getTime() - new Date(a.createdAt as Date | string).getTime()
     );
 
     // Pagination
@@ -250,12 +252,8 @@ export const getNotifications = async (
       },
       unreadCount,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error fetching notifications",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error fetching notifications");
   }
 };
 
@@ -314,7 +312,7 @@ export const markAsRead = async (
       } else {
         // Check Announcement
         const announcement = await Announcement.findById(relatedId);
-        if (announcement) {
+        if (announcement && canViewItem(req.user, announcement)) {
           notification = await Notification.create({
             recipient: userId,
             type: "announcement",
@@ -329,7 +327,7 @@ export const markAsRead = async (
         } else {
           // Check Event
           const event = await Event.findById(relatedId);
-          if (event) {
+          if (event && canViewItem(req.user, event)) {
             notification = await Notification.create({
               recipient: userId,
               type: "event",
@@ -384,12 +382,8 @@ export const markAsRead = async (
       message: "Notification marked as read",
       data: notification,
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error marking notification as read",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error marking notification as read");
   }
 };
 
@@ -418,12 +412,8 @@ export const markAllAsRead = async (
       success: true,
       message: "All notifications marked as read",
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error marking all notifications as read",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error marking all notifications as read");
   }
 };
 
@@ -555,11 +545,7 @@ export const deleteNotification = async (
       success: true,
       message: "Notification deleted",
     });
-  } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      message: "Error deleting notification",
-      error: error.message,
-    });
+  } catch (error) {
+    respondWithError(res, error, "Error deleting notification");
   }
 };

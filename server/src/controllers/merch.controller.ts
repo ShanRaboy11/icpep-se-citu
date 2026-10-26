@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Merch from '../models/merch';
-import { uploadToCloudinary, deleteFromCloudinary } from '../utils/cloudinary';
+import { uploadToCloudinary, deleteFromCloudinary } from '../utils/media/cloudinary';
+import { respondWithError } from '../utils/http-error';
 
 export const createMerch = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -51,11 +52,7 @@ export const createMerch = async (req: Request, res: Response): Promise<void> =>
       data: savedMerch,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create merch',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to create merch');
   }
 };
 
@@ -67,11 +64,7 @@ export const getMerch = async (req: Request, res: Response): Promise<void> => {
       data: merch,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch merch',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to fetch merch');
   }
 };
 
@@ -131,11 +124,7 @@ export const updateMerch = async (req: Request, res: Response): Promise<void> =>
       data: updatedMerch,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update merch',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to update merch');
   }
 };
 
@@ -163,10 +152,6 @@ export const deleteMerch = async (req: Request, res: Response): Promise<void> =>
       message: 'Merch deleted successfully',
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete merch',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to delete merch');
   }
 };

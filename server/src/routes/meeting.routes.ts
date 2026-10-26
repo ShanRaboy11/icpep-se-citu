@@ -1,4 +1,5 @@
 import express from "express";
+import { validateObjectId } from "../middleware/validate-id";
 import { authenticate, authorizeRoles } from "../middleware/auth.middleware";
 import {
   createMeeting,
@@ -9,6 +10,7 @@ import {
 } from "../controllers/meeting.controller";
 
 const router = express.Router();
+router.param("id", validateObjectId);
 
 // Any logged-in user can view meetings; the link is only included for the people it is meant for
 router.get("/", authenticate, getMeetings);

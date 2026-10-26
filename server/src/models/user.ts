@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
-import { getDefaultPassword } from "../config/env";
+import { NON_MEMBER, usesMembership } from "../utils/membership";
 
 // Interface for User document
 export interface IUser extends Document {
@@ -30,6 +30,7 @@ export interface IUser extends Document {
     validUntil?: Date;
   };
   profilePicture?: string;
+  gender?: "male" | "female" | null;
   isActive: boolean;
   registeredBy?: mongoose.Types.ObjectId | IUser;
   firstLogin: boolean;
@@ -40,6 +41,9 @@ export interface IUser extends Document {
   fullName: string;
   registeredByName: string;
   resetPasswordCode?: string;
+  resetPasswordAttempts?: number;
+  firstLoginCodeStatus?: "pending" | "sent" | "failed" | "no-email" | null;
+  firstLoginCodeExpires?: Date | null;
   resetPasswordExpire?: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -83,7 +87,6 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: [true, "Password is required"],
       minlength: 6,
-      default: () => getDefaultPassword(),
       select: false,
     },
     role: {
@@ -134,6 +137,11 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: null,
     },
+    gender: {
+      type: String,
+      enum: ["male", "female", null],
+      default: null,
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -158,6 +166,20 @@ const userSchema = new Schema<IUser>(
     },
     resetPasswordExpire: {
       type: Date,
+      select: false,
+    },
+    firstLoginCodeStatus: {
+      type: String,
+      enum: ["pending", "sent", "failed", "no-email", null],
+      default: null,
+    },
+    firstLoginCodeExpires: {
+      type: Date,
+      default: null,
+    },
+    resetPasswordAttempts: {
+      type: Number,
+      default: 0,
       select: false,
     },
   },
@@ -187,6 +209,10 @@ userSchema.virtual("registeredByName").get(function (this: IUser) {
 
 // Pre-save middleware to hash password
 userSchema.pre("save", async function (this: IUser, next) {
+  if (!usesMembership(this.role)) {
+    this.membershipStatus = { ...NON_MEMBER };
+  }
+
   // A changed password revokes every token issued before it, unless the
   // caller is the signed-in owner changing it themselves ($locals.keepSessions).
   if (this.isModified("password") && !this.isNew && !this.$locals.keepSessions) {

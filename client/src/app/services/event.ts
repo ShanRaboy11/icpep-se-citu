@@ -212,6 +212,33 @@ class EventService {
         }
     }
 
+    async getMyRsvp(id: string): Promise<{ rsvped: boolean; count: number }> {
+        try {
+            const response = await api.get(`/events/${id}/rsvp`);
+            return response.data.data;
+        } catch (error) {
+            this.handleError(error);
+        }
+    }
+
+    async rsvp(id: string): Promise<{ rsvped: boolean; count: number }> {
+        try {
+            const response = await api.post(`/events/${id}/rsvp`);
+            return response.data.data;
+        } catch (error) {
+            this.handleError(error);
+        }
+    }
+
+    async cancelRsvp(id: string): Promise<{ rsvped: boolean; count: number }> {
+        try {
+            const response = await api.delete(`/events/${id}/rsvp`);
+            return response.data.data;
+        } catch (error) {
+            this.handleError(error);
+        }
+    }
+
     /**
      * Delete an event
      */

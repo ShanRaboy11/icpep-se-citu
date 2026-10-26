@@ -1,9 +1,11 @@
 import express from 'express';
+import { validateObjectId } from '../middleware/validate-id';
 import { createMerch, getMerch, updateMerch, deleteMerch } from '../controllers/merch.controller';
 import { upload } from '../middleware/upload.middleware';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.middleware';
 
 const router = express.Router();
+router.param('id', validateObjectId);
 
 // Public routes
 router.get('/', getMerch);

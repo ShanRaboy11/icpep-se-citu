@@ -1,10 +1,10 @@
 "use client";
 
-import Header from "../components/header";
-import Footer from "../components/footer";
-import Grid from "../components/grid";
-import PageHeader from "../components/page-header";
-import Button from "../components/button";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import Grid from "../components/layout/grid";
+import PageHeader from "../components/ui/page-header";
+import Button from "../components/ui/button";
 import { FunctionComponent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -209,7 +209,7 @@ const CommeetPage: FunctionComponent = () => {
       stateClasses = "text-red-300 cursor-not-allowed";
     } else if (isSelected) {
       stateClasses =
-        "bg-primary1 text-white shadow-lg shadow-primary1/30 scale-105 font-bold";
+        "bg-primary1 text-white shadow-md shadow-primary1/30 scale-105 font-bold";
     } else {
       stateClasses =
         "text-gray-700 hover:bg-primary1/10 hover:text-primary1 cursor-pointer hover:scale-105 active:scale-95";
@@ -240,7 +240,7 @@ const CommeetPage: FunctionComponent = () => {
     "Select the dates you are available to meet with the community.";
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
@@ -248,15 +248,12 @@ const CommeetPage: FunctionComponent = () => {
           <Header />
 
           <div className="grow w-full max-w-7xl mx-auto px-6 pt-38 pb-24">
-            {/* Header Section */}
             <PageHeader badge={pillText} title={title} subtitle={subtitle} />
 
-            {/* Main Layout */}
             <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start justify-center">
               {/* --- LEFT COLUMN: Calendar --- */}
               <div className="w-full lg:w-1/2 flex flex-col items-center">
-                <div className="w-full bg-white rounded-4xl border border-gray-200 shadow-lg transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1 p-6 sm:p-8">
-                  {/* Calendar Controls */}
+                <div className="w-full bg-white rounded-4xl border border-gray-200 shadow-md transition-all duration-300 ease-in-out hover:shadow-primary1/40 hover:-translate-y-1 p-6 sm:p-8">
                   <div className="flex items-center justify-between mb-6">
                     <button
                       onClick={handlePrevMonth}
@@ -280,7 +277,6 @@ const CommeetPage: FunctionComponent = () => {
                     </button>
                   </div>
 
-                  {/* Day Headers */}
                   <div className="grid grid-cols-7 mb-2 border-b border-gray-100 pb-2">
                     {daysOfWeek.map((day) => (
                       <div key={day} className="text-center">
@@ -289,7 +285,6 @@ const CommeetPage: FunctionComponent = () => {
                     ))}
                   </div>
 
-                  {/* Dates Grid */}
                   <div className="grid grid-cols-7 gap-y-1">
                     {calendarDays.map((date, index) => {
                       const uniqueDateKey = `${currentYear}-${
@@ -312,7 +307,6 @@ const CommeetPage: FunctionComponent = () => {
                   </div>
                 </div>
 
-                {/* Let's Meet Button */}
                 <div className="mt-8 w-full">
                   <Button
                     variant="hero"
@@ -339,13 +333,11 @@ const CommeetPage: FunctionComponent = () => {
 
               {/* --- RIGHT COLUMN: Upcoming Meetings --- */}
               <div className="w-full lg:w-1/2 flex flex-col h-full">
-                {/* Section Header */}
                 <div className="flex items-center justify-between mb-6 px-2">
                   <h3 className="font-rubik font-bold text-2xl text-primary3">
                     Upcoming Meetings
                   </h3>
 
-                  {/* Toggle (Only show if there are meetings) */}
                   {upcoming.length > 0 && (
                     <div className="flex bg-gray-100 p-1 rounded-xl">
                       <button
@@ -372,7 +364,6 @@ const CommeetPage: FunctionComponent = () => {
                   )}
                 </div>
 
-                {/* Meetings Content or Empty State */}
                 {upcoming.length > 0 ? (
                   <div
                     className={`
@@ -432,7 +423,6 @@ const CommeetPage: FunctionComponent = () => {
                           </h4>
                         </div>
 
-                        {/* Time */}
                         <div
                           className={`flex flex-wrap items-center gap-2 text-xs text-gray-500 font-raleway ${
                             viewMode === "list" ? "justify-end" : ""

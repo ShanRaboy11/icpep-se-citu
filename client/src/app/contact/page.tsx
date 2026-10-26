@@ -1,27 +1,21 @@
 "use client";
 
+import { emailMeta } from "@/app/utils/social-platforms";
 import { FormEvent, useId, useState } from "react";
 import {
-  Facebook,
-  Mail,
   ChevronRight,
-  ChevronDown,
-  Check,
   AlertTriangle,
 } from "lucide-react";
-import { TbBrandTiktok } from "react-icons/tb";
+import { platformMeta } from "@/app/utils/social-platforms";
 import { useRouter } from "next/navigation";
-import Header from "../components/header";
-import Footer from "../components/footer";
-import Grid from "../components/grid";
-import BackButton from "../components/back-button";
-import PageHeader from "../components/page-header";
-import Button from "../components/button";
-import { useDropdownDismiss } from "@/app/utils/use-dropdown-dismiss";
-
-const CONTACT_EMAIL = "icpepse@cit.edu";
-const FACEBOOK_URL = "https://www.facebook.com/cituicpep";
-const TIKTOK_URL = "https://tiktok.com/@icpep.se.citu";
+import Header from "../components/layout/header";
+import Footer from "../components/layout/footer";
+import Grid from "../components/layout/grid";
+import BackButton from "../components/ui/back-button";
+import PageHeader from "../components/ui/page-header";
+import Button from "../components/ui/button";
+import { useSiteContact } from "@/app/hooks/use-site-contact";
+import Dropdown from "@/app/components/ui/dropdown";
 
 const SUBJECT_OPTIONS = [
   "Membership Inquiry",
@@ -41,17 +35,6 @@ const inputStyle =
 
 const labelStyle = "block font-raleway text-sm font-bold text-gray-700";
 
-// Shared custom-dropdown look (split outer/inner so the scrollbar never
-// pokes past the rounded corners), matching the convention used on the
-// create pages.
-const dropdownOuterStyle =
-  "absolute z-30 w-full mt-2 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden";
-const dropdownInnerStyle =
-  "flex flex-col gap-1 p-2 max-h-64 overflow-y-auto themed-scrollbar";
-const dropdownItemStyle =
-  "flex items-center justify-between px-4 py-2.5 rounded-lg cursor-pointer transition-colors font-rubik text-sm font-medium";
-const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
-const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
 
 function Field({
   label,
@@ -120,12 +103,10 @@ type FormErrors = {
 };
 
 export default function ContactPage() {
+  const contact = useSiteContact();
   const router = useRouter();
-  const subjectId = useId();
   const phoneId = useId();
   const [subject, setSubject] = useState("");
-  const [isSubjectOpen, setIsSubjectOpen] = useState(false);
-  useDropdownDismiss(isSubjectOpen, () => setIsSubjectOpen(false));
   const [phone, setPhone] = useState("");
 
   const [errors, setErrors] = useState<FormErrors>({
@@ -184,7 +165,7 @@ export default function ContactPage() {
         el?.focus();
         el?.scrollIntoView({ behavior: "smooth", block: "center" });
       } else if (newErrors.subject) {
-        setIsSubjectOpen(true);
+        form.querySelector("[data-dropdown] button")?.scrollIntoView({ behavior: "smooth", block: "center" });
       } else if (newErrors.customSubject) {
         const el = form.querySelector<HTMLInputElement>(
           '[name="customSubject"]',
@@ -207,16 +188,16 @@ export default function ContactPage() {
         subject === OTHER_SUBJECT ? customSubject : subject;
 
       const body = `Name: ${name}\nEmail: ${email}${phone ? `\nPhone: ${phone}` : ""}\n\n${message}`;
-      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(finalSubject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = `mailto:${contact.contactEmail}?subject=${encodeURIComponent(finalSubject)}&body=${encodeURIComponent(body)}`;
     } catch {
       setMailError(
-        `Something went wrong opening your mail app. You can reach us directly at ${CONTACT_EMAIL}.`,
+        `Something went wrong opening your mail app. You can reach us directly at ${contact.contactEmail}.`,
       );
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       <main className="relative z-10 bg-white rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         {/* Background glow decoration — static, matching the convention used
             on other pages, since the previous animated/orbiting blur blobs
@@ -247,8 +228,7 @@ export default function ContactPage() {
               }
             />
 
-            <div className="mx-auto max-w-3xl overflow-hidden rounded-4xl border border-gray-200 bg-white shadow-lg">
-              {/* Send an Inquiry */}
+            <div className="mx-auto max-w-3xl overflow-hidden rounded-4xl border border-gray-200 bg-white shadow-md">
               <section className="p-8 md:p-10">
                 <h2 className="font-rubik text-2xl font-bold text-primary3">
                   Send an inquiry
@@ -293,63 +273,22 @@ export default function ContactPage() {
                     />
                   </div>
 
-                  {/* Subject — custom dropdown */}
                   <div>
-                    <label htmlFor={subjectId} className={labelStyle}>
+                    <label className={labelStyle}>
                       Subject <span className="text-red-500">*</span>
                     </label>
-                    <div data-dropdown className="relative mt-2">
-                      <div
-                        id={subjectId}
-                        onClick={() => setIsSubjectOpen((prev) => !prev)}
-                        className={`flex w-full cursor-pointer items-center justify-between rounded-xl border bg-gray-50 px-4 py-3 font-rubik text-gray-800 transition-all hover:bg-gray-100 ${
-                          isSubjectOpen
-                            ? "bg-white border-primary1 ring-4 ring-primary1/10"
-                            : errors.subject
-                              ? "border-red-300 ring-2 ring-red-100"
-                              : "border-gray-200"
-                        }`}
-                      >
-                        <span
-                          className={subject ? "" : "text-gray-400 font-normal"}
-                        >
-                          {subject || "What's this all about?"}
-                        </span>
-                        <ChevronDown
-                          className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-300 ${
-                            isSubjectOpen ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-                      {isSubjectOpen && (
-                        <>
-                          <div className={dropdownOuterStyle}>
-                            <div className={dropdownInnerStyle}>
-                              {SUBJECT_OPTIONS.map((opt) => (
-                                <div
-                                  key={opt}
-                                  onClick={() => {
-                                    setSubject(opt);
-                                    setIsSubjectOpen(false);
-                                    clearError("subject");
-                                  }}
-                                  className={`${dropdownItemStyle} ${
-                                    subject === opt
-                                      ? dropdownItemSelectedStyle
-                                      : dropdownItemHoverStyle
-                                  }`}
-                                >
-                                  <span>{opt}</span>
-                                  {subject === opt && (
-                                    <Check className="h-4 w-4 text-primary1" />
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    <Dropdown
+                      variant="field"
+                      className="mt-2"
+                      value={subject}
+                      placeholder="What's this all about?"
+                      invalid={errors.subject}
+                      options={SUBJECT_OPTIONS.map((opt) => ({ value: opt, label: opt }))}
+                      onChange={(value) => {
+                        setSubject(value);
+                        clearError("subject");
+                      }}
+                    />
                     {errors.subject && (
                       <p className="mt-1.5 font-raleway text-xs text-red-400">
                         Subject is required
@@ -368,7 +307,7 @@ export default function ContactPage() {
                       <>
                         <input
                           name="customSubject"
-                          placeholder="Type your subject here..."
+                          placeholder="Type your subject here"
                           onChange={() => clearError("customSubject")}
                           className={`${inputStyle} ${
                             errors.customSubject
@@ -389,7 +328,7 @@ export default function ContactPage() {
                   <Field
                     label="Message"
                     name="message"
-                    placeholder="Write your message here..."
+                    placeholder="Write your message here"
                     textarea
                     rows={6}
                     error={errors.message}
@@ -415,7 +354,6 @@ export default function ContactPage() {
                 </form>
               </section>
 
-              {/* Stay Connected */}
               <div className="border-t border-gray-100 bg-gray-50/70 px-8 py-8 md:px-10">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                   <div>
@@ -428,32 +366,36 @@ export default function ContactPage() {
                       days.
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <a
-                      href={FACEBOOK_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Facebook"
-                      className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
-                    >
-                      <Facebook className="h-5 w-5" />
-                    </a>
-                    <a
-                      href={TIKTOK_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="TikTok"
-                      className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
-                    >
-                      <TbBrandTiktok className="h-5 w-5" />
-                    </a>
-                    <a
-                      href={`mailto:${CONTACT_EMAIL}`}
-                      title="Email us"
-                      className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
-                    >
-                      <Mail className="h-5 w-5" />
-                    </a>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {[contact.contactEmail, contact.secondaryEmail].filter(Boolean).map((address) => {
+                      const meta = emailMeta(address);
+                      return (
+                        <a
+                          key={address}
+                          href={`mailto:${address}`}
+                          title={`${meta.label}: ${address}`}
+                          className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
+                        >
+                          <meta.Icon className="h-5 w-5" aria-hidden="true" />
+                        </a>
+                      );
+                    })}
+                    {contact.socialLinks.map(({ platform, url }) => {
+                      const meta = platformMeta(platform);
+                      if (!meta) return null;
+                      return (
+                        <a
+                          key={`${platform}-${url}`}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title={meta.label}
+                          className="group flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-primary1/30 text-primary1 transition-all duration-300 hover:border-primary1 hover:bg-primary1 hover:text-white active:scale-95"
+                        >
+                          <meta.Icon className="h-5 w-5" />
+                        </a>
+                      );
+                    })}
                   </div>
                 </div>
               </div>

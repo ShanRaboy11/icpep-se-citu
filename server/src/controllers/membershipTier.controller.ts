@@ -1,5 +1,12 @@
 import { Request, Response } from 'express';
 import MembershipTier from '../models/membershipTier';
+import { respondWithError } from '../utils/http-error';
+
+// Only one tier can be the spotlighted (center, larger) card at a time.
+const clearOtherSpotlights = async (tier: { _id: unknown; isHighlighted: boolean }) => {
+  if (!tier.isHighlighted) return;
+  await MembershipTier.updateMany({ _id: { $ne: tier._id } }, { isHighlighted: false });
+};
 
 export const createMembershipTier = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -27,17 +34,15 @@ export const createMembershipTier = async (req: Request, res: Response): Promise
       displayOrder: displayOrder || 0,
     });
 
+    await clearOtherSpotlights(created);
+
     res.status(201).json({
       success: true,
       message: 'Membership tier created successfully',
       data: created,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create membership tier',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to create membership tier');
   }
 };
 
@@ -50,11 +55,7 @@ export const getMembershipTiers = async (req: Request, res: Response): Promise<v
     });
     res.status(200).json({ success: true, data: tiers });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch membership tiers',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to fetch membership tiers');
   }
 };
 
@@ -66,11 +67,7 @@ export const getAllMembershipTiers = async (req: Request, res: Response): Promis
     });
     res.status(200).json({ success: true, data: tiers });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch membership tiers',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to fetch membership tiers');
   }
 };
 
@@ -107,6 +104,7 @@ export const updateMembershipTier = async (req: Request, res: Response): Promise
     if (displayOrder !== undefined) tier.displayOrder = displayOrder;
 
     const updated = await tier.save();
+    await clearOtherSpotlights(updated);
 
     res.status(200).json({
       success: true,
@@ -114,11 +112,7 @@ export const updateMembershipTier = async (req: Request, res: Response): Promise
       data: updated,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to update membership tier',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to update membership tier');
   }
 };
 
@@ -134,10 +128,6 @@ export const deleteMembershipTier = async (req: Request, res: Response): Promise
 
     res.status(200).json({ success: true, message: 'Membership tier deleted successfully' });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete membership tier',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
+    respondWithError(res, error, 'Failed to delete membership tier');
   }
 };

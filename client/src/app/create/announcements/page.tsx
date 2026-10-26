@@ -1,41 +1,35 @@
 "use client";
 
+import VisibilityPicker from "@/app/components/create/visibility-picker";
+import FormDivider from "@/app/components/ui/form-divider";
+import TextButton from "@/app/components/ui/text-button";
+import { ERROR_CLASS as errorInputStyle, labelStyle, titleLabelStyle as titlelabelStyle, inputClass as inputCls } from "@/app/components/ui/form-styles";
+import ConfirmModal from "@/app/components/ui/confirm-modal";
+import SuccessModal from "@/app/components/ui/success-modal";
+import AddButton from "@/app/components/ui/add-button";
+import AttendancePicker, { type Attendee } from "../../components/create/attendance-picker";
+import EditingBanner from "@/app/components/ui/editing-banner";
+import { swapToFallback } from "@/app/components/ui/fallback-image";
+import RemoveButton from "@/app/components/ui/remove-button";
 import React, { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Sidebar from "../components/sidebar";
-import Header from "@/app/components/header";
-import Footer from "@/app/components/footer";
-import Grid from "@/app/components/grid";
-import Button from "@/app/components/button";
-import { GlassCard } from "../../components/glass-card";
+import { useSearchParams } from "next/navigation";
+import Sidebar from "../../components/create/sidebar";
+import Header from "@/app/components/layout/header";
+import Footer from "@/app/components/layout/footer";
+import Grid from "@/app/components/layout/grid";
+import Button from "@/app/components/ui/button";
 import {
   Pencil,
   Trash2,
-  RefreshCw,
   AlertTriangle,
-  Globe,
-  Users,
-  Shield,
-  Check,
   Upload,
   Plus,
-  X,
   Megaphone,
   MapPin,
   Calendar,
   ChevronDown,
   ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-
-// Custom time picker constants
-const timeHours = Array.from({ length: 12 }, (_, i) =>
-  (i + 1).toString().padStart(2, "0")
-);
-const timeMinutes = Array.from({ length: 60 }, (_, i) =>
-  i.toString().padStart(2, "0")
-);
-const timePeriods = ["AM", "PM"];
+  ChevronRight } from "lucide-react";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -53,7 +47,12 @@ function formatDateLabel(dateStr: string): string {
 import announcementService, {
   AnnouncementData,
 } from "../../services/announcement";
-import { LoadingIndicator } from "@/app/components/loading";
+import { LoadingIndicator } from "@/app/components/feedback/loading";
+import RichTextEditor from "@/app/components/content/rich-text-editor";
+import TimeSegmentInput from "@/app/components/ui/time-segment-input";
+import { timeHours, timeMinutes, timePeriods, parseTimeToPicker } from "@/app/utils/time";
+import { plainLength } from "@/app/components/content/rich-content";
+import ManageListCard from "@/app/components/create/manage-list-card";
 
 type FormErrors = {
   date: boolean;
@@ -62,7 +61,6 @@ type FormErrors = {
   summary: boolean;
   body: boolean;
   visibility: boolean;
-  attendanceLink?: boolean;
   agenda?: boolean;
   image?: boolean;
 };
@@ -82,42 +80,10 @@ interface AnnouncementItem {
   attendees?: string;
   awardees?: { name: string; program: string; year: string; award: string }[];
   agenda?: string[];
+  attendance?: Attendee[];
   imageUrl?: string;
   date?: string;
 }
-
-const VISIBILITY_OPTIONS = [
-  {
-    value: "public",
-    label: "Public",
-    sublabel: "Everyone can see this",
-    icon: Globe,
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    border: "border-emerald-200",
-    dot: "bg-emerald-500",
-  },
-  {
-    value: "members",
-    label: "Members Only",
-    sublabel: "Registered members",
-    icon: Users,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
-    border: "border-blue-200",
-    dot: "bg-blue-500",
-  },
-  {
-    value: "officers",
-    label: "Officers Only",
-    sublabel: "Organization officers",
-    icon: Shield,
-    color: "text-violet-600",
-    bg: "bg-violet-50",
-    border: "border-violet-200",
-    dot: "bg-violet-500",
-  },
-] as const;
 
 type ActiveTab = "General" | "News" | "Meeting" | "Achievement";
 const tabs: ActiveTab[] = ["General", "News", "Meeting", "Achievement"];
@@ -152,30 +118,7 @@ const TYPE_META: Record<
   },
 };
 
-// Helper: parse a saved time string ("08:30 AM" or "14:30") into picker state
-function parseTimeToPicker(timeStr: string): { hour: string; minute: string; period: string } {
-  if (!timeStr) return { hour: "08", minute: "00", period: "AM" };
-  // Try "hh:mm AM/PM" first
-  const ampm = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (ampm) {
-    return {
-      hour: ampm[1].padStart(2, "0"),
-      minute: ampm[2],
-      period: ampm[3].toUpperCase(),
-    };
-  }
-  // Try 24h "HH:MM"
-  const h24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
-  if (h24) {
-    let h = parseInt(h24[1]);
-    const m = h24[2];
-    const p = h >= 12 ? "PM" : "AM";
-    if (h === 0) h = 12;
-    else if (h > 12) h -= 12;
-    return { hour: h.toString().padStart(2, "0"), minute: m, period: p };
-  }
-  return { hour: "08", minute: "00", period: "AM" };
-}
+type StoredAnnouncement = AnnouncementData & { _id: string; isPublished?: boolean; imageUrl?: string; galleryImages?: string[] };
 
 export default function AnnouncementsPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("General");
@@ -203,13 +146,13 @@ export default function AnnouncementsPage() {
     { name: "", program: "", year: "", award: "" },
   ]);
   const [agenda, setAgenda] = useState<string[]>([""]);
+  const [attendance, setAttendance] = useState<Attendee[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [showGlobalError, setShowGlobalError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [loadingAction, setLoadingAction] = useState<
     "saving" | "publishing" | null
@@ -221,7 +164,6 @@ export default function AnnouncementsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
-  const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -232,7 +174,6 @@ export default function AnnouncementsPage() {
     summary: "",
     body: "",
     visibility: "",
-    attendanceLink: "",
     date: "",
     time: "",
     location: "",
@@ -244,7 +185,6 @@ export default function AnnouncementsPage() {
     summary: false,
     body: false,
     visibility: false,
-    attendanceLink: false,
     agenda: false,
     image: false,
   });
@@ -260,7 +200,7 @@ export default function AnnouncementsPage() {
         try {
           const response =
             await announcementService.getAnnouncementById(editIdParam);
-          const data = response.data as any;
+          const data = response.data as StoredAnnouncement;
           if (data) {
             setEditingId(data._id);
             setIsEditingDraft(!data.isPublished);
@@ -272,7 +212,6 @@ export default function AnnouncementsPage() {
               date: data.date || "",
               time: data.time || "",
               location: data.location || "",
-              attendanceLink: "",
             });
             if (data.time) {
               const parsed = parseTimeToPicker(data.time);
@@ -282,7 +221,7 @@ export default function AnnouncementsPage() {
             }
             setActiveTab(data.type as ActiveTab);
             if (data.agenda) setAgenda(data.agenda);
-            if (data.awardees) setAwardees(data.awardees);
+            if (data.awardees) setAwardees(data.awardees.map((a) => ({ ...a, program: a.program ?? "" })));
             if (data.organizer) {
               setOrganizer(data.organizer);
               setShowOrganizerInput(true);
@@ -328,7 +267,6 @@ export default function AnnouncementsPage() {
       date: item.date ? new Date(item.date).toISOString().split("T")[0] : "",
       time: item.time || "",
       location: item.location || "",
-      attendanceLink: item.attendees || "",
       visibility: item.targetAudience?.includes("members")
         ? "members"
         : item.targetAudience?.includes("officers")
@@ -344,6 +282,7 @@ export default function AnnouncementsPage() {
     setActiveTab(tabToSet);
     if (item.type === "Meeting" && item.agenda?.length) setAgenda(item.agenda);
     else setAgenda([""]);
+    setAttendance(item.type === "Meeting" ? (item.attendance ?? []) : []);
     if (item.type === "Achievement" && item.awardees?.length)
       setAwardees(item.awardees);
     else setAwardees([{ name: "", program: "", year: "", award: "" }]);
@@ -380,11 +319,11 @@ export default function AnnouncementsPage() {
       date: "",
       time: "",
       location: "",
-      attendanceLink: "",
     });
     setOrganizer("");
     setAwardees([{ name: "", program: "", year: "", award: "" }]);
     setAgenda([""]);
+    setAttendance([]);
     setImages([]);
     setPreviews([]);
     setShowSchedule(false);
@@ -467,13 +406,13 @@ export default function AnnouncementsPage() {
       time: `${timeHour}:${timeMinute} ${timePeriod}`,
       location: formData.location || undefined,
       organizer: organizer || undefined,
-      attendees: activeTab === "Meeting" ? formData.attendanceLink : undefined,
       awardees:
         activeTab === "Achievement"
           ? awardees.filter((a) => a.name.trim())
           : undefined,
       agenda:
         activeTab === "Meeting" ? agenda.filter((a) => a.trim()) : undefined,
+      attendance: activeTab === "Meeting" ? attendance : undefined,
       date: formData.date || undefined,
     };
   };
@@ -487,8 +426,6 @@ export default function AnnouncementsPage() {
       body: !formData.body.trim(),
       visibility: !formData.visibility.trim(),
     };
-    if (activeTab === "Meeting" && !formData.attendanceLink.trim())
-      newErrors.attendanceLink = true;
     if (activeTab === "Meeting" && !agenda.some((a) => a.trim()))
       newErrors.agenda = true;
     setErrors(newErrors);
@@ -510,8 +447,7 @@ export default function AnnouncementsPage() {
     setLoadingAction("publishing");
     setShowGlobalError(false);
     try {
-      const announcementData = buildAnnouncementData(true) as any;
-      announcementData.isPublished = true;
+      const announcementData = { ...buildAnnouncementData(true), isPublished: true };
       if (editingId)
         await announcementService.updateAnnouncement(
           editingId,
@@ -523,7 +459,6 @@ export default function AnnouncementsPage() {
           announcementData,
           images.length > 0 ? images : undefined,
         );
-      setSubmitSuccess(true);
       setSuccessMessage({
         title:
           editingId && !isEditingDraft
@@ -561,7 +496,6 @@ export default function AnnouncementsPage() {
           announcementData,
           images.length > 0 ? images : undefined,
         );
-      setSubmitSuccess(true);
       setSuccessMessage({
         title: editingId ? "Draft Updated!" : "Draft Saved!",
         description: editingId
@@ -604,7 +538,7 @@ export default function AnnouncementsPage() {
   const addAwardee = () =>
     setAwardees([...awardees, { name: "", program: "", year: "", award: "" }]);
   const removeAwardee = (index: number) =>
-    setAwardees((prev) => prev.filter((_, i) => i !== index));
+    setAwardees((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== index) : prev));
   const addAgendaItem = () => setAgenda((prev) => [...prev, ""]);
   const updateAgendaItem = (index: number, value: string) =>
     setAgenda((prev) => {
@@ -696,154 +630,34 @@ export default function AnnouncementsPage() {
 
   const publishedItems = announcementList.filter((item) => item.isPublished);
 
-  // --- Shared Styles (matching meet-information form) ---
-  const labelStyle =
-    "block text-sm font-bold font-raleway text-gray-700 mb-2 ml-1";
-  const titlelabelStyle =
-    "block text-sm font-bold font-raleway text-primary3 mb-2 ml-1 ";
-  const inputBaseStyle =
-    "w-full font-rubik text-base bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 outline-none transition-all placeholder-gray-400";
-  const inputFocusStyle =
-    "focus:bg-white focus:border-primary1 focus:ring-4 focus:ring-primary1/10";
-  const errorInputStyle = "border-red-300 ring-2 ring-red-100";
-
-  const inputCls = (hasError: boolean) =>
-    `${inputBaseStyle} ${inputFocusStyle} ${hasError ? errorInputStyle : ""}`;
-
-  const Divider = () => <div className="h-px bg-gray-100 w-full" />;
-
   // --- Custom Time Picker Render (matching meet-information) ---
   // Split into a non-scrolling outer wrapper (owns the rounding/border/shadow)
   // and a scrolling inner container, so the scrollbar never pokes past the
   // rounded corners.
-  const dropdownOuterStyle =
-    "absolute z-30 w-full min-w-20 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden";
-  const dropdownInnerStyle =
-    "flex flex-col gap-1 p-2 max-h-56 overflow-y-auto overflow-x-hidden themed-scrollbar";
-  const dropdownItemStyle =
-    "flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-colors font-rubik text-sm font-medium";
-  const dropdownItemSelectedStyle = "bg-primary1/5 text-primary1";
-  const dropdownItemHoverStyle = "hover:bg-gray-50 text-gray-700";
-
   const renderTimeInput = (
     id: string,
     value: string,
     setValue: (v: string) => void,
     options: string[],
-    type: "hour" | "minute" | "period"
-  ) => {
-    const isOpen = activeTimeDropdown === id;
+    type: "hour" | "minute" | "period",
+  ) => (
+    <TimeSegmentInput
+      id={id}
+      value={value}
+      onChange={setValue}
+      options={options}
+      type={type}
+      activeId={activeTimeDropdown}
+      setActiveId={setActiveTimeDropdown}
+    />
+  );
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const val = e.target.value;
-      if (type === "period") {
-        if (val.toLowerCase().includes("p")) {
-          setValue("PM");
-          setTimeout(() => e.target.select(), 0);
-        } else if (val.toLowerCase().includes("a")) {
-          setValue("AM");
-          setTimeout(() => e.target.select(), 0);
-        }
-      } else {
-        if (val !== "" && !/^\d*$/.test(val)) return;
-        if (val.length > 2) return;
-        const num = parseInt(val);
-        if (val !== "") {
-          if (type === "minute" && num > 59) return;
-          if (type === "hour" && num > 12) return;
-        }
-        setValue(val);
-      }
-    };
-
-    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-      if (activeTimeDropdown !== id) setActiveTimeDropdown(id);
-      e.target.select();
-    };
-
-    const handleMouseDown = (e: React.MouseEvent<HTMLInputElement>) => {
-      if (document.activeElement === e.currentTarget) {
-        if (activeTimeDropdown === id) {
-          setActiveTimeDropdown(null);
-        } else {
-          setActiveTimeDropdown(id);
-        }
-        e.preventDefault();
-        e.currentTarget.select();
-      }
-    };
-
-    const handleBlur = () => {
-      setTimeout(() => {
-        if (activeTimeDropdown === id) setActiveTimeDropdown(null);
-      }, 200);
-      if (type === "hour") {
-        let num = parseInt(value || "0");
-        if (num < 1) num = 1;
-        if (num > 12) num = 12;
-        setValue(num.toString().padStart(2, "0"));
-      } else if (type === "minute") {
-        let num = parseInt(value || "0");
-        if (num < 0) num = 0;
-        if (num > 59) num = 59;
-        setValue(num.toString().padStart(2, "0"));
-      } else if (type === "period") {
-        if (value !== "AM" && value !== "PM") setValue("AM");
-      }
-    };
-
-    return (
-      <div className="relative flex-1 h-full group">
-        <input
-          type="text"
-          className="w-full h-full text-center bg-transparent outline-none font-rubik text-base text-gray-700 font-medium placeholder-gray-300 transition-colors cursor-pointer caret-transparent focus:text-primary1 selection:bg-transparent selection:text-primary1"
-          value={value}
-          onChange={handleChange}
-          onFocus={handleFocus}
-          onMouseDown={handleMouseDown}
-          onBlur={handleBlur}
-          maxLength={2}
-          autoComplete="off"
-        />
-        {isOpen && (
-          <>
-            <div
-              className={`${dropdownOuterStyle} left-1/2 -translate-x-1/2 text-center`}
-              onMouseDown={(e) => e.preventDefault()}
-            >
-              <div className={dropdownInnerStyle}>
-                {options.map((opt) => (
-                  <div
-                    key={opt}
-                    className={`justify-center ${dropdownItemStyle} ${
-                      value === opt
-                        ? dropdownItemSelectedStyle
-                        : dropdownItemHoverStyle
-                    }`}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setValue(opt);
-                      setActiveTimeDropdown(null);
-                    }}
-                  >
-                    <span>{opt}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  };
-
-  // --- Custom Date Picker Render (matching meeting dropdown UI) ---
   const renderDatePicker = (
     id: string,
     value: string,
     onChange: (val: string) => void,
     hasError = false,
-    placeholder = "Select date..."
+    placeholder = "Select date"
   ) => {
     const isOpen = activeDatePicker === id;
     const todayStr = new Date().toISOString().split("T")[0];
@@ -888,7 +702,7 @@ export default function AnnouncementsPage() {
               className="fixed inset-0 z-30"
               onClick={() => setActiveDatePicker(null)}
             />
-            <div className="absolute z-40 top-full left-0 mt-2 w-72 bg-white border border-gray-100 rounded-2xl shadow-xl p-4 font-rubik">
+            <div className="absolute z-40 top-full left-0 mt-2 w-72 bg-white border border-gray-100 rounded-2xl shadow-lg p-4 font-rubik">
               <div className="flex items-center justify-between mb-3 px-1">
                 <button
                   type="button"
@@ -967,29 +781,21 @@ export default function AnnouncementsPage() {
               </div>
 
               <div className="mt-3 pt-2 border-t border-gray-100 flex justify-between items-center text-xs font-semibold">
-                <button
-                  type="button"
-                  className="text-primary1 hover:underline font-raleway cursor-pointer"
-                  onClick={(e) => {
+                <TextButton tone="link" className="text-xs" onClick={(e) => {
                     e.stopPropagation();
                     onChange(todayStr);
                     setActiveDatePicker(null);
-                  }}
-                >
-                  Today
-                </button>
+                  }}>
+                    Today
+                  </TextButton>
                 {value && (
-                  <button
-                    type="button"
-                    className="text-gray-400 hover:text-red-500 font-raleway cursor-pointer"
-                    onClick={(e) => {
+                  <TextButton className="text-xs" onClick={(e) => {
                       e.stopPropagation();
                       onChange("");
                       setActiveDatePicker(null);
-                    }}
-                  >
+                    }}>
                     Clear
-                  </button>
+                  </TextButton>
                 )}
               </div>
             </div>
@@ -1000,8 +806,7 @@ export default function AnnouncementsPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#004e89]">
-      {/* LOADING OVERLAY */}
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-pageblue">
       {isSubmitting && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-white/90 backdrop-blur-md">
           <div className="flex flex-col items-center gap-5">
@@ -1022,14 +827,13 @@ export default function AnnouncementsPage() {
         </div>
       )}
 
-      <main className="relative z-10 bg-[#f8f9fc] rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
+      <main className="relative z-10 bg-surface rounded-b-[40px] md:rounded-b-[50px] overflow-hidden">
         <Grid />
 
         <div className="relative z-10 flex flex-col min-h-screen">
           <Header />
 
           <div className="grow w-full max-w-7xl mx-auto px-4 sm:px-6 pt-40 sm:pt-48 pb-20">
-            {/* PAGE HEADER */}
             <div className="mb-16 text-left">
               <h1 className="font-rubik text-4xl sm:text-5xl font-bold text-primary3 leading-tight mb-4">
                 Manage Announcements
@@ -1045,30 +849,14 @@ export default function AnnouncementsPage() {
 </aside>
 
               <div className="flex-1 min-w-0 space-y-8">
-                {/* FORM CARD */}
-                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-lg p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
+                <div className={`bg-white rounded-4xl border transition-all duration-300 shadow-md p-6 sm:p-10 lg:p-12 hover:shadow-primary1/40 hover:-translate-y-2 ${
                   editingId ? "border-primary1 ring-2 ring-primary1/20" : "border-gray-200"
                 }`}>
-                    {/* Edit Banner */}
                     {editingId && (
-                      <div className="-mx-6 sm:-mx-10 lg:-mx-12 -mt-6 sm:-mt-10 lg:-mt-12 mb-8 bg-linear-to-r from-primary1 to-primary3 px-6 sm:px-10 py-5 flex items-center justify-between rounded-t-4xl">
-                        <div className="flex items-center gap-2 text-white">
-                          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                          <span className="text-sm font-bold font-rubik tracking-wide">
-                            EDITING MODE
-                          </span>
-                        </div>
-                        <button
-                          onClick={handleCancelEdit}
-                          className="text-white/80 hover:text-white text-sm font-bold font-raleway underline underline-offset-2 transition-colors cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                      <EditingBanner onCancel={handleCancelEdit} />
                     )}
 
                     <div className="flex flex-col gap-6">
-                      {/* Section Header */}
                      <div className="flex items-center justify-between">
                                              <p className="font-raleway text-gray-500 text-sm">
                                                Fill in the fields below
@@ -1081,7 +869,6 @@ export default function AnnouncementsPage() {
                                              </div>
                                            </div>
 
-                      {/* FEATURED IMAGE */}
                       <div className="w-full">
                         <div className="flex items-center justify-between mb-2">
                           <label className={labelStyle}>
@@ -1093,16 +880,15 @@ export default function AnnouncementsPage() {
                             </span>
                           )}
                           {previews.length > 0 && (
-                            <button
-                              type="button"
+                            <TextButton
                               onClick={() => {
                                 setImages([]);
                                 setPreviews([]);
                               }}
-                              className="text-xs font-bold text-red-400 hover:text-red-600 font-rubik flex items-center gap-1 transition-colors cursor-pointer"
+                              className="text-xs"
                             >
-                              <X size={11} /> Clear all
-                            </button>
+                              Clear all
+                            </TextButton>
                           )}
                         </div>
                         <input
@@ -1123,12 +909,12 @@ export default function AnnouncementsPage() {
                               >
                                 <img
                                   src={p}
+                                  onError={swapToFallback}
                                   alt={`preview-${i}`}
                                   className="w-full h-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                  <button
-                                    type="button"
+                                  <RemoveButton variant="overlay"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       try {
@@ -1140,11 +926,7 @@ export default function AnnouncementsPage() {
                                       setPreviews((prev) =>
                                         prev.filter((_, idx) => idx !== i),
                                       );
-                                    }}
-                                    className="bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-transform font-rubik cursor-pointer"
-                                  >
-                                    Remove
-                                  </button>
+                                    }} />
                                 </div>
                               </div>
                             ))}
@@ -1206,9 +988,8 @@ export default function AnnouncementsPage() {
                         )}
                       </div>
 
-                      <Divider />
+                      <FormDivider />
 
-                      {/* CATEGORY TABS */}
                       <div className="w-full">
                         <label className={labelStyle}>
                           Category
@@ -1234,9 +1015,8 @@ export default function AnnouncementsPage() {
 </div>
                       </div>
 
-                      <Divider />
+                      <FormDivider />
 
-                      {/* DATE / TIME / LOCATION */}
                       <div className="w-full">
                         <label className={`${titlelabelStyle} mb-4`}>
                           Date, Time &amp; Location
@@ -1265,7 +1045,6 @@ export default function AnnouncementsPage() {
                             <label className={labelStyle}>
                               Time <span className="text-red-500">*</span>
                             </label>
-                            {/* Custom Time Picker (matching meet-information) */}
                             <div
                               className={`flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 transition-all ${
                                 ["ann-hour", "ann-minute", "ann-period"].includes(
@@ -1306,23 +1085,15 @@ export default function AnnouncementsPage() {
                         </div>
                       </div>
 
-                      <Divider />
+                      <FormDivider />
                       <div className="w-full space-y-2">
-  {/* Top Row: Label on left, "Add Organizer" button on right (only when closed) */}
-  <div className="flex items-center justify-between w-full">
+    <div className="flex items-center justify-between w-full">
     <label className={labelStyle}>
       Organizer
     </label>
 
     {!showOrganizerInput && !organizer && (
-  <button
-    type="button"
-    onClick={() => setShowOrganizerInput(true)}
-    className="inline-flex items-center gap-1 px-4 py-1.5 rounded-xl border-2 border-primary2/30 text-primary2 hover:border-primary2 hover:bg-primary2/5 font-bold text-xs transition-all font-rubik cursor-pointer"
-    title="Add Organizer"
-  >
-    <Plus size={15} /> Add Organizer
-  </button>
+  <AddButton onClick={() => setShowOrganizerInput(true)}>Add Organizer</AddButton>
 )}
   </div>
 
@@ -1336,24 +1107,17 @@ export default function AnnouncementsPage() {
         onChange={(e) => setOrganizer(e.target.value)}
         className={`${inputCls(false)} flex-1`}
       />
-      <button
-        type="button"
+      <RemoveButton title="Remove Organizer"
         onClick={() => {
           setOrganizer("");
           setShowOrganizerInput(false);
-        }}
-        className="w-8 h-8 shrink-0 flex items-center justify-center rounded-xl border-2 border-red-100 text-red-400 hover:bg-red-50 transition-all cursor-pointer"
-        title="Remove Organizer"
-      >
-        <X size={13} />
-      </button>
+        }} />
     </div>
   )}
 </div>
 
-                      <Divider />
+                      <FormDivider />
 
-                      {/* CONTENT */}
                       <div className="w-full space-y-6">
                         <label className={`${titlelabelStyle} mb-4`}>
                           Content
@@ -1398,17 +1162,16 @@ export default function AnnouncementsPage() {
                               Body <span className="text-red-500">*</span>
                             </label>
                             <span className="text-[11px] text-gray-400 font-raleway">
-                              {formData.body.length} chars
+                              {plainLength(formData.body)} chars
                             </span>
                           </div>
-                          <textarea
-                            id="body"
-                            name="body"
+                          <RichTextEditor
                             value={formData.body}
-                            onChange={handleInputChange}
-                            rows={7}
-                            placeholder="Add full details, links, and information..."
-                            className={`${inputCls(errors.body)} resize-y min-h-45`}
+                            onChange={(html) =>
+                              setFormData((prev) => ({ ...prev, body: html }))
+                            }
+                            placeholder="Add full details, links, and information"
+                            invalid={errors.body}
                           />
                           {errors.body && (
                             <p className="text-red-500 text-xs mt-1 ml-2 font-raleway">Body is required</p>
@@ -1419,19 +1182,13 @@ export default function AnnouncementsPage() {
                       {/* AWARDEES — Achievement tab */}
                       {activeTab === "Achievement" && (
                         <>
-                          <Divider />
+                          <FormDivider />
                           <div className="w-full space-y-4">
                             <div className="flex items-center justify-between">
                               <label className={labelStyle}>
                                 Awardees
                               </label>
-                              <button
-                                type="button"
-                                onClick={addAwardee}
-                                className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
-                              >
-                                <Plus size={11} /> Add Awardee
-                              </button>
+                              <AddButton onClick={addAwardee}>Add Awardee</AddButton>
                             </div>
                             <div className="space-y-3">
                               {awardees.map((a, idx) => (
@@ -1454,7 +1211,7 @@ export default function AnnouncementsPage() {
                                       className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
                                     />
                                   </div>
-                                  <div className="sm:col-span-3">
+                                  <div className="sm:col-span-2">
                                     <input
                                       type="text"
                                       placeholder="Program (optional)"
@@ -1499,8 +1256,8 @@ export default function AnnouncementsPage() {
                                       className="w-full rounded-xl border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-rubik focus:outline-none focus:border-primary2 transition-all"
                                     />
                                   </div>
-                                  <div className="sm:col-span-1 flex items-center justify-end">
-                                    
+                                  <div className="sm:col-span-2 flex items-center justify-end">
+                                    <RemoveButton onClick={() => removeAwardee(idx)} disabled={awardees.length <= 1} />
                                   </div>
                                 </div>
                               ))}
@@ -1509,43 +1266,23 @@ export default function AnnouncementsPage() {
                         </>
                       )}
 
-                      {/* MEETING FIELDS */}
                       {activeTab === "Meeting" && (
                         <>
-                          <Divider />
+                          <FormDivider />
                           <div className="w-full space-y-5">
                             <label className={`${titlelabelStyle} mb-4`}>
                               Meeting Details
                             </label>
-                            <div>
-                              <label className={labelStyle}>
-                                Attendance Link
-                              </label>
-                              <input
-                                type="url"
-                                id="attendanceLink"
-                                name="attendanceLink"
-                                value={formData.attendanceLink}
-                                onChange={handleInputChange}
-                                placeholder="Link to attendance Google Sheet / Drive folder"
-                                className={inputCls(!!errors.attendanceLink)}
-                              />
-                              {errors.attendanceLink && (
-                                <p className="text-red-500 text-xs mt-1 ml-2 font-raleway">Attendance link is required for meetings</p>
-                              )}
+                            <div className="w-full">
+                              <label className={labelStyle}>Officers Who Attended</label>
+                              <AttendancePicker value={attendance} onChange={setAttendance} />
                             </div>
                             <div className="w-full">
                               <div className="flex items-center justify-between mb-2">
                                 <label className={labelStyle}>
                                   Agenda <span className="text-red-500">*</span>
                                 </label>
-                                <button
-                                  type="button"
-                                  onClick={addAgendaItem}
-                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border-2 border-primary2/30 text-primary2 rounded-lg hover:border-primary2 hover:bg-primary2/5 transition-all font-rubik cursor-pointer"
-                                >
-                                  <Plus size={11} /> Add Item
-                                </button>
+                                <AddButton onClick={addAgendaItem}>Add Item</AddButton>
                               </div>
                               <div className="space-y-2">
                                 {agenda.map((item, i) => (
@@ -1565,13 +1302,7 @@ export default function AnnouncementsPage() {
                                       placeholder={`Agenda item ${i + 1}`}
                                       className="flex-1 rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-rubik text-gray-700 focus:outline-none focus:border-primary2 transition-all"
                                     />
-                                    <button
-                                      type="button"
-                                      onClick={() => removeAgendaItem(i)}
-                                      className="w-8 h-8 flex items-center justify-center rounded-xl border-2 border-red-100 text-red-400 hover:bg-red-50 transition-all cursor-pointer"
-                                    >
-                                      <X size={13} />
-                                    </button>
+                                    <RemoveButton onClick={() => removeAgendaItem(i)} />
                                   </div>
                                 ))}
                               </div>
@@ -1583,64 +1314,20 @@ export default function AnnouncementsPage() {
                         </>
                       )}
 
-                      <Divider />
+                      <FormDivider />
 
-                      {/* VISIBILITY */}
-                      <div className="w-full">
-                        <label className={labelStyle}>
-                          Visibility <span className="text-red-500">*</span>
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {VISIBILITY_OPTIONS.map((opt) => {
-                            const Icon = opt.icon;
-                            const isActive = formData.visibility === opt.value;
-                            return (
-                              <button
-                                key={opt.value}
-                                type="button"
-                                onClick={() => {
-                                  setFormData((p) => ({
-                                    ...p,
-                                    visibility: opt.value,
-                                  }));
-                                  setErrors((p) => ({
-                                    ...p,
-                                    visibility: false,
-                                  }));
-                                }}
-                                className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-left border-2 transition-all duration-200 cursor-pointer ${isActive ? `${opt.bg} ${opt.color} ${opt.border} shadow-sm scale-[1.02]` : "bg-white text-gray-400 border-gray-100 hover:border-gray-300 hover:text-gray-600"}`}
-                              >
-                                <span
-                                  className={`w-2 h-2 rounded-full shrink-0 ${isActive ? opt.dot : "bg-gray-200"}`}
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-bold font-rubik leading-tight">
-                                    {opt.label}
-                                  </p>
-                                  <p
-                                    className={`text-[14px] font-raleway font-semibold mt-0.5 truncate ${isActive ? "opacity-90" : "text-gray-300"}`}
-                                  >
-                                    {opt.sublabel}
-                                  </p>
-                                </div>
-                                {isActive && (
-                                  <Check
-                                    size={12}
-                                    className="shrink-0 opacity-70"
-                                  />
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {errors.visibility && (
-                          <p className="text-red-500 text-xs mt-1 ml-2 font-raleway">Visibility is required</p>
-                        )}
-                      </div>
+                      <VisibilityPicker
+                        required
+                        error={!!errors.visibility}
+                        value={formData.visibility}
+                        onChange={(visibility) => {
+                          setFormData((p) => ({ ...p, visibility }));
+                          setErrors((p) => ({ ...p, visibility: false }));
+                        }}
+                      />
 
-                      <Divider />
+                      <FormDivider />
 
-                      {/* SCHEDULE PUBLISH */}
                       <div className="w-full space-y-4">
                         <div className="flex items-center justify-between">
                           <label className={`${titlelabelStyle} mb-4`}>
@@ -1668,7 +1355,7 @@ export default function AnnouncementsPage() {
                                 scheduleDate,
                                 (val) => setScheduleDate(val),
                                 false,
-                                "Select publish date..."
+                                "Select publish date"
                               )}
                             </div>
                             <div>
@@ -1695,9 +1382,8 @@ export default function AnnouncementsPage() {
                         )}
                       </div>
 
-                      <Divider />
+                      <FormDivider />
 
-                      {/* ACTIONS */}
                       <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
                         {showGlobalError && (
                           <p className="text-red-500 text-sm font-raleway flex items-center gap-1.5">
@@ -1708,7 +1394,7 @@ export default function AnnouncementsPage() {
                           {editingId && (
                             <Button
                               type="button"
-                              variant="heroOutline"
+                              variant="heroCancel"
                               onClick={handleCancelEdit}
                               className="px-4 py-2 sm:px-6 sm:py-3"
                             >
@@ -1744,71 +1430,20 @@ export default function AnnouncementsPage() {
                     </div>
                 </div>
 
-                {/* MANAGE LIST */}
-                  <div className="bg-white rounded-4xl border transition-all duration-300 shadow-md hover:shadow-primary1/40 hover:-translate-y-2 border-gray-200 overflow-hidden">
-                    <div className="px-6 sm:px-8 py-6 border-b border-gray-100 flex flex-wrap justify-between items-center gap-4">
-                      <div>
-                        <h2 className="text-xl font-bold font-rubik text-primary3">
-                          Published Announcements
-                        </h2>
-                        <p className="text-gray-400 text-xs font-raleway mt-0.5 tracking-wide">
-                          {publishedItems.length} {" "}
-                          {publishedItems.length === 1
-                            ? "announcement"
-                            : "announcements"}
-                        </p>
-                      </div>
-                      <button
-                        onClick={fetchAnnouncements}
-                        className="flex items-center gap-2 text-xs font-bold font-rubik text-primary1 border border-primary1/20 hover:border-primary1/50 hover:bg-primary1/5 px-4 py-2 rounded-full transition-all duration-200 cursor-pointer"
-                      >
-                        <RefreshCw
-                          size={13}
-                          className={isLoadingList ? "animate-spin" : ""}
-                        />{" "}
-                        Refresh
-                      </button>
-                    </div>
-
-                    {isLoadingList ? (
-                      <LoadingIndicator label="Loading announcements..." className="py-16" />
-                    ) : publishedItems.length === 0 ? (
-                      <div className="py-20 flex flex-col items-center gap-4 text-gray-300">
-                        <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center">
-                          <Megaphone size={24} className="text-gray-300" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-bold font-rubik text-gray-400">
-                            No announcements yet
-                          </p>
-                          <p className="text-xs font-raleway mt-0.5">
-                            Create one using the form above
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto themed-scrollbar">
-                        <table className="responsive-table w-full text-left min-w-170">
-                          <thead>
-                            <tr className="bg-gray-50/80">
-                              <th className="px-8 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Title
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Type
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Date
-                              </th>
-                              <th className="px-4 py-3.5 text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Status
-                              </th>
-                              <th className="px-8 py-3.5 text-right text-[10px] font-semibold uppercase tracking-widest text-gray-400 font-raleway">
-                                Actions
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody>
+                  <ManageListCard
+                  title="Published Announcements"
+                  count={publishedItems.length}
+                  singular="announcement"
+                  plural="announcements"
+                  status="published"
+                  loading={isLoadingList}
+                  onRefresh={fetchAnnouncements}
+                  emptyIcon={<Megaphone size={24} className="text-gray-300" />}
+                  emptyTitle="No announcements yet"
+                  emptyHint="Create one using the form above"
+                  columns={["Title","Type","Date","Status","Actions"]}
+                  minWidth="min-w-170"
+                >
                             {publishedItems.map((item) => {
                               const isEditing = editingId === item._id;
                               const meta =
@@ -1887,11 +1522,7 @@ export default function AnnouncementsPage() {
                                 </tr>
                               );
                             })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
+                </ManageListCard>
               </div>
             </div>
           </div>
@@ -1902,96 +1533,22 @@ export default function AnnouncementsPage() {
         <Footer />
       </div>
 
-      {/* DELETE MODAL */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowDeleteModal(false)}
-          />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center">
-            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-5">
-              <AlertTriangle className="w-6 h-6 text-red-500" />
-            </div>
-            <h3 className="text-xl font-bold text-primary3 font-rubik mb-2">
-              Delete Announcement?
-            </h3>
-            <p className="text-gray-400 text-sm font-raleway mb-6 leading-relaxed">
-              This will permanently remove the announcement. This action cannot
-              be undone.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                variant="heroOutline"
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 py-2 sm:py-3"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="heroDanger"
-                onClick={handleDelete}
-                className="flex-1 py-2 sm:py-3"
-              >
-                Delete
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Delete Announcement?"
+        message="This will permanently remove the announcement. This action cannot be undone."
+        confirmLabel="Delete"
+        onCancel={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+      />
 
-      {/* SUCCESS MODAL */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => {
-              setShowSuccessModal(false);
-              setSubmitSuccess(false);
-            }}
-          />
-          <div className="relative bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl">
-            <div className="flex justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-400/20 rounded-full animate-ping" />
-                <div className="w-20 h-20 rounded-full bg-linear-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-xl relative">
-                  <svg
-                    className="w-10 h-10 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={3}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-primary3 font-rubik">
-                {successMessage.title}
-              </h3>
-              <p className="text-gray-400 text-sm font-raleway mt-2">
-                {successMessage.description}
-              </p>
-            </div>
-            <Button
-              variant="hero"
-              onClick={() => {
-                setShowSuccessModal(false);
-                setSubmitSuccess(false);
-              }}
-              className="w-full py-2 text-sm sm:py-3"
-            >
-              Continue
-            </Button>
-          </div>
-        </div>
-      )}
+      <SuccessModal
+        open={showSuccessModal}
+        title={successMessage.title}
+        description={successMessage.description}
+        buttonLabel="Continue"
+        onClose={() => { setShowSuccessModal(false); }}
+      />
     </div>
   );
 }
